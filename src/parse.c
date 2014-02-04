@@ -211,6 +211,19 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 
 	substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
+	if (is_number(line))
+	{
+		int cnt = atoi(line);
+
+		input = get_arg_in_braces(input, line, TRUE);
+
+		while (cnt-- > 0)
+		{
+			ses = script_driver(ses, -1, line);
+		}
+		return ses;
+	}
+
 	for (sesptr = gts ; sesptr ; sesptr = sesptr->next)
 	{
 		if (!strcmp(sesptr->name, line))
@@ -511,11 +524,7 @@ void do_one_line(char *line, struct session *ses)
 {
 	char strip[BUFFER_SIZE];
 
-	if (push_call("[%s] do_one_line(%s)",ses->name,line))
-	{
-		pop_call();
-		return;
-	}
+	push_call("[%s] do_one_line(%s)",ses->name,line);
 
 	strip_vt102_codes(line, strip);
 

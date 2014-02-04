@@ -123,7 +123,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.99.0"
+#define VERSION_NUM               "1.99.1"
 
 #define ESCAPE                          27
 
@@ -191,8 +191,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define TOKEN_OPR_ELSE                   4
 #define TOKEN_OPR_ENDIF                  5
 #define TOKEN_OPR_RETURN                 6
-#define TOKEN_OPR_REPEAT                 7
-#define TOKEN_OPR_SESSION                8
+#define TOKEN_OPR_SESSION                7
 
 /*
 	generic define for show_message
@@ -600,6 +599,7 @@ struct tintin_data
 	char                    repeat_char;
 	char                  * vars[100];
 	char                  * cmds[100];
+	int                     args[100];
 };
 
 struct chat_data
@@ -1088,6 +1088,7 @@ DO_COMMAND(do_regexp);
 extern int regexp_cmds(char *str, char *exp);
 extern int regexp(char *str, char *exp);
 extern int action_regexp(char *str, char *exp);
+extern int tintin_regexp(char *str, char *exp);
 
 extern void substitute(struct session *ses, char *string, char *result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
@@ -1420,6 +1421,7 @@ extern int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc
 extern int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_will_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src);
 extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1427,8 +1429,8 @@ extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 extern int init_mccp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern void *zlib_alloc(void *opaque, unsigned int items, unsigned int size);
 extern void zlib_free(void *opaque, void *address);
-
 extern void init_telnet_session(struct session *ses);
+extern int skip_sb(struct session *ses, int cplen, unsigned char *cpsrc);
 
 #endif
 
@@ -1586,10 +1588,10 @@ extern void memory_update(void);
 #define __UTILS_H__
 
 extern int is_abbrev(char *s1, char *s2);
-extern int is_suffix(char *s1, char *s2);
 extern int is_color_code(char *str);
 extern int is_number(char *str);
 extern int hex_number(char *str);
+extern int oct_number(char *str);
 extern long long utime(void);
 extern char *capitalize(char *str);
 extern char *indent(int cnt);

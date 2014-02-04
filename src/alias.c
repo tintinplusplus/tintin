@@ -160,7 +160,7 @@ int check_all_aliases(struct session *ses, char *input)
 
 			substitute(ses, node->left, right, SUB_VAR|SUB_FUN);
 
-			if (action_regexp(left, right))
+			if (tintin_regexp(left, right))
 			{
 				substitute(ses, node->right, input, SUB_ARG);
 

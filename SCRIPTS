@@ -17,11 +17,11 @@
 
 002 Capture session information.
 
-#action {^#SESSION '%0' CONNECTED TO '%1' PORT '%2'}
+#action {^#SESSION '%1' CONNECTED TO '%2' PORT '%3'}
 {
-	#var session %0;
-	#var address %1;
-	#var port %2
+	#var session %1;
+	#var address %2;
+	#var port %3
 }
 
 
@@ -216,19 +216,19 @@
 	}
 }
 
-#act {%0 arrives}
+#act {%1 arrives}
 {
-	#if {"$targets" == "*{%0}*"} {kill %0}
+	#if {"$targets" == "*{%1}*"} {kill %0}
 }
 
-#act {%0 is standing here}
+#act {%1 is standing here}
 {
-	#if {"$targets" == "*{%0}*"} {kill %0}
+	#if {"$targets" == "*{%1}*"} {kill %0}
 }
 
-#action {%0 is dead! R.I.P.}
+#action {%1 is dead! R.I.P.}
 {
-	#if {"$targets" == "*{%0}*"} {target %0}
+	#if {"$targets" == "*{%1}*"} {target %0}
 }
 
 		

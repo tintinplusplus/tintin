@@ -862,7 +862,7 @@ struct telopt_type telopt_table[] =
 	{    "67",                TEL_N,               NEG_U },
 	{    "68",                TEL_N,               NEG_U },
 	{    "69",                TEL_N,               NEG_U },
-	{    "70",                TEL_N,               NEG_U },
+	{    "MSSP",              TEL_Y,               NEG_U },
 	{    "71",                TEL_N,               NEG_U },
 	{    "72",                TEL_N,               NEG_U },
 	{    "73",                TEL_N,               NEG_U },
@@ -884,8 +884,8 @@ struct telopt_type telopt_table[] =
 	{    "89",                TEL_N,               NEG_U },
 	{    "MSP",               TEL_N,               NEG_U },
 	{    "MXP",               TEL_N,               NEG_U },
-	{    "92",                TEL_N,               NEG_U },
-	{    "ZMP",               TEL_N,               NEG_U },
+	{    "MSP2",              TEL_N,               NEG_U }, /* Might have no actual implementation */
+	{    "ZMP",               TEL_N,               NEG_U }, /* Might have no actual implementation */
 	{    "94",                TEL_N,               NEG_U },
 	{    "95",                TEL_N,               NEG_U },
 	{    "96",                TEL_N,               NEG_U },

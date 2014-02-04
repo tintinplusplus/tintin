@@ -21,7 +21,7 @@
 
 DEFINES = -D_GNU_SOURCE @DEFS@
 
-CC = @CC@ -Wall
+CC = @CC@ -Wall -Wno-trigraphs
 MAKE = @MAKE@
 
 #this is the standard CFLAGS options, this is what most people should use

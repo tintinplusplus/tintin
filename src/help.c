@@ -117,7 +117,7 @@ struct help_type help_table[] =
 	},
 	{
 		"BUFFER",
-		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>lock<178><078>write filename<178>|<078>info<178>}<078>\n"
+		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>lock<178>|<078>write filename<178>|<078>info<178>}<078>\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
 		"         the entire scrollback buffer to file. The lock options toggles the\n"

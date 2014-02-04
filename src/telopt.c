@@ -36,12 +36,16 @@ char iac_will_naws[]          = { IAC, WILL,  TELOPT_NAWS            };
 char iac_do_sga[]             = { IAC, DO,    TELOPT_SGA             };
 char iac_will_sga[]           = { IAC, WILL,  TELOPT_SGA             };
 
-char iac_sb_tspeed[]          = { IAC, SB,    TELOPT_TSPEED, TELQUAL_SEND, IAC, SE };
-char iac_sb_ttype[]           = { IAC, SB,    TELOPT_TTYPE, TELQUAL_SEND, IAC, SE  };
+char iac_sb_tspeed[]          = { IAC, SB,    TELOPT_TSPEED, VAR_SEND, IAC, SE };
+char iac_sb_ttype[]           = { IAC, SB,    TELOPT_TTYPE,  VAR_SEND, IAC, SE  };
 
 char iac_do_echo[]            = { IAC, DO,    TELOPT_ECHO            };
 char iac_wont_echo[]          = { IAC, WONT,  TELOPT_ECHO            };
 char iac_will_echo[]          = { IAC, WILL,  TELOPT_ECHO            };
+
+char iac_sb_mssp[]            = { IAC, SB,    TELOPT_MSSP            };
+
+char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
 
 char iac_sb_mccp1[]           = { IAC, SB,    TELOPT_MCCP1, WILL, SE };
 char iac_will_mccp2[]         = { IAC, WILL,  TELOPT_MCCP2           };
@@ -50,7 +54,6 @@ char iac_sb_mccp2[]           = { IAC, SB,    TELOPT_MCCP2, IAC, SE  };
 char iac_eor[]                = { IAC, EOR                           };
 char iac_ga[]                 = { IAC, GA                            };
 
-char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
 
 struct iac_type
 {
@@ -71,11 +74,12 @@ struct iac_type iac_table [] =
 	{   3,  iac_will_echo,        &send_echo_off           },
 	{   3,  iac_wont_echo,        &send_echo_on            },
 	{   3,  iac_will_mccp2,       &send_do_mccp2           },
+	{   3,  iac_sb_mssp,          &recv_sb_mssp            },
 	{   5,  iac_sb_mccp1,         &init_mccp               },
 	{   5,  iac_sb_mccp2,         &init_mccp               },
+	{   3,  iac_sb_zmp,           &exec_zmp                },
 	{   2,  iac_eor,              &mark_prompt             },
 	{   2,  iac_ga,               &mark_prompt             },
-	{   3,  iac_sb_zmp,           &exec_zmp                },
 	{   0,  NULL,                 NULL                     }
 };
 
@@ -232,7 +236,10 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						break;
 
 					case SB:
-						tintin_printf2(ses, "RCVD IAC SB %s SEND", telopt_table[cpsrc[2]].name);
+						if (cplen > 2)
+						{
+							tintin_printf2(ses, "RCVD IAC SB %s", telopt_table[cpsrc[2]].name);
+						}
 						break;
 
 					default:
@@ -331,7 +338,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						break;
 
 					case SB:
-						skip = 3;
+						skip = skip_sb(ses, cplen, cpsrc);
 						break;
 
 					case IAC:
@@ -428,6 +435,10 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	gtd->mud_output_buf[gtd->mud_output_len] = 0;
 }
 
+/*
+	SGA
+*/
+
 int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
@@ -463,6 +474,10 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 2;
 }
 
+/*
+	TTYPE
+*/
+
 int send_will_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	SET_BIT(ses->telopt_flag[TELOPT_TTYPE / 32], 1 << TELOPT_TTYPE % 32);
@@ -474,6 +489,29 @@ int send_will_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 3;
 }
 
+int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	if (atoi(ses->port) == TELNET_PORT && getenv("TERM"))
+	{
+		socket_printf(ses, 6 + strlen(getenv("TERM")), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, getenv("TERM"), IAC, SE);
+
+		telopt_debug(ses, "SENT IAC SB TTYPE %s", getenv("TERM"));
+	}
+	else
+	{
+		socket_printf(ses, 15, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
+
+		telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
+	}
+
+	return 6;
+}
+
+
+/*
+	TSPEED
+*/
+
 int send_will_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	SET_BIT(ses->telopt_flag[TELOPT_TSPEED / 32], 1 << TELOPT_TSPEED % 32);
@@ -484,6 +522,20 @@ int send_will_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	return 3;
 }
+
+int send_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
+
+	telopt_debug(ses, "SENT IAC SB 0 %s 38400,38400 IAC SB", telopt_table[TELOPT_TSPEED].name);
+
+	return 6;
+}
+
+
+/*
+	NAWS
+*/
 
 int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
@@ -516,33 +568,9 @@ int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 3;
 }
 
-int send_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
-
-	telopt_debug(ses, "SENT IAC SB %s 38400,38400 IAC SB", telopt_table[TELOPT_TSPEED].name);
-
-	return 6;
-}
-
-
-int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	if (atoi(ses->port) == TELNET_PORT && getenv("TERM"))
-	{
-		socket_printf(ses, 6 + strlen(getenv("TERM")), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, getenv("TERM"), IAC, SE);
-
-		telopt_debug(ses, "SENT IAC SB TTYPE %s", getenv("TERM"));
-	}
-	else
-	{
-		socket_printf(ses, 15, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
-
-		telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
-	}
-
-	return 6;
-}
+/*
+	ECHO
+*/
 
 int send_echo_on(struct session *ses, int cplen, unsigned char *cpsrc)
 {
@@ -577,6 +605,10 @@ int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 3;
 }
 
+/*
+	IP
+*/
+
 int send_ip(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 5, "%c%c%c%c%c", IAC, IP, IAC, DO, TELOPT_TIMINGMARK);
@@ -586,6 +618,10 @@ int send_ip(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	return 3;
 }
+
+/*
+	Automatic telopt handling
+*/
 
 int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
@@ -623,6 +659,59 @@ int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 3;
 }
 
+/*
+	MSSP \xFF\xFD\x46
+*/
+
+int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
+{
+	char var[BUFFER_SIZE], val[BUFFER_SIZE];
+	char *pto;
+	int i;
+
+	var[0] = val[0] = i = 0;
+
+	while (i < cplen && src[i] != SE)
+	{
+		switch (src[i])
+		{
+			case MSSP_VAR:
+				i++;
+				pto = var;
+
+				while (i < cplen && src[i] >= 32 && src[i] != IAC)
+				{
+					*pto++ = src[i++];
+				}
+				*pto = 0;
+				break;
+
+			case MSSP_VAL:
+				i++;
+				pto = val;
+
+				while (i < cplen && src[i] >= 32 && src[i] != IAC)
+				{
+					*pto++ = src[i++];
+				}
+				*pto = 0;
+
+				telopt_debug(ses, "%-20s %s", var, val);
+				break;
+
+			default:
+				i++;
+				break;
+		}
+	}
+	return UMIN(i + 1, cplen);
+}
+
+
+/*
+	Routine to skip zmp stuff
+*/
+
 int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	char buf[BUFFER_SIZE];
@@ -641,6 +730,10 @@ int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc)
 	}
 	return len + 1;
 }
+
+/*
+	MCCP
+*/
 
 int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 {
@@ -715,4 +808,24 @@ void init_telnet_session(struct session *ses)
 	send_will_ttype(ses, 0, NULL);
 	send_will_tspeed(ses, 0, NULL);
 	send_will_naws(ses, 0, NULL);
+}
+
+
+/*
+	Returns the length of a telnet subnegotiation
+*/
+
+int skip_sb(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	int i;
+
+	for (i = 0 ; i < cplen ; i++)
+	{
+		if (cpsrc[i] == SE)
+		{
+			break;
+		}
+	}
+
+	return UMIN(i + 1, cplen);
 }

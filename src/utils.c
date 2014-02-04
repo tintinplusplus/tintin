@@ -45,15 +45,6 @@ int is_abbrev(char *s1, char *s2)
 	return (!strncasecmp(s2, s1, strlen(s1)));
 }
 
-int is_suffix(char *s1, char *s2)
-{
-	int sl1, sl2;
-
-	sl1 = strlen(s1);
-	sl2 = strlen(s2);
-
-	return (sl1 <= sl2 && !strcasecmp(s1, s2 + sl2 - sl1)) ? FALSE : TRUE;
-}
 
 int is_color_code(char *str)
 {
@@ -106,17 +97,17 @@ int is_number(char *str)
 
 int hex_number(char *str)
 {
-	int value = '?';
+	int value = 0;
 
 	if (str)
 	{
 		if (isdigit(*str))
 		{
-			value = (*str - '0') << 4;
+			value += 16 * (*str - '0');
 		}
 		else
 		{
-			value = (*str - 'A' + 10) << 4;
+			value += 16 * (toupper(*str) - 'A' + 10);
 		}
 		str++;
 	}
@@ -129,7 +120,32 @@ int hex_number(char *str)
 		}
 		else
 		{
-			value += *str - 'A' + 10;
+			value += toupper(*str) - 'A' + 10;
+		}
+		str++;
+	}
+
+	return value;
+}
+
+int oct_number(char *str)
+{
+	int value = 0;
+
+	if (str)
+	{
+		if (isdigit(*str))
+		{
+			value += 8 * (*str - '0');
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit(*str))
+		{
+			value += *str - '0';
 		}
 		str++;
 	}
@@ -292,6 +308,7 @@ void show_debug(struct session *ses, int index, char *format, ...)
 
 	if (!HAS_BIT(root->flags, LIST_FLAG_DEBUG) && !HAS_BIT(root->flags, LIST_FLAG_LOG))
 	{
+		pop_call();
 		return;
 	}
 

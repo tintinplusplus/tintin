@@ -1,4 +1,18 @@
-February 2008   1.99.0
+February 2009  1.99.1
+--------------------------------------------------------------------------------
+
+telopt.c       Added passive MSSP support. To trigger use: #send \xFF\xFD\x46
+
+tinexp.c       Added pre-parser to convert tintin globs to regexps.
+
+tinexp.c       Now using PCRE (Perl Compatible Regular Expressions)
+
+tinexp.c       Added \cx "control-x", where x is any character.
+
+tinexp.c       Added \0xx, where x is an octal number.
+
+
+February 2009  1.99.0
 --------------------------------------------------------------------------------
 
 misc.c         #showme and #echo now can have a / as a suffix to stop a

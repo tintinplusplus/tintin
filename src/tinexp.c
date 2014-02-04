@@ -28,9 +28,9 @@
 
 #include <regex.h>
 #include <sys/types.h>
+#include <pcre.h>
 
 #include "tintin.h"
-
 
 /******************************************************************************
 * Simple regexp that skips vt102 codes and supports the * and ? wildcards     *
@@ -151,7 +151,7 @@ DO_COMMAND(do_regexp)
 	else
 	{
 		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
-		substitute(ses, right, right, SUB_VAR|SUB_FUN|SUB_ESC);
+		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 		if (regexp_cmds(left, right))
 		{
@@ -167,97 +167,60 @@ DO_COMMAND(do_regexp)
 	return ses;
 }
 
-int regexp_cmds(char *str, char *exp)
+int regexp_comp(char *str, char *exp, int option, int flag)
 {
-	regex_t regex;
-	regmatch_t match[100];
-	int i;
+	pcre *regex;
+	const char *error;
+	int i, j, matches, match[303];
 
-	if (regcomp(&regex, exp, REG_EXTENDED))
+	regex = pcre_compile(exp, option, &error, &i, NULL);
+
+	if (regex == NULL)
 	{
 		return FALSE;
 	}
 
-	if (regexec(&regex, str, 100, match, 0))
+	matches = pcre_exec(regex, NULL, str, strlen(str), 0, 0, match, 303);
+
+	if (matches <= 0)
 	{
-		regfree(&regex);
+		free(regex);
 
 		return FALSE;
 	}
 
-	for (i = 0 ; i < 100 ; i++)
+	switch (flag)
 	{
-		if (match[i].rm_so != -1)
-		{
-			gtd->cmds[i] = refstring(gtd->cmds[i], "%.*s", (int) match[i].rm_eo - (int) match[i].rm_so, &str[match[i].rm_so]);
-		}
-		else
-		{
+		case SUB_CMD:
+			for (i = 0 ; i < matches ; i++)
+			{
+				gtd->cmds[i] = refstring(gtd->cmds[i], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+			}
 			break;
-		}
+
+		case SUB_ARG:
+			for (i = 0 ; i < matches ; i++)
+			{
+				j = gtd->args[i];
+
+				gtd->vars[i] = refstring(gtd->vars[i], "%.*s", match[j*2+1] - match[j*2], &str[match[j*2]]);
+			}
+			break;
 	}
-	regfree(&regex);
+
+	free(regex);
 
 	return TRUE;
 }
 
-int action_regexp(char *str, char *exp)
+int regexp_cmds(char *str, char *exp)
 {
-	regex_t regex;
-	regmatch_t match[100];
-	int i;
-
-	if (regcomp(&regex, exp, REG_EXTENDED))
-	{
-		return FALSE;
-	}
-
-	if (regexec(&regex, str, 100, match, 0))
-	{
-		regfree(&regex);
-
-		return FALSE;
-	}
-
-	for (i = 0 ; i < 100 ; i++)
-	{
-		if (match[i].rm_so == -1)
-		{
-			RESTRING(gtd->vars[i], "");
-		}
-		else
-		{
-			gtd->vars[i] = refstring(gtd->vars[i], "%.*s", (int) match[i].rm_eo - (int) match[i].rm_so, &str[match[i].rm_so]);
-		}
-	}
-
-	regfree(&regex);
-
-	return TRUE;
+	return regexp_comp(str, exp, 0, SUB_CMD);
 }
 
 int regexp(char *str, char *exp)
 {
-	regex_t regex;
-	regmatch_t match[1];
-
-	if (regcomp(&regex, exp, REG_NOSUB|REG_EXTENDED))
-	{
-		return FALSE;
-	}
-
-	if (regexec(&regex, str, 0, match, 0))
-	{
-		regfree(&regex);
-
-		return FALSE;
-	}
-	else
-	{
-		regfree(&regex);
-
-		return TRUE;
-	}
+	return regexp_comp(str, exp, 0, 0);
 }
 
 /******************************************************************************
@@ -733,6 +696,13 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						case 'b':
 							*pto++ = '\b';
 							break;
+						case 'c':
+							if (pti[1])
+							{
+								pti++;
+								*pto++ = *pti % 32;
+							}
+							break;
 						case 'e':
 							*pto++ = '\033';
 							break;
@@ -746,11 +716,18 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 							*pto++ = '\t';
 							break;
 						case 'x':
-							pti++;
-
-							if (pti[0] && pti[1])
+							if (pti[1] && pti[2])
 							{
+								pti++;
 								*pto++ = hex_number(pti);
+								pti++;
+							}
+							break;
+						case '0':
+							if (pti[1] && pti[2])
+							{
+								pti++;
+								*pto++ = oct_number(pti);
 								pti++;
 							}
 							break;
@@ -779,9 +756,8 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 
 /******************************************************************************
-* Calls action_glob checking if the string matches, and automatically fills *
-* in the text represented by the wildcards on success. Per default the entire *
-* string is compared unless it starts or ends with the ^ character.           *
+* Calls tintin_regexp checking if the string matches, and automatically fills *
+* in the text represented by the wildcards on success.                        *
 ******************************************************************************/
 
 int check_one_action(char *line, char *original, char *action, struct session *ses)
@@ -789,7 +765,7 @@ int check_one_action(char *line, char *original, char *action, struct session *s
 	char result[BUFFER_SIZE];
 	char *exp, *str;
 
-	substitute(ses, action, result, SUB_VAR|SUB_FUN|SUB_ESC);
+	substitute(ses, action, result, SUB_VAR|SUB_FUN);
 
 	exp = result;
 
@@ -803,184 +779,169 @@ int check_one_action(char *line, char *original, char *action, struct session *s
 		str = line;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
-	{
-		return action_regexp(str, exp);
-	}
-
-	if (*exp == '^')
-	{
-		exp++;
-		return action_glob(ses, str, exp, 255);
-	}
-
-	if (exp[0] == '%' && isdigit(exp[1]))
-	{
-		return action_glob(ses, str, exp, 255);
-	}
-
-	while (*str)
-	{
-		if ((*exp == '[' || *exp == *str) && action_glob(ses, str, exp, 255))
-		{
-			return TRUE;
-		}
-		str++;
-	}
-	return FALSE;
+	return tintin_regexp(str, exp);
 }
 
-
-int action_glob(struct session *ses, char *str, char *exp, unsigned char arg)
+int tintin_regexp(char *str, char *exp)
 {
-	short cnt, cnt2;
+	char out[BUFFER_SIZE], *pti, *pto;
+	int arg, var, cnt;
 
-	thestart:
+	arg = 1;
+	var = 1;
 
-	while (*exp)
+	pti = exp;
+	pto = out;
+
+	if (*pti == '{')
+	{
+		for (cnt = 0 ; cnt < 100 ; cnt++)
+		{
+			gtd->args[cnt] = cnt;
+		}
+	}
+
+	while (*pti)
 	{
 
 #ifdef BIG5
-		if (*exp & 0x80 && *str & 0x80)
+		if (*pti & 0x80)
 		{
-			exp++;
-			str++;
-			if (*exp++ != *str++)
-			{
-				return FALSE;
-			}
+			*pto++ = *pti++;
+			*pto++ = *pti++;
 			continue;
 		}
 #endif
-
-		switch (exp[0])
+		switch (pti[0])
 		{
-			case '%':
-				if (isdigit(exp[1]))
-				{
-					arg = isdigit(exp[2]) ? (exp[1] - '0') * 10 + exp[2] - '0' : exp[1] - '0';
-
-					if (exp[isdigit(exp[2]) ? 3 : 2] == 0)
-					{
-						RESTRING(gtd->vars[arg], str);
-
-						return TRUE;
-					}
-
-					for (cnt = 0 ; str[cnt] ; cnt++)
-					{
-						if (action_glob(ses, &str[cnt], exp + (isdigit(exp[2]) ? 3 : 2), arg))
-						{
-							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
-
-							return TRUE;
-						}
-					}
-					return FALSE;
-				}
-				if (exp[1] == DEFAULT_OPEN)
-				{
-					arg = (arg == 99) ? arg : arg + 1;
-
-					exp = get_arg_in_braces(&exp[1], gtd->vars[arg], TRUE);
-
-					if (*exp == 0)
-					{
-						internal_variable(ses, "{%s} {%s}", gtd->vars[arg], str);
-
-						return TRUE;
-					}
-
-					for (cnt = 0 ; str[cnt] ; cnt++)
-					{
-						if (action_glob(ses, &str[cnt], exp, arg))
-						{
-							internal_variable(ses, "{%s} {%.*s}", gtd->vars[arg], cnt, str);
-
-							return TRUE;
-						}
-					}
-					return FALSE;
-				}
+			case '\\':
+				*pto++ = *pti++;
+				*pto++ = *pti++;
 				break;
 
-			case '^':
-				if (exp[1] == 0)
-				{
-					return (exp[1] == str[0]);
-				}
+			case '{':
+				gtd->args[arg++ % 100] = var++ % 100;
+				*pto++ = '(';
+				pti = get_arg_in_braces(pti, pto, TRUE);
+				pto += strlen(pto);
+				*pto++ = ')';
 				break;
-				
+
 			case '[':
-				if (*str != '[' && glob(exp, "[*|*]*"))
+			case ']':
+			case '(':
+			case ')':
+			case '|':
+			case '.':
+			case '?':
+			case '+':
+			case '*':
+				*pto++ = '\\';
+				*pto++ = *pti++;
+				break;
+
+			case '%':
+				switch (pti[1])
 				{
-					cnt  = 1;
-					cnt2 = 0;
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						arg = isdigit(pti[2]) ? (pti[1] - '0') * 10 + (pti[2] - '0') : pti[1] - '0';
+						gtd->args[arg++ % 100] = var++ % 100;
+						pti += isdigit(pti[2]) ? 3 : 2;
+						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
+						pto += strlen(pto);
+						break;
 
-					while (TRUE)
-					{
-						if (exp[cnt] == '|' || exp[cnt] == ']')
-						{
-							arg = (arg == 99) ? arg : arg + 1;
-							cnt--;
-							cnt2 = 0;
+					case 'w':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "([a-zA-Z]*?)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-							while (exp[cnt] != '|' && exp[cnt] != '[')
-							{
-								cnt--;
-								cnt2++;
-								str++;
-							}
-							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt2, &exp[cnt+1]);
+					case 'W':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "([^a-zA-Z]*?)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-							while (*exp != ']')
-							{
-								exp++;
-							}
-							exp++;
+					case 'd':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "([0-9]*?)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-							goto thestart;
-						}
+					case 'D':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "([^0-9]*?)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-						if (str[cnt2] == 0)
-						{
-							break;
-						}
+					case 's':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "\\s*?");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-						if (exp[cnt] == str[cnt2])
-						{
-							cnt++;
-							cnt2++;
-							continue;
-						}
-						else
-						{
-							cnt2 = 0;
+					case 'S':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "\\S*?");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-							while (exp[cnt])
-							{
-								if (exp[cnt] == ']')
-								{
-									return FALSE;
-								}
-								if (exp[cnt++] == '|')
-								{
-									break;
-								}
+					case '?':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "(.??)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
 
-							}
-						}
-					}
+					case '*':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "(.*?)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
+
+					case '+':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "(.+?)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
+
+					case '.':
+						gtd->args[arg++ % 100] = var++ % 100;
+						strcpy(pto, "(.)");
+						pti += 2;
+						pto += strlen(pto);
+						break;
+
+					default:
+						*pto++ = *pti++;
+						break;
 				}
 				break;
-		}
 
-		if (*exp != *str)
-		{
-			return FALSE;
+			default:
+				*pto++ = *pti++;
+				break;
 		}
-		exp++;
-		str++;
 	}
-	return TRUE;
+	*pto = 0;
+
+	return regexp_comp(str, out, 0, SUB_ARG);
 }

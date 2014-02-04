@@ -12,8 +12,6 @@ GENERAL STUFF:
 
 - Add a #line skip option.
 
-- Tab completion based on scroll back history.
-
 - Add a pre-parser to determine whether a trigger is a regex or color
   trigger.
 

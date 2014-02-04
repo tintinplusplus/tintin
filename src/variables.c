@@ -37,7 +37,7 @@ DO_COMMAND(do_variable)
 	root = ses->list[LIST_VARIABLE];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	arg = get_arg_in_braces(arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
@@ -485,7 +485,7 @@ DO_COMMAND(do_format)
 				switch (*ptf)
 				{
 					case 'a':
-						sprintf(arglist[i], "%c", atoi(arglist[i]));
+						sprintf(arglist[i], "%c", (char) get_number(ses, arglist[i]));
 						break;
 
 					case 'c':
@@ -526,11 +526,6 @@ DO_COMMAND(do_format)
 
 					case 't':
 						timestring(ses, arglist[i]);
-						break;
-
-						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
-						timeval_tm = *localtime(&timeval_t);
-						strftime(arglist[i], BUFFER_SIZE, "%H:%M", &timeval_tm);
 						break;
 
 					case 'u':

@@ -31,7 +31,6 @@ AC_SUBST(MYINCLUDE)
 AC_SUBST(MYLIB)    
 AC_SUBST(mybindir)
 AC_SUBST(BIG5)
-AC_SUBST(IPv6)
 
 if [ test $bindir != "\${exec_prefix}/bin" ]
 then
@@ -94,6 +93,7 @@ AC_CHECK_LIB(z, inflate)
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(nsl, gethostbyname)
 AC_CHECK_LIB(util, forkpty)
+AC_CHECK_LIB(pcre, pcre_compile)
 AC_CHECK_PROGS(MAKE, gmake make)
 
 AC_FUNC_GETMNTENT

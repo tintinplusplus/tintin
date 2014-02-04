@@ -106,7 +106,7 @@ DO_CHAT(chat_initialize)
 	struct hostent *hp = NULL;
 	struct linger ld;
 	char *reuse = "1";
-	int sock;
+	int sock, port;
 
 	if (gtd->chat)
 	{
@@ -115,15 +115,7 @@ DO_CHAT(chat_initialize)
 		return;
 	}
 
-	gtd->chat = calloc(1, sizeof(struct chat_data));
-
-	gtd->chat->port     = *left ? atoi(left) : DEFAULT_PORT;
-	gtd->chat->name     = strdup("TinTin");
-	gtd->chat->ip       = strdup("<Unknown>");
-	gtd->chat->reply    = strdup("");
-	gtd->chat->color    = strdup("\033[0;1;31m");
-
-	chat_downloaddir("", "");
+	port = atoi(left) ? atoi(left) : DEFAULT_PORT;
 
 	gethostname(hostname, BUFFER_SIZE);
 
@@ -137,7 +129,7 @@ DO_CHAT(chat_initialize)
 	}
 
 	sa.sin_family      = hp->h_addrtype;
-	sa.sin_port        = htons(gtd->chat->port);
+	sa.sin_port        = htons(port);
 	sa.sin_addr.s_addr = 0;
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -167,7 +159,7 @@ DO_CHAT(chat_initialize)
 
 	if (bind(sock, (struct sockaddr *) &sa, sizeof(sa)) < 0)
 	{
-		chat_printf("Port in use, cannot initiate chat.");
+		tintin_printf(NULL, "Port %d is already in use, cannot initiate chat.", port);
 
 		close(sock);
 
@@ -182,7 +174,16 @@ DO_CHAT(chat_initialize)
 
 		return;
 	}
-	gtd->chat->fd = sock;
+	gtd->chat = calloc(1, sizeof(struct chat_data));
+
+	gtd->chat->fd       = sock;
+	gtd->chat->port     = port;
+
+	gtd->chat->color    = strdup("\033[0;1;31m");
+	gtd->chat->download = strdup("");
+	gtd->chat->ip       = strdup("<Unknown>");
+	gtd->chat->name     = strdup("TinTin");
+	gtd->chat->reply    = strdup("");
 
 	chat_printf("Initialized chat on port %d.", gtd->chat->port);
 }
@@ -240,10 +241,13 @@ int chat_new(int s)
 
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
-	new_buddy->ip    = strdup(inet_ntoa(sock.sin_addr));
-	new_buddy->fd    = fd;
-	new_buddy->name  = strdup("Unknown");
-	new_buddy->group = strdup("");
+	new_buddy->fd       = fd;
+
+	new_buddy->download = strdup("");
+	new_buddy->group    = strdup("");
+	new_buddy->ip       = strdup(inet_ntoa(sock.sin_addr));
+	new_buddy->name     = strdup("Unknown");
+	new_buddy->version  = strdup("");
 
 	new_buddy->timeout = CALL_TIMEOUT + time(NULL);
 
@@ -356,11 +360,14 @@ void *threaded_chat_call(void *arg)
 
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
-	new_buddy->ip    = strdup(host);
-	new_buddy->port  = atoi(port);
-	new_buddy->fd    = sock;
-	new_buddy->name  = strdup("");
-	new_buddy->group = strdup("");
+	new_buddy->fd       = sock;
+	new_buddy->port     = atoi(port);
+
+	new_buddy->group    = strdup("");
+	new_buddy->ip       = strdup(host);
+	new_buddy->name     = strdup("");
+	new_buddy->version  = strdup("");
+	new_buddy->download = strdup("");
 
 	strip_vt102_codes(gtd->chat->name, name);
 
@@ -512,11 +519,14 @@ void *threaded_chat_call(void *arg)
 
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
-	new_buddy->ip    = strdup(host);
-	new_buddy->port  = atoi(port);
-	new_buddy->fd    = sock;
-	new_buddy->name  = strdup("");
-	new_buddy->group = strdup("");
+	new_buddy->fd       = sock;
+	new_buddy->port     = atoi(port);
+
+	new_buddy->download = strdup("");
+	new_buddy->group    = strdup("");
+	new_buddy->ip       = strdup(host);
+	new_buddy->name     = strdup("");
+	new_buddy->version  = strdup("");
 
 	strip_vt102_codes(gtd->chat->name, name);
 
@@ -616,13 +626,13 @@ void close_chat(struct chat_data *buddy, int unlink)
 		}
 	}
 
-	STRFREE(buddy->name);
-	STRFREE(buddy->ip);
-	STRFREE(buddy->download);
-	STRFREE(buddy->version);
-	STRFREE(buddy->group);
-
 	close(buddy->fd);
+
+	STRFREE(buddy->download);
+	STRFREE(buddy->group);
+	STRFREE(buddy->ip);
+	STRFREE(buddy->name);
+	STRFREE(buddy->version);
 
 	free(buddy);
 }
@@ -939,12 +949,9 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 
 		*pto-- = 0;
 
-		if (strlen(txt))
+		while (isspace(*pto))
 		{
-			while (isspace(*pto))
-			{
-				*pto-- = 0;
-			}
+			*pto-- = 0;
 		}
 
 		switch (ptc)
@@ -994,11 +1001,11 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 				break;
 
 			case CHAT_VERSION:
-				if (buddy->version == NULL)
+				if (*buddy->version == 0 && *txt != 0)
 				{
 					chat_socket_printf(buddy, "%c%s%s%c", CHAT_VERSION, "TinTin++ ", VERSION_NUM, CHAT_END_OF_COMMAND);
 
-					buddy->version = strdup(txt);
+					RESTRING(buddy->version, txt);
 				}
 				break;
 
@@ -1378,14 +1385,7 @@ DO_CHAT(chat_downloaddir)
 {
 	char dir[BUFFER_SIZE];
 
-	if (gtd->chat->download == NULL)
-	{
-		gtd->chat->download = strdup("");
-
-		return;
-	}
-
-	sprintf(dir, "%s%s", left, is_suffix("/", left) ? "/" : "");
+	sprintf(dir, "%s%s", left, !str_suffix(left, "/") ? "" : "/");
 
 	RESTRING(gtd->chat->download, dir);
 

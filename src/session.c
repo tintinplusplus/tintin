@@ -259,7 +259,7 @@ void connect_session(struct session *ses)
 {
 	int sock;
 
-	tintin_printf2(ses, "\n#Trying to connect to %s port %s.\n", ses->host, ses->port);
+	tintin_printf(ses, "#Trying to connect to %s port %s.\n", ses->host, ses->port);
 
 	ses->connect_retry = utime() + gts->connect_retry;
 

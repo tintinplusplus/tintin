@@ -60,9 +60,6 @@ void debugtoken(struct session *ses, struct scripttoken *token)
 			case TOKEN_OPR_IF:
 				tintin_printf2(ses, "[%02d] %*s\033[1;32m%s {\033[0m%s\033[1;32m}", token->opr, token->lvl * 2, "", command_table[token->cmd].name, token->str);
 				break;
-			case TOKEN_OPR_REPEAT:
-				tintin_printf2(ses, "[%02d] %*s\033[1;32m%d {\033[0m%s\033[1;32m}", token->opr, token->lvl * 2, "", token->cmd, token->str);
-				break;
 		}
 	}
 }
@@ -140,18 +137,8 @@ void tokenize_script(struct scripttoken *root, int lvl, char *str)
 
 			if (cmd == -1)
 			{
-				cmd = atoi(line+1);
-
-				if (cmd > 0)
-				{
-					str = get_arg_in_braces(arg, line, TRUE);
-					addtoken(root, lvl, TOKEN_OPR_REPEAT, cmd, line);
-				}
-				else
-				{
-					str = get_arg_all(str, line);
-					addtoken(root, lvl, TOKEN_OPR_SESSION, -1, line);
-				}
+				str = get_arg_all(str, line);
+				addtoken(root, lvl, TOKEN_OPR_SESSION, -1, line+1);
 			}
 			else
 			{
@@ -274,15 +261,8 @@ struct scripttoken *parse_script(struct session *ses, int lvl, struct scripttoke
 				}
 				break;
 
-			case TOKEN_OPR_REPEAT:
-				while (token->cmd-- > 0)
-				{
-					ses = script_driver(ses, -1, token->str);
-				}
-				break;
-
 			case TOKEN_OPR_SESSION:
-				ses = parse_tintin_command(ses, token->str+1);
+				ses = parse_tintin_command(ses, token->str);
 				break;
 		}
 
@@ -311,7 +291,6 @@ char *write_script(struct session *ses, struct scripttoken *root)
 		switch (token->opr)
 		{
 			case TOKEN_OPR_STRING:
-			case TOKEN_OPR_SESSION:
 				cat_sprintf(buf, "%s%s", indent(token->lvl), token->str);
 				break;
 
@@ -331,9 +310,8 @@ char *write_script(struct session *ses, struct scripttoken *root)
 			case TOKEN_OPR_ENDIF:
 				cat_sprintf(buf, "\n%s}", indent(token->lvl));
 				break;
-
-			case TOKEN_OPR_REPEAT:
-				cat_sprintf(buf, "%s%c%d {%s}", indent(token->lvl), gtd->tintin_char, token->cmd, token->str);
+			case TOKEN_OPR_SESSION:
+				cat_sprintf(buf, "%s%c%s", indent(token->lvl), gtd->tintin_char, token->str);
 				break;
 		}
 
@@ -349,6 +327,8 @@ char *write_script(struct session *ses, struct scripttoken *root)
 	{
 		deltoken(root, root->next);
 	}
+
+	free(root);
 
 	return buf;
 }
@@ -375,6 +355,8 @@ struct session *script_driver(struct session *ses, int list, char *str)
 		deltoken(root, root->prev);
 	}
 
+	free(root);
+
 	return ses;
 }
 
@@ -386,6 +368,8 @@ char *script_writer(struct session *ses, char *str)
 	root = calloc(1, sizeof(struct scripttoken));
 
 	tokenize_script(root, 1, str);
+
+	free(root);
 
 	return write_script(ses, root);
 }
