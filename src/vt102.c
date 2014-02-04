@@ -176,6 +176,48 @@ int skip_vt102_codes(char *str)
 	return skip;
 }
 
+int find_non_color_codes(char *str)
+{
+	int skip;
+
+	switch (str[0])
+	{
+		case  27:   /* ESC */
+			break;
+
+		default:
+			return 0;
+	}
+
+	switch (str[1])
+	{
+		case '[':
+			break;
+
+		default:
+			return 0;
+	}
+
+	for (skip = 2 ; str[skip] != 0 ; skip++)
+	{
+		switch (str[skip])
+		{
+			case 'm':
+				return skip + 1;
+			case '@':
+			case '`':
+			case ']':
+				return 0;
+		}
+
+		if (isalpha(str[skip]))
+		{
+			return 0;
+		}
+	}
+	return 0;
+}
+
 
 int skip_vt102_codes_non_graph(char *str)
 {
@@ -268,6 +310,7 @@ int skip_vt102_codes_non_graph(char *str)
 }
 
 
+
 void strip_vt102_codes(char *str, char *buf)
 {
 	char *pti, *pto;
@@ -338,6 +381,178 @@ void strip_non_vt102_codes(char *str, char *buf)
 	*pto = 0;
 }
 
+void get_color_codes(char *old, char *str, char *buf)
+{
+	char *pti, *pto, col[100], tmp[BUFFER_SIZE];
+	int len, vtc, fgc, bgc, cnt;
+
+	pto = tmp;
+
+	pti = old;
+
+	while (*pti)
+	{
+		while ((len = find_non_color_codes(pti)) != 0)
+		{
+			memcpy(pto, pti, len);
+			pti += len;
+			pto += len;
+		}
+
+		if (*pti)
+		{
+			pti++;
+		}
+	}
+
+	pti = str;
+
+	while (*pti)
+	{
+		while ((len = find_non_color_codes(pti)) != 0)
+		{
+			memcpy(pto, pti, len);
+			pti += len;
+			pto += len;
+		}
+
+		if (*pti)
+		{
+			pti++;
+		}
+	}
+
+	*pto = 0;
+
+	vtc =  0;
+	fgc = 39;
+	bgc = 49;
+
+	pti = tmp;
+
+	while (*pti)
+	{
+		switch (*pti)
+		{
+			case 27:
+				pti += 2;
+
+				if (pti[-1] == 'm')
+				{
+					vtc =  0;
+					fgc = 39;
+					bgc = 49;
+					break;
+				}
+
+				for (cnt = 0 ; pti[cnt] ; cnt++)
+				{
+					col[cnt] = pti[cnt];
+
+					if (pti[cnt] == ';' || pti[cnt] == 'm')
+					{
+						col[cnt] = 0;
+
+						cnt = -1;
+						pti += 1 + strlen(col);
+
+						switch (atoi(col))
+						{
+							case 0:
+								vtc = 0;
+								fgc = 39;
+								bgc = 49;
+								break;
+							case 1:
+								SET_BIT(vtc, COL_BLD);
+								break;
+							case 4:
+								SET_BIT(vtc, COL_UND);
+								break;
+							case 5:
+								SET_BIT(vtc, COL_BLK);
+								break;
+							case 7:
+								SET_BIT(vtc, COL_REV);
+								break;
+							case  2:
+							case 21:
+							case 22:
+								DEL_BIT(vtc, COL_BLD);
+								break;
+							case 24:
+								DEL_BIT(vtc, COL_UND);
+								break;
+							case 25:
+								DEL_BIT(vtc, COL_UND);
+								break;
+							case 27:
+								DEL_BIT(vtc, COL_BLK);
+								break;
+							case 38:
+								SET_BIT(vtc, COL_UND);
+								fgc = 39;
+								break;
+							case 39:
+								DEL_BIT(vtc, COL_UND);
+								fgc = 39;
+								break;
+							default:
+								if (atoi(col) >= 40 && atoi(col) < 50)
+								{
+									bgc = atoi(col);
+								}
+								if (atoi(col) >= 30 && atoi(col) < 40)
+								{
+									fgc = atoi(col);
+								}
+								break;
+						}
+					}
+
+					if (pti[-1] == 'm')
+					{
+						break;
+					}
+				}
+				break;
+
+			default:
+				pti++;
+				break;
+		}
+	}
+
+	strcpy(buf, "\033[0");
+
+	if (HAS_BIT(vtc, COL_BLD))
+	{
+		strcat(buf, ";1");
+	}
+	if (HAS_BIT(vtc, COL_UND))
+	{
+		strcat(buf, ";4");
+	}
+	if (HAS_BIT(vtc, COL_BLK))
+	{
+		strcat(buf, ";5");
+	}
+	if (HAS_BIT(vtc, COL_REV))
+	{
+		strcat(buf, ";7");
+	}
+	if (fgc != 39)
+	{
+		cat_sprintf(buf, ";%d", fgc);
+	}
+	if (bgc != 49)
+	{
+		cat_sprintf(buf, ";%d", bgc);
+	}
+
+	strcat(buf, "m");
+}
+
 int strip_vt102_strlen(char *str)
 {
 	char *pti;
@@ -351,7 +566,6 @@ int strip_vt102_strlen(char *str)
 		{
 			pti += skip_vt102_codes(pti);
 		}
-
 
 		if (*pti)
 		{

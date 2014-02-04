@@ -37,11 +37,11 @@ DO_COMMAND(do_read)
 {
 	FILE *fp;
 	struct stat filedata;
-	char *bufi, *bufo, *filename, temp[BUFFER_SIZE], *pti, *pto;
+	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
 	int lvl, cnt, com, lnc, fix, ok;
 	int counter[LIST_MAX];
 
-	get_arg_in_braces(arg, &filename, TRUE);
+	get_arg_in_braces(arg, filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -308,7 +308,7 @@ DO_COMMAND(do_read)
 
 		if (bufi[0])
 		{
-			ses = parse_input(ses, bufi);
+			ses = pre_parse_input(ses, bufi, SUB_NONE);
 		}
 		pto = bufi;
 		pti++;
@@ -350,11 +350,11 @@ DO_COMMAND(do_read)
 DO_COMMAND(do_write)
 {
 	FILE *file;
-	char temp[STRING_SIZE], *filename;
+	char temp[STRING_SIZE], filename[BUFFER_SIZE];
 	struct listnode *node;
 	int cnt;
 
-	get_arg_in_braces(arg, &filename, TRUE);
+	get_arg_in_braces(arg, filename, TRUE);
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{

@@ -27,93 +27,23 @@
 
 #include "tintin.h"
 
-char *string_alloc(char *string)
+char *restring(char *point, char *string)
 {
-	struct memory_data *mem;
+	free(point);
 
-	mem = (struct memory_data *) calloc(1, sizeof(struct memory_data));
-
-	mem->data = *string ? strdup(string) : calloc(1, 1);
-
-	LINK(mem, gtd->mem->next, gtd->mem->prev);
-
-	return mem->data;
+	return strdup(string);
 }
 
-
-char *stringf_alloc(char *fmt, ...)
+char *refstring(char *point, char *fmt, ...)
 {
 	char string[STRING_SIZE];
-
 	va_list args;
 
 	va_start(args, fmt);
 	vsprintf(string, fmt, args);
 	va_end(args);
 
-	return string_alloc(string);
-}
+	free(point);
 
-
-char *string_realloc(char *point, char *string)
-{
-	struct memory_data *mem;
-
-	for (mem = gtd->mem->prev ; mem ; mem = mem->prev)
-	{
-		if (mem->data == point)
-		{
-			free(mem->data);
-
-			mem->data = *string ? strdup(string) : calloc(1, 1);
-
-			return mem->data;
-		}
-	}
-	return point;
-}
-
-
-char *stringf_realloc(char *point, char *fmt, ...)
-{
-	char string[STRING_SIZE];
-
-	va_list args;
-
-	va_start(args, fmt);
-	vsprintf(string, fmt, args);
-	va_end(args);
-
-	return string_realloc(point, string);
-}
-
-
-char *string_free(char *string)
-{
-	struct memory_data *mem;
-
-	while (TRUE)
-	{
-		mem = gtd->mem->prev;
-
-		if (mem->data == string)
-		{
-			memory_free(mem);
-
-			return NULL;
-		}
-		memory_free(mem);
-	}
-	printf("failed to free string: %s\n", string);
-
-	return NULL;
-}
-
-
-void memory_free(struct memory_data *mem)
-{
-	UNLINK(mem, gtd->mem->next, gtd->mem->prev);
-
-	free(mem->data);
-	free(mem);
+	return strdup(string);
 }

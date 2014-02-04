@@ -31,10 +31,10 @@
 
 DO_COMMAND(do_path)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (*left == 0)
 	{
@@ -128,14 +128,14 @@ DO_PATH(path_map)
 
 DO_PATH(path_save)
 {
-	char result[STRING_SIZE], *left, *right;
+	char result[STRING_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (!is_abbrev(left, "FORWARD") && !is_abbrev(left, "BACKWARD"))
 	{
@@ -195,20 +195,20 @@ DO_PATH(path_save)
 		}
 		strcat(result, "}");
 
-		parse_input(ses, result);
+		pre_parse_input(ses, result, SUB_NONE);
 	}
 }
 
 
 DO_PATH(path_load)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if ((node = searchnode_list(ses->list[LIST_ALIAS], left)) == NULL)
 	{
@@ -227,7 +227,7 @@ DO_PATH(path_load)
 				arg++;
 			}
 
-			arg = get_arg_in_braces(arg, &left, TRUE);
+			arg = get_arg_in_braces(arg, left, TRUE);
 
 			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)))
 			{
@@ -266,10 +266,10 @@ DO_PATH(path_del)
 
 DO_PATH(path_ins)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 0);
 
 	if (*left == 0)
 	{
@@ -289,14 +289,14 @@ DO_PATH(path_ins)
 
 DO_PATH(path_run)
 {
-	char *left, time[BUFFER_SIZE], name[BUFFER_SIZE];
+	char left[BUFFER_SIZE], time[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct listroot *root;
 	int wait;
 	long long flags;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (root->f_node == NULL)
 	{
@@ -328,7 +328,7 @@ DO_PATH(path_run)
 		{
 			while (root->f_node)
 			{
-				parse_input(ses, root->f_node->left);
+				pre_parse_input(ses, root->f_node->left, SUB_NONE);
 
 				deletenode_list(ses, root->f_node, LIST_PATH);
 			}
@@ -340,13 +340,13 @@ DO_PATH(path_run)
 
 DO_PATH(path_walk)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct listroot *root;
 	long long flags;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (root->f_node == NULL)
 	{
@@ -361,13 +361,13 @@ DO_PATH(path_walk)
 		switch (tolower(*left))
 		{
 			case 'b':
-				parse_input(ses, root->l_node->right);
+				pre_parse_input(ses, root->l_node->right, SUB_NONE);
 				deletenode_list(ses, root->l_node, LIST_PATH);
 				break;
 
 			case '\0':
 			case 'f':
-				parse_input(ses, root->f_node->left);
+				pre_parse_input(ses, root->f_node->left, SUB_NONE);
 				deletenode_list(ses, root->f_node, LIST_PATH);
 				break;
 
@@ -393,14 +393,14 @@ void check_insert_path(char *command, struct session *ses)
 
 DO_COMMAND(do_pathdir)
 {
-	char *left, *right, *coord;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], coord[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_PATHDIR];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
-	arg = get_arg_in_braces(arg, &coord, FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, coord, FALSE);
 
 	if (*left == 0)
 	{
@@ -417,7 +417,7 @@ DO_COMMAND(do_pathdir)
 	{
 		if (*coord == 0)
 		{
-			coord = string_alloc("0");
+			strcpy(coord, "0");
 		}
 		updatenode_list(ses, left, right, coord, LIST_PATHDIR);
 

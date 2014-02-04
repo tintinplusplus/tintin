@@ -30,18 +30,18 @@
 
 DO_COMMAND(do_substitute)
 {
-	char *left, *right, *rank;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_SUBSTITUTE];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
-	arg = get_arg_in_braces(arg, &rank,  TRUE);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(arg, rank,  1);
 
 	if (*rank == 0)
 	{
-		rank = string_alloc("5");
+		strcpy(rank, "5");
 	}
 
 	if (*left == 0)
@@ -72,19 +72,19 @@ DO_COMMAND(do_unsubstitute)
 	return ses;
 }
 
-void check_all_substitutions(struct session *ses, char **original, char *line)
+void check_all_substitutions(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 
 	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
 	{
-		if (check_one_action(line, *original, node->left, ses))
+		if (check_one_action(line, original, node->left, ses))
 		{
 			if (strcmp(node->right, "."))
 			{
-				substitute(ses, node->right, &*original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+				substitute(ses, node->right, original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				show_debug(ses, LIST_SUBSTITUTE, "#SUBSTITUTE DEBUG: %s : %s", line, *original);
+				show_debug(ses, LIST_SUBSTITUTE, "#SUBSTITUTE DEBUG: %s : %s", line, original);
 			}
 			else
 			{

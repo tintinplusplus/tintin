@@ -248,7 +248,6 @@ void readmud(struct session *ses)
 			break;
 		}
 
-
 		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
 		{
 			if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
@@ -262,7 +261,6 @@ void readmud(struct session *ses)
 			}
 		}
 
-
 		if (*line && ses->more_output[0])
 		{
 			if (ses->check_output)
@@ -270,6 +268,10 @@ void readmud(struct session *ses)
 				sprintf(linebuf, "%s%s", ses->more_output, line);
 
 				ses->more_output[0] = 0;
+			}
+			else if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+			{
+				sprintf(linebuf, "%s%s", ses->more_output, line);
 			}
 			else
 			{
@@ -283,8 +285,6 @@ void readmud(struct session *ses)
 
 		process_mud_output(ses, linebuf, next_line == NULL);
 	}
-	DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
-
 	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
@@ -299,9 +299,20 @@ void readmud(struct session *ses)
 
 void process_mud_output(struct session *ses, char *linebuf, int prompt)
 {
+	char line[STRING_SIZE];
+
 	ses->check_output = 0;
 
-	do_one_line(&linebuf, ses);   /* changes linebuf */
+	if (HAS_BIT(ses->flags, SES_FLAG_COLORPATCH))
+	{
+		get_color_codes(ses->color, linebuf, ses->color);
+
+		sprintf(line, "%s%s", ses->color, linebuf);
+
+		linebuf = line;
+	}
+
+	do_one_line(linebuf, ses);   /* changes linebuf */
 
 	/*
 		Take care of gags, vt102 support still goes

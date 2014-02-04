@@ -30,18 +30,18 @@
 
 DO_COMMAND(do_prompt)
 {
-	char *left, *right, *line;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], line[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_PROMPT];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
-	arg = get_arg_in_braces(arg, &line,    TRUE);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(arg, line,  1);
 
 	if (*line == 0)
 	{
-		line = string_alloc("1");
+		strcpy(line, "1");
 	}
 
 	if (*left == 0)
@@ -83,7 +83,7 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 		{
 			if (*node->right)
 			{
-				substitute(ses, node->right, &original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL);
+				substitute(ses, node->right, original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL);
 			}
 
 			show_debug(ses, LIST_PROMPT, "#PROMPT DEBUG: %s", original);

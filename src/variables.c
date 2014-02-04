@@ -31,13 +31,13 @@
 
 DO_COMMAND(do_variable)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0)
 	{
@@ -68,7 +68,7 @@ DO_COMMAND(do_unvariable)
 
 void internal_variable(struct session *ses, char *format, ...)
 {
-	char *left, *right, *temp, *arg, buf[STRING_SIZE], name[BUFFER_SIZE], index[BUFFER_SIZE], *pti, *pto;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg, buf[STRING_SIZE], name[BUFFER_SIZE], index[BUFFER_SIZE], *pti, *pto;
 	struct listnode *node;
 
 	va_list args;
@@ -79,11 +79,11 @@ void internal_variable(struct session *ses, char *format, ...)
 
 	arg = buf;
 
-	arg = get_arg_in_braces(arg, &temp,  FALSE);
-	substitute(ses, temp, &left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, &temp, TRUE);
-	substitute(ses, temp, &right, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	pti = left;
 	pto = name;
@@ -130,15 +130,15 @@ void internal_variable(struct session *ses, char *format, ...)
 
 DO_COMMAND(do_replacestring)
 {
-	char *var, *old, *new, buf[STRING_SIZE], *pti, *ptr, *pto;
+	char var[BUFFER_SIZE], old[BUFFER_SIZE], new[BUFFER_SIZE], buf[STRING_SIZE], *pti, *ptr, *pto;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, &var, FALSE);
-	arg = get_arg_in_braces(arg, &old, FALSE);
-	arg = get_arg_in_braces(arg, &new, TRUE);
+	arg = get_arg_in_braces(arg, var, FALSE);
+	arg = get_arg_in_braces(arg, old, FALSE);
+	arg = get_arg_in_braces(arg, new, TRUE);
 
 	if (*var == 0 || *old == 0)
 	{
@@ -263,11 +263,7 @@ void reversestring(char *str)
 
 void mathstring(struct session *ses, char *str)
 {
-	char *temp;
-
-	get_number_string(ses, str, &temp);
-
-	strcpy(str, temp);
+	get_number_string(ses, str, str);
 }
 
 void thousandgroupingstring(char *str)
@@ -386,21 +382,21 @@ void wrapstring(struct session *ses, char *str)
 
 int stringlength(struct session *ses, char *str)
 {
-     substitute(ses, str, &str, SUB_VAR|SUB_FUN|SUB_COL);
+	substitute(ses, str, str, SUB_VAR|SUB_FUN|SUB_COL);
 
 	return strip_vt102_strlen(str);
 }
 
 DO_COMMAND(do_format)
 {
-	char *destvar, *format, *argument, arglist[20][BUFFER_SIZE], *ptf, *tmp;
+	char destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
 
-	arg = get_arg_in_braces(arg, &destvar,  FALSE);
-	arg = get_arg_in_braces(arg, &format,   FALSE);
-	arg = get_arg_in_braces(arg, &argument, TRUE);
+	arg = get_arg_in_braces(arg, destvar,  FALSE);
+	arg = get_arg_in_braces(arg, format,   FALSE);
+	arg = get_arg_in_braces(arg, argument, TRUE);
 
 	if (*destvar == 0 || *format == 0)
 	{
@@ -413,7 +409,7 @@ DO_COMMAND(do_format)
 
 	for (i = 0 ; i < 20 ; i++)
 	{
-		arg = cpy_arg_in_braces(arg, arglist[i], FALSE);
+		arg = get_arg_in_braces(arg, arglist[i], FALSE);
 	}
 
 	i = 0;
@@ -503,8 +499,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'w':
-						substitute(ses, arglist[i], &tmp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
-						strcpy(arglist[i], tmp);
+						substitute(ses, arglist[i], arglist[i], SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 						wrapstring(ses, arglist[i]);
 						break;
 
@@ -560,7 +555,7 @@ DO_COMMAND(do_format)
 		}
 	}
 
-	argument = stringf_alloc(format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
+	sprintf(argument, format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
 
 /*	show_message(ses, LIST_VARIABLE, "#FORMAT: $%s IS NOW SET TO {%s}", destvar, argument); */
 

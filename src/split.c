@@ -30,10 +30,10 @@
 
 DO_COMMAND(do_split)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (*left == 0 && *right == 0)
 	{

@@ -30,13 +30,13 @@
 
 DO_COMMAND(do_macro)
 {
-	char *left, *right, buf[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_MACRO];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
 
 	if (*left == 0)
 	{

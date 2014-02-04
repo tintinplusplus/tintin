@@ -4,6 +4,12 @@
 
 GENERAL STUFF:
 
+- add color compressor
+- fix overwriting of prompt in split mode.
+- fix incosequent command echo-ing in split mode.
+
+- make sure the scrollback buffer becomes static when locking the buffer.
+
 - look into making input_buf pointer based.
 
 - events for text and input and prompt lines
@@ -11,6 +17,8 @@ GENERAL STUFF:
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:
+
+- look into adding a crawler to find rooms, so the avoid flag can be used to only search rooms within an area.
 
 - a method to double check correct movement.
 
@@ -41,6 +49,8 @@ MAPPING STUFF:
 
 - look into packet defragmentation for chat
 
+- shift-tab complete on the scrollback buffer.
+
 -------------------------------------------------------------------------------
 
 * Stuff that has been request but that I'm not entirely sure about
@@ -55,6 +65,8 @@ MAPPING STUFF:
 - place #grep output in the buffer. This is not desirable however.
 
 - add a command to manipulate the input buffer.
+
+- add color compression to the strip_non_vt function.
 
 -------------------------------------------------------------------------------
 

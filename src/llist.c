@@ -287,25 +287,25 @@ struct listnode *searchnode_list_begin(struct listroot *listhead, char *cptr, in
 
 void shownode_list(struct session *ses, struct listnode *nptr, int index)
 {
-	char *buf, *out;
+	char buf[STRING_SIZE], out[STRING_SIZE];
 
 	switch (list_table[index].args)
 	{
 		case 3:
-			buf = stringf_alloc("#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>} <168>@ <118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right, nptr->pr);
+			sprintf(buf, "#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>} <168>@ <118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right, nptr->pr);
 			break;
 		case 2:
-			buf = stringf_alloc("#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right);
+			sprintf(buf, "#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right);
 			break;
 		case 1:
-			buf = stringf_alloc("#%s <118>{<088>%s<118>}", list_table[index].name, nptr->left);
+			sprintf(buf, "#%s <118>{<088>%s<118>}", list_table[index].name, nptr->left);
 			break;
 		default:
-			buf = stringf_alloc("#BUG: list_table[index].args == 0");
+			sprintf(buf, "#BUG: list_table[index].args == 0");
 			break;
 	}
 
-	substitute(ses, buf, &out, SUB_COL);
+	substitute(ses, buf, out, SUB_COL);
 
 	tintin_printf2(ses, "%s", out);
 }
@@ -359,11 +359,11 @@ struct listnode *search_node_with_wild(struct listroot *listhead, char *cptr)
 
 void delete_node_with_wild(struct session *ses, int index, char *string)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct listnode *node;
 	int found = FALSE;
 
-	get_arg_in_braces(string, &left, TRUE);
+	get_arg_in_braces(string, left, TRUE);
 
 	while ((node = search_node_with_wild(ses->list[index], left)))
 	{
@@ -421,7 +421,7 @@ int count_list(struct listroot *listhead)
 
 DO_COMMAND(do_killall)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	int cnt;
 
 	if (arg == NULL || *arg == 0)
@@ -442,7 +442,7 @@ DO_COMMAND(do_killall)
 		return ses;
 	}
 
-	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, left,  0);
 
 	if (!strcasecmp(left, "ALL"))
 	{
@@ -471,11 +471,11 @@ DO_COMMAND(do_killall)
 
 DO_COMMAND(do_message)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int cnt, fnd = FALSE;
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (*left == 0)
 	{
@@ -528,11 +528,11 @@ DO_COMMAND(do_message)
 
 DO_COMMAND(do_ignore)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int cnt, fnd = FALSE;
 
-	arg = get_arg_in_braces(arg, &left,  0);
-	arg = get_arg_in_braces(arg, &right, 0);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 0);
 
 	if (*left == 0)
 	{
@@ -585,11 +585,11 @@ DO_COMMAND(do_ignore)
 
 DO_COMMAND(do_debug)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int cnt, fnd = FALSE;
 
-	arg = get_arg_in_braces(arg, &left,  0);
-	arg = get_arg_in_braces(arg, &right, 0);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 0);
 
 	if (*left == 0)
 	{

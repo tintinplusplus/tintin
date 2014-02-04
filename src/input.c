@@ -50,7 +50,7 @@ void process_input(void)
 
 	if (gtd->chat && gtd->chat->paste_time)
 	{
-		chat_paste(line);
+		chat_paste(line, NULL);
 
 		return;
 	}
@@ -76,7 +76,7 @@ void process_input(void)
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
-	parse_input(gtd->ses, line);
+	pre_parse_input(gtd->ses, line, SUB_NONE);
 
 	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
@@ -117,7 +117,8 @@ void read_line(char *line)
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				parse_input(gtd->ses, node->right);
+				pre_parse_input(gtd->ses, node->right, SUB_NONE);
+
 				gtd->macro_buf[0] = 0;
 
 				return;
@@ -268,7 +269,8 @@ void read_key(char *line)
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				parse_input(gtd->ses, node->right);
+				pre_parse_input(gtd->ses, buffer, SUB_NONE);
+
 				gtd->macro_buf[0] = 0;
 				return;
 			}
@@ -443,32 +445,42 @@ void echo_command(struct session *ses, char *line, int newline)
 		{
 			SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
-			tintin_printf2(ses, "%s", buffer);
+			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+			{
+				tintin_printf2(ses, "%s%s", ses->more_output, buffer);
+			}
+			else
+			{
+				tintin_printf2(ses, "%s%s", buffer);
+			}
 
 			DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 		}
-		add_line_buffer(ses, buffer, 0);
+		add_line_buffer(ses, buffer, -1);
 
 		return;
 	}
 
+	DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
+
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		if (!HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND) && ses->more_output[0] == 0)
+		if (!HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
 		{
-			return;
-		}
-
-		if (ses->more_output[0])
-		{
-			sprintf(result, "%s\033[0;37m%s", ses->more_output, line);
+			sprintf(result, "\033[0;37m");
 		}
 		else
 		{
-			sprintf(result, "\033[0;37m%s", line);
+			if (ses->more_output[0])
+			{
+				sprintf(result, "%s\033[0;37m%s", ses->more_output, line);
+			}
+			else
+			{
+				sprintf(result, "\033[0;37m%s", line);
+			}
 		}
-
-		add_line_buffer(ses, buffer, 0);
+		add_line_buffer(ses, buffer, -1);
 
 		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
@@ -478,7 +490,7 @@ void echo_command(struct session *ses, char *line, int newline)
 	}
 	else
 	{
-		add_line_buffer(ses, buffer, 0);
+		add_line_buffer(ses, buffer, -1);
 	}
 }
 

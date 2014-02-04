@@ -31,12 +31,12 @@
 
 DO_COMMAND(do_tab)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_TAB];
 
-	get_arg_in_braces(arg, &left, TRUE);
+	get_arg_in_braces(arg, left, TRUE);
 
 	if (*left == 0)
 	{

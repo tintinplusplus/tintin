@@ -53,11 +53,10 @@ void logit(struct session *ses, char *txt, FILE *file)
 
 DO_COMMAND(do_log)
 {
-	char *left, *right;
-	FILE *logfile;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (ses->logfile)
 	{
@@ -73,16 +72,15 @@ DO_COMMAND(do_log)
 	{
 		if (is_abbrev(left, "APPEND"))
 		{
-			if ((logfile = fopen(right, "a")))
+			if ((ses->logfile = fopen(right, "a")))
 			{
-				ses->logfile = logfile;
-
-				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
+				fseek(ses->logfile, 0, SEEK_END);
 
 				if (ftell(ses->logfile) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
 					write_html_header(ses->logfile);
 				}
+				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 			}
 			else
 			{
@@ -91,16 +89,13 @@ DO_COMMAND(do_log)
 		}
 		else
 		{
-			if ((logfile = fopen(right, "w")))
+			if ((ses->logfile = fopen(right, "w")))
 			{
-				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
-
-				ses->logfile = logfile;
-
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
 					write_html_header(ses->logfile);
 				}
+				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
 			}
 			else
 			{
@@ -114,12 +109,12 @@ DO_COMMAND(do_log)
 
 DO_COMMAND(do_logline)
 {
-	char *left, *right, *temp;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
 
-	arg = get_arg_in_braces(arg, &temp, TRUE);
-	substitute(ses, temp, &right, SUB_ESC|SUB_COL);
+	substitute(ses, right, right, SUB_ESC|SUB_COL);
 
 	if (ses->logline)
 	{
@@ -128,6 +123,8 @@ DO_COMMAND(do_logline)
 
 	if ((ses->logline = fopen(left, "a")))
 	{
+		fseek(ses->logline, 0, SEEK_END);
+
 		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 		{
 			write_html_header(ses->logline);
@@ -152,10 +149,10 @@ DO_COMMAND(do_logline)
 DO_COMMAND(do_writebuffer)
 {
 	FILE *fp;
-	char *left, out[STRING_SIZE];
+	char left[BUFFER_SIZE], out[STRING_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (*left == 0)
 	{
@@ -288,33 +285,33 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 								bgc = 49;
 								break;
 							case 1:
-								SET_BIT(vtc, 1);
+								SET_BIT(vtc, COL_BLD);
 								break;
 							case 4:
-								SET_BIT(vtc, 2);
+								SET_BIT(vtc, COL_UND);
 								break;
 							case 5:
 								break;
 							case 7:
-								SET_BIT(vtc, 4);
+								SET_BIT(vtc, COL_REV);
 								break;
 							case  2:
 							case 21:
 							case 22:
-								DEL_BIT(vtc, 1);
+								DEL_BIT(vtc, COL_BLD);
 								break;
 							case 24:
-								DEL_BIT(vtc, 2);
+								DEL_BIT(vtc, COL_UND);
 								break;
 							case 27:
-								DEL_BIT(vtc, 4);
+								DEL_BIT(vtc, COL_REV);
 								break;
 							case 38:
-								SET_BIT(vtc, 2);
+								SET_BIT(vtc, COL_UND);
 								fgc = 38;
 								break;
 							case 39:
-								DEL_BIT(vtc, 2);
+								DEL_BIT(vtc, COL_UND);
 								fgc = 39;
 								break;
 							default:
@@ -334,22 +331,22 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 						break;
 					}
 				}
-				if (HAS_BIT(vtc, 2) && !HAS_BIT(ses->vtc, 2))
+				if (HAS_BIT(vtc, COL_UND) && !HAS_BIT(ses->vtc, COL_UND))
 				{
 					strcpy(pto, "<u>");
 					pto += strlen(pto);
 				}
-				if (!HAS_BIT(vtc, 2) && HAS_BIT(ses->vtc, 2))
+				if (!HAS_BIT(vtc, COL_UND) && HAS_BIT(ses->vtc, COL_UND))
 				{
 					strcpy(pto, "</u>");
 					pto += strlen(pto);
 				}
 
-				if (HAS_BIT(vtc, 4))
+				if (!HAS_BIT(vtc, COL_REV) && HAS_BIT(ses->vtc, COL_REV))
 				{
 					cnt = fgc;
-					fgc = bgc - 10;
-					bgc = cnt + 10;
+					fgc = ses->fgc = bgc - 10;
+					bgc = ses->bgc = cnt + 10;
 				}
 
 				if (bgc != ses->bgc || fgc != ses->fgc || vtc != ses->vtc)
@@ -382,6 +379,14 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 						pto += strlen(pto);
 					}
 				}
+
+				if (HAS_BIT(vtc, COL_REV) && !HAS_BIT(ses->vtc, COL_REV))
+				{
+					cnt = fgc;
+					fgc = ses->fgc = bgc - 10;
+					bgc = ses->bgc = cnt + 10;
+				}
+
 				ses->vtc = vtc;
 				ses->fgc = fgc;
 				ses->bgc = bgc;

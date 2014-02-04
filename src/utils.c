@@ -390,7 +390,7 @@ void tintin_puts(struct session *ses, char *string)
 		ses = gtd->ses;
 	}
 
-	do_one_line(&string, ses);
+	do_one_line(string, ses);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{

@@ -30,18 +30,18 @@
 
 DO_COMMAND(do_alias)
 {
-	char *left, *right, *rank;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_ALIAS];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
-	arg = get_arg_in_braces(arg, &rank,  FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, rank,  FALSE);
 
 	if (*rank == 0)
 	{
-		rank = string_alloc("5");
+		strcpy(rank, "5");
 	}
 
 	if (*left == 0)
@@ -109,7 +109,7 @@ int alias_regexp(char *exp, char *str)
 					{
 						if (alias_regexp(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt]))
 						{
-							RESTRING(gtd->vars[arg], stringf_alloc("%.*s", cnt, str));
+							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
 
 							return TRUE;
 						}
@@ -141,42 +141,46 @@ int alias_regexp(char *exp, char *str)
 	return FALSE;
 }
 
-int check_all_aliases(struct session *ses, char *str1, char *str2, char **command)
+int check_all_aliases(struct session *ses, char *input)
 {
 	struct listnode *node;
 	struct listroot *root;
-	char *arg, *tmp;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
 
-	RESTRING(gtd->vars[0], str2);
+	arg = get_arg_stop_spaces(input, left);
 
-	arg = str2;
+	RESTRING(gtd->vars[0], arg);
 
-	for (i = 1 ; i < 10 ; i++)
+	for (i = 1 ; i < 100 ; i++)
 	{
-		arg = get_arg_in_braces(arg, &tmp, FALSE);
+		arg = get_arg_in_braces(arg, right, FALSE);
 
-		RESTRING(gtd->vars[i], tmp);
+		RESTRING(gtd->vars[i], right);
 	}
-
-	arg = stringf_alloc("%s%s%s", str1, *str2 ? " " : "", str2);
 
 	for (node = root->update = root->f_node ; node ; node = root->update)
 	{
 		root->update = node->next;
 
-		if (alias_regexp(node->left, arg))
+		if (alias_regexp(node->left, input))
 		{
-			substitute(ses, node->right, command, SUB_ARG);
+			substitute(ses, node->right, right, SUB_ARG);
 
-			if (!strcmp(node->right, *command) && *str2)
+			if (!strcmp(node->right, right) && *arg)
 			{
-				*command = stringf_alloc("%s %s", *command, str2);
+				sprintf(input, "%s %s", right, arg);
+			}
+			else
+			{
+				sprintf(input, "%s", right);
 			}
 
-			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s : %s %s", str1, *command, str2);
+			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", left, input);
+
+			DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
 			return TRUE;
 		}

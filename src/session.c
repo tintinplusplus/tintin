@@ -35,11 +35,11 @@
 
 DO_COMMAND(do_session)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct session *sesptr;
 	int cnt;
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
 
 	if (*left == 0)
 	{
@@ -163,13 +163,13 @@ struct session *activate_session(struct session *ses)
 struct session *new_session(struct session *ses, char *name, char *address, int desc)
 {
 	int cnt = 0;
-	char *host, *port;
+	char host[BUFFER_SIZE], port[BUFFER_SIZE];
 	struct session *newsession;
 
 	push_call("new_session(%p,%p,%p,%d)",ses,name,address,desc);
 
-	address = get_arg_in_braces(address, &host, FALSE);
-	address = get_arg_in_braces(address, &port, FALSE);
+	address = get_arg_in_braces(address, host, FALSE);
+	address = get_arg_in_braces(address, port, FALSE);
 
 	if (desc == 0)
 	{

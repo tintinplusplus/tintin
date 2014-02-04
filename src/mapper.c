@@ -86,9 +86,9 @@ unsigned char	map_palet1[]	= {126,247,247,109,247,120,108,116,247,106,113,118,10
 DO_COMMAND(do_map)
 {
 	int cnt;
-	char *cmd;
+	char cmd[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &cmd, FALSE);
+	arg = get_arg_in_braces(arg, cmd,   0);
 
 	if (*cmd == 0)
 	{
@@ -126,9 +126,12 @@ DO_COMMAND(do_map)
 	{
 		for (cnt = 0 ; *map_table[cnt].name ; cnt++)
 		{
-			if (is_abbrev(cmd, map_table[cnt].name))
+			if (is_abbrev(left, map_table[cnt].name))
 			{
-				map_table[cnt].map (ses, arg);
+				arg = get_arg_in_braces(arg, left,  map_table[cnt].lval);
+				arg = get_arg_in_braces(arg, right, map_table[cnt].rval);
+
+				map_table[cnt].map (ses, left, right);
 				break;
 			}
 		}
@@ -148,11 +151,7 @@ DO_COMMAND(do_map)
 
 DO_MAP(map_color)
 {
-	char *left;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	free(ses->map->room_list[ses->map->in_room]->color);
 	ses->map->room_list[ses->map->in_room]->color = strdup(left);
@@ -170,12 +169,9 @@ DO_MAP(map_create)
 DO_MAP(map_delete)
 {
 	int room;
-	char *left;
 	struct exit_data *exit;
 
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	exit = find_exit(ses, ses->map->in_room, left);
 
@@ -208,11 +204,8 @@ DO_MAP(map_dig)
 	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	struct listnode *node;
-	char *left;
 
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	for (room = 1 ; room < MAX_ROOM ; room++)
 	{
@@ -264,12 +257,8 @@ DO_MAP(map_exit)
 {
 	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
-	char *left, *right;
 
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	exit = find_exit(ses, ses->map->in_room, left);
 
@@ -291,33 +280,22 @@ DO_MAP(map_exit)
 
 DO_MAP(map_explore)
 {
-	char *left;
 
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	explore_path(ses, FALSE, left, "");
 }
 
 DO_MAP(map_find)
 {
-	char *left;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	shortest_path(ses, FALSE, left, "");
 }
 
 DO_MAP(map_flag)
 {
-	char *left;
-
 	CHECK_MAP();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left)
 	{
@@ -362,12 +340,7 @@ DO_MAP(map_flag)
 
 DO_MAP(map_get)
 {
-	char *left, *right;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*right == 0)
 	{
@@ -409,11 +382,8 @@ DO_MAP(map_get)
 DO_MAP(map_goto)
 {
 	int room;
-	char *left;
 
 	CHECK_MAP();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	room = find_room(ses, left);
 
@@ -474,11 +444,8 @@ DO_MAP(map_insert)
 	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	struct listnode *node;
-	char *left;
 
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	for (room = 1 ; room < MAX_ROOM ; room++)
 	{
@@ -543,11 +510,7 @@ DO_MAP(map_leave)
 
 DO_MAP(map_legenda)
 {
-	char *left;
-
 	CHECK_MAP();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left == 0)
 	{
@@ -567,13 +530,10 @@ DO_MAP(map_legenda)
 
 DO_MAP(map_link)
 {
-	char temp[BUFFER_SIZE], *left, *right;
+	char temp[BUFFER_SIZE];
 	struct listnode *node;
 	struct exit_data *exit;
 	int room;
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	CHECK_INSIDE();
 
@@ -628,11 +588,7 @@ DO_MAP(map_list)
 
 DO_MAP(map_map)
 {
-	char *left;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (!strcasecmp("vt", left))
 	{
@@ -646,22 +602,14 @@ DO_MAP(map_map)
 
 DO_MAP(map_move)
 {
-	char *left;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	follow_map(ses, left);
 }
 
 DO_MAP(map_name)
 {
-	char *left;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	free(ses->map->room_list[ses->map->in_room]->name);
 	ses->map->room_list[ses->map->in_room]->name = strdup(left);
@@ -670,10 +618,8 @@ DO_MAP(map_name)
 DO_MAP(map_read)
 {
 	FILE *myfile;
-	char temp[BUFFER_SIZE], *left, *cptr;
+	char buffer[BUFFER_SIZE], *cptr;
 	int room = 0;
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if ((myfile = fopen(left, "r")) == NULL)
 	{
@@ -689,36 +635,39 @@ DO_MAP(map_read)
 		ses->map = calloc(1, sizeof(struct map_data));
 	}
 
-	while (fgets(temp, BUFFER_SIZE - 1, myfile))
+	while (fgets(buffer, BUFFER_SIZE - 1, myfile))
 	{
-		for (cptr = temp ; *cptr && *cptr != '\n' ; cptr++);
+		cptr = strchr(buffer, '\n');
 
-		*cptr = 0;
+		if (cptr)
+		{
+			*cptr = 0;
+		}
 
-		switch (temp[0])
+		switch (buffer[0])
 		{
 			case 'C':
 				create_map(ses);
 				break;
 
 			case 'E':
-				create_exit(ses, room, &temp[2]);
+				create_exit(ses, room, &buffer[2]);
 				break;
 
 			case 'F':
-				ses->map->flags = atoi(&temp[2]);
+				ses->map->flags = atoi(&buffer[2]);
 				break;
 
 			case 'L':
-				create_legenda(ses, &temp[2]);
+				create_legenda(ses, &buffer[2]);
 				break;
 
 			case 'R':
-				room = create_room(ses, &temp[2]);
+				room = create_room(ses, &buffer[2]);
 				break;
 
 			case '#':
-				ses = parse_input(ses, temp);
+				ses = pre_parse_input(ses, buffer, SUB_NONE);
 				break;
 
 			case 0:
@@ -746,11 +695,7 @@ DO_MAP(map_read)
 
 DO_MAP(map_roomflag)
 {
-	char *left;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left)
 	{
@@ -790,12 +735,7 @@ DO_MAP(map_roomflag)
 
 DO_MAP(map_set)
 {
-	char *left, *right;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*right == 0)
 	{
@@ -839,12 +779,7 @@ DO_MAP(map_set)
 
 DO_MAP(map_travel)
 {
-	char *left, *right;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	explore_path(ses, TRUE, left, right);
 }
@@ -903,11 +838,8 @@ DO_MAP(map_undo)
 DO_MAP(map_unlink)
 {
 	struct exit_data *exit;
-	char *left;
 
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	exit = find_exit(ses, ses->map->in_room, left);
 
@@ -925,12 +857,7 @@ DO_MAP(map_unlink)
 
 DO_MAP(map_walk)
 {
-	char *left, *right;
-
 	CHECK_INSIDE();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	shortest_path(ses, TRUE, left, right);
 }
@@ -938,13 +865,11 @@ DO_MAP(map_walk)
 DO_MAP(map_write)
 {
 	FILE *file;
-	char *left, temp[BUFFER_SIZE];
+	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	int vnum;
 
 	CHECK_MAP();
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left == 0 || (file = fopen(left, "w")) == NULL)
 	{
@@ -1036,11 +961,11 @@ void delete_map(struct session *ses)
 void create_legenda(struct session *ses, char *arg)
 {
 	int cnt;
-	char *buf;
+	char buf[BUFFER_SIZE];
 
 	for (cnt = 0 ; cnt < 17 ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, &buf, FALSE);
+		arg = get_arg_in_braces(arg, buf, FALSE);
 
 		if (*buf)
 		{
@@ -1052,14 +977,14 @@ void create_legenda(struct session *ses, char *arg)
 
 int create_room(struct session *ses, char *arg)
 {
-	char *vnum, *flags, *color, *name, *symbol;
+	char vnum[BUFFER_SIZE], flags[BUFFER_SIZE], color[BUFFER_SIZE], name[BUFFER_SIZE], symbol[BUFFER_SIZE];
 	struct room_data *newroom;
 
-	arg = get_arg_in_braces(arg, &vnum,   FALSE);
-	arg = get_arg_in_braces(arg, &flags,  FALSE);
-	arg = get_arg_in_braces(arg, &color,  FALSE);
-	arg = get_arg_in_braces(arg, &name,   FALSE);
-	arg = get_arg_in_braces(arg, &symbol, FALSE);
+	arg = get_arg_in_braces(arg, vnum,   FALSE);
+	arg = get_arg_in_braces(arg, flags,  FALSE);
+	arg = get_arg_in_braces(arg, color,  FALSE);
+	arg = get_arg_in_braces(arg, name,   FALSE);
+	arg = get_arg_in_braces(arg, symbol, FALSE);
 
 	/* Backward compatbility 1.96.5 */
 
@@ -1121,11 +1046,11 @@ void delete_room(struct session *ses, int room, int exits)
 void create_exit(struct session *ses, int room, char *arg)
 {
 	struct exit_data *newexit;
-	char *vnum, *name, *cmd;
+	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &vnum, FALSE);
-	arg = get_arg_in_braces(arg, &name, FALSE);
-	arg = get_arg_in_braces(arg, &cmd,  TRUE);
+	arg = get_arg_in_braces(arg, vnum, FALSE);
+	arg = get_arg_in_braces(arg, name, FALSE);
+	arg = get_arg_in_braces(arg, cmd,  TRUE);
 
 	newexit       = calloc(1, sizeof(struct exit_data));
 	newexit->vnum = atoi(vnum);
@@ -1195,7 +1120,7 @@ void follow_map(struct session *ses, char *argument)
 		{
 			show_message(ses, LIST_MAP, "#MAP: LEAVE FLAG FOUND IN ROOM {%d}. LEAVING MAP.", ses->map->in_room);
 
-			map_leave(ses, argument);
+			map_leave(ses, "", "");
 		}
 		else if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
 		{
@@ -1276,16 +1201,16 @@ void follow_map(struct session *ses, char *argument)
 
 void insert_undo(struct session *ses, char *format, ...)
 {
-	char buf[BUFFER_SIZE], *arg, *dir, *rev, *flag;
+	char buf[BUFFER_SIZE], *arg, dir[BUFFER_SIZE], rev[BUFFER_SIZE], flag[BUFFER_SIZE];
 	va_list args;
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
 	va_end(args);
 
-	arg = get_arg_in_braces(buf, &dir, FALSE);
-	arg = get_arg_in_braces(arg, &rev, FALSE);
-	arg = get_arg_in_braces(arg, &flag, FALSE);
+	arg = get_arg_in_braces(buf, dir, FALSE);
+	arg = get_arg_in_braces(arg, rev, FALSE);
+	arg = get_arg_in_braces(arg, flag, FALSE);
 
 	addnode_list(ses->list[LIST_MAP], dir, rev, flag);
 
@@ -1370,7 +1295,7 @@ void create_map_grid(struct session *ses, short room, short x, short y)
 
 void show_map(struct session *ses, char *argument)
 {
-	char buf[BUFFER_SIZE], *out;
+	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
 	int x, y, line, size;
 
 	push_call("show_map(%p,%p)",ses,argument);
@@ -1403,7 +1328,7 @@ void show_map(struct session *ses, char *argument)
 					strcat(buf, draw_room(ses, map_grid[x][y], line));
 				}
 
-				substitute(ses, buf, &out, SUB_COL);
+				substitute(ses, buf, out, SUB_COL);
 
 				tintin_puts2(ses, out);
 			}
@@ -1421,7 +1346,7 @@ void show_map(struct session *ses, char *argument)
 			strcat(buf, draw_room(ses, map_grid[x][y], 0));
 		}
 
-		substitute(ses, buf, &out, SUB_COL);
+		substitute(ses, buf, out, SUB_COL);
 
 		tintin_puts2(ses, out);
 	}
@@ -1433,7 +1358,7 @@ void show_map(struct session *ses, char *argument)
 
 void show_vtmap(struct session *ses)
 {
-	char buf[BUFFER_SIZE], *out;
+	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
 	int x, y, line;
 
 	push_call("show_vtmap(%p)",ses);
@@ -1478,7 +1403,7 @@ void show_vtmap(struct session *ses)
 				{
 					strcat(buf, draw_room(ses, map_grid[x][y], line));
 				}
-				substitute(ses, buf, &out, SUB_COL);
+				substitute(ses, buf, out, SUB_COL);
 
 				printf("%s\033[0K\r\n", out);
 			}
@@ -1494,7 +1419,7 @@ void show_vtmap(struct session *ses)
 			{
 				strcat(buf, draw_room(ses, map_grid[x][y], 0));
 			}
-			substitute(ses, buf, &out, SUB_COL);
+			substitute(ses, buf, out, SUB_COL);
 
 			printf("%s\r\n", out);
 		}
@@ -1887,7 +1812,7 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 		{
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				parse_input(ses, ses->list[LIST_PATH]->f_node->left);
+				pre_parse_input(ses, ses->list[LIST_PATH]->f_node->left, SUB_NONE);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}
@@ -2043,7 +1968,7 @@ void explore_path(struct session *ses, int walk, char *left, char *right)
 		{
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				parse_input(ses, ses->list[LIST_PATH]->f_node->left);
+				pre_parse_input(ses, ses->list[LIST_PATH]->f_node->left, SUB_NONE);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}

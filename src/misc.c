@@ -30,17 +30,18 @@
 
 DO_COMMAND(do_all)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct session *sesptr, *next_ses;
 
 	if (gts->next)
 	{
-		get_arg_in_braces(arg, &left, TRUE);
+		get_arg_in_braces(arg, left, TRUE);
 
 		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
 		{
 			next_ses = sesptr->next;
-			parse_input(sesptr, left);
+
+			pre_parse_input(sesptr, left, SUB_NONE);
 		}
 	}
 	else
@@ -92,7 +93,7 @@ DO_COMMAND(do_commands)
 
 DO_COMMAND(do_cr)
 {
-	write_line_mud("\r\n", ses);
+	write_mud(ses, "", SUB_EOL);
 
 	return ses;
 }
@@ -100,15 +101,15 @@ DO_COMMAND(do_cr)
 
 DO_COMMAND(do_echo)
 {
-	char *temp;
+	char temp[BUFFER_SIZE];
 
-	temp = stringf_alloc("result %s", arg);
+	sprintf(temp, "result %s", arg);
 
 	internal_variable(ses, "{result}");
 
 	do_format(ses, temp);
 
-	substitute(ses, "$result", &temp, SUB_VAR);
+	substitute(ses, "$result", temp, SUB_VAR);
 
 	if (*temp)
 	{
@@ -135,12 +136,12 @@ DO_COMMAND(do_end)
 
 DO_COMMAND(do_forall)
 {
-	char *left, *right, *temp;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &temp,  TRUE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left,  TRUE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
-	substitute(ses, temp, &left, SUB_VAR|SUB_FUN);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -152,15 +153,13 @@ DO_COMMAND(do_forall)
 
 		while (*arg)
 		{
-			arg = get_arg_in_braces(arg, &temp, FALSE);
+			arg = get_arg_in_braces(arg, temp, FALSE);
 
 			internal_variable(ses, "{forall} {%s}", temp);
-			
+
 			RESTRING(gtd->cmds[0], temp);
 
-			substitute(ses, right, &temp, SUB_CMD);
-
-			ses = parse_input(ses, temp);
+			ses = pre_parse_input(ses, right, SUB_CMD);
 		}
 	}
 	return ses;
@@ -178,6 +177,8 @@ DO_COMMAND(do_gagline)
 DO_COMMAND(do_info)
 {
 	int cnt;
+
+	printf("--%s--\n", arg);
 
 	if (*arg == 'c')
 	{
@@ -209,15 +210,15 @@ DO_COMMAND(do_info)
 
 DO_COMMAND(do_loop)
 {
-	char *left, *right, *temp, *command;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], command[BUFFER_SIZE];
 
 	long long bound1, bound2, counter, step;
 
-	arg = get_arg_in_braces(arg, &temp, FALSE);
-	arg = get_arg_in_braces(arg, &command, TRUE);
+	arg = get_arg_in_braces(arg, temp,    0);
+	arg = get_arg_in_braces(arg, command, 1);
 
-	arg = get_arg_in_braces(temp, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(temp, left, 0);
+	arg = get_arg_in_braces(arg, right, 0);
 
 
 	if (*command == 0 || (*left == 0 && *right == 0))
@@ -245,19 +246,18 @@ DO_COMMAND(do_loop)
 
 		for (counter = bound1 ; counter != bound2 ; counter += step)
 		{
-			RESTRING(gtd->cmds[0], stringf_alloc("%lld", counter));
+			gtd->cmds[0] = refstring(gtd->cmds[0], "%lld", counter);
 
 			internal_variable(ses, "{loop} {%lld}", counter);
 
-			substitute(ses, command, &temp, SUB_CMD);
-			ses = parse_input(ses, temp);
+			ses = pre_parse_input(ses, command, SUB_CMD);
 		}
 	}
 	else
 	{
 		while ((long long) get_number(ses, left))
 		{
-			ses = parse_input(ses, command);
+			ses = pre_parse_input(ses, command, SUB_NONE);
 		}
 	}
 	return ses;
@@ -272,13 +272,13 @@ DO_COMMAND(do_nop)
 
 DO_COMMAND(do_parse)
 {
-	char *left, *right, *temp;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, &temp, 0);
-	substitute(ses, temp, &left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
 
-	arg = get_arg_in_braces(arg, &right, 1);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -291,20 +291,21 @@ DO_COMMAND(do_parse)
 #ifdef BIG5
 			if (left[cnt] & 0x80 && left[cnt+1] != 0)
 			{
-				RESTRING(gtd->cmds[0], stringf_alloc("%c%c", left[cnt], left[++cnt]));
+				sprintf(temp, "%c%c", left[cnt], left[++cnt]));
 			}
 			else
 			{
-				RESTRING(gtd->cmds[0], stringf_alloc("%c", left[cnt]));
+				sprintf(temp, "%c", left[cnt]);
 			}
 #else
-			RESTRING(gtd->cmds[0], stringf_alloc("%c", left[cnt]));
+			sprintf(temp, "%c", left[cnt]);
 #endif
+
+			RESTRING(gtd->cmds[0], temp);
+
 			internal_variable(ses, "{parse} {%s}", gtd->cmds[0]);
 
-			substitute(ses, right, &temp, SUB_CMD);
-
-			ses = parse_input(ses, temp);
+			ses = pre_parse_input(ses, right, SUB_CMD);
 		}
 	}
 	return ses;
@@ -324,25 +325,23 @@ DO_COMMAND(do_return)
 
 DO_COMMAND(do_send)
 {
-	char *left, *out;
+	char left[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, &left, TRUE);
+	get_arg_in_braces(arg, left, TRUE);
 
-	substitute(ses, left, &out, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
-
-	write_line_mud(out, ses);
+	write_mud(ses, left, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
 	return ses;
 }
 
 DO_COMMAND(do_showme)
 {
-	char *left, *right, *temp, *output;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], output[STRING_SIZE];
 
-	arg = get_arg_in_braces(arg, &temp, TRUE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left,  1);
+	arg = get_arg_in_braces(arg, right, 0);
 
-	substitute(ses, temp, &left, SUB_COL|SUB_ESC);
+	substitute(ses, left, left, SUB_COL|SUB_ESC);
 
 	if (*right)
 	{
@@ -350,9 +349,7 @@ DO_COMMAND(do_showme)
 
 		return ses;
 	}
-	do_one_line(&left, ses);
-
-	substitute(ses, left, &temp, SUB_COL|SUB_ESC);
+	do_one_line(left, ses);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
@@ -363,11 +360,11 @@ DO_COMMAND(do_showme)
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
-		output = stringf_alloc("\r\n\033[0m%s\033[0m", temp);
+		sprintf(output, "\r\n\033[0m%s\033[0m", left);
 	}
 	else
 	{
-		output = stringf_alloc("\033[0m%s\033[0m", temp);
+		sprintf(output, "\033[0m%s\033[0m", left);
 	}
 
 	add_line_buffer(ses, output, FALSE);
@@ -396,9 +393,9 @@ DO_COMMAND(do_showme)
 DO_COMMAND(do_snoop)
 {
 	struct session *sesptr = ses;
-	char *left;
+	char left[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, &left, 1);
+	get_arg_in_braces(arg, left, 1);
 
 	if (*left)
 	{

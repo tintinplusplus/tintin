@@ -38,21 +38,21 @@
 
 DO_COMMAND(do_highlight)
 {
-	char *left, *right, *rank, buf[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE], buf[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_HIGHLIGHT];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
-	arg = get_arg_in_braces(arg, &right, TRUE);
-	substitute(ses, right, &right, SUB_VAR|SUB_FUN);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, &rank,  TRUE);
+	arg = get_arg_in_braces(arg, rank,  TRUE);
 
 	if (*rank == 0)
 	{
-		rank = string_alloc("5");
+		strcpy(rank, "5");
 	}
 
 	if (*left == 0)
@@ -71,7 +71,7 @@ DO_COMMAND(do_highlight)
 		if (get_highlight_codes(ses, right, buf) == FALSE)
 		{
 			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\r\n");
-			tintin_printf2(ses, "reset, bold, faint, underscore, blink, reverse, dim, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
+			tintin_printf2(ses, "reset, bold, light, faint, dim, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 		}
 		else
 		{
@@ -127,26 +127,26 @@ void check_all_highlights(struct session *ses, char **original, char *line)
 }
 */
 
-void check_all_highlights(struct session *ses, char **original, char *line)
+void check_all_highlights(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 	char *pt1, *pt2;
-	char *match, color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char match[BUFFER_SIZE], color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], temp[BUFFER_SIZE];
 
 	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
 	{
-		if (check_one_action(line, *original, node->left, ses))
+		if (check_one_action(line, original, node->left, ses))
 		{
-			substitute(ses, node->left, &match, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
+			substitute(ses, node->left, match, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
 
-			if (strstr(*original, match) == NULL)
+			if (strstr(original, match) == NULL)
 			{
 				continue;
 			}
 
 			*output = *reset = 0;
 
-			pt1 = *original;
+			pt1 = original;
 
 			get_highlight_codes(ses, node->right, color);
 
@@ -158,9 +158,7 @@ void check_all_highlights(struct session *ses, char **original, char *line)
 			{
 				*pt2 = 0;
 
-				strip_non_vt102_codes(pt1, temp);
-
-				strcat(reset, temp);
+				get_color_codes(reset, pt1, reset);
 
 				cat_sprintf(output, "%s%s\033[0m%s", pt1, color, reset);
 
@@ -175,13 +173,11 @@ void check_all_highlights(struct session *ses, char **original, char *line)
 
 int get_highlight_codes(struct session *ses, char *string, char *result)
 {
-	char *str;
 	int cnt;
 
 	if (*string == '<')
 	{
-		substitute(ses, string, &str, SUB_COL);
-		strcpy(result, str);
+		substitute(ses, string, result, SUB_COL);
 
 		return TRUE;
 	}

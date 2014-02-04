@@ -39,14 +39,14 @@ extern char **environ;
 
 DO_COMMAND(do_run)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int desc;
 	struct winsize size;
 
 	char *argv[4] = {"sh", "-c", "", NULL};
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -65,7 +65,8 @@ DO_COMMAND(do_run)
 			break;
 
 		case 0:
-			argv[2] = stringf_alloc("exec %s", right);
+			sprintf(temp, "exec %s", right);
+			argv[2] = temp;
 			execve("/bin/sh", argv, environ);
 			break;
 
@@ -79,9 +80,9 @@ DO_COMMAND(do_run)
 DO_COMMAND(do_scan)
 {
 	FILE *fp;
-	char *filename;
+	char filename[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, &filename, TRUE);
+	get_arg_in_braces(arg, filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -115,10 +116,10 @@ DO_COMMAND(do_scan)
 
 DO_COMMAND(do_script)
 {
-	char *left, *ptr, buf[STRING_SIZE];
+	char left[BUFFER_SIZE], *cptr, buffer[BUFFER_SIZE];
 	FILE *script;
 
-	arg = get_arg_in_braces(arg, &left, TRUE);
+	arg = get_arg_in_braces(arg, left, TRUE);
 
 	if (*left == 0)
 	{
@@ -128,16 +129,16 @@ DO_COMMAND(do_script)
 	{
 		script = popen(left, "r");
 
-		while (fgets(buf, sizeof(buf), script))
+		while (fgets(buffer, BUFFER_SIZE - 1, script))
 		{
-			if ((ptr = strstr(buf, "\n")) != NULL)
+			cptr = strchr(buffer, '\n');
+
+			if (cptr)
 			{
-				*ptr = 0;
+				*cptr = 0;
 			}
 
-			ptr = buf;
-
-			parse_input(ses, ptr);
+			pre_parse_input(ses, buffer, SUB_NONE);
 		}
 
 		pclose(script);
@@ -147,11 +148,11 @@ DO_COMMAND(do_script)
 
 DO_COMMAND(do_system)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, &left, TRUE);
+	get_arg_in_braces(arg, left, TRUE);
 
-	if (!*left)
+	if (*left == 0)
 	{
 		tintin_printf(ses, "#SYNTAX: #SYSTEM {COMMAND}");
 		return ses;
@@ -181,9 +182,9 @@ DO_COMMAND(do_system)
 DO_COMMAND(do_textin)
 {
 	FILE *fp;
-	char *filename, buffer[BUFFER_SIZE], *cptr;
+	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
 
-	get_arg_in_braces(arg, &filename, TRUE);
+	get_arg_in_braces(arg, filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -191,17 +192,16 @@ DO_COMMAND(do_textin)
 		return ses;
 	}
 
-	while (fgets(buffer, sizeof(buffer), fp))
+	while (fgets(buffer, BUFFER_SIZE - 1, fp))
 	{
-		for (cptr = buffer ; *cptr && *cptr != '\n' ; cptr++)
-		{
-			;
-		}
-		*cptr++ = '\r';
-		*cptr++ = '\n';
-		*cptr++ = '\0';
+		cptr = strchr(buffer, '\n');
 
-		write_line_mud(buffer, ses);
+		if (cptr)
+		{
+			*cptr = 0;
+		}
+
+		write_mud(ses, buffer, SUB_EOL);
 	}
 	fclose(fp);
 

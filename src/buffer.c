@@ -82,9 +82,14 @@ void init_buffer(struct session *ses, int size)
 void add_line_buffer(struct session *ses, char *line, int more_output)
 {
 	char linebuf[STRING_SIZE];
-	char *pti, *pto, *more_line;
+	char *pti, *pto;
 	int lines;
 	int sav_row, sav_col, cur_row, cur_col, top_row, bot_row;
+
+	if (ses->buffer == NULL || HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP))
+	{
+		return;
+	}
 
 	sav_row = ses->sav_row;
 	sav_col = ses->sav_col;
@@ -93,16 +98,9 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 	top_row = ses->top_row;
 	bot_row = ses->bot_row;
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP))
-	{
-		return;
-	}
-
-	more_line = stringf_alloc("%s%s", ses->more_output, line);
-
 	if (more_output == TRUE)
 	{
-		if (strlen(ses->more_output) < BUFFER_SIZE)
+		if (strlen(ses->more_output) < BUFFER_SIZE / 2)
 		{
 			strcat(ses->more_output, line);
 
@@ -117,8 +115,9 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		reset_hash_table();
 	}
 
-	pti = more_line;
-	pto = ses->more_output;
+	strcat(ses->more_output, line);
+
+	pti = pto = ses->more_output;
 
 	while (*pti != 0)
 	{
@@ -199,13 +198,13 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 
 DO_COMMAND(do_grep)
 {
-	char *left, *right, *str;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], str[BUFFER_SIZE];
 	int scroll_cnt, grep_cnt, grep_min, grep_max, grep_add;
 
 	grep_cnt = grep_add = scroll_cnt = grep_min = 0;
 	grep_max = ses->bot_row - ses->top_row - 2;
 
-	get_arg_in_braces(arg, &left,  FALSE);
+	get_arg_in_braces(arg, left, FALSE);
 
 	if (ses->buffer == NULL)
 	{
@@ -219,8 +218,8 @@ DO_COMMAND(do_grep)
 	{
 		if (is_number(left))
 		{
-			arg = get_arg_in_braces(arg, &left,  FALSE);
-			arg = get_arg_in_braces(arg, &right, TRUE);
+			arg = get_arg_in_braces(arg, left,  FALSE);
+			arg = get_arg_in_braces(arg, right, TRUE);
 
 			if (*right == 0)
 			{
@@ -233,12 +232,12 @@ DO_COMMAND(do_grep)
 		}
 		else
 		{
-			arg = get_arg_in_braces(arg, &right, TRUE);
+			arg = get_arg_in_braces(arg, right, TRUE);
 		}
 
 		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
-		str = stringf_alloc("*%s*", right);
+		sprintf(str, "*%s*", right);
 
 		tintin_header(ses, " GREP %s ", right);
 
@@ -519,10 +518,10 @@ int show_buffer(struct session *ses)
 
 DO_COMMAND(do_buffer)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	switch (left[0])
 	{
@@ -747,12 +746,12 @@ DO_CURSOR(buffer_l)
 
 void buffer_f(char *arg)
 {
-	char *left, *right, *str;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], str[BUFFER_SIZE];
 	int scroll_cnt, grep_cnt, grep_max;
 
 	grep_cnt = grep_max = scroll_cnt = 0;
 
-	get_arg_in_braces(arg, &left, FALSE);
+	get_arg_in_braces(arg, left, FALSE);
 
 	if (gtd->ses->buffer == NULL)
 	{
@@ -766,8 +765,8 @@ void buffer_f(char *arg)
 	{
 		if (is_number(left))
 		{
-			arg = get_arg_in_braces(arg, &left,  FALSE);
-			arg = get_arg_in_braces(arg, &right, TRUE);
+			arg = get_arg_in_braces(arg, left,  FALSE);
+			arg = get_arg_in_braces(arg, right, TRUE);
 
 			if (*right == 0)
 			{
@@ -779,10 +778,10 @@ void buffer_f(char *arg)
 		}
 		else
 		{
-			arg = get_arg_in_braces(arg, &right, TRUE);
+			arg = get_arg_in_braces(arg, right, TRUE);
 		}
 
-		str = stringf_alloc("*%s*", right);
+		sprintf(str, "*%s*", right);
 
 		if (grep_max >= 0)
 		{

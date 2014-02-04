@@ -31,16 +31,15 @@
 
 DO_COMMAND(do_configure)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 	int cnt;
 
 	root = ses->list[LIST_CONFIG];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (*left == 0)
 	{
@@ -79,7 +78,7 @@ DO_COMMAND(do_configure)
 
 DO_CONFIG(config_speedwalk)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -95,7 +94,7 @@ DO_CONFIG(config_speedwalk)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -105,7 +104,7 @@ DO_CONFIG(config_speedwalk)
 
 DO_CONFIG(config_verbatim)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -121,7 +120,7 @@ DO_CONFIG(config_verbatim)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -130,7 +129,7 @@ DO_CONFIG(config_verbatim)
 
 DO_CONFIG(config_repeatenter)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -146,7 +145,7 @@ DO_CONFIG(config_repeatenter)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -155,7 +154,7 @@ DO_CONFIG(config_repeatenter)
 
 DO_CONFIG(config_echocommand)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -171,7 +170,7 @@ DO_CONFIG(config_echocommand)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -180,7 +179,7 @@ DO_CONFIG(config_echocommand)
 
 DO_CONFIG(config_verbose)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -196,7 +195,7 @@ DO_CONFIG(config_verbose)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -205,7 +204,7 @@ DO_CONFIG(config_verbose)
 
 DO_CONFIG(config_wordwrap)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -221,7 +220,7 @@ DO_CONFIG(config_wordwrap)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -230,7 +229,7 @@ DO_CONFIG(config_wordwrap)
 
 DO_CONFIG(config_log)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "HTML"))
 	{
@@ -253,7 +252,7 @@ DO_CONFIG(config_log)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -262,7 +261,7 @@ DO_CONFIG(config_log)
 
 DO_CONFIG(config_buffersize)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!is_number(arg))
 	{
@@ -280,7 +279,7 @@ DO_CONFIG(config_buffersize)
 
 	init_buffer(ses, atoi(arg));
 
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -289,7 +288,7 @@ DO_CONFIG(config_buffersize)
 
 DO_CONFIG(config_scrolllock)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -305,7 +304,7 @@ DO_CONFIG(config_scrolllock)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -314,7 +313,7 @@ DO_CONFIG(config_scrolllock)
 
 DO_CONFIG(config_connectretry)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!is_number(arg))
 	{
@@ -325,17 +324,16 @@ DO_CONFIG(config_connectretry)
 
 	gts->connect_retry = atoll(arg) * 1000000LL;
 
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
 	return ses;
 }
 
-
 DO_CONFIG(config_packetpatch)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!is_number(arg))
 	{
@@ -353,7 +351,7 @@ DO_CONFIG(config_packetpatch)
 
 	gts->check_output = atoi(arg) * 1000;
 
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -363,7 +361,7 @@ DO_CONFIG(config_packetpatch)
 
 DO_CONFIG(config_historysize)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!is_number(arg))
 	{
@@ -379,9 +377,7 @@ DO_CONFIG(config_historysize)
 
 	gtd->history_size = atoi(arg);
 
-/*	stifle_history(gtd->history_size); */
-
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -390,11 +386,11 @@ DO_CONFIG(config_historysize)
 
 DO_CONFIG(config_tintinchar)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	gtd->tintin_char = arg[0];
 
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
 
@@ -403,11 +399,11 @@ DO_CONFIG(config_tintinchar)
 
 DO_CONFIG(config_verbatimchar)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	gtd->verbatim_char = arg[0];
 
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
 
@@ -416,11 +412,11 @@ DO_CONFIG(config_verbatimchar)
 
 DO_CONFIG(config_repeatchar)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	gtd->repeat_char = arg[0];
 
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
 
@@ -429,7 +425,7 @@ DO_CONFIG(config_repeatchar)
 
 DO_CONFIG(config_debugtelnet)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -445,7 +441,7 @@ DO_CONFIG(config_debugtelnet)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -454,7 +450,7 @@ DO_CONFIG(config_debugtelnet)
 
 DO_CONFIG(config_convertmeta)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "ON"))
 	{
@@ -470,7 +466,7 @@ DO_CONFIG(config_convertmeta)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
@@ -479,7 +475,7 @@ DO_CONFIG(config_convertmeta)
 
 DO_CONFIG(config_loglevel)
 {
-	char *str;
+	char str[BUFFER_SIZE];
 
 	if (!strcasecmp(arg, "LOW"))
 	{
@@ -495,7 +491,32 @@ DO_CONFIG(config_loglevel)
 
 		return NULL;
 	}
-	str = stringf_alloc("%d", index);
+	sprintf(str, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+
+	return ses;
+}
+
+DO_CONFIG(config_colorpatch)
+{
+	char str[BUFFER_SIZE];
+
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_COLORPATCH);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_COLORPATCH);
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 

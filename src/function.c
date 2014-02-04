@@ -31,13 +31,14 @@
 
 DO_COMMAND(do_function)
 {
-	char *left, *right, *pti;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *pti;
 	struct listroot *root;
 
 	root = ses->list[LIST_FUNCTION];
 
-	arg = get_arg_in_braces(arg, &left,  0);
-	arg = get_arg_in_braces(arg, &right, 1);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
 
 	if (*left == 0)
 	{

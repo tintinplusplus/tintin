@@ -83,12 +83,12 @@
 */
 typedef struct listnode LNODE;
 
-typedef struct session *ARRAY   (struct session *ses, LNODE *list, char *arg);
-typedef void            CHAT    (char *arg);
+typedef struct session *ARRAY   (struct session *ses, LNODE *list, char *left, char *right);
+typedef void            CHAT    (char *left, char *right);
 typedef struct session *CLASS   (struct session *ses, char *left, char *right);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *COMMAND (struct session *ses, char *arg);
-typedef void            MAP     (struct session *ses, char *arg);
+typedef void            MAP     (struct session *ses, char *left, char *right);
 typedef void            CURSOR  (char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
 
@@ -114,10 +114,10 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define HISTORY_FILE         ".tt_history"
 
 #define STRING_SIZE                  50000
-#define BUFFER_SIZE                  10000
+#define BUFFER_SIZE                  20000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.8"
+#define VERSION_NUM               "1.97.9"
 
 #define ESCAPE                          27
 
@@ -177,6 +177,12 @@ typedef void            PATH    (struct session *ses, char *arg);
 /*
 	Various flags
 */
+
+#define COL_BLD                       (1 << 1)
+#define COL_ITL                       (1 << 2)
+#define COL_UND                       (1 << 3)
+#define COL_BLK                       (1 << 4)
+#define COL_REV                       (1 << 5)
 
 #define CHAT_NAME_CHANGE                 1
 #define CHAT_REQUEST_CONNECTIONS         2
@@ -259,11 +265,13 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define SES_FLAG_LOGHTML              (1 << 17)
 #define SES_FLAG_GAG                  (1 << 18)
 #define SES_FLAG_UPDATEVTMAP          (1 << 19)
+#define SES_FLAG_COLORPATCH           (1 << 20)
 #define SES_FLAG_SCROLLLOCK           (1 << 21)
 #define SES_FLAG_SCAN                 (1 << 22)
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_RUN                  (1 << 25)
+
 #define SES_FLAG_BREAK                (1 << 28) /* wasn't the greatest idea */
 
 
@@ -432,12 +440,12 @@ typedef void            PATH    (struct session *ses, char *arg);
 
 #define SCROLL(ses)               (((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
-#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg)
-#define DO_CHAT(chat) void chat (char *arg)
+#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *left, char *right)
+#define DO_CHAT(chat) void chat (char *left, char *right)
 #define DO_CLASS(class) struct session *class (struct session *ses, char *left, char *right)
 #define DO_COMMAND(command) struct session  *command (struct session *ses, char *arg)
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
-#define DO_MAP(map) void map (struct session *ses, char *arg)
+#define DO_MAP(map) void map (struct session *ses, char *left, char *right)
 #define DO_PATH(path) void path (struct session *ses, char *arg)
 #define DO_CURSOR(cursor) void cursor (char *arg)
 
@@ -519,6 +527,7 @@ struct session
 	long long               connect_retry;
 	int                     connect_error;
 	char                    more_output[STRING_SIZE];
+	char                    color[100];
 	long long               check_output;
 };
 
@@ -594,12 +603,16 @@ struct array_type
 {
 	char                  * name;
 	ARRAY                 * array;
+	int                     lval;
+	int                     rval;
 };
 
 struct chat_type
 {
 	char                  * name;
 	CHAT                  * fun;
+	int                     lval;
+	int                     rval;
 	char                  * desc;
 };
 
@@ -650,6 +663,8 @@ struct map_type
 {
 	char                  * name;
 	MAP                   * map;
+	int                     lval;
+	int                     rval;
 };
 
 struct cursor_type
@@ -790,8 +805,8 @@ extern DO_ARRAY(array_len);
 extern DO_ARRAY(array_set);
 extern DO_ARRAY(array_srt);
 
-extern char *get_list_item(struct session *ses, struct listnode *node, char *arg);
-extern void  set_list_item(struct session *ses, struct listnode *node, char *left, char *right);
+extern void get_list_item(struct session *ses, struct listnode *node, char *arg);
+extern void set_list_item(struct session *ses, struct listnode *node, char *left, char *right);
 
 #endif
 
@@ -833,7 +848,6 @@ extern DO_CHAT(chat_who);
 extern DO_CHAT(chat_zap);
 
 extern  int chat_new(int s);
-extern void chat_call(char *ip);
 extern void close_chat(struct chat_data *buddy, int unlink);
 extern void process_chat_connections(fd_set *read_set, fd_set *write_set, fd_set *exc_set);
 extern void chat_forward_session(struct session *ses, char *linelog);
@@ -965,7 +979,7 @@ extern void show_vtmap(struct session *ses);
 extern DO_COMMAND(do_math);
 extern DO_COMMAND(do_if);
 extern double get_number(struct session *ses, char *str);
-extern void get_number_string(struct session *ses, char *str, char **result);
+extern void get_number_string(struct session *ses, char *str, char *result);
 extern double mathexp(struct session *ses, char *str);
 extern int mathexp_tokenize(struct session *ses, char *str);
 extern void mathexp_level(struct listnode *node);
@@ -999,7 +1013,7 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 extern int regexp(char *exp, char *str, unsigned char cs);
 extern int regex(char *exp, char *str);
 DO_COMMAND(do_regexp);
-extern void substitute(struct session *ses, char *string, char **result, int flags);
+extern void substitute(struct session *ses, char *string, char *result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
 extern int action_regexp(char *exp, char *str, unsigned char arg);
 
@@ -1029,6 +1043,7 @@ extern DO_CONFIG(config_repeatchar);
 extern DO_CONFIG(config_debugtelnet);
 extern DO_CONFIG(config_convertmeta);
 extern DO_CONFIG(config_loglevel);
+extern DO_CONFIG(config_colorpatch);
 
 #endif
 
@@ -1077,6 +1092,7 @@ extern void buffer_f(char *arg);
 extern int push_call(char *f, ...);
 extern void pop_call(void);
 extern void dump_stack(void);
+extern void dump_full_stack(void);
 
 #endif
 
@@ -1104,7 +1120,7 @@ extern void check_all_actions(struct session *ses, char *original, char *line);
 
 extern struct session *do_alias(struct session *ses, char *arg);
 extern struct session *do_unalias(struct session *ses, char *arg);
-extern int check_all_aliases(struct session *ses, char *original, char *line, char **command);
+int                    check_all_aliases(struct session *ses, char *input);
 
 #endif
 
@@ -1151,7 +1167,7 @@ extern DO_COMMAND(do_help);
 extern DO_COMMAND(do_highlight);
 extern int is_high_arg(char *s);
 extern DO_COMMAND(do_unhighlight);
-extern void check_all_highlights(struct session *ses, char **original, char *line);
+extern void check_all_highlights(struct session *ses, char *original, char *line);
 extern int get_highlight_codes(struct session *ses, char *htype, char *result);
 
 #endif
@@ -1231,15 +1247,10 @@ extern void quitmsg(char *message);
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
-extern char *string_alloc(char *string);
-extern char *stringf_alloc(char *fmt, ...);
-extern char *string_realloc(char *point, char *string);
-extern char *stringf_realloc(char *point, char *fmt, ...);
-extern char *string_free(char *string);
-extern void memory_free(struct memory_data *mem);
+extern char *restring(char *point, char *string);
+extern char *refstring(char *point, char *fmt, ...);
 
 #endif
-
 
 #ifndef __MISC_H__
 #define __MISC_H__
@@ -1318,20 +1329,20 @@ extern void init_telnet_session(struct session *ses);
 #ifndef __PARSE_H__
 #define __PARSE_H__
 
+extern struct session *pre_parse_input(struct session *ses, char *input, int flags);
 extern struct session *parse_input(struct session *ses, char *input);
-extern int is_speedwalk_dirs(char *cp);
-extern void process_speedwalk(char *cp, struct session *ses);
-extern struct session *parse_tintin_command(struct session *ses, char *command, char *arg);
-extern char *get_arg_all(char *string, char **result);
-extern char *get_arg_in_braces(char *string, char **result, int flag);
-extern char *get_arg_with_spaces(char *string, char **result);
-extern char *get_arg_stop_spaces(char *string, char **result);
-extern char *cpy_arg_in_braces(char *pti, char *arg, int flag);
-extern char *cpy_arg_with_spaces(char *pti, char *pto);
-extern char *cpy_arg_stop_spaces(char *pti, char *pto);
+extern struct session *parse_command(struct session *ses, char *input);
+
+extern int is_speedwalk(char *input);
+extern void process_speedwalk(struct session *ses, char *input);
+extern struct session *parse_tintin_command(struct session *ses, char *input);
+extern char *get_arg_all(char *string, char *result);
+extern char *get_arg_in_braces(char *string, char *result, int flag);
+extern char *get_arg_with_spaces(char *string, char *result);
+extern char *get_arg_stop_spaces(char *string, char *result);
 extern char *space_out(char *string);
-extern void write_mud(struct session *ses, char *command);
-extern void do_one_line(char **line, struct session *ses);
+extern void write_mud(struct session *ses, char *command, int flags);
+extern void do_one_line(char *line, struct session *ses);
 
 #endif
 
@@ -1385,7 +1396,7 @@ extern void cleanup_session(struct session *ses);
 
 extern DO_COMMAND(do_substitute);
 extern DO_COMMAND(do_unsubstitute);
-extern void check_all_substitutions(struct session *ses, char **original, char *line);
+extern void check_all_substitutions(struct session *ses, char *original, char *line);
 
 #endif
 
@@ -1521,6 +1532,7 @@ extern int skip_vt102_codes_non_graph(char *str);
 extern void strip_vt102_codes(char *str, char *buf);
 extern void strip_vt102_codes_non_graph(char *str, char *buf);
 extern void strip_non_vt102_codes(char *str, char *buf);
+extern void get_color_codes(char *old, char *str, char *buf);
 extern int strip_vt102_strlen(char *str);
 extern int interpret_vt102_codes(struct session *ses, char *str, int real);
 

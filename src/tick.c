@@ -32,22 +32,22 @@
 
 DO_COMMAND(do_tick)
 {
-	char *left, *right, *rank, *temp;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], delay[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_TICKER];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
-	arg = get_arg_in_braces(arg, &temp,  TRUE);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(arg, delay, 1);
 
-	if (*temp == 0)
+	if (*delay == 0)
 	{
-		rank = string_alloc("60");
+		strcpy(delay, "60");
 	}
 	else
 	{
-		get_number_string(ses, temp, &rank);
+		get_number_string(ses, delay, delay);
 	}
 
 	if (*left == 0)
@@ -63,9 +63,9 @@ DO_COMMAND(do_tick)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, rank, LIST_TICKER);
+		updatenode_list(ses, left, right, delay, LIST_TICKER);
 
-		show_message(ses, LIST_TICKER, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", left, right, rank);
+		show_message(ses, LIST_TICKER, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", left, right, delay);
 	}
 	return ses;
 }
@@ -81,14 +81,14 @@ DO_COMMAND(do_untick)
 
 DO_COMMAND(do_delay)
 {
-	char *arg1, *arg2, *arg3, *time;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], time[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_DELAY];
 
-	arg = get_arg_in_braces(arg, &arg1, 0);
-	arg = get_arg_in_braces(arg, &arg2, 1);
-	arg = get_arg_in_braces(arg, &arg3, 1);
+	arg = get_arg_in_braces(arg, arg1, 0);
+	arg = get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
 	if (*arg1 == 0)
 	{
@@ -105,7 +105,7 @@ DO_COMMAND(do_delay)
 	{
 		if (*arg3 == 0)
 		{
-			time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));
+			sprintf(time, "%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));
 
 			updatenode_list(ses, time, arg2, time, LIST_DELAY);
 
@@ -113,7 +113,7 @@ DO_COMMAND(do_delay)
 		}
 		else
 		{
-			time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg3) * 1000000LL));
+			sprintf(time, "%lld", utime() + (long long) (get_number(ses, arg3) * 1000000LL));
 
 			updatenode_list(ses, arg1, arg2, time, LIST_DELAY);
 

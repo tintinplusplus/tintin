@@ -30,12 +30,12 @@
 
 DO_COMMAND(do_gag)
 {
-	char *left;
+	char left[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_GAG];
 
-	arg = get_arg_in_braces(arg, &left, TRUE);
+	arg = get_arg_in_braces(arg, left, TRUE);
 
 	if (*left == 0)
 	{

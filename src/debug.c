@@ -48,7 +48,7 @@ int push_call(char *f, ...)
 		va_end(ap);
 	}
 
-	if (++debug_index == 10000)
+	if (++debug_index == 50)
 	{
 		dump_stack();
 
@@ -66,7 +66,8 @@ void pop_call(void)
 	}
 	else
 	{
-		fprintf(stderr, "pop_call: index is zero: %s\n", debug_stack[0]);
+		tintin_printf2(gtd->ses, "pop_call: index is zero.");
+		dump_full_stack();
 	}
 }
 
@@ -79,6 +80,22 @@ void dump_stack(void)
 	for (i = 0 ; i < debug_index && i < MAX_STACK_SIZE ; i++)
 	{
 		tintin_printf2(gtd->ses, "\033[1;31mDEBUG_STACK[%03d] = %s", i, debug_stack[i]);
+	}
+	tintin_header(gtd->ses, "");
+}
+
+void dump_full_stack(void)
+{
+	unsigned char i;
+
+	tintin_header(gtd->ses, " FULL DEBUG STACK ");
+
+	for (i = 0 ; i < MAX_STACK_SIZE ; i++)
+	{
+		if (*debug_stack[i])
+		{
+			tintin_printf2(gtd->ses, "\033[1;31mDEBUG_STACK[%03d] = %s", i, debug_stack[i]);
+		}
 	}
 	tintin_header(gtd->ses, "");
 }

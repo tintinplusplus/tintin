@@ -128,13 +128,13 @@ struct help_type help_table[] =
 		"         #chat {name}       {name}             Sets your chat name.\n"
 		"         #chat {message}    {buddy|all} {text} Sends a chat message\n"
 		"\n"
-		"         #chat {accept}     {buddy} {boosted}  Accept a file transfer\n"
+		"         #chat {accept}     {buddy}            Accept a file transfer\n"
 		"         #chat {call}       {address} {port}   Connect to a buddy\n"
 		"         #chat {cancel}     {buddy}            Cancel a file transfer\n"
 		"         #chat {color}      {color names}      Set the default color\n"
 		"         #chat {decline}    {buddy}            Decline a file transfer\n"
 		"         #chat {dnd}                           Decline new connections\n"
-		"         #chat {download}   {buddy}            Set your download dir\n"
+		"         #chat {download}   {directory}        Set your download directory\n"
 		"         #chat {emote}      {buddy|all} {text} Send an emote message\n"
 		"         #chat {forward}    {buddy}            Forward all chat messages\n"
 		"         #chat {forwardall} {buddy}            Forward all session output\n"
@@ -219,6 +219,7 @@ struct help_type help_table[] =
 		"         Config options which aren't listed by default:\n"
 		"\n"
 		"         #CONFIG {CONVERT META} {ON|OFF} Shows color codes and key bindings.\n"
+		"         #CONFIG {COLOR PATCH}  {ON|OFF} Fixes color code usage on some muds.\n"
 		"         #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
 		"         #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers\n"
 	},
@@ -1155,10 +1156,10 @@ struct help_type help_table[] =
 
 DO_COMMAND(do_help)
 {
-	char *left, add[BUFFER_SIZE], *ptf, *pto;
+	char left[BUFFER_SIZE], add[BUFFER_SIZE], buf[BUFFER_SIZE], *ptf, *pto;
 	int cnt, found;
 
-	arg = get_arg_in_braces(arg, &left, TRUE);
+	arg = get_arg_in_braces(arg, left, TRUE);
 
 	if (*left == 0)
 	{
@@ -1185,11 +1186,13 @@ DO_COMMAND(do_help)
 		{
 			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1 || regexp(left, help_table[cnt].name, FALSE))
 			{
-				substitute(ses, help_table[cnt].text, &pto, SUB_COL);
+				substitute(ses, help_table[cnt].text, buf, SUB_COL);
 
 				tintin_header(ses, " %s ", help_table[cnt].name);
 
 				tintin_puts2(ses, "");
+
+				pto = buf;
 
 				while (*pto)
 				{

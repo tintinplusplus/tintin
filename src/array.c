@@ -33,15 +33,15 @@
 
 DO_COMMAND(do_list)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 	int cnt;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -69,7 +69,10 @@ DO_COMMAND(do_list)
 
 				node = search_node_with_wild(root, left);
 			}
-			array_table[cnt].array(ses, node, arg);
+			arg = get_arg_in_braces(arg, left,  array_table[cnt].lval);
+			arg = get_arg_in_braces(arg, right, array_table[cnt].rval);
+
+			array_table[cnt].array(ses, node, left, right);
 		}
 	}
 	return ses;
@@ -77,12 +80,12 @@ DO_COMMAND(do_list)
 
 int get_list_length(struct listnode *node)
 {
-	char *arg, *temp;
+	char *arg, temp[BUFFER_SIZE];
 	int cnt = 0;
 
 	for (arg = node->right ; *arg ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, temp, FALSE);
 	}
 	return cnt;
 }
@@ -111,31 +114,29 @@ int get_list_index(struct session *ses, struct listnode *node, char *arg)
 	return index;
 }
 
-char *get_list_item(struct session *ses, struct listnode *node, char *arg)
+void get_list_item(struct session *ses, struct listnode *node, char *left)
 {
-	char *result;
+	char *arg;
 	int cnt, index;
 
-	index = get_list_index(ses, node, arg);
+	index = get_list_index(ses, node, left);
 
 	if (index <= 0)
 	{
-		return "";
+		strcpy(left, "");
 	}
 
 	arg = node->right;
 
 	for (cnt = 1 ; cnt <= index ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, &result, FALSE);
+		arg = get_arg_in_braces(arg, left, FALSE);
 	}
-
-	return result;
 }
 
 void set_list_item(struct session *ses, struct listnode *node, char *left, char *right)
 {
-	char *temp, buf[STRING_SIZE];
+	char temp[BUFFER_SIZE], buf[STRING_SIZE];
 	int cnt, index, length;
 
 	index  = (int) get_number(ses, left);
@@ -165,18 +166,18 @@ void set_list_item(struct session *ses, struct listnode *node, char *left, char 
 
 	for (cnt = 1 ; cnt < index ; cnt++)
 	{
-		left = get_arg_in_braces(left, &temp, FALSE);
+		left = get_arg_in_braces(left, temp, FALSE);
 
 		cat_sprintf(buf, "{%s}", temp);
 	}
 
-	left = get_arg_in_braces(left, &temp, FALSE);
+	left = get_arg_in_braces(left, temp, FALSE);
 
 	cat_sprintf(buf, "{%s}", right);
 
 	while (*left)
 	{
-		left = get_arg_in_braces(left, &temp, FALSE);
+		left = get_arg_in_braces(left, temp, FALSE);
 
 		cat_sprintf(buf, "{%s}", temp);
 	}
@@ -193,10 +194,8 @@ DO_ARRAY(array_clr)
 
 DO_ARRAY(array_del)
 {
-	char *left, *temp, buf[STRING_SIZE];
+	char buf[STRING_SIZE], *arg;
 	int cnt, index;
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	index = get_list_index(ses, list, left);
 
@@ -208,22 +207,23 @@ DO_ARRAY(array_del)
 	}
 
 	buf[0] = 0;
+
 	arg = list->right;
 
 	for (cnt = 1 ; cnt < index ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, right, FALSE);
 
-		cat_sprintf(buf, "{%s}", temp);
+		cat_sprintf(buf, "{%s}", right);
 	}
 
-	arg = get_arg_in_braces(arg, &temp, FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, right, FALSE);
 
-		cat_sprintf(buf, "{%s}", temp);
+		cat_sprintf(buf, "{%s}", right);
 	}
 
 	updatenode_list(ses, list->left, buf, "0", LIST_VARIABLE);
@@ -233,11 +233,8 @@ DO_ARRAY(array_del)
 
 DO_ARRAY(array_fnd)
 {
-	char *left, *right, *temp;
+	char temp[BUFFER_SIZE], *arg;
 	int cnt, index, result;
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
 
 	index = get_list_length(list);
 
@@ -247,7 +244,7 @@ DO_ARRAY(array_fnd)
 
 	for (cnt = 1 ; cnt <= index ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, temp, FALSE);
 
 		if (regexp(left, temp, TRUE))
 		{
@@ -262,23 +259,17 @@ DO_ARRAY(array_fnd)
 
 DO_ARRAY(array_get)
 {
-	char *left, *right;
+	get_list_item(ses, list, left);
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
-
-	internal_variable(ses, "{%s} {%s}", right, get_list_item(ses, list, left));
+	internal_variable(ses, "{%s} {%s}", right, left);
 
 	return ses;
 }
 
 DO_ARRAY(array_ins)
 {
-	char *left, *right, *temp, buf[STRING_SIZE];
+	char temp[BUFFER_SIZE], buf[STRING_SIZE], *arg;
 	int cnt, index;
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	index = get_list_index(ses, list, left);
  
@@ -303,11 +294,12 @@ DO_ARRAY(array_ins)
 	}
 
 	buf[0] = 0;
+
 	arg = list->right;
 
 	for (cnt = 1 ; cnt < index ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, temp, FALSE);
 
 		cat_sprintf(buf, "{%s}", temp);
 	}
@@ -316,7 +308,7 @@ DO_ARRAY(array_ins)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, temp, FALSE);
 
 		cat_sprintf(buf, "{%s}", temp);
 	}
@@ -328,10 +320,6 @@ DO_ARRAY(array_ins)
 
 DO_ARRAY(array_len)
 {
-	char *left;
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-
 	internal_variable(ses, "{%s} {%d}", left, get_list_length(list));
 
 	return ses;
@@ -339,11 +327,6 @@ DO_ARRAY(array_len)
 
 DO_ARRAY(array_set)
 {
-	char *left, *right;
-
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
-
 	set_list_item(ses, list, left, right);
 
 	return ses;
@@ -351,9 +334,7 @@ DO_ARRAY(array_set)
 
 DO_ARRAY(array_srt)
 {
-	char *left, *temp, buf[STRING_SIZE];
-
-	arg = get_arg_in_braces(arg, &left, TRUE);
+	char temp[BUFFER_SIZE], buf[STRING_SIZE], *arg;
 
 	buf[0] = 0;
 
@@ -370,7 +351,7 @@ DO_ARRAY(array_srt)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, temp, FALSE);
 
 		if (strcmp(left, temp) <= 0)
 		{
@@ -388,7 +369,7 @@ DO_ARRAY(array_srt)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, &temp, FALSE);
+		arg = get_arg_in_braces(arg, temp, FALSE);
 
 		cat_sprintf(buf, "{%s}", temp);
 	}

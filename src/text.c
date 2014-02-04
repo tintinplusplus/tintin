@@ -33,13 +33,17 @@ void printline(struct session *ses, char *str, int prompt)
 {
 	char wrapped_str[STRING_SIZE];
 
+	push_call("printline(%p,%p,%d)",ses,str,prompt);
+
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
  	{
+		pop_call();
 		return;
 	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
 	{
+		pop_call();
 		return;
 	}
 
@@ -55,7 +59,8 @@ void printline(struct session *ses, char *str, int prompt)
 	{
 		printf("%s\r\n", wrapped_str);
 	}
-
+	pop_call();
+	return;
 }
 
 /*
@@ -71,6 +76,41 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 	pto = los = textout;
 
 	ses->cur_col = 1;
+
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
+	{
+		while (*pti)
+		{
+			switch (*pti)
+			{
+				case ESCAPE:
+					*pto++ = '\\';
+					*pto++ = 'e';
+					break;
+
+				default:
+					if (*pti < 27)
+					{
+						*pto++ = '\\';
+						*pto++ = 'C';
+						*pto++ = '-';
+						*pto++ = 'a' + *pti - 1;
+					}
+					else
+					{
+						*pto++ = *pti;
+					}
+					break;
+			}
+			pti++;
+		}
+		*pto = 0;
+
+		strcpy(textin, textout);
+
+		pti = lis = textin;
+		pto = los = textout;
+	}
 
 	while (*pti != 0)
 	{

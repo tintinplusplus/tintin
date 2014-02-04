@@ -143,8 +143,6 @@ int main(int argc, char **argv)
 		SOCKSinit(argv[0]);
 	#endif
 
-	push_call("main(%p,%p)",argc,argv);
-
 	init_tintin();
 
 	if (signal(SIGTERM, trap_handler) == BADSIG)
@@ -200,14 +198,14 @@ int main(int argc, char **argv)
 
 	if (argc > 1)
 	{
-		char c;
+		int c;
 
 		while ((c = getopt(argc, argv, "e: h r: t: v")) != EOF)
 		{
 			switch (c)
 			{
 				case 'e':
-					gtd->ses = parse_input(gtd->ses, optarg);
+					gtd->ses = pre_parse_input(gtd->ses, optarg, SUB_NONE);
 					break;
 
 				case 'h':
@@ -242,7 +240,6 @@ int main(int argc, char **argv)
 
 	mainloop();
 
-	pop_call();
 	return 0;
 }
 

@@ -31,16 +31,17 @@
 
 DO_COMMAND(do_class)
 {
-	char *left, *right, *pr;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+
 	struct listroot *root;
 	struct listnode *node;
 	int cnt;
 
 	root = ses->list[LIST_CLASS];
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
-	arg = get_arg_in_braces(arg, &right, FALSE);
-	arg = get_arg_in_braces(arg, &pr, FALSE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, pr,    FALSE);
 
 	if (*left == 0)
 	{

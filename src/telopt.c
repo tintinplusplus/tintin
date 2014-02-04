@@ -377,45 +377,14 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					break;
 
 				default:
-					if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
+					if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
 					{
-						switch (*cpsrc)
-						{
-							case ESCAPE:
-								*cpdst++ = '\\';
-								*cpdst++ = 'e';
-								gtd->mud_output_len += 2;
-								break;
-
-
-							default:
-								if (*cpsrc < 27)
-								{
-									*cpdst++ = '\\';
-									*cpdst++ = 'C';
-									*cpdst++ = '-';
-									*cpdst++ = 'a' + *cpsrc - 1;
-									gtd->mud_output_len += 4;
-								}
-								else
-								{
-									*cpdst++ = *cpsrc;
-									gtd->mud_output_len++;
-								}
-								break;
-						}
-					}
-					else
-					{
-						if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
-						{
-							DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
-							*cpdst++ = '\n';
-							gtd->mud_output_len++;
-						}
-						*cpdst++ = *cpsrc;
+						DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
+						*cpdst++ = '\n';
 						gtd->mud_output_len++;
 					}
+					*cpdst++ = *cpsrc;
+					gtd->mud_output_len++;
 					break;
 			}
 			cpsrc++;
@@ -499,7 +468,7 @@ int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-//	SET_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
+	SET_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
 
 	return 2;
 }

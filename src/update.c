@@ -306,7 +306,7 @@ void tick_update(void)
 
 				show_debug(ses, LIST_TICKER, "#TICKER DEBUG: %s", node->right);
 
-				parse_input(ses, node->right);
+				pre_parse_input(ses, node->right, SUB_NONE);
 			}
 		}
 	}
@@ -340,7 +340,7 @@ void delay_update(void)
 			{
 				show_debug(ses, LIST_DELAY, "#DELAY DEBUG: %s", node->right);
 
-				parse_input(ses, node->right);
+				pre_parse_input(ses, node->right, SUB_NONE);
 
 				deletenode_list(ses, node, LIST_DELAY);
 			}
@@ -413,7 +413,7 @@ void chat_update(void)
 
 		if (gtd->chat->paste_time && gtd->chat->paste_time < utime())
 		{
-			chat_paste(NULL);
+			chat_paste(NULL, NULL);
 		}
 	}
 	close_timer(TIMER_UPDATE_CHAT);
@@ -443,11 +443,5 @@ void memory_update(void)
 {
 	open_timer(TIMER_UPDATE_MEMORY);
 
-	while (gtd->mem->next)
-	{
-/*		printf("---freeing string: %s\n", gtd->mem->next->data); */
-
-		memory_free(gtd->mem->next);
-	}
 	close_timer(TIMER_UPDATE_MEMORY);
 }

@@ -54,13 +54,13 @@ int precision;
 
 DO_COMMAND(do_math)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -76,11 +76,11 @@ DO_COMMAND(do_math)
 
 DO_COMMAND(do_if)
 {
-	char *left, *true, *false, *temp;
+	char left[BUFFER_SIZE], true[BUFFER_SIZE], false[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, &left,  0);
-	arg = get_arg_in_braces(arg, &true,  1);
-	arg = get_arg_in_braces(arg, &false, 1);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, true,  1);
+	arg = get_arg_in_braces(arg, false, 1);
 
 	if (*left == 0 || *true == 0)
 	{
@@ -88,15 +88,15 @@ DO_COMMAND(do_if)
 	}
 	else
 	{
-		substitute(ses, left, &temp, SUB_VAR|SUB_FUN);
+		substitute(ses, left, temp, SUB_VAR|SUB_FUN);
 
 		if (mathexp(ses, temp))
 		{
-			ses = parse_input(ses, true);
+			ses = pre_parse_input(ses, true, SUB_NONE);
 		}
 		else if (*false)
 		{
-			ses = parse_input(ses, false);
+			ses = pre_parse_input(ses, false, SUB_NONE);
 		}
 	}
 	return ses;
@@ -104,20 +104,20 @@ DO_COMMAND(do_if)
 
 double get_number(struct session *ses, char *str)
 {
-	char *number;
+	char number[BUFFER_SIZE];
 
-	substitute(ses, str, &number, SUB_VAR|SUB_FUN);
+	substitute(ses, str, number, SUB_VAR|SUB_FUN);
 
 	return mathexp(ses, number);
 }
 
-void get_number_string(struct session *ses, char *str, char **result)
+void get_number_string(struct session *ses, char *str, char *result)
 {
-	char *number;
+	char number[BUFFER_SIZE];
 
-	substitute(ses, str, &number, SUB_VAR|SUB_FUN);
+	substitute(ses, str, number, SUB_VAR|SUB_FUN);
 
-	*result = stringf_alloc("%.*f", precision, mathexp(ses, number));
+	sprintf(result, "%.*f", precision, mathexp(ses, number));
 }
 
 /*

@@ -897,3 +897,24 @@ path.c         Added #path run <delay> option.
 highlights.c   #highlight now colors all matches on a line.
 
 tinexp.c       Functions now only use %0 to %99 rather than &*
+
+
+December 2007  1.97.9
+
+highlight.c    Added 'dark' as a valid color name.
+
+vt102.c        Added get_color_codes function.
+
+text.c         Now printing the previous color code on each new line.
+
+config.c       Added a color patching option.
+
+log.c          Fixed append logging in html mode for cygwin.
+
+parse.c        Went back to the more robust old school memory usage with
+               some changes to still allow for recursion.
+
+telopt.c       re-enabled GA prompt handling.
+
+main.c         Fixed a bug with the startup argument routine.
+

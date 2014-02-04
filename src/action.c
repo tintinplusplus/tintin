@@ -29,18 +29,18 @@
 
 DO_COMMAND(do_action)
 {
-	char *left, *right, *rank;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_ACTION];
 
-	arg = get_arg_in_braces(arg, &left,  0);
-	arg = get_arg_in_braces(arg, &right, 1);
-	arg = get_arg_in_braces(arg, &rank,  1);
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(arg, rank,  1);
 
 	if (*rank == 0)
 	{
-		rank = string_alloc("5");
+		strcpy(rank, "5");
 	}
 
 	if (*left == 0)
@@ -74,7 +74,6 @@ DO_COMMAND(do_unaction)
 
 void check_all_actions(struct session *ses, char *original, char *line)
 {
-	char *buffer;
 	struct listnode *node;
 	struct listroot *root;
 
@@ -86,11 +85,9 @@ void check_all_actions(struct session *ses, char *original, char *line)
 
 		if (check_one_action(line, original, node->left, ses))
 		{
-			substitute(ses, node->right, &buffer, SUB_ARG|SUB_SEC);
+			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", node->left);
 
-			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", buffer);
-
-			parse_input(ses, buffer);
+			pre_parse_input(ses, node->right, SUB_ARG|SUB_SEC);
 
 			return;
 		}

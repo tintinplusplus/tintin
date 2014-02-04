@@ -30,14 +30,14 @@
 
 DO_COMMAND(do_event)
 {
-	char *left, *right;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	int cnt;
 
 	root = ses->list[LIST_EVENT];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0)
 	{
@@ -89,7 +89,7 @@ void check_all_events(struct session *ses, char *line)
 	{
 		if (!strcmp(node->left, line))
 		{
-			parse_input(ses, node->right);
+			pre_parse_input(ses, node->right, SUB_NONE);
 		}
 	}
 }
