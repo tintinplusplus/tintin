@@ -208,7 +208,7 @@ void poll_sessions(void)
 		{
 			gtd->update = ses->next;
 
-			if (FD_ISSET(ses->socket, &excfds))
+			if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED) && FD_ISSET(ses->socket, &excfds))
 			{
 				FD_CLR(ses->socket, &readfds);
 				FD_CLR(ses->socket, &writefds);

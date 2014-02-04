@@ -164,15 +164,21 @@ int connect_mud(char *host, char *port, struct session *ses)
 
 void write_line_mud(char *line, struct session *ses)
 {
+	push_call("write_line_mud(%p,%p)",line,ses);
+
 	if (ses == gts)
 	{
 		tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
+
+		pop_call();
 		return;
 	}
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 	{
 		tintin_printf2(ses, "#THIS SESSION IS NOT CONNECTED.");
+
+		pop_call();
 		return;
 	}
 
@@ -180,6 +186,7 @@ void write_line_mud(char *line, struct session *ses)
 	{
 		syserr("write in write_line_mud");
 	}
+	pop_call();
 	return;
 }
 

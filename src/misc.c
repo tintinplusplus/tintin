@@ -320,7 +320,6 @@ DO_COMMAND(do_return)
 	return ses;
 }
 
-
 DO_COMMAND(do_send)
 {
 	char *left, *out;
@@ -436,37 +435,6 @@ DO_COMMAND(do_snoop)
 DO_COMMAND(do_suspend)
 {
 	suspend_handler(0);
-
-	return ses;
-}
-
-DO_COMMAND(do_system)
-{
-	char *left;
-
-	get_arg_in_braces(arg, &left, TRUE);
-
-	if (!*left)
-	{
-		tintin_printf(ses, "#SYNTAX: #SYSTEM {COMMAND}");
-		return ses;
-	}
-
-	show_message(ses, -1, "#OK: EXECUTING '%s'", left);
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		save_pos(ses);
-		goto_rowcol(ses, ses->bot_row, 1);
-	}
-	fflush(stdout);
-
-	system(left);
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		restore_pos(ses);
-	}
 
 	return ses;
 }

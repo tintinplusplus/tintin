@@ -36,14 +36,14 @@ void init_terminal()
 {
 	struct termios io;
 
-	if (tcgetattr(0, &gtd->terminal))
+	if (tcgetattr(0, &gtd->old_terminal))
 	{
 		perror("tcgetattr");
 
 		exit(errno);
 	}
 
-	io = gtd->terminal;
+	io = gtd->old_terminal;
 
 	/*
 		Canonical mode off
@@ -75,11 +75,18 @@ void init_terminal()
 
 		exit(errno);
 	}
+
+	if (tcgetattr(0, &gtd->new_terminal))
+	{
+		perror("tcgetattr");
+
+		exit(errno);
+	}
 }
 
 void reset_terminal(void)
 {
-	tcsetattr(0, TCSANOW, &gtd->terminal);
+	tcsetattr(0, TCSANOW, &gtd->old_terminal);
 }
 
 void echo_off(struct session *ses)

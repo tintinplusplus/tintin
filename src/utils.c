@@ -35,6 +35,7 @@
 /* return: TRUE if s1 is an abbrevation of s2 */
 /**********************************************/
 
+
 int is_abbrev(char *s1, char *s2)
 {
 	if (strlen(s2) < strlen(s1))

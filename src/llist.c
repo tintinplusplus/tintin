@@ -422,9 +422,9 @@ int count_list(struct listroot *listhead)
 DO_COMMAND(do_killall)
 {
 	char *left;
-	int cnt, fnd = FALSE;
+	int cnt;
 
-	if (arg == NULL || *arg == 0) 
+	if (arg == NULL || *arg == 0)
 	{
 		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 		{
@@ -444,9 +444,15 @@ DO_COMMAND(do_killall)
 
 	arg = get_arg_in_braces(arg, &left,  0);
 
-	for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
+	if (!strcasecmp(left, "ALL"))
 	{
-		if (!is_abbrev(left, list_table[cnt].name_multi) && strcasecmp(left, "ALL"))
+		do_killall(ses, "");
+		return ses;
+	}
+
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	{
+		if (!is_abbrev(left, list_table[cnt].name_multi))
 		{
 			continue;
 		}
@@ -454,9 +460,9 @@ DO_COMMAND(do_killall)
 
 		tintin_printf(ses, "#OK: #%s LIST CLEARED.", list_table[cnt].name);
 
-		fnd = TRUE;
+		break;
 	}
-	if (fnd == FALSE)
+	if (cnt == LIST_MAX)
 	{
 		tintin_printf(ses, "#ERROR: #KILL {%s} - NO MATCH FOUND.", left);
 	}

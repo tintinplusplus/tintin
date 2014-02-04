@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.2"
+#define VERSION_NUM               "1.97.3"
 
 #define ESCAPE                          27
 
@@ -264,6 +264,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define SES_FLAG_SCAN                 (1 << 22)
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
+#define SES_FLAG_RUN                  (1 << 25)
 #define SES_FLAG_BREAK                (1 << 28) /* wasn't the greatest idea */
 
 
@@ -528,7 +529,8 @@ struct tintin_data
 	struct session        * update;
 	struct chat_data      * chat;
 	struct memory_data    * mem;
-	struct termios          terminal;
+	struct termios          old_terminal;
+	struct termios          new_terminal;
 	char                  * mud_output_buf;
 	int                     mud_output_max;
 	int                     mud_output_len;
@@ -1253,15 +1255,13 @@ extern DO_COMMAND(do_loop);
 extern DO_COMMAND(do_nop);
 extern DO_COMMAND(do_parse);
 extern DO_COMMAND(do_return);
-extern DO_COMMAND(do_run);
-extern DO_COMMAND(do_send);
+extern DO_COMMAND(do_run);extern DO_COMMAND(do_send);
 extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_snoop);
 extern DO_COMMAND(do_suspend);
-extern DO_COMMAND(do_system);
 extern DO_COMMAND(do_zap);
-
 extern DO_COMMAND(do_gagline);
+
 #endif
 
 
@@ -1371,12 +1371,12 @@ extern struct session *session_command(char *arg, struct session *ses);
 extern void show_session(struct session *ses, struct session *ptr);
 extern struct session *newactive_session(void);
 extern struct session *activate_session(struct session *ses);
-extern struct session *new_session(char *name, char *address, struct session *ses);
+extern struct session *new_session(struct session *ses, char *name, char *address, int desc);
 extern void connect_session(struct session *ses);
 extern void cleanup_session(struct session *ses);
 
-
 #endif
+
 
 #ifndef __SUBSTITUTE_H__
 #define __SUBSTITUTE_H__
@@ -1386,6 +1386,17 @@ extern DO_COMMAND(do_unsubstitute);
 extern void check_all_substitutions(struct session *ses, char **original, char *line);
 
 #endif
+
+
+#ifndef __SYSTEM_H__
+#define __SYSTEM_H__
+
+extern DO_COMMAND(do_run);
+extern DO_COMMAND(do_script);
+extern DO_COMMAND(do_system);
+
+#endif
+
 
 #ifndef __TABLES_H__
 #define __TABLES_H__

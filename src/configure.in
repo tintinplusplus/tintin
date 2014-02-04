@@ -86,7 +86,7 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select socket strcasecmp strchr strdup strerror strftime strncasecmp strstr utime getaddrinfo])
+AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select socket strcasecmp strchr strdup strerror strftime strncasecmp strstr utime getaddrinfo forkpty popen])
 
 # Checks libraries
 
@@ -94,7 +94,7 @@ AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(z, inflate)
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(nsl, gethostbyname)
-
+AC_CHECK_LIB(util, forkpty)
 AC_CHECK_PROGS(MAKE, gmake make)
 
 AC_FUNC_GETMNTENT

@@ -85,7 +85,7 @@ DO_COMMAND(do_session)
 				return ses;
 			}
 		}
-		ses = new_session(left, arg, ses);
+		ses = new_session(ses, left, arg, 0);
 	}
 	return gtd->ses;
 }
@@ -168,21 +168,24 @@ struct session *activate_session(struct session *ses)
 /* open a new session */
 /**********************/
 
-struct session *new_session(char *name, char *address, struct session *ses)
+struct session *new_session(struct session *ses, char *name, char *address, int desc)
 {
 	int cnt = 0;
 	char *host, *port;
 	struct session *newsession;
 
-	if (name)
-	{
-		address = get_arg_in_braces(address, &host, FALSE);
-		address = get_arg_in_braces(address, &port, FALSE);
+	push_call("new_session(%p,%p,%p,%d)",ses,name,address,desc);
 
+	address = get_arg_in_braces(address, &host, FALSE);
+	address = get_arg_in_braces(address, &port, FALSE);
+
+	if (desc == 0)
+	{
 		if (*host == 0)
 		{
 			tintin_puts(ses, "#HEY! SPECIFY AN ADDRESS WILL YOU?");
 
+			pop_call();
 			return ses;
 		}
 
@@ -190,6 +193,7 @@ struct session *new_session(char *name, char *address, struct session *ses)
 		{
 			tintin_puts(ses, "#HEY! SPECIFY A PORT NUMBER WILL YOU?");
 
+			pop_call();
 			return ses;
 		}
 	}
@@ -197,11 +201,12 @@ struct session *new_session(char *name, char *address, struct session *ses)
 	newsession                = calloc(1, sizeof(struct session));
 
 	newsession->name          = strdup(name);
+	newsession->host          = strdup(host);
+	newsession->port          = strdup(port);
+
 	newsession->class         = strdup(gts->class);
 	newsession->flags         = gts->flags;
 	newsession->telopts       = gts->telopts;
-	newsession->host          = strdup(host);
-	newsession->port          = strdup(port);
 
 	gtd->ses                  = newsession;
 
@@ -222,18 +227,23 @@ struct session *new_session(char *name, char *address, struct session *ses)
 
 	dirty_screen(newsession);
 
-	if (name)
+	if (desc == 0)
 	{
 		connect_session(newsession);
 	}
 	else
 	{
-		newsession->socket = atoi(address);
-
 		SET_BIT(newsession->flags, SES_FLAG_CONNECTED);
 
-		gtd->ses = ses;
+		SET_BIT(newsession->telopts, TELOPT_FLAG_SGA);
+		DEL_BIT(newsession->telopts, TELOPT_FLAG_ECHO);
+
+		newsession->socket = desc;
 	}
+
+
+
+	pop_call();
 	return gtd->ses;
 }
 
@@ -241,11 +251,9 @@ void connect_session(struct session *ses)
 {
 	int sock;
 
-
 	tintin_printf2(ses, "\n\r#Trying to connect to %s port %s.\n\r", ses->host, ses->port);
 
 	ses->connect_retry = utime() + gts->connect_retry;
-
 
 	reconnect:
 

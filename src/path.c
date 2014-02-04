@@ -86,7 +86,7 @@ DO_PATH(path_end)
 	{
 		show_message(ses, LIST_PATH, "#PATH: YOU ARE NO LONGER MAPPING A PATH.");
 
-		SET_BIT(ses->flags, SES_FLAG_MAPPING);
+		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
 	}
 	else
 	{

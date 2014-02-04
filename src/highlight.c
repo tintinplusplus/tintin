@@ -44,7 +44,10 @@ DO_COMMAND(do_highlight)
 	root = ses->list[LIST_HIGHLIGHT];
 
 	arg = get_arg_in_braces(arg, &left,  FALSE);
+
 	arg = get_arg_in_braces(arg, &right, TRUE);
+	substitute(ses, right, &right, SUB_VAR|SUB_FUN);
+
 	arg = get_arg_in_braces(arg, &rank,  TRUE);
 
 	if (*rank == 0)

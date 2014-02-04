@@ -1797,11 +1797,10 @@ DO_CHAT(chat_zap)
 DO_CHAT(chat_accept)
 {
 	char *left, *right;
+	struct chat_data *buddy;
 
 	arg = get_arg_in_braces(arg, &left, FALSE);
 	arg = get_arg_in_braces(arg, &right, TRUE);
-
-	struct chat_data *buddy;
 
 	if ((buddy = find_buddy(left)) == NULL)
 	{

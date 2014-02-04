@@ -827,3 +827,8 @@ June 2007      1.97.2
                Fixed buffer overflow with receiving several prompts.
                Fixed bug with scrollback lines not being properly deleted.
                Added #map explore and #map travel options.
+
+July 2007      1.97.3
+
+               Added the #script command to run any kind of script client side.
+               Fixed a variety of minor bugs.

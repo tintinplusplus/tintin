@@ -77,6 +77,7 @@ struct command_type command_table[] =
 	{	"replacestring",     do_replacestring,     CMD_FLAG_SUB     },
 	{	"return",            do_return,            CMD_FLAG_NONE    },
 	{	"scan",              do_scan,              CMD_FLAG_SUB     },
+	{    "script",            do_script,            CMD_FLAG_SUB     },
 	{	"send",              do_send,              CMD_FLAG_NONE    },
 	{	"session",           do_session,           CMD_FLAG_SUB     },
 	{	"showme",            do_showme,            CMD_FLAG_SUB     },

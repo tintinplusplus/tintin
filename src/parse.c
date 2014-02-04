@@ -503,7 +503,7 @@ char *get_arg_stop_spaces(char *string, char **result)
 		{
 			break;
 		}
-		else if (*pti == ' ' && nest == 0)
+		else if (isspace(*pti) && nest == 0)
 		{
 			break;
 		}
@@ -672,7 +672,7 @@ char *cpy_arg_stop_spaces(char *pti, char *pto)
 		{
 			break;
 		}
-		else if (*pti == ' ' && nest == 0)
+		else if (isspace(*pti) && nest == 0)
 		{
 			break;
 		}

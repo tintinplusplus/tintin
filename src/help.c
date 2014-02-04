@@ -861,6 +861,19 @@ struct help_type help_table[] =
 		"         argument to both break out of the function and set the result variable.\n"
 	},
 	{
+		"RUN",
+		"<178>Command<078>: #run <178>{<078>session name<178>}<078> <178>{<078>shell command<178>}<078>\n"
+		"\n"
+		"         The run command works much like the system command except that it\n"
+		"         runs the command in a pseudo terminal. The run command also creates\n"
+		"         a session that treats the given shell command as a mud server. This\n"
+		"         allows you to run ssh, as well as any other shell application, with\n"
+		"         full tintin scripting capabilities\n"
+		"\n"
+		"<178>Example<078>: #run {somewhere} {ssh someone@somewhere.com}\n"
+		"<178>Example<078>: #run {something} {tail -f chats.log}\n"
+	},
+	{
 		"SCAN",
 		"<178>Command<078>: #scan <178>{<078>filename<178>}<078>\n"
 		"\n"
@@ -875,6 +888,22 @@ struct help_type help_table[] =
 		"         This is useful to convert ansi color file to html or viewing log file.\n"
 		
 	},
+	{
+		"SCRIPT",
+		"<178>Command<078>: #script <178>{<078>shell command<178>}\n"
+		"\n"
+		"         The script command works much like the system command except that it\n"
+		"         treats the generated echos as commands.\n"
+		"\n"
+		"         This is useful for running php, perl, ruby, and python scripts. You\n"
+		"         can run these scrips either from file or from within tintin if the\n"
+		"         scripting language allows this.\n"
+		"\n"
+		"<178>Example<078>: #script {ruby -e 'print \"#showme hello world\"'}\n"
+		"<178>Example<078>: #script {python -c 'print \"#showme hello world\"'}\n"
+		"<178>Example<078>: #script {php -r 'echo \"#showme hello world\"'}\n"
+	},
+
 	{
 		"SEND",
 		"<178>Command<078>: #send <178>{<078>text<178>}<078>\n"
@@ -1162,6 +1191,11 @@ DO_COMMAND(do_help)
 				tintin_puts2(ses, "");
 
 				found = TRUE;
+
+				if (is_abbrev(left, help_table[cnt].name))
+				{
+					break;
+				}
 			}
 		}
 		if (found == FALSE)

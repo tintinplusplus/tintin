@@ -31,6 +31,8 @@ MAPPING STUFF:
 
 - Add info about which room you're in when leaving the map.
 
+- add conditional if checks for room traversal.
+
 -------------------------------------------------------------------------------
 
 * This is a list of improvements that are planned for a rainy day.

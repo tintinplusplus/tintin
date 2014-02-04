@@ -57,7 +57,7 @@ unsigned char	map_palet0[]	= { 42, 35, 35, 43, 35,124, 43, 43, 35, 43, 45, 43, 4
 
 unsigned char	map_palet1[]	= {126,247,247,109,247,120,108,116,247,106,113,118,107,117,119,110, 88};
 
-#define CHECK_MAP(void)                                                                                            \
+#define CHECK_MAP()                                                                                            \
 {                                                                                                                  \
 	if (ses->map == NULL)                                                                                         \
 	{                                                                                                             \
@@ -67,7 +67,7 @@ unsigned char	map_palet1[]	= {126,247,247,109,247,120,108,116,247,106,113,118,10
 	}                                                                                                             \
 }
 
-#define CHECK_INSIDE(void)                                                                                         \
+#define CHECK_INSIDE()                                                                                         \
 {                                                                                                                  \
 	if (ses->map == NULL)                                                                                         \
 	{                                                                                                             \
@@ -1191,8 +1191,7 @@ void follow_map(struct session *ses, char *argument)
 
 			map_leave(ses, argument);
 		}
-
-		if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
+		else if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
 		{
 			node = searchnode_list(ses->list[LIST_PATHDIR], argument);
 

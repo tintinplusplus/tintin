@@ -272,7 +272,11 @@ void read_key(char *line)
 				gtd->input_buf[0] = 0;
 				gtd->macro_buf[0] = 0;
 				echo_command(gtd->ses, "", FALSE);
-				socket_printf(gtd->ses, 2, "%c%c", '\r', '\0');
+
+				socket_printf(gtd->ses, 1, "%c", '\r'); 
+
+/*				socket_printf(gtd->ses, 2, "%c%c", '\r', '\0'); */
+
 				break;
 
 			default:

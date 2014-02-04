@@ -59,7 +59,7 @@ DO_COMMAND(do_alias)
 	{
 		updatenode_list(ses, left, right, rank, LIST_ALIAS);
 
-		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASSES {%s} @ {%s}.", left, right, rank);
+		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASES {%s} @ {%s}.", left, right, rank);
 	}
 	return ses;
 }

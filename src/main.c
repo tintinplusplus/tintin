@@ -263,6 +263,7 @@ void init_tintin(void)
 	gts->host           = strdup("");
 	gts->port           = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
+	gts->socket         = 1;
 
 	gtd                 = calloc(1, sizeof(struct tintin_data));
 
