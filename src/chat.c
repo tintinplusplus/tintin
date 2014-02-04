@@ -42,7 +42,7 @@
 #define CALL_TIMEOUT 5
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.96.1"
+#define TINTIN_VERSION "TinTin++ 1.96.2"
 
 #define RESTRING(point, value)   \
 {                                \
@@ -171,6 +171,15 @@ DO_CHAT(chat_initialize)
 	ld.l_linger = 100;
 
 	setsockopt(sock, SOL_SOCKET, SO_LINGER, (char *) &ld, sizeof(ld));
+
+	/*
+		Might make things unstable
+	*/
+
+	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+	{
+		perror("chat_initialize: fcntl O_NDELAY|O_NONBLOCK");
+	}
 
 	if (bind(sock, (struct sockaddr *) &sa, sizeof(sa)) < 0)
 	{
@@ -393,7 +402,6 @@ void *threaded_chat_call(void *arg)
 	if (process_chat_input(new_buddy) == -1)
 	{
 		FD_CLR(new_buddy->fd, &rds);
-
 		close_chat(new_buddy, FALSE);
 
 		return NULL;
@@ -467,17 +475,17 @@ void close_chat(struct chat_data *buddy, int unlink)
 	                              connected sockets.
 */
 
-void process_chat_connections(fd_set *input_set, fd_set *exc_set)
+void process_chat_connections(fd_set *read_set, fd_set *write_set, fd_set *exc_set)
 {
 	struct chat_data *buddy, *buddy_next;
 
-	push_call("process_chat_connections(%p,%p)",input_set,exc_set);
+	push_call("process_chat_connections(%p,%p,%p)",read_set,write_set,exc_set);
 
 	/*
 		accept incoming connections
 	*/
 
-	if (FD_ISSET(gtd->chat->fd, input_set))
+	if (FD_ISSET(gtd->chat->fd, read_set))
 	{
 		chat_new(gtd->chat->fd);
 	}
@@ -490,34 +498,19 @@ void process_chat_connections(fd_set *input_set, fd_set *exc_set)
 	{
 		buddy_next = buddy->next;
 
-		if (HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST))
+		if (HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST) || FD_ISSET(buddy->fd, exc_set))
 		{
+			FD_CLR(buddy->fd, write_set);
+			FD_CLR(buddy->fd, read_set);
+
 			close_chat(buddy, TRUE);
 		}
-	}
-
-	for (buddy = gtd->chat->next ; buddy ; buddy = buddy_next)
-	{
-		buddy_next = buddy->next;
-
-		if (FD_ISSET(buddy->fd, exc_set))
+		else if (FD_ISSET(buddy->fd, read_set) && process_chat_input(buddy) < 0)
 		{
+			FD_CLR(buddy->fd, write_set);
+			FD_CLR(buddy->fd, read_set);
+
 			close_chat(buddy, TRUE);
-		}
-	}
-
-	for (buddy = gtd->chat->next ; buddy ; buddy = buddy_next)
-	{
-		buddy_next = buddy->next;
-
-		if (FD_ISSET(buddy->fd, input_set))
-		{
-			if (process_chat_input(buddy) < 0)
-			{
-				FD_CLR(buddy->fd, exc_set);
-
-				close_chat(buddy, TRUE);
-			}
 		}
 	}
 	pop_call();
@@ -765,7 +758,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 		{
 			if (*pti == 0)
 			{
-				chat_printf("Invalid message: %d %s", ptc, buf);
+				chat_printf("Unterminated command: %d %s", ptc, buf);
 				pop_call();
 				return;
 			}
@@ -1911,7 +1904,7 @@ void chat_receive_file(char *arg, struct chat_data *buddy)
 	}
 
 	chat_printf("File transfer from %s, file: %s, size: %d.", buddy->name, buddy->file_name, buddy->file_size);
-	chat_printf("#accept or #decline?");
+	chat_printf("Use %cchat <accept|decline> %s to proceed.", gtd->tintin_char, buddy->name);
 
 	buddy->file_start_time = 0;
 

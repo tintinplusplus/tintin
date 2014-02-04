@@ -100,16 +100,6 @@ const struct help_type help_table[] =
 		"         Will chime every time someone gives you a tell.\n"
 	},
 	{
-		"BOSS",
-		"Command: #boss\n"
-		"\n"
-		"         Puts some fake text on your screen so nobody knows you're mudding.\n"
-		"         No new text will appear untill you press a button.\n"
-		"\n"
-		"Example: #macro {\\e[11~} {#boss}\n"
-		"         Will make you go into boss mode whenever you hit F1\n"
-	},
-	{
 		"BUFFER",
 		"Command: #buffer {home|up|down|end|write filename|info}\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
@@ -205,8 +195,9 @@ const struct help_type help_table[] =
 		"\n"
 		"          Config options which aren't listed by default:\n"
 		"\n"
-		"          #CONFIG {CONVERT META} {ON|OFF} Shows color codes.\n"
-		"          #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations\n"
+		"          #CONFIG {CONVERT META} {ON|OFF} Shows color codes and key bindings.\n"
+		"          #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
+		"          #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers\n"
 	},
 	{
 		"CR",
@@ -230,7 +221,7 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                             1992, 2006                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.96.1                           <068>#\n"
+		"<068>    #<078>                           Version 1.96.2                           <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<068>####################################################################<068>#<088>\n\n"
 	},
@@ -692,6 +683,8 @@ const struct help_type help_table[] =
 		"#redit find firstroom (searches the shortest path, see #path)\n"
 		"#redit color <code> will set the room's color, see #help colors for info.\n"
 		"#redit link <direction> <room name> will link to an already mapped room\n"
+		"#redit load <filename> loads a map from file\n"
+		"#redit save <filename> saves a map to file\n"
 	},
 	{
 		"REPLACESTRING",

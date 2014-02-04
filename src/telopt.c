@@ -53,6 +53,7 @@ char iac_will_eor[]           = { IAC, WILL,  TELOPT_EOR             };
 char iac_eor[]                = { IAC, EOR                           };
 char iac_ga[]                 = { IAC, GA                            };
 char iac_do[]                 = { IAC, DO                            };
+char iac_will[]               = { IAC, WILL                          };
 char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
 
 struct iac_type
@@ -93,6 +94,7 @@ const struct iac_type iac_table [] =
 	{   2,  iac_eor,              &mark_prompt             },
 	{   2,  iac_ga,               &mark_prompt             },
 	{   2,  iac_do,               &send_wont_telopt        },
+	{   2,  iac_will,             &send_dont_telopt        },
 	{   3,  iac_sb_zmp,           &exec_zmp                },
 	{   0,  NULL,                 NULL                     }
 };
@@ -178,6 +180,12 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 		cpsrc = src;
 	}
 
+	if (HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL) && ses->logfile)
+	{
+		fwrite(cpsrc, 1, cplen, ses->logfile);
+		fflush(ses->logfile);
+	}
+
 	while (gtd->mud_output_len + cplen >= gtd->mud_output_max)
 	{
 		gtd->mud_output_max *= 2;
@@ -186,6 +194,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	cpdst = (unsigned char *) gtd->mud_output_buf + gtd->mud_output_len;
 
+	
 	while (cplen > 0)
 	{
 		if (*cpsrc == IAC || HAS_BIT(ses->telopts, TELOPT_FLAG_IAC))
@@ -663,7 +672,30 @@ int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, WONT, cpsrc[2]);
 
-	telopt_debug(ses, "SENT IAC WONT %s", TELOPT(cpsrc[2]));
+	if (TELOPT_OK(cpsrc[2]))
+	{
+		telopt_debug(ses, "SENT IAC WONT %s", TELOPT(cpsrc[2]));
+	}
+	else
+	{
+		telopt_debug(ses, "SENT IAC WONT %d", cpsrc[2]);
+	}
+
+	return 3;
+}
+
+int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	socket_printf(ses, 3, "%c%c%c", IAC, DONT, cpsrc[2]);
+
+	if (TELOPT_OK(cpsrc[2]))
+	{
+		telopt_debug(ses, "SENT IAC DONT %s", TELOPT(cpsrc[2]));
+	}
+	else
+	{
+		telopt_debug(ses, "SENT IAC DONT %d", cpsrc[2]);
+	}
 
 	return 3;
 }

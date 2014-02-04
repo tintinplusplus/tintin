@@ -149,9 +149,12 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 		str_hash_grep(ses->buffer[ses->scroll_row], TRUE);
 	}
 
-	if (ses->logfile)
+	if (!HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL))
 	{
-		logit(ses, linelog, ses->logfile);
+		if (ses->logfile)
+		{
+			logit(ses, linelog, ses->logfile);
+		}
 	}
 
 	if (gtd->chat)

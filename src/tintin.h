@@ -240,7 +240,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
 #define SES_FLAG_QUIET                (1 << 14)
-
+#define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
 #define SES_FLAG_GAG                  (1 << 18)
@@ -670,7 +670,7 @@ extern DO_CHAT(chat_zap);
 extern  int chat_new(int s);
 extern void chat_call(const char *ip);
 extern void close_chat(struct chat_data *buddy, int unlink);
-extern void process_chat_connections(fd_set *input_set, fd_set *exc_set);
+extern void process_chat_connections(fd_set *read_set, fd_set *write_set, fd_set *exc_set);
 extern void chat_forward_session(struct session *ses, char *linelog);
 extern void chat_socket_printf(struct chat_data *buddy, const char *format, ...);
 extern void chat_printf(const char *format, ...);
@@ -768,6 +768,7 @@ extern void mathexp_level(struct listnode *node);
 extern void mathexp_compute(struct listnode *node);
 extern double tintoi(const char *str);
 extern double tincmp(const char *left, const char *right);
+extern double tineval(const char *left, const char *right);
 extern double tindice(const char *left, const char *right);
 
 #endif
@@ -821,6 +822,7 @@ extern DO_CONFIG(config_verbatimchar);
 extern DO_CONFIG(config_repeatchar);
 extern DO_CONFIG(config_debugtelnet);
 extern DO_CONFIG(config_convertmeta);
+extern DO_CONFIG(config_loglevel);
 
 #endif
 
@@ -998,7 +1000,6 @@ extern void init_tintin(void);
 
 extern DO_COMMAND(do_all);
 extern DO_COMMAND(do_bell);
-extern DO_COMMAND(do_boss);
 extern DO_COMMAND(do_commands);
 extern DO_COMMAND(do_cr);
 extern DO_COMMAND(do_echo);
@@ -1056,6 +1057,7 @@ extern int send_echo_off(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_ip(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1248,14 +1250,11 @@ extern DO_COMMAND(do_variable);
 extern DO_COMMAND(do_internal_variable);
 extern DO_COMMAND(do_unvariable);
 
-extern DO_COMMAND(do_getlistlength);
-extern DO_COMMAND(do_getitemnr);
 extern DO_COMMAND(do_format);
 extern DO_COMMAND(do_tolower);
 extern DO_COMMAND(do_toupper);
 extern DO_COMMAND(do_postpad);
 extern DO_COMMAND(do_prepad);
-extern DO_COMMAND(do_removestring);
 extern DO_COMMAND(do_replacestring);
 
 #endif

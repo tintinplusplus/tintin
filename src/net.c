@@ -137,7 +137,8 @@ void read_buffer_mud(struct session *ses)
 
 	if ((size = read(ses->socket, buf, BUFFER_SIZE - 1)) == -1)
 	{
-		perror("\n\033[0mread_buffer_mud: read");
+		tintin_printf2(ses, "");
+		perror("read_buffer_mud:");
 	}
 
 	if (size <= 0)

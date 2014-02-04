@@ -1005,3 +1005,19 @@ tick.c         Can use 1d10 etc for the times in #delay.
 
 main.c         Added -h and -e as startup options.
 
+August 2006    - 1.96.2
+
+variables.c    Removed #getitemnr, obsolete with the #list command.
+
+variables.c    Removed #getlistlength, obsolete with the #list command.
+
+variables.c    Removed #removestring, obsolete with the #replacestring command.
+
+math.c         Added tineval to properly evaluate == and !=
+
+chat.c         Now setting NONBLOCK on the chat port due to reports about
+               disconnects hanging tintin.
+
+config.c       Added #config {log level} {low|high} which is a hidden config
+               option. Defaults to high, when set to low tintin will log the
+               raw mud output.

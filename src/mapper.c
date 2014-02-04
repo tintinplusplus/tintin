@@ -61,6 +61,23 @@ DO_COMMAND(do_redit)
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
+	if (!strcasecmp(left, ""))
+	{
+		tintin_printf2(ses, "Available redit options");
+		tintin_printf2(ses, "#redit list                          (shows list of created rooms)");
+		tintin_printf2(ses, "#redit goto <room name>              (moves you to given room)");
+		tintin_printf2(ses, "#redit map <radius>                  (shows an ascii map)");
+		tintin_printf2(ses, "#redit create <direction>            (creates a new room)");
+		tintin_printf2(ses, "#redit link <direction> <room name>  (links 2 rooms)");
+		tintin_printf2(ses, "#redit name <room name>              (set the room's name)");
+		tintin_printf2(ses, "#redit color <color code>            (set the room's color for map)");
+		tintin_printf2(ses, "#redit find <room name>              (#map and #walk to use)");
+		tintin_printf2(ses, "#redit load <filename>               (load your map from a file)");
+		tintin_printf2(ses, "#redit save <filename>               (save your map to a file)");
+
+		return ses;
+	}
+
 	if (!strcasecmp(left, "goto"))
 	{
 		room = find_room(ses, right);
@@ -78,6 +95,20 @@ DO_COMMAND(do_redit)
 		create_room(ses, "{1} {0} {<078>} {firstroom}");
 
 		tintin_printf2(ses, "First room created, used #redit goto firstroom, to proceed");
+
+		return ses;
+	}
+
+	if (!strcasecmp(left, "load"))
+	{
+		do_readmap(ses, right);
+
+		return ses;
+	}
+
+	if (!strcasecmp(left, "save"))
+	{
+		do_writemap(ses, right);
 
 		return ses;
 	}
@@ -260,18 +291,7 @@ DO_COMMAND(do_redit)
 		tintin_printf2(ses, "Created new room.");
 	}
 
-	if (!strcasecmp(left, ""))
-	{
-		tintin_printf2(ses, "Available redit options");
-		tintin_printf2(ses, "#redit list                          (shows list of created rooms)");
-		tintin_printf2(ses, "#redit goto <room name>              (moves you to given room)");
-		tintin_printf2(ses, "#redit map <radius>                  (shows an ascii map)");
-		tintin_printf2(ses, "#redit create <direction>            (creates a new room)");
-		tintin_printf2(ses, "#redit link <direction> <room name>  (links 2 rooms)");
-		tintin_printf2(ses, "#redit name <room name>              (set the room's name)");
-		tintin_printf2(ses, "#redit color <color code>            (set the room's color for map)");
-		tintin_printf2(ses, "#redit find <room name>              (#map and #walk to use)");
-	}
+	do_redit(ses, "");
 
 	return ses;
 }
@@ -860,4 +880,91 @@ void search_coord(int vnum, short x, short y, short z)
 			}
 		}
 	}
+}
+
+DO_COMMAND(do_readmap)
+{
+	FILE *myfile;
+	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
+
+	get_arg_in_braces(arg, filename, TRUE);
+
+	if ((myfile = fopen(filename, "r")) == NULL)
+	{
+		tintin_printf(ses, "#ERROR: #READMAP {%s} - FILE NOT FOUND.", filename);
+		return(ses);
+	}
+
+	SET_BIT(gts->flags, SES_FLAG_QUIET);
+
+	while (fgets(buffer, BUFFER_SIZE - 1, myfile))
+	{
+		for (cptr = buffer ; *cptr && *cptr != '\n' ; cptr++);
+
+		*cptr = 0;
+
+		switch (buffer[0])
+		{
+			case 'R':
+				ses->in_room = create_room(ses, &buffer[2]);
+				break;
+			case 'E':
+				create_exit(ses, &buffer[2]);
+				break;
+		}
+	}
+
+	DEL_BIT(gts->flags, SES_FLAG_QUIET);
+
+	fclose(myfile);
+
+	show_message(ses, -1, "#OK. FILE READ.");
+
+	return(ses);
+}
+
+DO_COMMAND(do_writemap)
+{
+	FILE *file;
+	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE];
+	struct exit_data *exit;
+	int vnum;
+
+	get_arg_in_braces(arg, filename, TRUE);
+
+	if (*buffer == 0 || (file = fopen(filename, "w")) == NULL)
+	{
+		tintin_printf(ses, "#ERROR: #WRITEMAP {%s} - COULDN'T OPEN FILE TO WRITE.", filename);
+		return ses;
+	}
+
+	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	{
+		if (ses->room_list[vnum])
+		{
+			sprintf(buffer, "R {%5d} {%d} {%s} {%s}\n",
+				ses->room_list[vnum]->vnum,
+				ses->room_list[vnum]->flags,
+				ses->room_list[vnum]->color,
+				ses->room_list[vnum]->name);
+
+			fputs(buffer, file);
+
+			for (exit = ses->room_list[vnum]->f_exit ; exit ; exit = exit->next)
+			{
+				sprintf(buffer, "E {%5d} {%s} {%s}\n",
+					exit->vnum,
+					exit->name,
+					exit->cmd);
+
+				fputs(buffer, file);
+			}
+		}
+	}
+
+	fclose(file);
+
+	show_message(ses, -1, "#OK. FILE WRITTEN.");
+
+	return ses;
 }

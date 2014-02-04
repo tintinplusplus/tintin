@@ -476,3 +476,27 @@ DO_CONFIG(config_convertmeta)
 	return ses;
 }
 
+DO_CONFIG(config_loglevel)
+{
+	char buf[NUMBER_SIZE];
+
+	if (!strcasecmp(arg, "LOW"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_LOGLEVEL);
+	}
+	else if (!strcasecmp(arg, "HIGH"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_LOGLEVEL);
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <LOW|HIGH>", config_table[index].name);
+
+		return NULL;
+	}
+	sprintf(buf, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, capitalize(arg), buf, LIST_CONFIG);
+
+	return ses;
+}

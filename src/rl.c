@@ -65,7 +65,6 @@ void initrl(void)
 	rl_macro_bind("\033[8~", "[[#buffer e]]", gtd->keymap);
 	rl_macro_bind("\033[F",  "[[#buffer e]]", gtd->keymap);
 	rl_macro_bind("\\C-t",   "[[#buffer l]]", gtd->keymap);
-
 }
 
 
@@ -77,12 +76,12 @@ void printline(struct session *ses, const char *str, int prompt)
  	{
 		return;
 	}
-/*
+
 	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
 	{
 		return;
 	}
-*/
+
 	word_wrap(ses, str, wrapped_str, TRUE);
 
 /*	strcpy(wrapped_str, str); */
@@ -100,22 +99,23 @@ void printline(struct session *ses, const char *str, int prompt)
 
 void bait(void)
 {
-	fd_set readfds, excfds;
+	fd_set readfds, writefds, excfds;
 	struct session *ses;
 	struct chat_data *buddy;
-	struct timeval to;
+	static struct timeval to;
 	int rv;
 
 	to.tv_sec  = 0;
+	to.tv_usec = 0;
 
 	{
 		FD_ZERO(&readfds);
+		FD_ZERO(&writefds);
+		FD_ZERO(&excfds);
 
 		if (!FD_ISSET(0, &readfds))
 		{
-			FD_ZERO(&readfds);
-			FD_ZERO(&excfds);
-			FD_SET(0, &readfds);	/* stdin */
+			FD_SET(0, &readfds);  /* stdin */
 
 			if (gtd->chat)
 			{
@@ -127,6 +127,7 @@ void bait(void)
 				if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 				{
 					FD_SET(ses->socket, &readfds);
+					FD_SET(ses->socket, &writefds);
 					FD_SET(ses->socket, &excfds);
 				}
 			}
@@ -136,13 +137,12 @@ void bait(void)
 				for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
 				{
 					FD_SET(buddy->fd, &readfds);
+					FD_SET(buddy->fd, &writefds);
 					FD_SET(buddy->fd, &excfds);
 				}
 			}
 
-			to.tv_usec = 0;
-
-			rv = select(FD_SETSIZE, &readfds, NULL, &excfds, &to);
+			rv = select(FD_SETSIZE, &readfds, &writefds, &excfds, &to);
 
 			if (rv <= 0)
 			{
@@ -155,7 +155,7 @@ void bait(void)
 
 			if (gtd->chat)
 			{
-				process_chat_connections(&readfds, &excfds);
+				process_chat_connections(&readfds, &writefds, &excfds);
 			}
 
 			for (ses = gts->next ; ses ; ses = gtd->update)
@@ -164,6 +164,9 @@ void bait(void)
 
 				if (FD_ISSET(ses->socket, &excfds))
 				{
+					FD_CLR(ses->socket, &readfds);
+					FD_CLR(ses->socket, &writefds);
+
 					cleanup_session(ses);
 				}
 			}
@@ -557,14 +560,8 @@ void quitmsg(const char *m)
 
 	if (history_max_entries != 0)
 	{
-		if (getenv("TINTIN_HISTORY") == NULL)
-		{
-			sprintf(filestring, "%s/%s", getenv("HOME"), HISTORY_FILE);
-		}
-		else
-		{
-			sprintf(filestring, "%s/%s", getenv("TINTIN_HISTORY"), HISTORY_FILE);
-		}
+		sprintf(filestring, "%s/%s", getenv("HOME"), HISTORY_FILE);
+
 		write_history(filestring);
 	}
 

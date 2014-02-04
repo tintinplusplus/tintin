@@ -35,7 +35,6 @@ const struct command_type command_table[] =
 	{	"alias",             do_alias,             CMD_FLAG_NONE    },
 	{	"all",               do_all,               CMD_FLAG_SUB     },
 	{	"bell",              do_bell,              CMD_FLAG_NONE    },
-	{	"boss",              do_boss,              CMD_FLAG_NONE    },
 	{	"buffer",            do_buffer,            CMD_FLAG_SUB     },
 	{	"chat",              do_chat,              CMD_FLAG_SUB     },
 	{	"class",             do_class,             CMD_FLAG_SUB     },
@@ -51,8 +50,6 @@ const struct command_type command_table[] =
 	{	"function",          do_function,          CMD_FLAG_NONE    },
 	{	"gag",               do_gag,               CMD_FLAG_NONE    },
 	{	"gagline",           do_gagline,           CMD_FLAG_NONE    },
-	{	"getitemnr",         do_getitemnr,         CMD_FLAG_SUB     },
-	{	"getlistlength",     do_getlistlength,     CMD_FLAG_SUB     },
 	{	"grep",              do_grep,              CMD_FLAG_SUB     },
 	{	"help",              do_help,              CMD_FLAG_NONE    },
 	{	"highlight",         do_highlight,         CMD_FLAG_NONE    },
@@ -76,9 +73,7 @@ const struct command_type command_table[] =
 	{	"pathdir",           do_pathdir,           CMD_FLAG_NONE    },
 	{	"prompt",            do_prompt,            CMD_FLAG_NONE    },
 	{	"read",              do_read,              CMD_FLAG_SUB     },
-	{	"readmap",           do_readmap,           CMD_FLAG_SUB     },
 	{	"redit",             do_redit,             CMD_FLAG_SUB     },
-	{	"removestring",      do_removestring,      CMD_FLAG_NONE    },
 	{	"replacestring",     do_replacestring,     CMD_FLAG_SUB     },
 	{	"return",            do_return,            CMD_FLAG_NONE    },
 	{	"savepath",          do_savepath,          CMD_FLAG_SUB     },
@@ -110,7 +105,6 @@ const struct command_type command_table[] =
 	{	"variable",          do_variable,          CMD_FLAG_NONE    },
 	{	"walk",              do_walk,              CMD_FLAG_NONE    },
 	{	"write",             do_write,             CMD_FLAG_SUB     },
-	{	"writemap",          do_writemap,          CMD_FLAG_SUB     },
 	{	"zap",               do_zap,               CMD_FLAG_NONE    },
 	{	"",                  NULL,                 CMD_FLAG_NONE    }
 };
@@ -356,6 +350,13 @@ const struct config_type config_table[] =
 		"Tintin converts meta prefixed characters.",
 		"Tintin doesn't convert meta prefixed characters.",
 		config_convertmeta
+	},
+
+	{
+		"LOG LEVEL",
+		"Tintin only logs low level mud data.",
+		"Tintin only logs high level mud data.",
+		config_loglevel
 	},
 
 	{

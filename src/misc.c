@@ -60,23 +60,6 @@ DO_COMMAND(do_bell)
 }
 
 
-DO_COMMAND(do_boss)
-{
-	int i;
-
-	for (i = 0 ; i < 50 ; i++)
-	{
-		tintin_printf2(ses, "in-order traverse of tree starting from node %2d resulted in %2d red nodes\n", i, 50-i);
-	}
-	/*
-		stop screen from scrolling stuff
-	*/
-	getchar();
-
-	return ses;
-}
-
-
 DO_COMMAND(do_commands)
 {
 	char buf[BUFFER_SIZE] = { 0 }, add[BUFFER_SIZE];

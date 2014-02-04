@@ -1232,7 +1232,7 @@
 
      Syntax: #readold {<filename>}
 
-     Description: same as #readnew, but converts old v1.86 scripts to
+     Description: same as #readnew, but converts old v1.84 scripts to
      the new format (some of it)
 
 
@@ -1917,7 +1917,7 @@
      on TMC or simply not having the required functionality that is
      expected nowadays to be worth mentioning, I figured it was time to
      see what I could do. So I downloaded the latest official tintin++
-     release v1.86b and started an evaluation. It didn't take long to
+     release v1.84b and started an evaluation. It didn't take long to
      find out the main problems. Over functionality, inconsistant
      command syntax, total chaos, anarchistic implementation views,
      all in all enough to end up deleting about 33% of the code, and

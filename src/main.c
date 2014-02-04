@@ -160,14 +160,8 @@ int main(int argc, char **argv)
 
 	if (getenv("HOME") != NULL)
 	{
-		if (getenv("TINTIN_HISTORY") == NULL)
-		{
-			sprintf(filestring, "%s/%s", getenv("HOME"), HISTORY_FILE);
-		}
-		else
-		{
-			sprintf(filestring, "%s/%s", getenv("TINTIN_HISTORY"), HISTORY_FILE);
-		}
+		sprintf(filestring, "%s/%s", getenv("HOME"), HISTORY_FILE);
+
 		read_history(filestring);
 
 		add_history("");
@@ -255,7 +249,7 @@ void init_tintin(void)
 
 	SET_BIT(gts->flags, SES_FLAG_VERBOSE);
 
-	do_configure(gts, "{SPEEDWALK}          {ON}");
+	do_configure(gts, "{SPEEDWALK}         {OFF}");
 	do_configure(gts, "{VERBATIM}          {OFF}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
 	do_configure(gts, "{ECHO COMMAND}       {ON}");

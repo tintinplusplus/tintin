@@ -221,7 +221,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 		{
 			if (*arg)
 			{
-				get_arg_with_spaces(arg, arg);
+				get_arg_in_braces(arg, arg, TRUE);
 				substitute(ses, arg, newcommand, SUB_VAR|SUB_FUN);
 				parse_input(newcommand, sesptr);  /* was: #sessioname commands */
 				return ses;
@@ -237,7 +237,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 	{
 		int i = atoi(command);
 
-		get_arg_in_braces(arg, arg, 1);
+		get_arg_in_braces(arg, arg, TRUE);
 
 		while (i-- > 0)
 		{
