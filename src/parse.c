@@ -95,7 +95,7 @@ struct session *parse_input(struct session *ses, char *input)
 			write_mud(ses, line, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 		}
 
-		if (*input == ';')
+		if (*input == COMMAND_SEPARATOR)
 		{
 			input++;
 		}

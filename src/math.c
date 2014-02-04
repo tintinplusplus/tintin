@@ -702,6 +702,29 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 
 double tintoi(char *str)
 {
+	char *ptr = str;
+
+	if (*ptr == 0)
+	{
+		return 0;
+	}
+
+	if (isdigit(*ptr))
+	{
+		return atof(str);
+	}
+
+	ptr++;
+
+	while (*ptr)
+	{
+		if (!isdigit(*ptr) && *ptr != '.')
+		{
+			return 0;
+		}
+		ptr++;
+	}
+
 	switch (str[0])
 	{
 		case '!':
@@ -717,14 +740,7 @@ double tintoi(char *str)
 			return -atof(&str[1]);
 
 		default:
-			if (isdigit(str[0]))
-			{
-				return atof(str);
-			}
-			else
-			{
-				return 0;
-			}
+			return 0;
 	}
 }
 

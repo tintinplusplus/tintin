@@ -111,8 +111,12 @@ DO_ARRAY(array_clear)
 
 DO_ARRAY(array_create)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 	int index = 1;
+
+	substitute(ses, arg, arg3, SUB_VAR|SUB_FUN);
+
+	arg = arg3;
 
 	if (list->root)
 	{
@@ -125,7 +129,7 @@ DO_ARRAY(array_create)
 	{
 		sprintf(arg1, "%d", index++);
 
-		arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+		arg = get_arg_in_braces(arg, arg2, GET_ONE);
 
 		insert_node_list(list->root, arg1, arg2, "");
 	}

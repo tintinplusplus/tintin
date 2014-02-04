@@ -32,6 +32,7 @@
 struct command_type command_table[] =
 {
 	{    "action",            do_action,            TOKEN_TYP_COMMAND },
+	{    "advertise",         do_advertise,         TOKEN_TYP_COMMAND },
 	{    "alias",             do_alias,             TOKEN_TYP_COMMAND },
 	{    "all",               do_all,               TOKEN_TYP_COMMAND },
 	{    "bell",              do_bell,              TOKEN_TYP_COMMAND },
@@ -767,6 +768,7 @@ struct event_type event_table[] =
 	{    "IAC ",                                   "Triggers on telopt negotiation."         },
 	{    "MAP ENTER ROOM",                         "Triggers when entering a map room."      },
 	{    "MAP EXIT ROOM",                          "Triggers when exiting a map room."       },
+	{    "PROGRAM START",                          "Triggers when main session starts."      },
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."      },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },
 	{    "RECEIVED LINE",                          "Triggers when a new line is received."   },
@@ -813,6 +815,7 @@ struct history_type history_table[] =
 
 struct buffer_type buffer_table[] =
 {
+	{    "CLEAR",             buffer_clear,        "Clear buffer."                                  },
 	{    "DOWN",              buffer_down,         "Scroll down one page."                          },
 	{    "END",               buffer_end,          "Scroll down to the end of the buffer."          },
 	{    "FIND",              buffer_find,         "Move to the given string in the buffer."        },
@@ -897,8 +900,8 @@ struct telopt_type telopt_table[] =
 	{    "66",                TEL_N,               NEG_U },
 	{    "67",                TEL_N,               NEG_U },
 	{    "68",                TEL_N,               NEG_U },
-	{    "MSDP",              TEL_N,               NEG_U },
-	{    "MSSP",              TEL_N,               NEG_U },
+	{    "MSDP",              TEL_N,               NEG_U }, /* Mud Server Data Protocol */
+	{    "MSSP",              TEL_N,               NEG_U }, /* Mud Server Status Protocol */
 	{    "71",                TEL_N,               NEG_U },
 	{    "72",                TEL_N,               NEG_U },
 	{    "73",                TEL_N,               NEG_U },
@@ -913,15 +916,15 @@ struct telopt_type telopt_table[] =
 	{    "82",                TEL_N,               NEG_U },
 	{    "83",                TEL_N,               NEG_U },
 	{    "84",                TEL_N,               NEG_U },
-	{    "MCCP1",             TEL_N,               NEG_U },
-	{    "MCCP2",             TEL_Y,               NEG_U },
+	{    "MCCP1",             TEL_N,               NEG_U }, /* Obsolete */
+	{    "MCCP2",             TEL_Y,               NEG_U }, /* Mud Client Compression Protocol */
 	{    "87",                TEL_N,               NEG_U },
 	{    "88",                TEL_N,               NEG_U },
 	{    "89",                TEL_N,               NEG_U },
-	{    "MSP",               TEL_N,               NEG_U },
-	{    "MXP",               TEL_N,               NEG_U },
+	{    "MSP",               TEL_N,               NEG_U }, /* Mud Sound Protocl */
+	{    "MXP",               TEL_N,               NEG_U }, /* Mud eXtension Protocol */
 	{    "92",                TEL_N,               NEG_U }, /* MSP2 draft */
-	{    "ZMP",               TEL_N,               NEG_U },
+	{    "ZMP",               TEL_N,               NEG_U }, /* Zenith Mud Protocl */
 	{    "94",                TEL_N,               NEG_U },
 	{    "95",                TEL_N,               NEG_U },
 	{    "96",                TEL_N,               NEG_U },

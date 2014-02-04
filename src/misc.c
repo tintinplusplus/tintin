@@ -204,7 +204,7 @@ DO_COMMAND(do_forall)
 
 			ses = script_driver(ses, -1, temp);
 
-			if (*arg == ';')
+			if (*arg == COMMAND_SEPARATOR)
 			{
 				arg++;
 			}

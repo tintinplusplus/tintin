@@ -149,11 +149,12 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				break;
 
 			case Z_STREAM_END:
-				cplen = ses->mccp->next_out - gtd->mccp_buf;
-				cpsrc = gtd->mccp_buf;
-
 				tintin_puts2(ses, "");
-				tintin_puts2(ses, "#COMPRESSION END, DISABLING MCCP.");
+				tintin_printf2(ses, "#COMPRESSION END, DISABLING MCCP.");
+
+				cpsrc = src + (cplen - ses->mccp->avail_in);
+				cplen = ses->mccp->avail_in;
+
 				inflateEnd(ses->mccp);
 				free(ses->mccp);
 				ses->mccp = NULL;
@@ -176,7 +177,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 		cpsrc = src;
 	}
 
-	if (ses->read_len + cplen >= ses->read_max)
+ 	if (ses->read_len + cplen >= ses->read_max)
 	{
 		ses->read_max = ses->read_len + cplen + 1000;
 		ses->read_buf = (unsigned char *) realloc(ses->read_buf, ses->read_max);

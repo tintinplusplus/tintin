@@ -933,7 +933,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 				}
 			}
 
-			if (*arg == ';')
+			if (*arg == COMMAND_SEPARATOR)
 			{
 				arg++;
 			}

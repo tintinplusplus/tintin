@@ -219,32 +219,37 @@ void mathstring(struct session *ses, char *str)
 	get_number_string(ses, str, str);
 }
 
-void thousandgroupingstring(char *str)
+void thousandgroupingstring(struct session *ses, char *str)
 {
 	char result[BUFFER_SIZE], strold[BUFFER_SIZE];
-	int cnt1, cnt2, cnt3;
+	int cnt1, cnt2, cnt3, cnt4;
 
-	sprintf(strold, "%lld", atoll(str));
+	get_number_string(ses, str, strold);
 
 	cnt1 = strlen(strold);
-	cnt2 = strlen(strold) + (strlen(strold) - 1 - (atoll(strold) < 0)) / 3;
+	cnt2 = BUFFER_SIZE / 2;
+	cnt4 = strchr(strold, '.') ? 0 : 1;
 
-	for (cnt3 = 0 ; cnt2 >= 0 ; cnt1--, cnt2--, cnt3++)
+	result[cnt2+1] = 0;
+
+	for (cnt3 = 0 ; cnt1 >= 0 ; cnt1--, cnt2--)
 	{
+		if (cnt3++ % 3 == 0 && cnt3 != 1 && isdigit(strold[cnt1]))
+		{
+			result[cnt2--] = ',';
+		}
+
 		result[cnt2] = strold[cnt1];
 
-		if (cnt3 && cnt3 % 3 == 0)
+		if (!isdigit(result[cnt2]))
 		{
-			result[--cnt2] = ',';
+			cnt4 = 1;
+			cnt3 = 0;
+			continue;
 		}
 	}
 
-	if (atoll(strold) < 0)
-	{
-		result[0] = '-';
-	}
-
-	strcpy(str, result);
+	strcpy(str, result + cnt2 + 1);
 }
 
 
@@ -501,7 +506,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'G':
-						thousandgroupingstring(arglist[i]);
+						thousandgroupingstring(ses, arglist[i]);
 						break;
 
 					case 'L':

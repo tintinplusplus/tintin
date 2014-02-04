@@ -323,6 +323,7 @@ void delay_update(void)
 	struct session *ses;
 	struct listnode *node;
 	struct listroot *root;
+	char buf[BUFFER_SIZE];
 
 	open_timer(TIMER_UPDATE_DELAYS);
 
@@ -343,11 +344,13 @@ void delay_update(void)
 
 			if (node->data <= gtd->time)
 			{
-				show_debug(ses, LIST_DELAY, "#DEBUG DELAY {%s}", node->right);
+				strcpy(buf, node->right);
 
-				script_driver(ses, LIST_DELAY, node->right);
+				show_debug(ses, LIST_DELAY, "#DEBUG DELAY {%s}", buf);
 
 				delete_node_list(ses, LIST_DELAY, node);
+
+				script_driver(ses, LIST_DELAY, buf);
 			}
 		}
 	}

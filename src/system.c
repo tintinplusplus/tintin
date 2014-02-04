@@ -188,20 +188,20 @@ DO_COMMAND(do_system)
 
 	show_message(ses, LIST_MESSAGE, "#OK: EXECUTING '%s'", left);
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_READMUD) && IS_SPLIT(gtd->ses))
 	{
-		save_pos(ses);
-		goto_rowcol(ses, ses->bot_row, 1);
+		save_pos(gtd->ses);
+		goto_rowcol(gtd->ses, gtd->ses->bot_row, 1);
 	}
-
 	fflush(stdout);
 
 	system(left);
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_READMUD) && IS_SPLIT(gtd->ses))
 	{
-		restore_pos(ses);
+		restore_pos(gtd->ses);
 	}
+	fflush(stdout);
 
 	return ses;
 }

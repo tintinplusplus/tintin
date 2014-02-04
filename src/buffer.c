@@ -556,6 +556,33 @@ DO_COMMAND(do_buffer)
 	return ses;
 }
 
+DO_BUFFER(buffer_clear)
+{
+	int cnt;
+
+	cnt = ses->scroll_row;
+		
+	do
+	{
+		if (++cnt == ses->scroll_max)
+		{
+			cnt = 0;
+		}
+
+		if (ses->buffer[cnt] == NULL)
+		{
+			break;
+		}
+		ses->buffer[cnt] = str_unhash(ses->buffer[cnt]);
+	}
+	while (cnt != ses->scroll_row);
+
+	ses->scroll_row  = ses->scroll_max - 1;
+	ses->scroll_line = - 1;
+
+	return;
+}
+
 DO_BUFFER(buffer_up)
 {
 	int scroll_size, scroll_cnt, buffer_add, buffer_tmp;

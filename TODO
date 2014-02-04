@@ -12,13 +12,21 @@ GENERAL STUFF:
 
 - #buffer copy {line} {variable}
 
-- Look into fixing atoff("inf") returning a big number.
+- Look into old school automatic packet patching.
 
 - Add split pane scrollback
 
 - Add a ARG_LEN / ARG_MAX setting.
 
 - Add a #line skip option.
+
+- look into color patch with 256 color codes.
+
+- #config toggle for big5
+
+- Deal with escaping { } / ; in #script variables.
+
+- Make tintin char set by session instead of global.
 
 -------------------------------------------------------------------------------
 
@@ -43,6 +51,17 @@ MAPPING STUFF:
 - Better #map undo support.
 
 - Add conditional if checks for room traversal.
+
+-------------------------------------------------------------------------------
+DEBUGGING STUFF:
+
+#SESSION 'mssp' DIED.
+
+#THERE'S NO ACTIVE SESSION NOW.
+#UNLINK ERROR in file session.c on line 351
+DEBUG_STACK[000] = cleanup_session(0x8205430)
+
+ERROR: close in cleanup (9: Bad file descriptor)
 
 -------------------------------------------------------------------------------
 

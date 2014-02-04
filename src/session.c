@@ -172,6 +172,12 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	push_call("new_session(%p,%p,%p,%d)",ses,name,address,desc);
 
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_TERMINATE))
+	{
+		pop_call();
+		return ses;
+	}
+
 	address = get_arg_in_braces(address, host, FALSE);
 	address = get_arg_in_braces(address, port, FALSE);
 

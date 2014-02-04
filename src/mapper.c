@@ -883,9 +883,20 @@ DO_MAP(map_read)
 
 		for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
 		{
-			if (ses->map->room_list[exit->vnum] == NULL)
+			if (exit->vnum < 0 || exit->vnum >= ses->map->size || ses->map->room_list[exit->vnum] == NULL)
 			{
-				tintin_printf2(ses, "#MAP READ: Room %d - invalid exit '%s'.", room, exit->name);
+				tintin_printf2(ses, "#MAP READ: Room %d - invalid exit '%s' to room %d.", room, exit->name, exit->vnum);
+
+				delete_exit(ses, room, exit);
+
+				if (ses->map->room_list[room]->f_exit)
+				{
+					exit = ses->map->room_list[room]->f_exit;
+				}
+				else
+				{
+					break;
+				}
 			}
 		}
 	}
@@ -1621,20 +1632,20 @@ void del_undo(struct session *ses, struct link_data *link)
 
 struct grid_node
 {
-	short vnum;
-	short x;
-	short y;
-	short z;
-	short size;
+	int vnum;
+	int x;
+	int y;
+	int z;
+	int size;
 };
 
-void build_map_grid_bf(short vnum, short x, short y, short z)
+void build_map_grid_bf(int vnum, int x, int y, int z)
 {
-	short head, tail;
+	int head, tail;
 	struct grid_node *node, *temp, list[MAP_BF_SIZE];
 	struct exit_data *exit;
 	struct room_data *room;
-	short xx, yy, zz;
+	int xx, yy, zz;
 
 	head = 0;
 	tail = 1;
@@ -1718,9 +1729,9 @@ void build_map_grid_bf(short vnum, short x, short y, short z)
 
 
 
-void create_map_grid(struct session *ses, short room, short x, short y)
+void create_map_grid(struct session *ses, int room, int x, int y)
 {
-	short vnum;
+	int vnum;
 
 	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
@@ -1871,6 +1882,12 @@ void show_vtmap(struct session *ses)
 	push_call("show_vtmap(%p)",ses);
 
 	if (ses->map == NULL || !HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
+	{
+		pop_call();
+		return;
+	}
+
+	if (ses->map->room_list[ses->map->in_room] == NULL)
 	{
 		pop_call();
 		return;
@@ -2308,7 +2325,7 @@ int revdir(int dir)
 	return revdir;
 }
 
-struct exit_data *find_exit_dir(struct session *ses, int room, short dir)
+struct exit_data *find_exit_dir(struct session *ses, int room, int dir)
 {
 	struct exit_data *exit;
 
@@ -2341,7 +2358,7 @@ struct exit_data *find_exit_dir(struct session *ses, int room, short dir)
 	Fast, short distance node weighted algorithms - Igor
 */
 
-short follow_void(struct session *ses, short from, short room, short dir)
+int follow_void(struct session *ses, int from, int room, int dir)
 {
 	struct exit_data *exit;
 
@@ -2371,7 +2388,7 @@ short follow_void(struct session *ses, short from, short room, short dir)
 	}
 }
 
-void search_path(short room, short size, short dir)
+void search_path(int room, int size, int dir)
 {
 	struct exit_data *exit;
 
@@ -2423,6 +2440,8 @@ void fill_map(struct session *ses)
 	int vnum, room;
 	struct exit_data *exit;
 
+	push_call("fill_map(%p)",ses);
+
 	map_search_ses       = ses;
 	map_search_tar_room  = -1;
 	map_search_max_size  = MAP_SEARCH_SIZE;
@@ -2437,6 +2456,7 @@ void fill_map(struct session *ses)
 
 	if (ses->map->in_room == 0)
 	{
+		pop_call();
 		return;
 	}
 
@@ -2452,6 +2472,7 @@ void fill_map(struct session *ses)
 		}
 	}
 
+	pop_call();
 	return;
 }
 
@@ -2606,11 +2627,13 @@ int find_coord(struct session *ses, char *arg)
 
 void search_coord_bf(int vnum)
 {
-	short head, tail;
+	int head, tail;
 	struct grid_node *node, *temp, list[MAP_BF_SIZE];
 	struct exit_data *exit;
 	struct room_data *room;
-	short xx, yy, zz;
+	int xx, yy, zz;
+
+	push_call("search_coord_bf(%d)",vnum);
 
 	head = 0;
 	tail = 1;
@@ -2642,6 +2665,7 @@ void search_coord_bf(int vnum)
 		{
 			map_search_tar_room = node->vnum;
 
+			pop_call();
 			return;
 		}
 
@@ -2677,6 +2701,8 @@ void search_coord_bf(int vnum)
 			tail = (tail + 1) % MAP_BF_SIZE;
 		}
 	}
+	pop_call();
+	return;
 }
 
 void explore_path(struct session *ses, int run, char *arg1, char *arg2)

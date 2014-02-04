@@ -135,11 +135,11 @@ void trap_handler(int signal)
 
 int main(int argc, char **argv)
 {
+	int greeting = TRUE;
+
 	#ifdef SOCKS
 		SOCKSinit(argv[0]);
 	#endif
-
-	init_tintin();
 
 	if (signal(SIGTERM, trap_handler) == BADSIG)
 	{
@@ -198,7 +198,26 @@ int main(int argc, char **argv)
 	{
 		int c;
 
-		while ((c = getopt(argc, argv, "e: h r: t: v")) != EOF)
+		while ((c = getopt(argc, argv, "e: G h r: t: v")) != EOF)
+		{
+			if (c == 'G')
+			{
+				greeting = FALSE;
+			}
+		}
+
+		optind = 1;
+	}
+
+	init_tintin(greeting);
+
+	if (argc > 1)
+	{
+		int c;
+
+		optind = 1;
+
+		while ((c = getopt(argc, argv, "e: G h r: t: v")) != EOF)
 		{
 			switch (c)
 			{
@@ -206,10 +225,15 @@ int main(int argc, char **argv)
 					gtd->ses = script_driver(gtd->ses, -1, optarg);
 					break;
 
+				case 'G':
+					break;
+
 				case 'h':
 					tintin_printf(NULL, "Usage: %s [OPTION]... [FILE]...", argv[0]);
 					tintin_printf(NULL, "");
 					tintin_printf(NULL, "  -e  Execute given command.");
+					tintin_printf(NULL, "  -G  Don't show the greeting screen.");
+					tintin_printf(NULL, "  -h  This help section.");
 					tintin_printf(NULL, "  -r  Read given file.");
 					tintin_printf(NULL, "  -t  Set given title.");
 					tintin_printf(NULL, "  -v  Enable verbose mode.");
@@ -235,12 +259,13 @@ int main(int argc, char **argv)
 					break;
 			}
 		}
-		
+
 		if (argv[optind] != NULL)
 		{
 			gtd->ses = do_read(gtd->ses, argv[optind]);
 		}
-	} 
+	}
+	check_all_events(gts, 0, 0, "PROGRAM START");
 
 	mainloop();
 
@@ -248,7 +273,7 @@ int main(int argc, char **argv)
 }
 
 
-void init_tintin(void)
+void init_tintin(int greeting)
 {
 	int ref, index;
 
@@ -341,33 +366,20 @@ void init_tintin(void)
 
 	init_terminal();
 
-	do_showme(gts, "");
-	do_showme(gts, "<068>      #<068>###################################################################<068>#");
-	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>                     T I N T I N + +   "VERSION_NUM"                      <068>#");
-	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>           #");
-	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,          <068>#");
-	do_showme(gts, "<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.       <068>#");
-	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>                             1992, 2009                            <068>#");
+	if (greeting)
+	{
+		do_advertise(gts, "");
 
-//	do_showme(gts, "<068>      #<078>                 Original TINTIN code by Peter Unold               <068>#");
-//	do_showme(gts, "<068>      #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,     <068>#");
-//	do_showme(gts, "<068>      #<078>                 Jeremy C. Jack, Igor van den Hoven                <068>#");
-//	do_showme(gts, "<068>      #<078>                             1992, 2009                            <068>#");
-	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-//	do_showme(gts, "<068>      #<078>                               "VERSION_NUM"                              <068>#");
-//	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<068>###################################################################<068>#<088>");
-	do_showme(gts, "");
+		do_help(gts, "GREETING");
+	}
 }
 
 
 void quitmsg(char *message)
 {
 	struct session *ses;
+
+	SET_BIT(gtd->flags, TINTIN_FLAG_TERMINATE);
 
 	while ((ses = gts->next) != NULL)
 	{

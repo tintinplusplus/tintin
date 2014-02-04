@@ -237,7 +237,7 @@ char *get_arg_foreach(struct scriptnode *token)
 
 	token->data->arg = get_arg_in_braces(token->data->arg, buf, TRUE);
 
-	if (*token->data->arg == ';')
+	if (*token->data->arg == COMMAND_SEPARATOR)
 	{
 		token->data->arg++;
 	}
@@ -324,9 +324,9 @@ int find_command(char *command)
 		}
 	}
 
-	if (isalpha(*command))
+	if (isalpha((int) *command))
 	{
-		for (cmd = gtd->command_ref[tolower(*command) - 'a'] ; *command_table[cmd].name ; cmd++)
+		for (cmd = gtd->command_ref[tolower((int) *command) - 'a'] ; *command_table[cmd].name ; cmd++)
 		{
 			if (is_abbrev(command, command_table[cmd].name))
 			{
@@ -507,7 +507,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 				}
 			}
 		}
-		if (*str == ';')
+		if (*str == COMMAND_SEPARATOR)
 		{
 			str++;
 		}

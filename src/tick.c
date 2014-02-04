@@ -80,9 +80,9 @@ DO_COMMAND(do_delay)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, arg1, 0);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, arg2, 1);
-	arg = get_arg_in_braces(arg, arg3, 1);
+	arg = sub_arg_in_braces(ses, arg, arg3, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0)
 	{
@@ -107,8 +107,6 @@ DO_COMMAND(do_delay)
 		}
 		else
 		{
-			substitute(ses, arg1, arg1, SUB_VAR|SUB_FUN);
-
 			update_node_list(ses->list[LIST_DELAY], arg1, arg2, arg3);
 
 			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg3, arg2);

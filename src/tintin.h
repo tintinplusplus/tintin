@@ -120,7 +120,7 @@
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
-#define VERSION_NUM               "1.99.8"
+#define VERSION_NUM               "1.99.9"
 
 #define ESCAPE                          27
 
@@ -292,6 +292,7 @@ enum operators
 #define TINTIN_FLAG_USERCOMMAND       (1 <<  5)
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  6)
 #define TINTIN_FLAG_VERBATIM          (1 <<  7)
+#define TINTIN_FLAG_TERMINATE         (1 <<  8)
 
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
@@ -838,8 +839,8 @@ struct room_data
 	struct exit_data        * f_exit;
 	struct exit_data        * l_exit;
 	int                       vnum;
-	short                     size;
-	short                     flags;
+	int                       size;
+	int                       flags;
 	char                    * color;
 	char                    * name;
 	char                    * symbol;
@@ -852,8 +853,8 @@ struct exit_data
 {
 	struct exit_data        * next;
 	struct exit_data        * prev;
-	short                     vnum;
-	short                     dir;
+	int                       vnum;
+	int                       dir;
 	char                    * name;
 	char                    * cmd;
 };
@@ -873,6 +874,13 @@ extern struct session *do_action(struct session *ses, char *arg);
 extern struct session *do_unaction(struct session *ses, char *arg);
 
 extern void check_all_actions(struct session *ses, char *original, char *line);
+
+#endif
+
+#ifndef __ADVERTISE_H__
+#define __ADVERTISE_H__
+
+extern DO_COMMAND(do_advertise);
 
 #endif
 
@@ -1111,13 +1119,13 @@ extern void goto_room(struct session *ses, int room);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
 extern int  get_map_exit(struct session *ses, char *arg);
 extern int  get_map_exits(struct session *ses, int room);
-extern void create_map_grid(struct session *ses, short room, short x, short y);
-extern void build_map_grid(short room, short x, short y, short z);
+extern void create_map_grid(struct session *ses, int room, int x, int y);
+extern void build_map_grid(int room, int x, int y, int z);
 extern void follow_map(struct session *ses, char *argument);
 extern void add_undo(struct session *ses, char *format, ...);
 extern void del_undo(struct session *ses, struct link_data *link);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
-extern void search_path(short room, short size, short dir);
+extern void search_path(int room, int size, int dir);
 extern void fill_map(struct session *ses);
 extern void shortest_path(struct session *ses, int run, char *delay, char *arg);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
@@ -1242,6 +1250,7 @@ extern DO_COMMAND(do_buffer);
 extern DO_COMMAND(do_grep);
 extern int show_buffer(struct session *ses);
 extern DO_BUFFER(buffer_up);
+extern DO_BUFFER(buffer_clear);
 extern DO_BUFFER(buffer_down);
 extern DO_BUFFER(buffer_home);
 extern DO_BUFFER(buffer_end);
@@ -1422,7 +1431,7 @@ extern void suspend_handler(int signal);
 extern void trap_handler(int signal);
 
 extern int main(int argc, char **argv);
-extern void init_tintin(void);
+extern void init_tintin(int greeting);
 extern void quitmsg(char *message);
 
 #endif

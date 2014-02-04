@@ -35,7 +35,7 @@ void printline(struct session *ses, char *str, int prompt)
 	push_call("printline(%p,%p,%d)",ses,str,prompt);
 
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
- 	{
+	{
 		pop_call();
 		return;
 	}

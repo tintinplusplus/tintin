@@ -1,10 +1,26 @@
+Nov 2009       1.99.9
+
+main.c         Fixed infinite reconnect trigger loop with #end.
+
+tintin.h       Can now alter the COMMAND_SEPARATOR definition in tintin.h to
+               change the command separator character.
+
+buffer.c       Added #buffer clear option.
+
+math.c         Fixed bug with ~ handling.
+
+tick.c         Fixed a bug with delays not substituting variables right away.
+
 Sep 2009       1.99.8
+
+math.c         Added check to bypass inf and nan in tintoi.
 
 update.c       Fixed a potential memory overflow in the input parser.
 
 misc.c         Fixed displaying bug with semi-colons in echos.
 
-nest.c         Added support for $variable[regex] to return lists.
+nest.c         Added support for $variable[regex] to return lists. For
+               example $variable[%*]
 
 tinexp.c       No longer required to escape literal ^ and $ signs.
                So #regex {A ^ B} {A ^ B} returns true now instead of false.

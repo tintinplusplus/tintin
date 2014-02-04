@@ -151,7 +151,7 @@ struct help_type help_table[] =
 	},
 	{
 		"BUFFER",
-		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>lock<178>|<078>write filename<178>|<078>info<178>}<078>\n"
+		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>lock<178>|<078>clear<178>|<078>write filename<178>|<078>info<178>}<078>\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
 		"         the entire scrollback buffer to file. The lock options toggles the\n"
@@ -271,8 +271,8 @@ struct help_type help_table[] =
 		"         #CONFIG {CONVERT META} {ON|OFF} Shows color codes and key bindings.\n"
 		"         #CONFIG {COLOR PATCH}  {ON|OFF} Fixes color code usage on some muds.\n"
 		"         #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
+		"         #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers.\n"
 		"         #CONFIG {MCCP}         {ON|OFF} Enable or disable MCCP support.\n"
-		"         #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers\n"
 	},
 	{
 		"CONTINUE",
@@ -387,7 +387,6 @@ struct help_type help_table[] =
 		"\n"
 		"         \\a   will beep the terminal.\n"
 		"         \\c   will send a control character, \\ca for ctrl-a.\n"
-		"         \\d   will send a decimal character, \\d255 for example.\n"
 		"         \\e   will start an escape sequence.\n"
 		"         \\n   will send a line feed.\n"
 		"         \\r   will send a carriage return.\n"
@@ -517,6 +516,20 @@ struct help_type help_table[] =
 		"<178>Comment<078>: See '#help action', for more information about triggers.\n"
 		"\n"
 		"<178>Comment<078>: You can remove a gag with the #ungag command.\n"
+	},
+	{
+		"GREETING",
+		"<068>      #<068>###################################################################<068>#\n"
+		"<068>      #<078>                                                                   <068>#\n"
+		"<068>      #<078>                     T I N T I N + +   "VERSION_NUM"                      <068>#\n"
+		"<068>      #<078>                                                                   <068>#\n"
+		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>           #\n"
+		"<068>      #<078>                                                                   <068>#\n"
+		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,          <068>#\n"
+		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.       <068>#\n"
+		"<068>      #<078>                                                                   <068>#\n"
+//		"<068>      #<078>                             1992, 2010                            <068>#\n"
+		"<068>      #<068>###################################################################<068>#<088>\n"
 	},
 	{
 		"GREP",
@@ -1394,8 +1407,6 @@ DO_COMMAND(do_help)
 
 	if (*left == 0)
 	{
-		tintin_header(ses, " HELP LIST ");
-
 		for (cnt = add[0] = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
 			if ((int) strlen(add) + 19 > ses->cols)
@@ -1406,8 +1417,6 @@ DO_COMMAND(do_help)
 			cat_sprintf(add, "%19s", help_table[cnt].name);
 		}
 		tintin_puts2(ses, add);
-
-		tintin_header(ses, "");
 	}
 	else
 	{
@@ -1418,10 +1427,6 @@ DO_COMMAND(do_help)
 			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1 || match(ses, help_table[cnt].name, left))
 			{
 				substitute(ses, help_table[cnt].text, buf, SUB_COL);
-
-				tintin_header(ses, " %s ", help_table[cnt].name);
-
-				tintin_puts2(ses, "");
 
 				pto = buf;
 
@@ -1439,7 +1444,7 @@ DO_COMMAND(do_help)
 
 					pto = ptf;
 				}
-				tintin_puts2(ses, "");
+//				tintin_puts2(ses, "");
 
 				found = TRUE;
 

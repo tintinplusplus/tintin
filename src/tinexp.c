@@ -519,11 +519,6 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 							{
 								switch (*ptt)
 								{
-									case COMMAND_SEPARATOR:
-										*pto++ = '\\';
-										*pto++ = COMMAND_SEPARATOR;
-										break;
-
 									case '\\':
 										*pto++ = '\\';
 										*pto++ = '\\';
@@ -542,6 +537,10 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 										*pto++ = '7';
 										*pto++ = 'D';
 										break;
+
+									case COMMAND_SEPARATOR:
+										*pto++ = '\\';
+										*pto++ = COMMAND_SEPARATOR;
 
 									default:
 										*pto++ = *ptt;
