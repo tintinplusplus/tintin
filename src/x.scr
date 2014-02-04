@@ -41,3 +41,6 @@ oops 5
 #loadpath bla
 #3 #walk
 #if {$bla != 3} {oops 9}
+
+#alias bla {#if {1} {#showme okie;#return};#showme dokie}
+#alias bli {#if {1} {#showme okie};#showme dokie}

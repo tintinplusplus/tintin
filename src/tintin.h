@@ -212,6 +212,7 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_GAGPROMPT            (1 << 25)
+#define SES_FLAG_BREAK                (1 << 26)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -312,7 +313,7 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define UMAX(a, b)                ((a) > (b) ? (a) : (b))
 #define UMIN(a, b)                ((a) < (b) ? (a) : (b))
 
-#define IS_SPLIT(ses)             ((ses)->rows != (ses)->bot_row)
+#define IS_SPLIT(ses)             ((ses)->rows != (ses)->bot_row || (ses)->top_row != 1)
 
 #define SCROLL(ses)               (((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
@@ -797,6 +798,7 @@ extern DO_COMMAND(do_forall);
 extern DO_COMMAND(do_message);
 extern DO_COMMAND(do_ignore);
 extern DO_COMMAND(do_debug);
+extern DO_COMMAND(do_return);
 extern DO_COMMAND(do_snoop);
 extern DO_COMMAND(do_system);
 extern DO_COMMAND(do_zap);
@@ -955,9 +957,11 @@ extern void init_telnet_session(struct session *ses);
 extern struct session *session_command(const char *arg, struct session *ses);
 extern void show_session(struct session *ses, struct session *ptr);
 extern struct session *newactive_session(void);
+extern struct session *activate_session(struct session *ses);
 extern struct session *new_session(const char *name, const char *address, struct session *ses);
 extern void connect_session(struct session *ses);
 extern void cleanup_session(struct session *ses);
+
 
 #endif
 

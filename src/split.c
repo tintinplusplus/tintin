@@ -122,17 +122,19 @@ void dirty_screen(struct session *ses)
 	{
 		init_split(ses, ses->top_row, ses->bot_row);
 	}
+	else if (IS_SPLIT(ses))
+	{
+		scroll_region(ses, ses->top_row, ses->bot_row);
+	}
 	else
 	{
 		clean_screen(ses);
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_LOCALECHO))
+	if (IS_SPLIT(ses) && ses == gtd->ses)
 	{
-		echo_on(ses);
+		goto_rowcol(ses, ses->rows, 1);
 	}
-	else
-	{
-		echo_off(ses);
-	}
+
+	fflush(stdout);
 }

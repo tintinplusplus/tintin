@@ -61,6 +61,8 @@ DO_COMMAND(do_commands)
 	return ses;
 }
 
+
+
 DO_COMMAND(do_cr)
 {
 	write_line_mud(" ", ses);
@@ -442,6 +444,20 @@ DO_COMMAND(do_debug)
 	return ses;
 }
 
+DO_COMMAND(do_return)
+{
+	char result[BUFFER_SIZE];
+
+	SET_BIT(ses->flags, SES_FLAG_BREAK);
+
+	if (*arg)
+	{
+		sprintf(result, "%s %s", "result", arg);
+
+		do_internal_variable(ses, result);
+	}
+	return ses;
+}
 
 DO_COMMAND(do_snoop)
 {

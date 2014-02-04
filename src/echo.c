@@ -28,34 +28,39 @@
 
 #include "tintin.h"
 
-
+/*
 #include <termios.h>
+*/
 
 void echo_off(struct session *ses)
 {
+/*
 	struct termios io;
 
 	tcgetattr(STDIN_FILENO, &io);
 
 	DEL_BIT(io.c_lflag, ECHO);
 
+	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
+*/
 	DEL_BIT(ses->flags, SES_FLAG_LOCALECHO);
 
 	readline_echoing_p = FALSE;
-
-	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
 }
 
 void echo_on(struct session *ses)
 {
+/*
 	struct termios io;
 
 	tcgetattr(STDIN_FILENO, &io);
 
 	SET_BIT(io.c_lflag, ECHO);
 
+	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
+*/
 	SET_BIT(ses->flags, SES_FLAG_LOCALECHO);
 
-	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
+	readline_echoing_p = TRUE;
 }
 

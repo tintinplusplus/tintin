@@ -731,3 +731,30 @@ antisubstitute Removed antisubstitutions since there seems little reason to
                ever need them.
 
 rl.c           Checking internal messages for prompt gags now
+
+
+
+june 2005
+
+
+
+files.c        If the bracing level is off in the last line tintin reports
+               the correct line instead of 0.
+
+rl.c           reading the default readline init file when leaving tintin.
+               Should help with a couple of shells not handling this properly.
+
+echo.c         removed some experimental code that ended up causing double
+               echoing when switching between sessions.
+
+split.c        fixed screen switching for muds with native vt102 interfaces.
+
+session.c      added #session {-|+|number} options to switch between sessions.
+
+files.c        no longer showing output while using #scan to speed things up
+               for huge log files.
+
+misc.c         Added #return which used in an #if check allows bailing out of
+               a semicolon seperated command string. If used in a #function
+               you can also add an argument to it to set the result, as
+               opposed to setting the $result variable directly.

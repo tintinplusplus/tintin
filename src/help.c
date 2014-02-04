@@ -188,7 +188,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.0                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.1                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -624,6 +624,15 @@ const struct help_type help_table[81] =
 		"again.\n"
 	},
 	{
+		"RETURN",
+		"\n"
+		"Command: #return {text}\n"
+		"\n"
+		"The return command can be used in an #if check to break out of a command\n"
+		"string being executed. In a #function you can use #return with an argument\n"
+		"to both break out of the function and set the result variable.\n"
+	},
+	{
 		"SCAN",
 		"\n"
 		"Command: #scan {filename}\n"
@@ -640,6 +649,12 @@ const struct help_type help_table[81] =
 		"be anything you want, except the name of an already existant session.\n"
 		"\n"
 		"Without an argument #session shows the currently active session.\n"
+		"\n"
+		"If you have more than 1 session you can use #session {-|+|number} to switch\n"
+		"between them. Using #{name} allows switching to a session with the given name.\n"
+		"\n"
+		"#{name} {command} allows executing a command with the given session without\n"
+		"changing the active session.\n"
 	},
 
 	{

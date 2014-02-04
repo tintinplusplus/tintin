@@ -43,6 +43,8 @@ struct session *parse_input(char *input, struct session *ses)
 
 	push_call("[%s] parse_input(%s,%p)",ses->name,input,ses);
 
+	DEL_BIT(ses->flags, SES_FLAG_BREAK);
+
 	if (*input == 0)
 	{
 		write_line_mud("", ses);
@@ -117,6 +119,10 @@ struct session *parse_input(char *input, struct session *ses)
 		{
 			get_arg_with_spaces(arg, arg);
 			write_com_arg_mud(command, arg, ses);
+		}
+		if (HAS_BIT(ses->flags, SES_FLAG_BREAK))
+		{
+			break;
 		}
   	}
 
@@ -227,13 +233,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 			}
 			else
 			{
-				gtd->ses = sesptr;
-
-				dirty_screen(sesptr);
-
-				tintin_printf(sesptr, "#SESSION '%s' ACTIVATED.", sesptr->name);
-
-				return sesptr;
+				return activate_session(sesptr);
 			}
 		}
 	}
@@ -274,7 +274,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 			}
 		}
 	}
-	tintin_puts2("#UNKNOWN TINTIN-COMMAND.", ses);
+	tintin_printf2(ses, "#UNKNOWN TINTIN-COMMAND '%s'.", command);
 
 	return ses;
 }

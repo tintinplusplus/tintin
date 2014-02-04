@@ -72,6 +72,11 @@ void printline(struct session *ses, const char *str, int prompt)
 	char wrapped_str[BUFFER_SIZE];
 
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
+ 	{
+		return;
+	}
+
+	if (HAS_BIT(ses->flags, SES_FLAG_SCAN))
 	{
 		return;
 	}
@@ -212,6 +217,8 @@ void commandloop(void)
 			erase_toeol();
 		}
 		free(line);
+
+		fflush(stdout);
 	}
 }
 
@@ -655,6 +662,8 @@ void quitmsg(const char *m)
 	}
 
 	clean_screen(gtd->ses);
+
+	rl_read_init_file ("");
 
 	if (m)
 	{

@@ -38,6 +38,7 @@ DO_COMMAND(do_session)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct session *sesptr;
+	int cnt;
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
@@ -53,18 +54,28 @@ DO_COMMAND(do_session)
 	}
 	else if (*left && *right == 0)
 	{
-		for (sesptr = gts->next ; sesptr; sesptr = sesptr->next)
+		if (*left == '+')
 		{
-			if (!strcmp(sesptr->name, left))
+			return activate_session(ses->next ? ses->next : gts->next);
+		}
+
+		if (*left == '-')
+		{
+			return activate_session(ses->prev ? ses->prev : gts->prev);
+		}
+
+		if (is_number(left))
+		{
+			for (cnt = 0, sesptr = gts ; sesptr ; cnt++, sesptr = sesptr->next)
 			{
-				show_session(ses, sesptr);
-				break;
+				if (cnt == atoi(left))
+				{
+					return activate_session(sesptr);
+				}
 			}
 		}
-		if (!sesptr)
-		{
-			tintin_puts("#THAT SESSION IS NOT DEFINED.", ses);
-		}
+
+		tintin_puts("#THAT SESSION IS NOT DEFINED.", ses);
 	}
 	else
 	{
@@ -127,17 +138,27 @@ struct session *newactive_session(void)
 {
 	if (gts->next)
 	{
-		gtd->ses = gts->next;
-		tintin_printf(gtd->ses, "#SESSION '%s' ACTIVATED.", gts->next->name);
+		activate_session(gts->next);
 	}
 	else
 	{
 		gtd->ses = gts;
+		dirty_screen(gtd->ses);
 		tintin_puts("#THERE'S NO ACTIVE SESSION NOW.", NULL);
 	}
-	dirty_screen(gtd->ses);
 
 	return gtd->ses;
+}
+
+struct session *activate_session(struct session *ses)
+{
+	gtd->ses = ses;
+
+	dirty_screen(ses);
+
+	tintin_printf(ses, "#SESSION '%s' ACTIVATED.", ses->name);
+
+	return ses;
 }
 
 /**********************/
@@ -190,6 +211,8 @@ struct session *new_session(const char *name, const char *address, struct sessio
 		init_split(newsession, gts->top_row, gts->bot_row);
 	}
 	init_buffer(newsession, gts->scroll_max);
+
+	dirty_screen(newsession);
 
 	connect_session(newsession);
 

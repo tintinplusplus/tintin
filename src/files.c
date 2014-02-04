@@ -216,7 +216,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 	if (lvl)
 	{
-		tintin_printf2(ses, "#READ '%s' MISSING %d '%c'. POSSIBLY ON LINE %d.", filename, abs(lvl), lvl < 0 ? DEFAULT_OPEN : DEFAULT_CLOSE, fix);
+		tintin_printf2(ses, "#READ '%s' MISSING %d '%c' ON OR BEFORE LINE %d.", filename, abs(lvl), lvl < 0 ? DEFAULT_OPEN : DEFAULT_CLOSE, fix == 0 ? lnc + 1 : fix);
 
 		fclose(fp);
 
@@ -466,6 +466,8 @@ DO_COMMAND(do_scan)
 	}
 
 	DEL_BIT(ses->flags, SES_FLAG_SCAN);
+
+	tintin_printf2(ses, "OK, SCANNED FILE '%s'.", buffer);
 
 	fclose(fp);
 
