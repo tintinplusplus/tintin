@@ -66,7 +66,7 @@ AC_PROG_MAKE_SET
 # Checks for header files.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h ctype.h fcntl.h net/errno.h netdb.h netinet/in.h param.h pthread.h socks.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/ptem.h sys/socket.h sys/termio.h sys/time.h termcap.h time.h unistd.h zlib.h util.h pty.h])
+AC_CHECK_HEADERS([arpa/inet.h ctype.h fcntl.h net/errno.h netdb.h netinet/in.h param.h pthread.h socks.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/ptem.h sys/socket.h sys/termio.h sys/time.h time.h unistd.h zlib.h util.h pty.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -90,7 +90,6 @@ AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select s
 
 # Checks libraries
 
-AC_CHECK_LIB(termcap, tgetent)
 AC_CHECK_LIB(z, inflate)
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(nsl, gethostbyname)

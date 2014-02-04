@@ -57,12 +57,8 @@ A07) There are precompiled versions for Slackware (works on various linux
 Q08) I would like to help, how can I contribute to tintin?
 
 A08) You can assist people on the message board and give bug reports or
-     suggestions.
-
-     Currently there is no development team, just a few individuals
-     working on seperate versions of tintin++, if you feel the urge to write
-     code for tintin++ try to get in touch with one of these individuals or
-     write your own version.
+     suggestions. If you can program you can add new features, though
+     inclusion in the main branch isn't guaranteed.
 
 Q09) Tintin is so awesome, how can I thank you guys for spending all that time
      to write tintin for free?? :)
@@ -113,27 +109,18 @@ A16) That's because the new syntax is: #prompt {string} {substitution}
 Q17) I want to make an ALIAS that creates an ACTION, but both use %0, how to
      go about this?
 
-A17) Use %%90 %%91 %%92. When the alias is parsed %9 will be replaced with the
-     9th argument which mostly isn't given, this leaves %0 %1 %2.
-
-     Another way to go about it is using classes which you can read from file
-     and are easy to delete when you want them removed.
+A17) Use %%0 %%1 %%2 for the arguments of the nested action.
 
 Q18) How to enable support for chinese muds?
 
-A18  Try: ./configure --enable-big5 to use the big5 encoding. You may however
-     want to use the last readline enabled version of tintin++ which would
-     be tintin++ 1.96.4.
+A18  Try: ./configure --enable-big5 to use the big5 encoding.
 
-Q19) I use OS X and am totally friggin confused...I ran tintin a few times,
-     and now every time I open a terminal window, it runs tintin automatically.
-     What the hell has this program done to my computer?
+Q19) I use OS X and ran tintin a few times, now every time I open a terminal
+     window, it runs tintin automatically.
 
-
-A19) You did "use settings as default" while running tintin. There's a few
+A19) You clicked "use settings as default" while running tintin. There's a few
      ways out of this, but the easiest is locating your terminal preference 
      (home : library : com.apple.Terminal.plist) and deleting it. You'll have
      to redo anyting custom you set up (screen size, colors, etc.), but it
      will get the terminal back to the default of loading into your home
      directory.
-

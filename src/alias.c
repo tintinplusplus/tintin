@@ -150,7 +150,7 @@ int check_all_aliases(struct session *ses, char *input)
 
 	root = ses->list[LIST_ALIAS];
 
-	arg = get_arg_stop_spaces(input, left);
+	substitute(ses, input, left, SUB_VAR|SUB_FUN);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
 	{
@@ -158,11 +158,11 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			root->update = node->next;
 
-			if (action_regexp(input, node->left))
+			if (action_regexp(left, node->left))
 			{
 				substitute(ses, node->right, input, SUB_ARG);
 
-				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", left, input);
+				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", node->left, input);
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
 
@@ -172,6 +172,8 @@ int check_all_aliases(struct session *ses, char *input)
 	}
 	else
 	{
+		arg = get_arg_in_braces(left, right, FALSE);
+
 		RESTRING(gtd->vars[0], arg);
 
 		for (i = 1 ; i < 100 ; i++)
@@ -185,7 +187,7 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			root->update = node->next;
 
-			if (alias_glob(node->left, input))
+			if (alias_glob(node->left, left))
 			{
 				substitute(ses, node->right, right, SUB_ARG);
 
@@ -198,7 +200,7 @@ int check_all_aliases(struct session *ses, char *input)
 					sprintf(input, "%s", right);
 				}
 
-				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", left, input);
+				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", node->left, right);
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
 

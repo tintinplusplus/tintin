@@ -1,0 +1,108 @@
+001 Loop through room 1 to 1000 and change the color of rooms with the
+    static (16) flag.
+
+#loop {1 1000}
+{
+	#map goto &0;
+	#map get roomflags result;
+	#if {$result & 16}
+	{
+		#map set roomcolor <168>
+	}
+	{
+		#map set roomcolor <178>
+	}
+}
+
+
+002 Capture session information.
+
+#action {^#SESSION '%0' CONNECTED TO '%1' PORT '%2'}
+{
+	#var session %0;
+	#var address %1;
+	#var port %2
+}
+
+
+003 Capture system information. #script stores the output as a list,
+    hence the need to convert it into a normal variable.
+
+#script {dir} {pwd}
+#var dir $dir[1]
+
+#script {home} {echo $HOME}
+#var home $home[1]
+
+
+004 Automatically reconnect on disconnect.
+
+#event {SESSION DISCONNECTED}
+{
+	#gts #delay 5 {#session MyMUD 214.241.15.11 3000;loom;mypass}
+}
+
+
+005 Execute a random social at random time intervals.
+
+#tick {randomsocial}
+{
+    #delay {1d100}
+    {
+        #if {1d2 == 1}
+        {
+            #if {1d3 == 1} {cheer}
+            #if {1d2 == 1} {greet all}
+            #if {1d1 == 1} {smile}
+        }
+    }
+}
+{200}
+
+
+006 Maintain a friendlist.
+
+#variable friendlist {{bubba} {pamela} {cookie} {harry potter}}
+
+#function isfriend
+{
+    #format name %l {{%0}};
+
+    #list friendlist fnd {$name} result
+}
+
+
+#act {%1 follows you.}
+{
+    #if {@isfriend{%1}}
+    {
+        group %1
+    }
+    {
+        unfollow %1
+    }
+}
+
+#alias {addfriend}
+{
+	#format name %l {{%0}};
+
+	#list friendlist ins -1 $name;
+
+	#showme $name has been added to your friendlist.
+}
+
+#alias {delfriend}
+{
+	#format name %l {{%0}};
+
+	#if {@isfriend{$name}}
+	{
+		#list friendlist del @isfriend{$name};
+		#showme $name has been deleted from your friendlist.
+	}
+	{
+		#showme $name is not on your friendlist.
+	}
+}
+

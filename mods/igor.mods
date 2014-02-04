@@ -1072,3 +1072,23 @@ cursor.c       Fixed bug with ctrl-r's input offset.
 mapper.c       When using #map find, run, and goto and there are multiple
                matching rooms the nearest room will be returned.
 
+
+September 2008 1.98.6
+
+mapper.c       No longer need braces to use the delay option in map travel
+               and map run.
+
+mapper.c       Added static room flag.
+
+mapper.c       Can now specify on/off for setting global flags and room flags.
+
+mapper.c       Added breadth first support for the map drawing routine, based
+               on code by Bryan Turner.
+
+mapper.c       Added support for 3 letter room symbols.
+
+alias.c        Variables passed along as an alias argument now go by value
+               instead of by reference.
+
+mapper.c       Added the asciivnums flag which displays room vnums in the ascii
+               map. 

@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.5"
+#define VERSION_NUM               "1.98.6"
 
 #define ESCAPE                          27
 
@@ -315,11 +315,13 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define ROOM_FLAG_HIDE                (1 <<  1)
 #define ROOM_FLAG_LEAVE               (1 <<  2)
 #define ROOM_FLAG_VOID                (1 <<  3)
+#define ROOM_FLAG_STATIC              (1 <<  4)
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
 #define MAP_FLAG_VTGRAPHICS           (1 <<  2)
 #define MAP_FLAG_ASCIIGRAPHICS        (1 <<  3)
+#define MAP_FLAG_ASCIIVNUMS           (1 <<  4)
 
 #define MAP_EXIT_N                    (1 <<  0)
 #define MAP_EXIT_E                    (1 <<  1)
@@ -470,6 +472,8 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define SET_BIT(bitvector, bit)   ((bitvector) |= (bit))
 #define DEL_BIT(bitvector, bit)   ((bitvector) &= (~(bit)))
 #define TOG_BIT(bitvector, bit)   ((bitvector) ^= (bit))
+#define FFS_BIT(bitvector)        ((ffs(bitvector) - 1)) 
+
 
 /*
 	Compatibility
@@ -995,7 +999,7 @@ extern void fill_map(struct session *ses);
 extern void shortest_path(struct session *ses, int run, char *left, char *right);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
 extern int find_coord(struct session *ses, char *arg);
-extern void search_coord(int vnum, short x, short y, short z);
+extern void search_coord_bf(int vnum);
 extern void show_vtmap(struct session *ses);
 
 #endif
@@ -1586,6 +1590,7 @@ extern void strip_vt102_codes_non_graph(char *str, char *buf);
 extern void strip_non_vt102_codes(char *str, char *buf);
 extern void get_color_codes(char *old, char *str, char *buf);
 extern int strip_vt102_strlen(char *str);
+extern int strip_color_strlen(char *str);
 extern int interpret_vt102_codes(struct session *ses, char *str, int real);
 
 #endif

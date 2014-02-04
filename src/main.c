@@ -313,7 +313,7 @@ void init_tintin(void)
 	do_configure(gts, "{BUFFER SIZE}      {5000}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");
 	do_configure(gts, "{HISTORY SIZE}     {2500}");
-	do_configure(gts, "{CONNECT RETRY}      {30}");
+	do_configure(gts, "{CONNECT RETRY}      {15}");
 	do_configure(gts, "{PACKET PATCH}        {0}");
 	do_configure(gts, "{TINTIN CHAR}         {#}");
 	do_configure(gts, "{VERBATIM CHAR}      {\\}");

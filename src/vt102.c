@@ -580,6 +580,27 @@ int strip_vt102_strlen(char *str)
 	return i;
 }
 
+int strip_color_strlen(char *str)
+{
+	char *pti;
+	int i = 0;
+
+	pti = str;
+
+	while (*pti)
+	{
+		if (pti[0] == '<' && isalnum(pti[1]) && isalnum(pti[2]) && isalnum(pti[3]) && pti[4] == '>')
+		{
+			pti += 5;
+		}
+		else
+		{   
+			pti++;
+			i++;  
+		}	   
+	}
+	return i;
+}
 
 int interpret_vt102_codes(struct session *ses, char *str, int real)
 {
