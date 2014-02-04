@@ -43,7 +43,7 @@ DO_COMMAND(do_list)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #LIST {listname} {INS|DEL|GET|SET|LEN} {argument}");
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {listname} {INS|DEL|GET|SET|LEN} {argument}");
 	}
 	else
 	{
@@ -57,7 +57,7 @@ DO_COMMAND(do_list)
 
 		if (cnt == ARRAY_MAX)
 		{
-			tintin_printf2(ses, "#SYNTAX: #LIST {%s} {INS|DEL|GET|SET|LEN} {argument}", left);
+			show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {%s} {INS|DEL|GET|SET|LEN} {argument}", left);
 		}
 		else
 		{
@@ -130,7 +130,7 @@ DO_ARRAY(array_del)
 
 	if (index <= 0)
 	{
-		tintin_printf(ses, "#LIST DEL: Invalid index: %s", left);
+		show_message(ses, LIST_VARIABLE, "#LIST DEL: Invalid index: %s", left);
 
 		return ses;
 	}
@@ -172,7 +172,7 @@ DO_ARRAY(array_get)
 
 	if (index <= 0)
 	{
-		tintin_printf(ses, "#LIST GET: Invalid index: %s", left);
+		show_message(ses, LIST_VARIABLE, "#LIST GET: Invalid index: %s", left);
 
 		return ses;
 	}
@@ -205,7 +205,7 @@ DO_ARRAY(array_ins)
 
 	if (index == -1)
 	{
-		tintin_printf(ses, "#LIST INS: Invalid index: %s", left);
+		show_message(ses, LIST_VARIABLE, "#LIST INS: Invalid index: %s", left);
 
 		return ses;
 	}
@@ -273,7 +273,7 @@ DO_ARRAY(array_set)
 
 	if (index <= 0)
 	{
-		tintin_printf(ses, "#LIST DEL: Invalid index: %s", left);
+		show_message(ses, LIST_VARIABLE, "#LIST SET: Invalid index: %s", left);
 
 		return ses;
 	}

@@ -109,7 +109,7 @@ DO_COMMAND(do_unclass)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_TAB];
 
@@ -117,17 +117,16 @@ DO_COMMAND(do_unclass)
 
 	while ((node = search_node_with_wild(root, left)) != NULL)
 	{
-		if (show_message(ses, LIST_CLASS))
-		{
-			tintin_printf(ses, "#Ok. {%s} removed from class list.", node->left);
-		}
+		show_message(ses, LIST_CLASS, "#OK. {%s} IS NO LONGER A CLASS.", node->left);
+
 		deletenode_list(ses, node, LIST_CLASS);
-		flag = TRUE;
+
+		found = TRUE;
 	}
 
-	if (!flag && show_message(ses, LIST_CLASS))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT CLASS IS NOT DEFINED.", ses);
+		show_message(ses, LIST_CLASS, "#UNCLASS: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }
@@ -138,10 +137,8 @@ DO_CLASS(class_open)
 
 	SET_BIT(ses->class->data, NODE_FLAG_CLASS);
 
-	if (show_message(ses, LIST_CLASS))
-	{
-		tintin_printf2(ses, "#CLASS {%s} HAS BEEN OPENED.", arg);
-	}
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", arg);
+
 	return ses;
 }
 
@@ -151,10 +148,8 @@ DO_CLASS(class_close)
 
 	node = search_node_with_wild(ses->list[LIST_CLASS], arg);
 
-	if (show_message(ses, LIST_CLASS))
-	{
-		tintin_printf2(ses, "#CLASS {%s} HAS BEEN CLOSED.", node->left);
-	}
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", node->left);
+
 	DEL_BIT(node->data, NODE_FLAG_CLASS);
 
 	if (node == ses->class)
@@ -222,10 +217,8 @@ DO_CLASS(class_write)
 
 	fclose(file);
 
-	if (show_message(ses, LIST_CLASS))
-	{
-		tintin_printf2(ses, "#CLASS {%s} HAS BEEN WRITTEN TO FILE.", class->left);
-	}
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN WRITTEN TO FILE.", class->left);
+
 	return ses;
 }
 
@@ -253,10 +246,7 @@ DO_CLASS(class_kill)
 		}
 	}
 
-	if (show_message(ses, LIST_CLASS))
-	{
-		tintin_printf2(ses, "#CLASS {%s} HAS BEEN CLEARED.", class->left);
-	}
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLEARED.", class->left);
 
 	deletenode_list(ses, class, LIST_CLASS);
 

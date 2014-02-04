@@ -65,7 +65,7 @@
 #define     TELOPT_SGA            3     /* suppress go ahead */
 #define     TELOPT_NAMS           4     /* approximate message size */
 #define     TELOPT_STATUS         5     /* give status */
-#define     TELOPT_TM             6     /* timing mark */
+#define     TELOPT_TIMINGMARK     6     /* timing mark */
 #define     TELOPT_RCTE           7     /* remote controlled transmission and echo */
 #define     TELOPT_NAOL           8     /* negotiate about output line width */
 #define     TELOPT_NAOP           9     /* negotiate about output page size */
@@ -104,10 +104,10 @@
 #define     TELOPT_MCCP2         86     /* mud Compression Protocol v2 */
 #define     TELOPT_MSP           90     /* mud Sound Protocol */
 #define     TELOPT_MXP           91     /* mud Extention Protocol */
-
+#define     TELOPT_ZMP           93     /* Zeniths mud Protocol */
 #define     TELOPT_EXOPL        255     /* extended-options-list */
 
-#define     NTELOPTS             92     /* Highest telopt excluding exopl */
+#define     NTELOPTS             94     /* Highest telopt excluding exopl */
 
 char *telcmds[] =
 {
@@ -132,14 +132,14 @@ char *telopts[NTELOPTS] =
 	"NAOHTD",           "NAOFFD",           "NAOVTS",
 	"NAOVTD",           "NAOLFD",           "EXTEND ASCII",
 	"LOGOUT",           "BYTE MACRO",       "DATA ENTRY TERMINAL",
-        "SUPDUP",           "SUPDUP OUTPUT",    "SEND LOCATION",
+	"SUPDUP",           "SUPDUP OUTPUT",    "SEND LOCATION",
 	"TERMINAL TYPE",    "EOR",              "TACACS UID",
-        "OUTPUT MARKING",   "TTYLOC",           "3270 REGIME",
-        "X.3 PAD",          "NAWS",             "TSPEED",
-        "LFLOW",            "LINEMODE",         "XDISPLOC",
-        "ENVIRON",          "AUTH",             "ENCRYPT",
-        "NEWENV",           "TELOPT 40",        "TELOPT 41",
-        "TELOPT 42",        "TELOPT 43",        "TELOPT 44",
+	"OUTPUT MARKING",   "TTYLOC",           "3270 REGIME",
+	"X.3 PAD",          "NAWS",             "TSPEED",
+	"LFLOW",            "LINEMODE",         "XDISPLOC",
+	"ENVIRON",          "AUTH",             "ENCRYPT",
+	"NEWENV",           "TELOPT 40",        "TELOPT 41",
+	"TELOPT 42",        "TELOPT 43",        "TELOPT 44",
 	"TELOPT 45",        "STARTTLS",         "TELOPT 47",
 	"TELOPT 48",        "TELOPT 49",        "TELOPT 50",
 	"TELOPT 51",        "TELOPT 52",        "TELOPT 53",
@@ -151,15 +151,16 @@ char *telopts[NTELOPTS] =
 	"TELOPT 69",        "TELOPT 70",        "TELOPT 71",
 	"TELOPT 72",        "TELOPT 73",        "TELOPT 74",
 	"TELOPT 75",        "TELOPT 76",        "TELOPT 77",
-        "TELOPT 78",        "TELOPT 79",        "TELOPT 80",
-        "TELOPT 81",        "TELOPT 82",        "TELOPT 83",
+	"TELOPT 78",        "TELOPT 79",        "TELOPT 80",
+	"TELOPT 81",        "TELOPT 82",        "TELOPT 83",
 	"TELOPT 84",        "MCCP1",            "MCCP2",
-        "TELOPT 87",        "TELOPT 88",        "TELOPT 89",
-        "MSP",              "MXP"
+	"TELOPT 87",        "TELOPT 88",        "TELOPT 89",
+	"MSP",              "MXP",              "TELOPT 92",
+	"ZMP"
 };
 
 #define  TELOPT_FIRST   TELOPT_BINARY
-#define  TELOPT_LAST    TELOPT_MXP
+#define  TELOPT_LAST    TELOPT_ZMP
 #define  TELOPT_OK(x)   ((x) <= TELOPT_LAST)
 #define  TELOPT(x)      telopts[(x)-TELOPT_FIRST]
 

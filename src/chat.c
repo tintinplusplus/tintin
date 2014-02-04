@@ -36,12 +36,13 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <pthread.h>
 
 
-#define CALL_TIMEOUT 8
+#define CALL_TIMEOUT 2
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.95.4"
+#define TINTIN_VERSION "TinTin++ 1.95.6"
 
 #define RESTRING(point, value)   \
 {                                \
@@ -95,7 +96,7 @@ DO_COMMAND(do_chat)
 
 		if (chat_table[cnt].chat != chat_initialize && gtd->chat == NULL)
 		{
-			tintin_printf(NULL, "\e[1;31m<CHAT> You must initialize a chat port first.");
+			tintin_printf(NULL, "\033[1;31m<CHAT> You must initialize a chat port first.");
 
 			return ses;
 		}
@@ -240,7 +241,7 @@ int chat_new(int s)
 	Places a call to another chat client.
 */
 
-void chat_call(const char *arg)
+void *threaded_chat_call(void *arg)
 {
 	int sock;
 	char ip[BUFFER_SIZE], pn[BUFFER_SIZE];
@@ -255,8 +256,8 @@ void chat_call(const char *arg)
 	to.tv_sec = CALL_TIMEOUT;                
 	to.tv_usec = 0;
 
-	arg = get_arg_in_braces(arg, ip, FALSE);
-	arg = get_arg_in_braces(arg, pn, FALSE);
+	arg = (void *) get_arg_in_braces((const char *) arg, ip, FALSE);
+	arg = (void *) get_arg_in_braces((const char *) arg, pn, FALSE);
 
 	if (*pn == 0)
 	{
@@ -275,7 +276,7 @@ void chat_call(const char *arg)
 		{
 			chat_printf("<CHAT> Failed to call %s, unknown host.", ip);
 
-			return;
+			return NULL;
 		}
 		memcpy((char *)&dest_addr.sin_addr, hp->h_addr, sizeof(dest_addr.sin_addr));
 	}
@@ -288,7 +289,7 @@ void chat_call(const char *arg)
 	{
 		chat_printf("<CHAT> The port should be a number.");
 
-		return;
+		return NULL;
 	}
 
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -302,11 +303,10 @@ void chat_call(const char *arg)
 	{
 		chat_printf("<CHAT> Failed to connect to %s:%s", ip, pn);
 
-		return;
+		return NULL;
 	}
 
 	chat_printf("<CHAT> Press ENTER to abort call.");
-
 
 
 	FD_ZERO(&rds);
@@ -319,21 +319,22 @@ void chat_call(const char *arg)
 	{
 		chat_printf("<CHAT> Failed to connect to %s %s", ip, pn);
 
-		return;
+		return NULL;
 	}
+
 
 	if (FD_ISSET(0, &rds))
 	{
 		chat_printf("<CHAT> Call aborted.");
 
-		return;
+		return NULL;
 	}
 
 	if (!FD_ISSET(sock, &wds))
 	{
 		chat_printf("<CHAT> Connection timed out.");
 
-		return;
+		return NULL;
 	}
 
 	nonblock(sock);
@@ -347,7 +348,7 @@ void chat_call(const char *arg)
 	new_buddy->fd   = sock;
 
 	chat_socket_printf(new_buddy, "CHAT:%s\n%s%-5u", gtd->chat->name, gtd->chat->ip, gtd->chat->port);
- 
+
 	FD_ZERO(&rds);
 	FD_SET(sock, &rds);
 
@@ -357,20 +358,29 @@ void chat_call(const char *arg)
 	if (select(FD_SETSIZE, &rds, NULL, NULL, &to) == -1)
 	{
 		close_chat(new_buddy);
-		return;
+		return NULL;
 	}
 
 	if (process_chat_input(new_buddy) == -1)
 	{
 		close_chat(new_buddy);
-		return;
+		return NULL;
 	}
 
 	chat_printf("<CHAT> Connection made to %s", new_buddy->name);
 
 	LINK(new_buddy, gtd->chat->next, gtd->chat->prev, next, prev);
+
+	return NULL;
 }
 
+void chat_call(const char *arg)
+{
+	pthread_t thread;
+
+	pthread_create(&thread, NULL, (void *) threaded_chat_call, (void *) arg);
+}
+	
 
 /*
 	Clean up and close a chat conneciton.
@@ -521,7 +531,7 @@ void chat_printf(const char *format, ...)
 			chat_socket_printf(buddy, tmp);
 		}
 	}
-	sprintf(tmp, "\e[1;31m%s", buf);
+	sprintf(tmp, "\033[1;31m%s", buf);
 
 	tintin_puts(tmp, NULL);
 }
@@ -603,7 +613,7 @@ int process_chat_input(struct chat_data *buddy)
 
 void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 {
-	unsigned char txt[BUFFER_SIZE];
+	char txt[BUFFER_SIZE];
 	unsigned char *pto, *pti, ptc;
 
 	push_call("get_chat_commands(%p,%p)",buddy,buf);
@@ -1164,6 +1174,19 @@ DO_CHAT(chat_paste)
 
 	if (arg == NULL)
 	{
+		if (strlen(rl_line_buffer))
+		{
+			sprintf(temp, "%s\n%s", gtd->chat->paste_buf, rl_line_buffer);
+
+			RESTRING(gtd->chat->paste_buf, temp);
+
+			rl_point = 0;
+
+			rl_delete_text(0, strlen(rl_line_buffer));
+
+			rl_redisplay();
+		}
+
 		arg = get_arg_in_braces(gtd->chat->paste_buf, left, FALSE);
 
 		sprintf(temp, "%s\n<078>======================================================================", arg);
@@ -1194,6 +1217,10 @@ DO_CHAT(chat_paste)
 				chat_printf("<CHAT> You are not connected to anyone named '%s'.", left);
 			}
 		}
+		if (IS_SPLIT(gtd->ses))
+		{
+			erase_toeol();
+		}
 		gtd->chat->paste_time = 0;
 
 		return;
@@ -1205,13 +1232,15 @@ DO_CHAT(chat_paste)
 
 		RESTRING(gtd->chat->paste_buf, temp);
 
+		gtd->chat->paste_time = 200000LL + utime();
+
 		return;
 	}
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
-	gtd->chat->paste_time = 500000LL + utime();
+	gtd->chat->paste_time = 200000LL + utime();
 
 	sprintf(temp, "{%s}<078>======================================================================\n<068>%s", left, right);
 
@@ -1956,4 +1985,3 @@ char *fix_file_name(char *name)
 	}
 	return name;
 }
-

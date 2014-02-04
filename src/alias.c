@@ -47,20 +47,14 @@ DO_COMMAND(do_alias)
 	{
 		if (show_node_with_wild(ses, left, LIST_ALIAS) == FALSE)
 		{
-			if (show_message(ses, LIST_ALIAS))
-			{
-				tintin_printf2(ses, "#No match(es) found for {%s}", left);
-			}
+			show_message(ses, LIST_ALIAS, "#ALIAS: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, "0", LIST_ALIAS);
 
-		if (show_message(ses, LIST_ALIAS))
-		{
-			tintin_printf2(ses, "#Ok. {%s} aliases {%s}.", left, right);
-		}
+		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASSES {%s}.", left, right);
 	}
 	return ses;
 }
@@ -79,16 +73,14 @@ DO_COMMAND(do_unalias)
 
 	while ((node = search_node_with_wild(root, left)))
 	{
-		if (show_message(ses, LIST_ALIAS))
-		{
-			tintin_printf(ses, "#Ok. {%s} is no longer an alias.", node->left);
-		}
+		show_message(ses, LIST_ALIAS, "#OK. {%s} IS NO LONGER AN ALIAS.", node->left);
+
 		deletenode_list(ses, node, LIST_ALIAS);
 		flag = TRUE;
 	}
-	if (!flag && show_message(ses, LIST_ALIAS))
+	if (!flag)
 	{
-		tintin_printf(ses, "#No match(es) found for {%s}", left);
+		show_message(ses, LIST_ALIAS, "#ALIAS: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }

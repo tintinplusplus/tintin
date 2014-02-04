@@ -831,3 +831,40 @@ tinexp.c       Fixed parsing of function arguments some more.
 
 array.c        Added #list command with basic list support.
 
+
+               - 1.96.6
+
+chat.c         Added multi threading for opening new chat connections.
+
+parse.c        Added protection for infinite loops.
+
+variable.c     Added %D option to format, which will print a given decimal
+               value as a single character.
+
+utils.c        Added hex_number translation function.
+
+tinexp.c       Can now use \x?? where ?? is a hexadecimal number.
+
+*.c            Changed usage of \e with \033 since \e isn't supported on all
+               systems.
+
+rl.c           Verbatim mode now enters character mode as well. Aliasses and
+               macros do not work while in this mode, these are expected to
+               be defined server side anyways in this mode.
+
+rl.c           In verbatim mode ctrl-c will send IAC IP.
+
+misc.c         #debug all log, logs debug info without displaying it.
+
+Makefile.in    make install now copies tt++ to /usr/bin
+
+parse.c        Can now disable verbatim mode after enabling it.
+
+tables.c       Got rid of unneeded table size for the command, help, and
+               config table.
+
+variable.c     Added %D %M %Y options to print the day month year
+
+misc.c         Added parse command to parse strings
+
+misc.c         Fixed double variable substitution for #echo

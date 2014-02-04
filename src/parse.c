@@ -41,7 +41,11 @@ struct session *parse_input(char *input, struct session *ses)
 	struct listnode *ln;
 	int i;
 
-	push_call("[%s] parse_input(%s,%p)",ses->name,input,ses);
+	if (push_call("[%s] parse_input(%s,%p)",ses->name,input,ses))
+	{
+		pop_call();
+		return ses;
+	}
 
 	DEL_BIT(ses->flags, SES_FLAG_BREAK);
 
@@ -55,16 +59,24 @@ struct session *parse_input(char *input, struct session *ses)
 
 	if (ses != gts)
 	{
-		if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) || *input == gtd->verbatim_char)
+		if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char)
 		{
-			if (*input != gtd->tintin_char)
-			{
-				sprintf(command, "%s\r\n", input);
+			sprintf(command, "%s\r\n", input);
 
-				write_line_mud(command, ses);
-			}
+			write_line_mud(command, ses);
+
 			pop_call();
 			return(ses);
+		}
+
+		if (*input == gtd->verbatim_char)
+		{
+			sprintf(command, "%s\r\n", &input[1]);
+
+			write_line_mud(command, ses);
+
+			pop_call();
+			return ses;
 		}
 	}
 

@@ -46,10 +46,7 @@ DO_COMMAND(do_tab)
 	{
 		updatenode_list(ses, left, "", "0", LIST_TAB);
 
-		if (show_message(ses, LIST_TAB))
-		{
-			tintin_printf2(ses, "#Ok. {%s} added to tab list.", left);
-		}
+		show_message(ses, LIST_TAB, "#OK. {%s} IS NOW A TAB.", left);
 	}
 	return ses;
 }
@@ -60,7 +57,7 @@ DO_COMMAND(do_untab)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_TAB];
 
@@ -68,17 +65,16 @@ DO_COMMAND(do_untab)
 
 	while ((node = search_node_with_wild(root, left)) != NULL)
 	{
-		if (show_message(ses, LIST_TAB))
-		{
-			tintin_printf(ses, "#Ok. {%s} removed from tab list.", node->left);
-		}
+		show_message(ses, LIST_TAB, "#OK. {%s} IS NO LONGER A TAB.", node->left);
+
 		deletenode_list(ses, node, LIST_TAB);
-		flag = TRUE;
+
+		found = TRUE;
 	}
 
-	if (!flag && show_message(ses, LIST_TAB))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT TAB IS NOT DEFINED.", ses);
+		show_message(ses, LIST_TAB, "#TAB: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }

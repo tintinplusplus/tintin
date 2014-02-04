@@ -28,27 +28,33 @@
 
 #include "tintin.h"
 
-#define MAX_STACK_SIZE     200
+#define MAX_STACK_SIZE     50
 #define MAX_DEBUG_SIZE     500
 
 char          debug_stack[MAX_STACK_SIZE][MAX_DEBUG_SIZE];
+
 unsigned char debug_index;
 
-void push_call(char *f, ...)
+int push_call(char *f, ...)
 {
 	va_list ap;
 
 	va_start(ap, f);
 
-	if (debug_index >= MAX_STACK_SIZE)
-	{
-		dump_stack();
-		debug_index = 0;
-	}
-
 	vsnprintf(debug_stack[debug_index], MAX_DEBUG_SIZE - 1, f, ap);
 
+	va_end(ap);
+
 	debug_index++;
+
+	if (debug_index == MAX_STACK_SIZE - 10)
+	{
+		dump_stack();
+
+		return 1;
+	}
+
+	return 0;
 }
 
 void pop_call(void)
@@ -59,7 +65,7 @@ void pop_call(void)
 	}
 	else
 	{
-		fprintf(stderr, "pop_call: index is zero: %s", debug_stack[0]);
+		fprintf(stderr, "pop_call: index is zero: %s\n", debug_stack[0]);
 	}
 }
 

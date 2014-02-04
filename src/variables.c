@@ -51,20 +51,14 @@ DO_COMMAND(do_variable)
 	{
 		if (show_node_with_wild(ses, left, LIST_VARIABLE) == FALSE)
 		{
-			if (show_message(ses, LIST_VARIABLE))
-			{
-				tintin_puts2("#THAT VARIABLE IS NOT DEFINED.", ses);
-			}
+			show_message(ses, LIST_VARIABLE, "#VARIABLE: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, "0", LIST_VARIABLE);
 
-		if (show_message(ses, LIST_VARIABLE))
-		{
-			tintin_printf2(ses, "#Ok. $%s is now set to {%s}.", left, right);
-		}
+		show_message(ses, LIST_VARIABLE, "#OK. $%s IS NOW SET TO {%s}.", left, right);
 	}
 	return ses;
 }
@@ -94,9 +88,9 @@ DO_COMMAND(do_internal_variable)
 DO_COMMAND(do_unvariable)
 {
 	char left[BUFFER_SIZE];
-	int flag = FALSE;
 	struct listroot *root;
 	struct listnode *node;
+	int found = FALSE;
 
 	root = ses->list[LIST_VARIABLE];
 
@@ -104,16 +98,15 @@ DO_COMMAND(do_unvariable)
 
 	while ((node = search_node_with_wild(root, left)) != NULL)
 	{
-		if (show_message(ses, LIST_VARIABLE))
-		{
-			tintin_printf2(ses, "#Ok. $%s is no longer a variable.", node->left);
-		}
+		show_message(ses, LIST_VARIABLE, "#OK. $%s IS NO LONGER A VARIABLE.", node->left);
+
 		deletenode_list(ses, node, LIST_VARIABLE);
-		flag = TRUE;
+
+		found = TRUE;
 	}
-	if (!flag && show_message(ses, LIST_VARIABLE))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT VARIABLE IS NOT DEFINED.", ses);
+		show_message(ses, LIST_VARIABLE, "#UNVARIABLE: NO MATCH(ES) FOUND FOR {%s}.", ses);
 	}
 	return ses;
 }
@@ -245,24 +238,15 @@ DO_COMMAND(do_replacestring)
 
 	if (*var == 0 || *old == 0)
 	{
-		if (show_message(ses, LIST_VARIABLE))
-		{
-			tintin_puts2("#Syntax: #replacestring <var> <oldtext> <newtext>", ses);
-		}
+		show_message(ses, LIST_VARIABLE, "#Syntax: #replacestring <var> <oldtext> <newtext>", ses);
 	}
 	else	if ((node = searchnode_list(root, var)) == NULL)
 	{
-		if (show_message(ses, LIST_VARIABLE))
-		{
-			tintin_puts2("#THAT VARIABLE IS NOT DEFINED.", ses);
-		}
+		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: VARIABLE {%s} NOT FOUND.", var);
 	}
 	else if ((ptr = strstr(node->right, old)) == NULL)
 	{
-		if (show_message(ses, LIST_VARIABLE))
-		{
-			tintin_printf2(ses, "#REPLACESTRING {%s} NOT FOUND IN {%s}", old, node->right);
-		}
+		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: {%s} NOT FOUND IN {%s}", old, node->right);
 	}
 	else
 	{
@@ -291,10 +275,8 @@ DO_COMMAND(do_replacestring)
 
 		sprintf(result, "{%s} {%s}", node->left, var);
 
-		if (show_message(ses, LIST_VARIABLE))
-		{
-			tintin_printf2(ses, "#REPLACESTRING: $%s is now set to {%s}", node->left, var);
-		}
+		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: $%s IS NOW SET TO {%s}", node->left, var);
+
 		do_internal_variable(ses, result);
 	}
 	return ses;
@@ -559,12 +541,24 @@ DO_COMMAND(do_format)
 						sprintf(arglist[i], "%d", ses->cols);
 						break;
 
+					case 'D':
+						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_tm = *localtime(&timeval_t);
+						strftime(arglist[i], BUFFER_SIZE, "%d", &timeval_tm);
+						break;
+
 					case 'G':
 						thousandgroupingstring(arglist[i]);
 						break;
 
 					case 'L':
 						sprintf(arglist[i], "%d", (int) strlen(arglist[i]));
+						break;
+
+					case 'M':
+						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_tm = *localtime(&timeval_t);
+						strftime(arglist[i], BUFFER_SIZE, "%m", &timeval_tm);
 						break;
 
 					case 'R':
@@ -579,11 +573,14 @@ DO_COMMAND(do_format)
 						sprintf(arglist[i], "%lld", utime());
 						break;
 
+					case 'Y':
+						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_tm = *localtime(&timeval_t);
+						strftime(arglist[i], BUFFER_SIZE, "%Y", &timeval_tm);
+						break;
+
 					default:
-						if (show_message(ses, LIST_VARIABLE))
-						{
-							tintin_printf2(ses, "#FORMAT: UNKNOWN ARGUMENT {%%%c}", *ptf);
-						}
+						show_message(ses, LIST_VARIABLE, "#FORMAT: UNKNOWN ARGUMENT {%%%c}", *ptf);
 						break;
 				}
 				*ptf = 's';
@@ -596,10 +593,7 @@ DO_COMMAND(do_format)
 
 	sprintf(format, "{%s} {%s}", destvar, argument);
 
-	if (show_message(ses, LIST_VARIABLE))
-	{
-		tintin_printf2(ses, "#FORMAT: $%s is now set to {%s}", destvar, argument);
-	}
+	show_message(ses, LIST_VARIABLE, "#FORMAT: $%s IS NOW SET TO {%s}", destvar, argument);
 
 	do_internal_variable(ses, format);
 

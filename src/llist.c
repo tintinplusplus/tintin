@@ -564,6 +564,7 @@ DO_COMMAND(do_ignore)
 	return ses;
 }
 
+
 DO_COMMAND(do_debug)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
@@ -603,18 +604,22 @@ DO_COMMAND(do_debug)
 			{
 				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
 			}
+			else if (is_abbrev(right, "LOG"))
+			{
+				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_LOG);
+			}
 			else
 			{
-				tintin_printf(ses, "#SYNTAX: #DEBUG [NAME] [ON|OFF]");
+				tintin_printf(ses, "#SYNTAX: #DEBUG [NAME] [ON|OFF|LOG]");
 				break;
 			}
-			tintin_printf(ses, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+			tintin_printf(ses, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, is_abbrev(right, "LOG") ? "LOG" : HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
 			fnd = TRUE;
 		}
 
 		if (fnd == FALSE)
 		{
-			tintin_printf2(ses, "#ERROR: #DEBUG {%s} - NO MATCH FOUND.", left);
+			tintin_printf2(ses, "#DEBUG {%s} - NO MATCH FOUND.", left);
 		}
 	}
 	return ses;

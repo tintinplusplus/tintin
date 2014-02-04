@@ -59,16 +59,13 @@ DO_COMMAND(do_configure)
 	}
 	else
 	{
-		for (cnt = 0 ; cnt < CONFIG_MAX ; cnt++)
+		for (cnt = 0 ; cnt < *config_table[cnt].name != 0 ; cnt++)
 		{
 			if (is_abbrev(left, config_table[cnt].name))
 			{
 				if (config_table[cnt].config(ses, right, cnt) != NULL)
 				{
-					if (show_message(ses, LIST_CONFIG))
-					{
-						tintin_printf2(ses, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[cnt].name, capitalize(right));
-					}
+					show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[cnt].name, capitalize(right));
 				}
 				return ses;
 			}
@@ -111,10 +108,21 @@ DO_CONFIG(config_verbatim)
 
 	if (!strcasecmp(arg, "ON"))
 	{
+/*		rl_initialize();
+		rl_prep_terminal(1);
+
+		SET_BIT(gts->flags, SES_FLAG_PREPPED);
+*/
 		SET_BIT(ses->flags, SES_FLAG_VERBATIM);
 	}
 	else if (!strcasecmp(arg, "OFF"))
 	{
+/*
+		rl_initialize();
+		rl_deprep_terminal();
+
+		DEL_BIT(gts->flags, SES_FLAG_PREPPED);
+*/
 		DEL_BIT(ses->flags, SES_FLAG_VERBATIM);
 	}
 	else
@@ -344,7 +352,7 @@ DO_CONFIG(config_packetpatch)
 		tintin_printf(ses, "#SYNTAX: #CONFIG {PACKET PATCH} <NUMBER>");
 	}
 
-	if (atoi(arg) < 0 || atoi(arg) > 1000)
+	if (atoi(arg) < 0 || atoi(arg) > 10000)
 	{
 		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0 and 1000");
 
@@ -461,6 +469,7 @@ DO_CONFIG(config_convertmeta)
 		rl_initialize();
 		rl_prep_terminal(1);
 
+		SET_BIT(gts->flags, SES_FLAG_PREPPED);
 		SET_BIT(ses->flags, SES_FLAG_CONVERTMETA);
 	}
 	else if (!strcasecmp(arg, "OFF"))
@@ -468,6 +477,7 @@ DO_CONFIG(config_convertmeta)
 		rl_initialize();
 		rl_deprep_terminal();
 
+		DEL_BIT(ses->flags, SES_FLAG_PREPPED);
 		DEL_BIT(ses->flags, SES_FLAG_CONVERTMETA);
 	}
 	else

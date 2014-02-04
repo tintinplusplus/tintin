@@ -53,17 +53,14 @@ DO_COMMAND(do_prompt)
 	{
 		if (show_node_with_wild(ses, left, LIST_PROMPT) == FALSE)
 		{
-			tintin_printf2(ses, "#THAT PROMPT IS NOT DEFINED.");
+			show_message(ses, LIST_PROMPT, "#PROMPT: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, pr, LIST_PROMPT);
 
-		if (show_message(ses, LIST_PROMPT))
-		{
-			tintin_printf2(ses, "#OK. {%s} NOW PROMPTS {%s}.", left, right);
-		}
+		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s}.", left, right);
 	}
 	return ses;
 }
@@ -74,7 +71,7 @@ DO_COMMAND(do_unprompt)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_PROMPT];
 
@@ -82,17 +79,15 @@ DO_COMMAND(do_unprompt)
 
 	while ((node = search_node_with_wild(root, left)))
 	{
-		if (show_message(ses, LIST_PROMPT))
-		{
-			tintin_printf2(ses, "#OK. {%s} IS NO LONGER A PROMPT.", node->left);
-		}
+		show_message(ses, LIST_PROMPT, "#OK. {%s} IS NO LONGER A PROMPT.", node->left);
+
 		deletenode_list(ses, node, LIST_PROMPT);
 
-		flag = TRUE;
+		found = TRUE;
 	}
-	if (!flag && show_message(ses, LIST_PROMPT))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT PROMPT IS NOT DEFINED.", ses);
+		show_message(ses, LIST_PROMPT, "#UNPROMPT: NO MATCH(ES) FOUND FOR.", ses);
 	}
 	return ses;
 }
@@ -113,7 +108,7 @@ void check_all_prompts(char *original, char *line, struct session *ses)
 
 			do_one_prompt(ses, original, atoi(node->pr));
 
-			SET_BIT(ses->flags, SES_FLAG_GAGPROMPT);
+			SET_BIT(ses->flags, SES_FLAG_GAG);
 		}
 	}
 }

@@ -33,8 +33,11 @@ void init_buffer(struct session *ses, int size)
 {
 	int cnt;
 
+	push_call("init_buffer(%p,%p)",ses,size);
+
 	if (ses->scroll_max == size)
 	{
+		pop_call();
 		return;
 	}
 
@@ -68,6 +71,7 @@ void init_buffer(struct session *ses, int size)
 	ses->scroll_max = size;
 	ses->scroll_row = size - 1;
 
+	pop_call();
 	return;
 }
 
@@ -558,7 +562,6 @@ void buffer_d(void)
 
 	if (gtd->ses->scroll_line == -1)
 	{
-		buffer_e();
 		return;
 	}
 

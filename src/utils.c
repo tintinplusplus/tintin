@@ -74,6 +74,38 @@ int is_number(const char *str)
 	return TRUE;
 }
 
+int hex_number(const char *str)
+{
+	int value = '?';
+
+	if (str)
+	{
+		if (isdigit(*str))
+		{
+			value = (*str - '0') << 4;
+		}
+		else
+		{
+			value = (*str - 'A' + 10) << 4;
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit(*str))
+		{
+			value += *str - '0';
+		}
+		else
+		{
+			value += *str - 'A' + 10;
+		}
+		str++;
+	}
+
+	return value;
+}
 
 long long utime()
 {

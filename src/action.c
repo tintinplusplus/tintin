@@ -56,20 +56,14 @@ DO_COMMAND(do_action)
 	{
 		if (show_node_with_wild(ses, left, LIST_ACTION) == FALSE) 
 		{
-			if (show_message(ses, LIST_ACTION))
-			{
-				tintin_puts2("#That action is not defined.", ses);
-			}
+			show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, pr, LIST_ACTION);
 
-		if (show_message(ses, LIST_ACTION)) 
-		{
-			tintin_printf2(ses, "#Ok. {%s} now triggers {%s} @ {%s}", left, right, pr);
-		}
+		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", left, right, pr);
 	}
 	return ses;
 }
@@ -88,17 +82,16 @@ DO_COMMAND(do_unaction)
 
 	while ((node = search_node_with_wild(root, left))) 
 	{
-		if (show_message(ses, LIST_ACTION))
-		{
-			tintin_printf2(ses, "#Ok. {%s} is no longer a trigger.", node->left);
-		}
+		show_message(ses, LIST_ACTION, "#OK. {%s} IS NO LONGER A TRIGGER.", node->left);
+
 		deletenode_list(ses, node, LIST_ACTION);
+
 		flag = TRUE;
 	}
 
-	if (!flag && show_message(ses, LIST_ACTION))
+	if (!flag)
 	{
-		tintin_printf(ses, "#No match(es) found for {%s}", left);
+		show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }
@@ -123,7 +116,7 @@ void check_all_actions(const char *original, char *line, struct session *ses)
 
 			if (HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_DEBUG))
 			{
-				tintin_printf2(ses, "#ACTION DEBUG: %s", buffer);
+				show_message(ses, LIST_ACTION, "#ACTION DEBUG: %s", buffer);
 			}
 			parse_input(buffer, ses);
 

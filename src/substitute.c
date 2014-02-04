@@ -82,30 +82,16 @@ DO_COMMAND(do_substitute)
 	}
 	else if (*left && !*right)
 	{
-		if (show_node_with_wild(ses, left, LIST_SUBSTITUTE) == TRUE)
+		if (show_node_with_wild(ses, left, LIST_SUBSTITUTE) == FALSE)
 		{
-			;
-		}
-		else if (show_message(ses, LIST_SUBSTITUTE))
-		{
-			tintin_puts2("#THAT SUBSTITUTE IS NOT DEFINED.", ses);
+			show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, pr, LIST_SUBSTITUTE);
 
-		if (show_message(ses, LIST_SUBSTITUTE))
-		{
-			if (strcmp(right, "."))
-			{
-				tintin_printf2(ses, "#Ok. {%s} is substituted as {%s} @ {%s}.", left, right, pr);
-			}
-			else
-			{
-				tintin_printf2(ses, "#Ok. {%s} is now gagged.", left);
-			}
-		}
+		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", left, right, pr);
 	}
 	return ses;
 }
@@ -116,7 +102,7 @@ DO_COMMAND(do_unsubstitute)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_SUBSTITUTE];
 
@@ -124,25 +110,15 @@ DO_COMMAND(do_unsubstitute)
 
 	while ((node = search_node_with_wild(root, left)))
 	{
-		if (show_message(ses, LIST_SUBSTITUTE))
-		{
-			if (strcmp(node->right, "."))
-			{
-				tintin_printf2(ses, "#Ok. {%s} is no longer substituted.", node->left);
-			}
-			else
-			{
-				tintin_printf2(ses, "#Ok. {%s} is no longer gagged.", node->left);
-			}
+		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NO LONGER A SUBSTITUTION.", node->left);
 
-		}
 		deletenode_list(ses, node, LIST_SUBSTITUTE);
 
-		flag = TRUE;
+		found = TRUE;
 	}
-	if (!flag && show_message(ses, LIST_SUBSTITUTE))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT SUBSTITUTE IS NOT DEFINED.", ses);
+		show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }

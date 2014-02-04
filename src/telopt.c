@@ -80,7 +80,7 @@ const struct iac_type iac_table [TELOPT_MAX] =
 	{   3,  iac_sb_tspeed,        &send_sb_tspeed          },
 	{   3,  iac_sb_ttype,         &send_sb_ttype 		},
 	{   3,  iac_dont_status,      &send_wont_status      	},
-	{   3,  iac_will_sga,         &send_dont_sga           },
+	{   3,  iac_will_sga,         &send_do_sga             },
 	{   3,  iac_will_status,      &send_dont_status      	},
 	{   3,  iac_do_oldenviron,    &send_wont_oldenviron    },
 	{   3,  iac_do_echo,          &send_echo_will          },
@@ -334,7 +334,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					{
 						switch (*cpsrc)
 						{
-							case '\e':
+							case ESCAPE:
 								*cpdst++ = '\\';
 								*cpdst++ = 'e';
 								gtd->mud_output_len += 2;
@@ -494,6 +494,13 @@ void send_dont_sga(struct session *ses)
 	telopt_debug(ses, "SENT IAC DONT SGA");
 }
 
+void send_do_sga(struct session *ses)
+{
+	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_SGA);
+
+	telopt_debug(ses, "SENT IAC DO SGA");
+}
+
 void send_wont_oldenviron(struct session *ses)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_OLD_ENVIRON);
@@ -505,7 +512,7 @@ void send_echo_on(struct session *ses)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, DONT, TELOPT_ECHO);
 
-	SET_BIT(ses->flags, SES_FLAG_LOCALECHO);
+	echo_on(ses);
 
 	telopt_debug(ses, "SENT IAC DONT ECHO");
 }
@@ -514,7 +521,7 @@ void send_echo_off(struct session *ses)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_ECHO);
 
-	DEL_BIT(ses->flags, SES_FLAG_LOCALECHO);
+	echo_off(ses);
 
 	telopt_debug(ses, "SENT IAC DO ECHO");
 }
@@ -523,9 +530,17 @@ void send_echo_will(struct session *ses)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_ECHO);
 
-	DEL_BIT(ses->flags, SES_FLAG_LOCALECHO);
+	echo_off(ses);
 
 	telopt_debug(ses, "SENT IAC WILL ECHO");
+}
+
+void send_ip(struct session *ses)
+{
+	socket_printf(ses, 5, "%c%c%c%c%c", IAC, IP, IAC, DO, TELOPT_TIMINGMARK);
+
+	telopt_debug(ses, "SENT IAC IP");
+	telopt_debug(ses, "SENT IAC DO TIMING MARK");
 }
 
 void send_do_mccp2(struct session *ses)

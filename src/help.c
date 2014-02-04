@@ -38,7 +38,7 @@ struct help_type
 	This help table is a mess, but I got better things to do - Scandum
 */
 
-const struct help_type help_table[82] =
+const struct help_type help_table[] =
 {
 	{
 		"ALIAS",
@@ -185,8 +185,8 @@ const struct help_type help_table[82] =
 		"         This will show: <115>t<828>e<838>s<848>t<088> <468>!<568>!<088>\n"
 	},
 	{
-		"CONFIGURE",
-		"Commands: #configure {option} {argument}\n"
+		"CONFIG",
+		"Commands: #config {option} {argument}\n"
 		"\n"
 		"          This allows you to configure various settings, the settings can be\n"
 		"          written to file with the #write or #writesession command.\n"
@@ -218,8 +218,8 @@ const struct help_type help_table[82] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.5                           <068>#\n"
-		"<068>    ######################################################################<088>\n"
+		"<068>    #<078>                           Version 1.95.6                           <068>#\n"
+		"<068>    ######################################################################<088>\n\n"
 	},
 	{
 		"DELAY",
@@ -389,12 +389,15 @@ const struct help_type help_table[82] =
 		"         #format {test} {%r}   {string}  reverse text, hiya = ayih\n"
 		"         #format {test} {%t}     {time}  print the current military time\n"
 		"         #format {test} {%u}   {string}  uppercase text\n"
-		"         #format {time} {%T}             store the epoch time in {time}\n"
-		"         #format {time} {%U}             store the micro epoch time in {time}\n"
 		"         #format {test} {%C}   {colums}  store the screen width in {colums}\n"
+		"         #format {test} {%D}     {time}  print the current day\n"
 		"         #format {test} {%G}   {number}  perform thousand grouping on {number}\n"
 		"         #format {test} {%L}   {string}  store the string length in {test}\n"
+		"         #format {test} {%M}     {time}  print the current month\n"
 		"         #format {test} {%R}     {rows}  store the screen height in {rows}\n"
+		"         #format {time} {%T}             store the epoch time in {time}\n"
+		"         #format {time} {%U}             store the micro epoch time in {time}\n"
+		"         #format {time} {%Y}     {time}  print the current year\n"
 	},
 	{
 		"FUNCTION",
@@ -594,6 +597,15 @@ const struct help_type help_table[82] =
 		"\n"
 		"example:\n"
 		"#nop This is the start of my autoactions\n"
+	},
+	{
+		"PARSE",
+		"\n"
+		"Command: #parse {string} {commands}\n"
+		"\n"
+		"Like a for statement, parse will loop from start to finish through the\n"
+		"given string. The value of the character parse is at will be placed in\n"
+		"the $parse variable as well as in &0.\n"
 	},
 	{
 		"PATH",
@@ -912,7 +924,7 @@ const struct help_type help_table[82] =
 		"#act {You cannot go that way.} {#unpath}\n"
 	},
 	{
-		"UNRPROMPT",
+		"UNPROMPT",
 		"\n"
 		"format: 	#unprompt\n"
 		"\n"

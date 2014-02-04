@@ -60,10 +60,7 @@ DO_COMMAND(do_highlight)
 	{
 		if (show_node_with_wild(ses, left, LIST_HIGHLIGHT) == FALSE)
 		{
-			if (show_message(ses, LIST_HIGHLIGHT))
-			{
-				tintin_puts2("#THAT HIGHLIGHT IS NOT DEFINED.", ses);
-			}
+			show_message(ses, LIST_HIGHLIGHT, "#HIGHLIGHT: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
@@ -77,10 +74,7 @@ DO_COMMAND(do_highlight)
 		{
 			updatenode_list(ses, left, right, pr, LIST_HIGHLIGHT);
 
-			if (show_message(ses, LIST_HIGHLIGHT))
-			{
-				tintin_printf2(ses, "#OK. {%s} IS NOW HIGHLIGHTED {%s} @ {%s}", left, right, pr);
-			}
+			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}", left, right, pr);
 		}
 	}
 	return ses;
@@ -92,7 +86,7 @@ DO_COMMAND(do_unhighlight)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_HIGHLIGHT];
 
@@ -100,17 +94,16 @@ DO_COMMAND(do_unhighlight)
 
 	while ((node = search_node_with_wild(root, left)))
 	{
-		if (show_message(ses, LIST_HIGHLIGHT))
-		{
-			tintin_printf2(ses, "#OK. {%s} IS NO LONGER A HIGHLIGHT.", node->left);
-		}
+		show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} IS NO LONGER A HIGHLIGHT.", node->left);
+
 		deletenode_list(ses, node, LIST_HIGHLIGHT);
-		flag = TRUE;
+
+		found = TRUE;
 	}
 
-	if (flag == FALSE && show_message(ses, LIST_HIGHLIGHT))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT HIGHLIGHT IS NOT DEFINED.", ses);
+		show_message(ses, LIST_HIGHLIGHT, "#HIGHLIGHT: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }

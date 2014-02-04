@@ -167,8 +167,6 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define LIST_DELAY                    LIST_MAX + 1
 #define LIST_ALL                      LIST_MAX + 2
 
-#define CONFIG_MAX                    17
-
 #define COLOR_MAX                     24
 
 #define CLASS_MAX                      5
@@ -233,6 +231,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SUB_ANC                       (1 <<  6)
 #define SUB_SEC                       (1 <<  7)
 #define SUB_EOL                       (1 <<  8)
+#define SUB_FMT                       (1 <<  9)
 
 #define SES_FLAG_NAWS                 (1 <<  0)
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
@@ -259,7 +258,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SES_FLAG_SCAN                 (1 << 22)
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
-#define SES_FLAG_GAGPROMPT            (1 << 25)
+#define SES_FLAG_PREPPED              (1 << 25)
 #define SES_FLAG_EOR                  (1 << 26)
 #define SES_FLAG_GA                   (1 << 27)
 #define SES_FLAG_BREAK                (1 << 28)
@@ -267,6 +266,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
 #define LIST_FLAG_DEBUG               (1 <<  2)
+#define LIST_FLAG_LOG                 (1 <<  3)
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
 #define NODE_FLAG_CLASS               (1 <<  0)
@@ -276,9 +276,6 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define CMD_FLAG_NONE                 (0 <<  0)
 #define CMD_FLAG_SUB                  (1 <<  0)
-
-
-#define MAX_COMMAND                   82
 
 #define MAX_STR_HASH                  5000
 
@@ -826,7 +823,7 @@ extern void buffer_e(void);
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-extern void push_call(char *f, ...);
+extern int push_call(char *f, ...);
 extern void pop_call(void);
 extern void dump_stack(void);
 
@@ -969,6 +966,7 @@ extern DO_COMMAND(do_echo);
 extern DO_COMMAND(do_end);
 extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_loop);
+extern DO_COMMAND(do_parse);
 extern DO_COMMAND(do_forall);
 
 extern DO_COMMAND(do_return);
@@ -1008,10 +1006,12 @@ extern void send_sb_ttype(struct session *ses);
 extern void send_wont_status(struct session *ses);
 extern void send_dont_status(struct session *ses);
 extern void send_dont_sga(struct session *ses);
+extern void send_do_sga(struct session *ses);
 extern void send_wont_oldenviron(struct session *ses);
 extern void send_echo_on(struct session *ses);
 extern void send_echo_off(struct session *ses);
 extern void send_echo_will(struct session *ses);
+extern void send_ip(struct session *ses);
 extern void send_do_mccp2(struct session *ses);
 extern void send_dont_mccp2(struct session *ses);
 extern void init_mccp(struct session *ses);
@@ -1065,7 +1065,7 @@ extern void bait(void);
 extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
 extern char *readkeyboard(void);
 extern void echo_command(struct session *ses, char *line, int force);
-extern int  show_message(struct session *ses, int index);
+extern void show_message(struct session *ses, int index, const char *format, ...);
 extern void tintin_header(struct session *ses, const char *format, ...);
 extern void socket_printf(struct session *ses, size_t length, const char *format, ...);
 extern void tintin_printf2(struct session *ses, const char *format, ...);
@@ -1156,9 +1156,9 @@ extern void check_all_substitutions(char *original, char *line, struct session *
 #define __TABLES_H__
 
 
-extern const struct command_type command_table[MAX_COMMAND];
+extern const struct command_type command_table[];
 extern const struct list_type list_table[LIST_ALL];
-extern const struct config_type config_table[CONFIG_MAX];
+extern const struct config_type config_table[];
 extern const struct color_type color_table[COLOR_MAX];
 extern const struct class_type class_table[CLASS_MAX];
 extern const struct chat_type chat_table[CHAT_MAX];
@@ -1190,6 +1190,7 @@ extern void tick_update(void);
 extern int is_abbrev(const char *s1, const char *s2);
 extern int is_suffix(const char *s1, const char *s2);
 extern int is_number(const char *str);
+extern int hex_number(const char *str);
 extern long long utime(void);
 extern char *capitalize(const char *str);
 extern void cat_sprintf(char *dest, const char *fmt, ...);

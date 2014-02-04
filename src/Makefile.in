@@ -49,7 +49,7 @@ INCS = @MYINCLUDE@
 #Since readline and history are required, I'll hard code it in here.
 #Guess we'll add zlib as well - Scandum
 
-LIBS = @MYLIB@ -lreadline -lhistory -lz -lncurses @LIBS@
+LIBS = @MYLIB@ -lreadline -lhistory -lz -lncurses -lpthread @LIBS@
 
 # If you prefer to be able to enter ISO latin-1 characters instead
 # of being able to use the meta key for special emacs-like commands
@@ -102,7 +102,7 @@ Makefile: Makefile.in
 	@exit 1
 
 install: tt++
-	@./install-sh $(BINDIR) $(DEFAULT_FILE_DIR) $(COMPRESSED_HELP)
+	cp tt++* /usr/bin
 
 # Autocompile all .c files into .o files using this rule:
 .c.o:

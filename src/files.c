@@ -345,10 +345,8 @@ DO_COMMAND(do_write)
 
 	fclose(file);
 
-	if (show_message(ses, -1))
-	{
-		tintin_printf(ses, "#OK: #WRITE {%s} - COMMANDO-FILE WRITTEN.", filename);
-	}
+	show_message(ses, -1, "#OK. COMMAND FILE WRITTEN.", filename);
+
 	return ses;
 }
 
@@ -403,10 +401,7 @@ DO_COMMAND(do_textin)
 	}
 	fclose(fp);
 
-	if (show_message(ses, -1))
-	{
-		tintin_printf(ses, "#OK: #TEXTIN {%s} - FILE READ.");
-	}
+	show_message(ses, -1, "#OK. FILE READ.");
 
 	return ses;
 }
@@ -440,10 +435,8 @@ DO_COMMAND(do_scan)
 
 	DEL_BIT(ses->flags, SES_FLAG_SCAN);
 
-	if (show_message(ses, -1))
-	{
-		tintin_printf(ses, "#OK: #SCAN {%s} - FILE READ.", filename);
-	}
+	show_message(ses, -1, "#OK. FILE READ.", filename);
+
 	fclose(fp);
 
 	return ses;
@@ -486,10 +479,8 @@ DO_COMMAND(do_readmap)
 
 	fclose(myfile);
 
-	if (show_message(ses, -1))
-	{
-		tintin_printf(ses, "#OK: #READMAP {%s} - FILE READ.", filename);
-	}
+	show_message(ses, -1, "#OK. FILE READ.");
+
 	return(ses);
 }
 
@@ -535,10 +526,7 @@ DO_COMMAND(do_writemap)
 
 	fclose(file);
 
-	if (show_message(ses, -1))
-	{
-		tintin_printf(ses, "#OK: #WRITEMAP {%s} - FILE WRITTEN.", filename);
-	}
+	show_message(ses, -1, "#OK. FILE WRITTEN.");
 
 	return ses;
 }

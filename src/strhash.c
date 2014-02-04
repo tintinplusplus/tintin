@@ -81,7 +81,7 @@ char *str_unhash(char *str)
 
 	hash_ptr = (struct str_hash_data *) (str - gtd->str_hash_size);
 
-	if (--hash_ptr->count == 0)
+	if (--(hash_ptr->count) == 0)
 	{
 		UNLINK(hash_ptr, str_hash_index[hash_ptr->hash].f_node, str_hash_index[hash_ptr->hash].l_node, next, prev);
 		free(hash_ptr);

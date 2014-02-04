@@ -66,10 +66,7 @@ DO_COMMAND(do_function)
 	{
 		if (show_node_with_wild(ses, left, LIST_FUNCTION) == FALSE)
 		{
-			if (show_message(ses, LIST_FUNCTION))
-			{
-				tintin_puts2("#THAT FUNCTION IS NOT DEFINED.", ses);
-			}
+			show_message(ses, LIST_FUNCTION, "#FUNCTION: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
@@ -89,10 +86,7 @@ DO_COMMAND(do_function)
 
 		updatenode_list(ses, left, temp, "0", LIST_FUNCTION);
 
-		if (show_message(ses, LIST_FUNCTION))
-		{
-			tintin_printf2(ses, "#OK. {%s} now gives {%s}.",left, temp);
-		}
+		show_message(ses, LIST_FUNCTION, "#OK. {%s} IS NOW A FUNCTION.", left);
 	}
 	return ses;
 }
@@ -103,7 +97,7 @@ DO_COMMAND(do_unfunction)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_FUNCTION];
 
@@ -111,16 +105,15 @@ DO_COMMAND(do_unfunction)
 
 	while ((node = search_node_with_wild(root, left)) != NULL)
 	{
-		if (show_message(ses, LIST_FUNCTION))
-		{
-			tintin_printf2(ses, "#Ok. {%s} is no longer a function.", node->left);
-		}
+		show_message(ses, LIST_FUNCTION, "#OK. {%s} IS NO LONGER A FUNCTION.", node->left);
+
 		deletenode_list(ses, node, LIST_FUNCTION);
-		flag = TRUE;
+
+		found = TRUE;
 	}
-	if (!flag && show_message(ses, LIST_FUNCTION))
+	if (found == FALSE)
 	{
-		tintin_puts2("#THAT FUNCTION IS NOT DEFINED.", ses);
+		show_message(ses, LIST_FUNCTION, "#FUNCTION: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }

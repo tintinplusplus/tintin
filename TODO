@@ -1,3 +1,14 @@
+* Stuff that isn't that hard to do, but somehow never ends up being fixed.
+
+- remove assignment spams when using an alias.
+
+- fix up macro usage in character mode SGA + LOCAL ECHO OFF.
+
+- look into cleanup_session crashing tintin sometimes.
+
+- check if buffer code is platform independent
+
+
 * This is a list of new features/improvements that are planned.
 
 - auto mapper (half finished)
@@ -9,6 +20,8 @@
 - code that deals with broken lines (half finished)
 
 - event system to deal with various situations
+
+
 
 * This is a list of new features/improvements the author of this version has
   no interest in.

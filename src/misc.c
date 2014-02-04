@@ -181,7 +181,7 @@ DO_COMMAND(do_showme)
 	arg = get_arg_in_braces(arg, temp, TRUE);
 	arg = get_arg_in_braces(arg, right, FALSE);
 
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+	substitute(ses, temp, left, SUB_COL|SUB_ESC);
 
 	if (*right)
 	{
@@ -191,11 +191,10 @@ DO_COMMAND(do_showme)
 	}
 	do_one_line(left, ses);
 
-	substitute(ses, left, temp, SUB_EOL);
+	substitute(ses, temp, left, SUB_COL|SUB_ESC|SUB_EOL);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_GAG) || HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
+	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
-		DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
 
 		return ses;
@@ -217,7 +216,7 @@ DO_COMMAND(do_showme)
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	sprintf(output, "\033[0m\033[0K%s\033[0m", temp);
+	sprintf(output, "\033[0m\033[0K%s\033[0m", left);
 
 	add_line_buffer(ses, output, FALSE);
 
@@ -230,9 +229,6 @@ DO_COMMAND(do_showme)
 	return ses;
 }
 
-/*********************/
-/* the #loop command */
-/*********************/
 
 DO_COMMAND(do_loop)
 {
@@ -267,6 +263,37 @@ DO_COMMAND(do_loop)
 			sprintf(gtd->cmds[0], "%d", counter);
 
 			sprintf(temp, "loop %d", counter);
+			do_internal_variable(ses, temp);
+
+			substitute(ses, right, temp, SUB_CMD);
+			ses = parse_input(temp, ses);
+		}
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_parse)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	int cnt;
+
+	arg = get_arg_in_braces(arg, temp, 0);
+	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+
+	arg = get_arg_in_braces(arg, right, 1);
+
+	if (*left == 0 || *right == 0)
+	{
+		tintin_printf2(ses, "#ERROR: #PARSE - PROVIDE 2 ARGUMENTS");
+	}
+	else
+	{
+		for (cnt = 0 ; left[cnt] != 0 ; cnt++)
+		{
+			sprintf(gtd->cmds[0], "%c", left[cnt]);
+
+			sprintf(temp, "parse %c", left[cnt]);
 			do_internal_variable(ses, temp);
 
 			substitute(ses, right, temp, SUB_CMD);
@@ -378,10 +405,7 @@ DO_COMMAND(do_system)
 		return ses;
 	}
 
-	if (show_message(ses, -1))
-	{
-		tintin_printf(ses, "#OK: EXECUTING '%s'", left);
-	}
+	show_message(ses, -1, "#OK: EXECUTING '%s'", left);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{

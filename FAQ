@@ -175,3 +175,16 @@ A17) Use %%90 %%91 %%92. When the alias is parsed %9 will be replaced with the
 Q18) How to enable support for chinese muds?
 
 A18  Try: ./configure --big5 to use the big5 encoding
+
+Q19) I use OS X and am totally friggin confused...I ran tintin a few times,
+     and now every time I open a terminal window, it runs tintin automatically.
+     What the hell has this program done to my computer?
+
+
+A19) You did "use settings as default" while running tintin. There's a few
+     ways out of this, but the easiest is locating your terminal preference 
+     (home : library : com.apple.Terminal.plist) and deleting it. You'll have
+     to redo anyting custom you set up (screen size, colors, etc.), but it
+     will get the terminal back to the default of loading into your home
+     directory.
+

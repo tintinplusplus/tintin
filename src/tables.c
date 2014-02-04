@@ -29,7 +29,7 @@
 #include "tintin.h"
 
 
-const struct command_type command_table[MAX_COMMAND] =
+const struct command_type command_table[] =
 {
 	{	"action",            do_action,            CMD_FLAG_NONE    },
 	{	"alias",             do_alias,             CMD_FLAG_NONE    },
@@ -71,6 +71,7 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"mark",              do_mark,              CMD_FLAG_NONE    },
 	{	"message",           do_message,           CMD_FLAG_SUB     },
 	{	"nop",               do_nop,               CMD_FLAG_NONE    },
+	{    "parse",             do_parse,             CMD_FLAG_NONE    },
 	{	"path",              do_path,              CMD_FLAG_NONE    },
 	{	"pathdir",           do_pathdir,           CMD_FLAG_NONE    },
 	{	"prompt",            do_prompt,            CMD_FLAG_NONE    },
@@ -83,7 +84,7 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"savepath",          do_savepath,          CMD_FLAG_SUB     },
 	{	"scan",              do_scan,              CMD_FLAG_SUB     },
 	{	"session",           do_session,           CMD_FLAG_SUB     },
-	{	"showme",            do_showme,            CMD_FLAG_NONE    },
+	{	"showme",            do_showme,            CMD_FLAG_SUB     },
 	{	"snoop",             do_snoop,             CMD_FLAG_SUB     },
 	{	"split",             do_split,             CMD_FLAG_SUB     },
 	{	"substitute",        do_substitute,        CMD_FLAG_NONE    },
@@ -229,7 +230,7 @@ const struct list_type list_table[LIST_ALL] =
 };
 
 
-const struct config_type config_table[CONFIG_MAX] =
+const struct config_type config_table[] =
 {
 	{
 		"SPEEDWALK",
@@ -347,6 +348,13 @@ const struct config_type config_table[CONFIG_MAX] =
 		"Tintin converts meta prefixed characters.",
 		"Tintin doesn't convert meta prefixed characters.",
 		config_convertmeta
+	},
+
+	{
+		"",
+		"",
+		0,
+		0
 	}
 };
 

@@ -174,10 +174,7 @@ DO_COMMAND(do_loadpath)
 
 	if ((node = searchnode_list(ses->list[LIST_ALIAS], left)) == NULL)
 	{
-		if (show_message(ses, LIST_PATH))
-		{
-			tintin_printf2(ses, "#ALIAS {%s} NOT FOUND.", left);
-		}
+		show_message(ses, LIST_PATH, "#ALIAS {%s} NOT FOUND.", left);
 	}
 	else
 	{
@@ -202,10 +199,7 @@ DO_COMMAND(do_loadpath)
 			}
 		}
 
-		if (show_message(ses, LIST_PATH))
-		{
-			tintin_printf(ses, "#OK: #PATH WITH %d NODES LOADED.", root->count);
-		}
+		show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", root->count);
 	}
 	return ses;
 }
@@ -229,7 +223,7 @@ DO_COMMAND(do_path)
 	{
 		addnode_list(ses->list[LIST_PATH], left, right, "0");
 
-		tintin_printf(ses, "#OK: #PATH - {%s} = {%s} ADDED.", left, right);
+		show_message(ses, LIST_PATH, "#OK. #PATH - {%s} = {%s} ADDED.", left, right);
 	}
 	return ses;
 }
@@ -245,7 +239,7 @@ DO_COMMAND(do_unpath)
 
 	if (root->l_node)
 	{
-		tintin_printf2(ses, "#OK: #UNPATH - DELETED MOVE {%s}", root->l_node->left);
+		show_message(ses, LIST_PATH, "#OK. #UNPATH - DELETED MOVE {%s}", root->l_node->left);
 		deletenode_list(ses, root->l_node, LIST_PATH);
 	}
 	else
@@ -319,20 +313,14 @@ DO_COMMAND(do_pathdir)
 	{
 		if (show_node_with_wild(ses, left, LIST_PATHDIR) == FALSE)
 		{
-			if (show_message(ses, LIST_PATHDIR))
-			{
-				tintin_printf2(ses, "#NO MATCH(ES) FOUND FOR {%s}", left);
-			}
+			show_message(ses, LIST_PATHDIR, "#NO MATCH(ES) FOUND FOR {%s}", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, "0", LIST_PATHDIR);
 
-		if (show_message(ses, LIST_PATHDIR))
-		{
-			tintin_printf2(ses, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s}", left, right);
-		}
+		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s}", left, right);
 	}
 	return ses;
 }

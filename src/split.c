@@ -136,5 +136,27 @@ void dirty_screen(struct session *ses)
 		goto_rowcol(ses, ses->rows, 1);
 	}
 
+
+	if (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA) || HAS_BIT(ses->flags, SES_FLAG_VERBATIM))
+	{
+		if (!HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+		{
+			SET_BIT(gts->flags, SES_FLAG_PREPPED);
+
+			rl_initialize();
+			rl_prep_terminal(1);
+		}
+	}
+	else
+	{
+		if (HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+		{
+			DEL_BIT(gts->flags, SES_FLAG_PREPPED);
+
+			rl_initialize();
+			rl_deprep_terminal();
+		}
+	}
+
 	fflush(stdout);
 }

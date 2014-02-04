@@ -270,7 +270,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
 					{
-						tintin_printf2(ses, "#FUNCTION DEBUG: (%s) (%s)", node->left, funcargs);
+						tintin_printf2(ses, "#FUNCTION DEBUG: (%s) (%s)", node->left, temp);
 					}
 					for (i = 0 ; i < 10 ; i++)
 					{
@@ -341,6 +341,11 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 					}
 					pti += 2;
 				}
+				else if (HAS_BIT(flags, SUB_FMT))
+				{
+					*pto++ = '%';
+					*pto++ = *pti++;
+				}
 				else
 				{
 					*pto++ = *pti++;
@@ -396,7 +401,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 							*pto++ = '\a';
 							break;
 						case 'e':
-							*pto++ = '\e';
+							*pto++ = '\033';
 							break;
 						case 'n':
 							*pto++ = '\n';
@@ -406,6 +411,15 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 							break;
 						case 't':
 							*pto++ = '\t';
+							break;
+						case 'x':
+							pti++;
+
+							if (pti[0] && pti[1])
+							{
+								*pto++ = hex_number(pti);
+								pti += 2;
+							}
 							break;
 						case '[':
 							*pto++ = '{';

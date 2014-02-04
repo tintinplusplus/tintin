@@ -136,6 +136,8 @@ void show_session(struct session *ses, struct session *ptr)
 
 struct session *newactive_session(void)
 {
+	push_call("newactive_session(void)");
+
 	if (gts->next)
 	{
 		activate_session(gts->next);
@@ -147,7 +149,7 @@ struct session *newactive_session(void)
 
 		tintin_printf(NULL, "#THERE'S NO ACTIVE SESSION NOW.");
 	}
-
+	pop_call();
 	return gtd->ses;
 }
 
@@ -329,6 +331,8 @@ void cleanup_session(struct session *ses)
 		fclose(ses->logline);
 	}
 
+	pop_call();
+	push_call("cleanup_session(%p) (free)", ses);
 
 	free(ses->name);
 	free(ses->host);

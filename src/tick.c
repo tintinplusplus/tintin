@@ -56,17 +56,14 @@ DO_COMMAND(do_tick)
 	{
 		if (show_node_with_wild(ses, left, LIST_TICKER) == FALSE) 
 		{
-			tintin_printf2(ses, "#TICK, NO MATCH(ES) found for {%s}", left);
+			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}", left);
 		}
 	}
 	else
 	{
 		updatenode_list(ses, left, right, pr, LIST_TICKER);
 
-		if (show_message(ses, LIST_TICKER))
-		{
-			tintin_printf2(ses, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", left, right, pr);
-		}
+		show_message(ses, LIST_TICKER, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", left, right, pr);
 	}
 	return ses;
 }
@@ -77,7 +74,7 @@ DO_COMMAND(do_untick)
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int flag = FALSE;
+	int found = FALSE;
 
 	root = ses->list[LIST_TICKER];
 
@@ -85,18 +82,16 @@ DO_COMMAND(do_untick)
 
 	while ((node = search_node_with_wild(root, left))) 
 	{
-		if (show_message(ses, LIST_TICKER))
-		{
-			tintin_printf2(ses, "#OK {%s} IS NO LONGER A TICKER.", node->left);
-		}
+		show_message(ses, LIST_TICKER, "#OK {%s} IS NO LONGER A TICKER.", node->left);
+
 		deletenode_list(ses, node, LIST_TICKER);
 
-		flag = TRUE;
+		found = TRUE;
 	}
 
-	if (!flag && show_message(ses, LIST_TICKER)) 
+	if (found == FALSE)
 	{
-		tintin_printf(ses, "#NO MATCH(ES) FOUND FOR {%s}", left);
+		show_message(ses, LIST_TICKER, "#NO MATCH(ES) FOUND FOR {%s}", left);
 	}
 	return ses;
 }
@@ -128,10 +123,7 @@ DO_COMMAND(do_delay)
 	{
 		updatenode_list(ses, temp, right, left, LIST_DELAY);
 
-		if (show_message(ses, LIST_TICKER))
-		{
-			tintin_printf2(ses, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", left, right);
-		}
+		show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", left, right);
 	}
 	return ses;
 }
@@ -170,7 +162,7 @@ void tick_update(void)
 
 				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
 				{
-					tintin_printf2(ses, "#TICKER DEBUG: %s", result);
+					show_message(ses, LIST_TICKER, "#TICKER DEBUG: %s", result);
 				}
 				parse_input(result, ses);
 			}

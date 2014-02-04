@@ -47,6 +47,7 @@ oops 5
 
 #alias {telnet} {#config {debug telnet} on;#ses x %0}
 
+/*
 #var travel 0
 
 #function {revdir}
@@ -142,3 +143,35 @@ oops 5
           }
 }
 {1}
+
+#sub {~%0%1} {%0^%1}
+*/
+
+#function {getyear}
+{
+    #format epoch %T;
+    #format result %Y $epoch;
+    #math result $result % 100;
+    #if {$result < 10} {#format result 0%s $result}
+}
+
+#showme the year is @getyear{} 
+
+#function getName
+{
+    #var tmp 0;
+    #format result %s;
+    #parse {&0}
+    {
+        #if {$tmp == 0}
+        {
+            #if {("$parse" >= "A" && "$parse" <= "Z") || ("$parse" >= "a" && "$parse" <= "z")}
+            {
+                #format result {%s%s} {$result $parse}
+            }
+            {
+                #var tmp 1
+            }
+        }
+    }
+}

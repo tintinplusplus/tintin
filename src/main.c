@@ -78,7 +78,7 @@ RETSIGTYPE winchhandler(int no_care)
 
 RETSIGTYPE tstphandler(int no_care)
 {
-	printf("\e[r\e[%d;%dH", gtd->ses->rows, 1);
+	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
 
 	fflush(stdout);
 
@@ -248,7 +248,7 @@ void init_tintin(void)
 
 /*	chat_init(""); */
 
-	printf("\e=\e[?1h");
+	printf("\033=\033[?1h");
 
 	SET_BIT(gts->flags, SES_FLAG_VERBOSE);
 
