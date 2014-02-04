@@ -34,7 +34,7 @@
 
 int match(struct session *ses, char *str, char *exp)
 {
-	char expbuf[BUFFER_SIZE], strbuf[BUFFER_SIZE];
+	char expbuf[BUFFER_SIZE];
 
 	if (ses)
 	{
@@ -480,9 +480,14 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 						RESTRING(gtd->vars[i], temp);
 
-						if (*gtd->vars[i] == 0)
+						if (*pte == 0)
 						{
 							break;
+						}
+
+						if (*pte == COMMAND_SEPARATOR)
+						{
+							pte++;
 						}
 					}
 

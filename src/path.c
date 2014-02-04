@@ -42,7 +42,7 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|MAP|RUN|SAVE|WALK} {argument}.");
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|MAP|NEW|RUN|SAVE|WALK} {argument}.");
 	}
 	else
 	{
@@ -141,7 +141,7 @@ DO_PATH(path_save)
 
 	if (!is_abbrev(left, "FORWARD") && !is_abbrev(left, "BACKWARD"))
 	{
-		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <ALIAS NAME>");
+		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <VARIABLE NAME>");
 	}
 	else if (root->used == 0)
 	{
@@ -149,11 +149,11 @@ DO_PATH(path_save)
 	}
 	else if (*right == 0)
 	{
-		tintin_puts2(ses, "#PATH SAVE: YOU MUST PROVIDE AN ALIAS TO SAVE THE PATH TO.");
+		tintin_puts2(ses, "#PATH SAVE: YOU MUST PROVIDE A VARIABLE TO SAVE THE PATH TO.");
 	}
 	else
 	{
-		sprintf(result, "%calias {%s} {", gtd->tintin_char, right);
+		result[0] = 0;
 
 		if (is_abbrev(left, "FORWARD"))
 		{
@@ -179,9 +179,7 @@ DO_PATH(path_save)
 				}
 			}
 		}
-		strcat(result, "}");
-
-		script_driver(ses, LIST_PATH, result);
+		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
 	}
 }
 
@@ -193,9 +191,9 @@ DO_PATH(path_load)
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
-	if ((node = search_node_list(ses->list[LIST_ALIAS], left)) == NULL)
+	if ((node = search_node_list(ses->list[LIST_VARIABLE], left)) == NULL)
 	{
-		show_message(ses, LIST_PATH, "#ALIAS {%s} NOT FOUND.", left);
+		show_message(ses, LIST_PATH, "#PATH LOAD: VARIABLE {%s} NOT FOUND.", left);
 	}
 	else
 	{
@@ -250,19 +248,15 @@ DO_PATH(path_ins)
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 0);
 
-	if (*left == 0)
+	if (*left == 0 && *right == 0)
 	{
-		show_message(ses, LIST_PATH, "#PATH INS: YOU MUST GIVE A DIRECTION TO INSERT");
-	}
-	else if (*right == 0 && search_node_list(ses->list[LIST_PATHDIR], left))
-	{
-		check_insert_path(left, ses);
+		show_message(ses, LIST_PATH, "#PATH INS: YOU MUST GIVE A COMMAND TO INSERT");
 	}
 	else
 	{
 		insert_node_list(ses->list[LIST_PATH], left, right, "0");
 
-		show_message(ses, LIST_PATH, "#OK. #PATH - {%s} = {%s} ADDED.", left, right);
+		show_message(ses, LIST_PATH, "#PATH INS: FORWARD {%s} BACKWARD {%s}.", left, right);
 	}
 }
 
@@ -323,7 +317,7 @@ DO_PATH(path_walk)
 	{
 		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
 
-		switch (tolower(*left))
+		switch (tolower((int) *left))
 		{
 			case 'b':
 				script_driver(ses, LIST_PATH, root->list[root->used - 1]->right);

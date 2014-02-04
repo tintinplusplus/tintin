@@ -328,12 +328,13 @@ int locate_index_list(struct listroot *root, char *text, char *priority)
 
 int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 {
-	long long bot, top, val, srt, toi;
+	long long bot, top, val;
+	double toi, toj, srt;
 
 	bot = 0;
 	top = root->used - 1;
 	val = top;
-	toi = (long long) get_number(root->ses, text);
+	toi = get_number(root->ses, text);
 
 	if (!seek && toi && (*text == '+' || *text == '-') && HAS_BIT(list_table[root->type].flags, LIST_FLAG_NEST))
 	{
@@ -353,7 +354,20 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 
 	while (bot <= top)
 	{
-		srt = toi || atoll(root->list[val]->left) ? toi - atoll(root->list[val]->left) : strcmp(text, root->list[val]->left);
+		toj = get_number(root->ses, root->list[val]->left);
+
+		if (toi)
+		{
+			srt = toi - toj;
+		}
+		else if (toj)
+		{
+			srt = -1;
+		}
+		else
+		{
+			srt = strcmp(text, root->list[val]->left);
+		}
 
 		if (srt == 0)
 		{

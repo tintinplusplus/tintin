@@ -76,6 +76,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map delete   <direction>              (delete the room at given dir)");
 		tintin_printf2(ses, "#map dig      <direction> [new]        (creates a new room)");
 		tintin_printf2(ses, "#map exit     <direction>  <command>   (sets the exit command)");
+		tintin_printf2(ses, "#map exitdir  <direction> <pathdir>    (set the exit direction)");
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
 		tintin_printf2(ses, "#map insert   <direction>  [roomflag]  (insert a new room)");
@@ -261,6 +262,7 @@ DO_MAP(map_dig)
 	tintin_printf(ses, "#MAP: Created room {%d}.", room);
 }
 
+
 DO_MAP(map_exitcmd)
 {
 	char temp[BUFFER_SIZE];
@@ -289,7 +291,6 @@ DO_MAP(map_exitcmd)
 
 DO_MAP(map_exitdir)
 {
-	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	struct listnode *node;
 
@@ -312,13 +313,9 @@ DO_MAP(map_exitdir)
 		return;
 	}
 
-	sprintf(temp, "{%d} {%s} {%s} {%s}", exit->vnum, exit->name, exit->cmd, node->pr);
+	exit->dir = atoi(node->pr);
 
-	delete_exit(ses, ses->map->in_room, exit);
-
-	create_exit(ses, ses->map->in_room, temp);
-
-	tintin_printf2(ses, "#MAP: Exit {%s} set to {%s}.", arg1, arg2);
+	tintin_printf(ses, "#MAP: The direction of exit {%s} has been set to {%s}.", arg1, arg2);
 }
 
 DO_MAP(map_explore)
@@ -805,7 +802,12 @@ DO_MAP(map_read)
 
 	while (fgets(buffer, BUFFER_SIZE - 1, myfile))
 	{
-		cptr = strchr(buffer, '\n');
+		cptr = strchr(buffer, '\r'); /* For map files editor on Windows systems. */
+
+		if (!cptr)
+		{
+			cptr = strchr(buffer, '\n');
+		}
 
 		if (cptr)
 		{

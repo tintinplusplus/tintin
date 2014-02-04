@@ -303,6 +303,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 						if (point >= 0)
 						{
 							show_message(NULL, -1, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
+							precision = 0;
 							return FALSE;
 						}
 						point++;
@@ -709,20 +710,39 @@ double tintoi(char *str)
 		return 0;
 	}
 
-	if (isdigit(*ptr))
+	switch (*ptr)
 	{
-		return atof(str);
+		case '!':
+		case '~':
+		case '+':
+		case '-':
+			ptr++;
+			break;
 	}
-
-	ptr++;
 
 	while (*ptr)
 	{
-		if (!isdigit(*ptr) && *ptr != '.')
+		if (!isdigit((int) *ptr))
 		{
-			return 0;
+			if (*ptr != '.')
+			{
+				return 0;
+			}
+			ptr++;
+
+			while (*ptr)
+			{
+				if (!isdigit((int) *ptr))
+				{
+					return 0;
+				}
+				ptr++;
+			}
 		}
-		ptr++;
+		else
+		{
+			ptr++;
+		}
 	}
 
 	switch (str[0])
@@ -740,7 +760,7 @@ double tintoi(char *str)
 			return -atof(&str[1]);
 
 		default:
-			return 0;
+			return atof(str);
 	}
 }
 

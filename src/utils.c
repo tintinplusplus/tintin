@@ -71,9 +71,8 @@ int is_color_code(char *str)
 
 int is_number(char *str)
 {
-	int i;
-
-	i = 0;
+	int i = 0;
+	int j = 0;
 
 	if (str[i] == '-' || str[i] == '+')
 	{
@@ -87,9 +86,21 @@ int is_number(char *str)
 
 	for (i = 1 ; str[i] != 0 ; i++)
 	{
-		if (!isdigit(str[i]) && str[i] != '.')
+		if (!isdigit(str[i]))
 		{
-			return FALSE;
+			if (str[i] != '.')
+			{
+				return FALSE;
+			}
+
+			for (i++ ; str[i] != 0 ; i++)
+			{
+				if (!isdigit(str[i]))
+				{
+					return FALSE;
+				}
+			}
+			return TRUE;
 		}
 	}
 	return TRUE;

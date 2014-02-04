@@ -176,7 +176,7 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 						cnt = -1;
 						pti += 1 + strlen(tmp);
 
-						if (HAS_BIT(vtc, COL_256))
+						if (HAS_BIT(vtc, COL_256) && (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB)))
 						{
 							if (HAS_BIT(vtc, COL_XTF))
 							{
@@ -228,20 +228,20 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 									bgc = 48;
 									break;
 								default:
-									if (atoi(tmp) >= 40 && atoi(tmp) < 50)
+									if (atoi(tmp) / 10 == 4)
 									{
 										bgc = atoi(tmp);
 									}
-									if (atoi(tmp) >= 100 && atoi(tmp) < 110)
+									if (atoi(tmp) / 10 == 10)
 									{
 										bgc = atoi(tmp) - 50;
 									}
 
-									if (atoi(tmp) >= 30 && atoi(tmp) < 40)
+									if (atoi(tmp) / 10 == 3)
 									{
 										fgc = atoi(tmp);
 									}
-									if (atoi(tmp) >= 90 && atoi(tmp) < 100)
+									if (atoi(tmp) / 10 == 9)
 									{
 										SET_BIT(vtc, COL_BLD);
 

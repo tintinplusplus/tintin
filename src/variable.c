@@ -386,12 +386,8 @@ DO_COMMAND(do_format)
 	time_t    timeval_t;
 	int i;
 
-	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
-
-	arg = temp;
-
-	arg = get_arg_in_braces(arg, destvar,  GET_NST);
-	arg = get_arg_in_braces(arg, format,   GET_ONE);
+	arg = sub_arg_in_braces(ses, arg, destvar,  GET_NST, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, format,   GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*destvar == 0 || *format == 0)
 	{
@@ -402,7 +398,7 @@ DO_COMMAND(do_format)
 
 	for (i = 0 ; i < 20 ; i++)
 	{
-		arg = get_arg_in_braces(arg, arglist[i], GET_ONE);
+		arg = sub_arg_in_braces(ses, arg, arglist[i], GET_ONE, SUB_VAR|SUB_FUN);
 	}
 
 	i = 0;

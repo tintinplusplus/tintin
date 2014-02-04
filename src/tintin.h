@@ -120,7 +120,7 @@
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
-#define VERSION_NUM               "2.00.0"
+#define VERSION_NUM               "2.00.1"
 
 #define ESCAPE                          27
 

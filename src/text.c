@@ -79,13 +79,13 @@ void printline(struct session *ses, char *str, int prompt)
 
 int word_wrap(struct session *ses, char *textin, char *textout, int display)
 {
-	char *pti, *pto, *lis, *los;
+	char *pti, *pto, *lis, *los, *chi, *cho;
 	int skip = 0, cnt = 0;
 
 	push_call("word_wrap(%s,%p,%p)",ses->name, textin,textout);
 
-	pti = lis = textin;
-	pto = los = textout;
+	pti = chi = lis = textin;
+	pto = cho = los = textout;
 
 	ses->cur_col = 1;
 
@@ -138,11 +138,18 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 					los = pto;
 					lis = pti;
 				}
-				else
+				else if (lis != chi) // infinite VT loop detection
 				{
 					pto = los;
 					*pto++ = '\n';
-					pti = lis;
+					pti = chi = lis;
+					pti++;
+				}
+				else if (los != cho)
+				{
+					pto = cho = los;
+					pto++;
+					pti = chi = lis;
 					pti++;
 				}
 			}

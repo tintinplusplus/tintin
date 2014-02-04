@@ -8,8 +8,6 @@
 
 - classes aren't saved when using #write
 
-- fix 256 color color patching.
-
 -------------------------------------------------------------------------------
 
 GENERAL STUFF:

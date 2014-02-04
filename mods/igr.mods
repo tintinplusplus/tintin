@@ -1,3 +1,33 @@
+Feb 2010       2.00.1
+--------------------------------------------------------------------------------
+
+help.c         Added documentation for #map exitdir
+
+net.c          Fixed a bug with color patch prepending the current line's color
+               rather than the previous line's color.
+
+vt102.c        Improved 256 color patching handling.
+
+vt102.c        Added better \b handling, so muds using backspaces won't cause
+               wrapping or scrollback issues.
+
+path.c         #path load and #path save now load and save to variables, rather
+               than aliases.
+
+mapper.c       Added #map dig {<direction>} {new} option.
+
+mapper.c       Added support for loading map files edited in Windows.
+
+tinexp.c       Added support for separating function arguments using semicolons.
+
+buffer.c       Now only stores a buffer line as a simple variable if no upper
+               bound argument is given. Added support for dealing with a
+               lower upper bound to store the lines in reverse.
+
+math.c         Fixed floating point handling.
+
+data.c         Fixed floating point associative array handling.
+
 Jan 2010       2.00.0
 --------------------------------------------------------------------------------
 

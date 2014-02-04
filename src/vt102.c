@@ -108,6 +108,8 @@ int skip_vt102_codes(char *str)
 {
 	int skip;
 
+	push_call("skip_vt102_codes(%p)",str);
+
 	switch (str[0])
 	{
 		case   5:   /* ENQ */
@@ -125,47 +127,64 @@ int skip_vt102_codes(char *str)
 		case  24:   /* CAN */
 		case  26:   /* SUB */
 		case 127:   /* DEL */
+			pop_call();
 			return 1;
 
 		case  27:   /* ESC */
 			break;
 
 		default:
+			pop_call();
 			return 0;
 	}
 
 	switch (str[1])
 	{
 		case '\0':
+			pop_call();
 			return 1;
 
 		case '%':
 		case '#':
 		case '(':
 		case ')':
-			return 3;
+			pop_call();
+			return str[2] ? 3 : 2;
 
 		case ']':
 			switch (str[2])
 			{
 				case 'P':
-					return 10;
+					for (skip = 3 ; skip < 10 ; skip++)
+					{
+						if (str[skip] == 0)
+						{
+							break;
+						}
+					}
+					pop_call();
+					return skip;
+
 				case 'R':
+					pop_call();
 					return 3;
 			}
+			pop_call();
 			return 2;
 
 		case '[':
 			break;
 
 		default:
+			pop_call();
 			return 2;
 	}
 
 	for (skip = 2 ; str[skip] != 0 ; skip++)
 	{
-		if (isalpha(str[skip]))
+		if (isalpha((int) str[skip]))
 		{
+			pop_call();
 			return skip + 1;
 		}
 
@@ -174,9 +193,11 @@ int skip_vt102_codes(char *str)
 			case '@':
 			case '`':
 			case ']':
+				pop_call();
 				return skip + 1;
 		}
 	}
+	pop_call();
 	return skip;
 }
 
@@ -214,7 +235,7 @@ int find_non_color_codes(char *str)
 				return 0;
 		}
 
-		if (isalpha(str[skip]))
+		if (isalpha((int) str[skip]))
 		{
 			return 0;
 		}
@@ -231,7 +252,7 @@ int skip_vt102_codes_non_graph(char *str)
 	{
 		case   5:   /* ENQ */
 		case   7:   /* BEL */
-		case   8:   /* BS  */
+	/*	case   8: *//* BS  */
 	/*	case   9: *//* HT  */
 	/*	case  10: *//* LF  */
 		case  11:   /* VT  */
@@ -305,7 +326,7 @@ int skip_vt102_codes_non_graph(char *str)
 				return skip + 1;
 		}
 
-		if (isalpha(str[skip]))
+		if (isalpha((int) str[skip]))
 		{
 			return skip + 1;
 		}
@@ -452,8 +473,8 @@ void get_color_codes(char *old, char *str, char *buf)
 				if (pti[-1] == 'm')
 				{
 					vtc =  0;
-					fgc = 39;
-					bgc = 49;
+					fgc = -1;
+					bgc = -1;
 					break;
 				}
 
@@ -468,7 +489,7 @@ void get_color_codes(char *old, char *str, char *buf)
 						cnt = -1;
 						pti += 1 + strlen(col);
 
-						if (HAS_BIT(vtc, COL_256))
+						if (HAS_BIT(vtc, COL_256) && (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB)))
 						{
 							if (HAS_BIT(vtc, COL_XTF))
 							{
@@ -479,7 +500,7 @@ void get_color_codes(char *old, char *str, char *buf)
 							{
 								bgc = URANGE(0, atoi(col), 255);
 							}
-							DEL_BIT(vtc, COL_XTF|COL_XTB|COL_256);
+							DEL_BIT(vtc, COL_XTF|COL_XTB);
 						}
 						else
 						{
@@ -487,12 +508,12 @@ void get_color_codes(char *old, char *str, char *buf)
 							{
 								case 0:
 									vtc = 0;
-									fgc = 39;
-									bgc = 49;
+									fgc = -1;
+									bgc = -1;
 									break;
 								case 1:
 									SET_BIT(vtc, COL_BLD);
-										break;
+									break;
 								case 4:
 									SET_BIT(vtc, COL_UND);
 									break;
@@ -525,27 +546,43 @@ void get_color_codes(char *old, char *str, char *buf)
 									break;
 								case 38:
 									DEL_BIT(vtc, COL_XTB);
+									DEL_BIT(vtc, COL_256);
 									SET_BIT(vtc, COL_XTF);
-									fgc = 39;
+									fgc = -1;
 									break;
 								case 39:
 									DEL_BIT(vtc, COL_UND);
-									fgc = 39;
+									fgc = -1;
 									break;
 								case 48:
 									DEL_BIT(vtc, COL_XTF);
+									DEL_BIT(vtc, COL_256);
 									SET_BIT(vtc, COL_XTB);
-									bgc = 49;
+									bgc = -1;
 									break;
 								default:
-									if (atoi(col) >= 40 && atoi(col) < 50)
+									DEL_BIT(vtc, COL_256);
+
+									/*
+										Use 256 color's 16 color notation
+									*/
+
+									if (atoi(col) / 10 == 4)
 									{
-										bgc = atoi(col);
+										bgc = atoi(col) % 10;
+									}
+									if (atoi(col) / 10 == 9)
+									{
+										bgc = atoi(col) % 10 + 8;
 									}
 
-									if (atoi(col) >= 30 && atoi(col) < 40)
+									if (atoi(col) / 10 == 3)
 									{
-										fgc = atoi(col);
+										fgc = atoi(col) % 10;
+									}
+									if (atoi(col) / 10 == 10)
+									{
+										fgc = atoi(col) % 10 + 8;
 									}
 									break;
 							}
@@ -583,27 +620,31 @@ void get_color_codes(char *old, char *str, char *buf)
 	{
 		strcat(buf, ";7");
 	}
-	if (fgc >= 0)
+
+	if (fgc >= 16)
 	{
-		if (HAS_BIT(vtc, COL_256))
-		{
-			cat_sprintf(buf, ";38;5;%d", fgc);
-		}
-		else
-		{
-			cat_sprintf(buf, ";%d", fgc);
-		}
+		cat_sprintf(buf, ";38;5;%d", fgc);
 	}
-	if (bgc >= 0)
+	else if (fgc >= 8)
 	{
-		if (HAS_BIT(vtc, COL_256))
-		{
-			cat_sprintf(buf, ";48;5;%d", bgc);
-		}
-		else
-		{
-			cat_sprintf(buf, ";%d", bgc);
-		}
+		cat_sprintf(buf, ";%d", fgc + 100);
+	}
+	else if (fgc >= 0)
+	{
+		cat_sprintf(buf, ";%d", fgc + 30);
+	}
+
+	if (bgc >= 16)
+	{
+		cat_sprintf(buf, ";48;5;%d", bgc);
+	}
+	else if (bgc >= 8)
+	{
+		cat_sprintf(buf, ";%d", fgc + 90);
+	}
+	else if (bgc >= 0)
+	{
+		cat_sprintf(buf, ";%d", bgc + 40);
 	}
 
 	strcat(buf, "m");
@@ -663,6 +704,10 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 	{
 		case   5:
 			return FALSE; /* ^E fucks with the terminal */
+
+		case   8:
+			ses->cur_col = UMAX(1, ses->cur_col - 1);
+			return TRUE;
 
 		case  27:   /* ESC */
 			break;
@@ -814,7 +859,7 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 				break;
 		}
 
-		if (isalpha(str[skip]))
+		if (isalpha((int) str[skip]))
 		{
 			ses->cur_row = URANGE(1, ses->cur_row, ses->rows);
 
