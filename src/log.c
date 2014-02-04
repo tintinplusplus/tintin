@@ -47,13 +47,10 @@ void logit(struct session *ses, const char *txt, FILE *file)
 
 DO_COMMAND(do_log)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, right, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (ses->logfile)
 	{
@@ -108,11 +105,10 @@ DO_COMMAND(do_logline)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, right, SUB_VAR|SUB_FUN|SUB_ESC|SUB_COL);
+	substitute(ses, temp, right, SUB_ESC|SUB_COL);
 
 	if (ses->logline)
 	{
@@ -145,11 +141,10 @@ DO_COMMAND(do_logline)
 DO_COMMAND(do_writebuffer)
 {
 	FILE *fp;
-	char left[BUFFER_SIZE], out[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], out[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (ses->buffer == 0)
 	{

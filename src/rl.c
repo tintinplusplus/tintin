@@ -69,7 +69,7 @@ void initrl(void)
 
 void printline(struct session *ses, const char *str, int prompt)
 {
-	char wrapped_str[BUFFER_SIZE * BUFFER_SAFE];
+	char wrapped_str[BUFFER_SIZE];
 
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
 	{
@@ -531,7 +531,7 @@ void tintin_printf(struct session *ses, const char *format, ...)
 
 void tintin_puts2(const char *cptr, struct session *ses)
 {
-	char output[BUFFER_SIZE * BUFFER_SAFE];
+	char output[BUFFER_SIZE];
 
 	if (ses == NULL)
 	{
@@ -633,9 +633,8 @@ void quitmsg(const char *m)
 	{
 		printf("%s\n", m);
 	}
-	system("stty echo");
 
-	printf("\ec\nGoodbye from tintin++\n\n");
+	printf("\nGoodbye from TinTin++\n\n");
 
 	exit(0);
 }

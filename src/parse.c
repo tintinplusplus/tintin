@@ -210,7 +210,7 @@ void process_speedwalk(const char *cp, struct session *ses)
 
 struct session *parse_tintin_command(const char *command, char *arg, struct session *ses)
 {
-	char newcommand[BUFFER_SIZE];
+	char newcommand[BUFFER_SIZE], argument[BUFFER_SIZE];
 	int cmd;
 	struct session *sesptr;
 
@@ -262,7 +262,16 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 	{
 		if (is_abbrev(command, command_table[cmd].name))
 		{
-			return (ses = (*command_table[cmd].command) (ses, arg));
+			if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
+			{
+				substitute(ses, arg, argument, SUB_VAR|SUB_FUN);
+
+				return (ses = (*command_table[cmd].command) (ses, argument));
+			}
+			else
+			{
+				return (ses = (*command_table[cmd].command) (ses, arg));
+			}
 		}
 	}
 	tintin_puts2("#UNKNOWN TINTIN-COMMAND.", ses);

@@ -36,14 +36,11 @@
 
 DO_COMMAND(do_session)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct session *sesptr;
 
-	arg = get_arg_in_braces(arg, temp,  FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, right, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (!*left)
 	{

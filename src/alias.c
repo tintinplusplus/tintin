@@ -31,14 +31,12 @@
 
 DO_COMMAND(do_alias)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_ALIAS];
 
-	arg = get_arg_in_braces(arg, temp,  FALSE);
-	substitute(ses, temp, left, SUB_DEF);
-
+	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (!*left)
@@ -70,15 +68,14 @@ DO_COMMAND(do_alias)
 
 DO_COMMAND(do_unalias)
 {
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 	int flag = FALSE;
 
 	root = ses->list[LIST_ALIAS];
 
-	arg = get_arg_in_braces(arg, temp,  TRUE);
-	substitute(ses, temp, left, SUB_DEF);
+	arg = get_arg_in_braces(arg, left,  TRUE);
 
 	while ((node = search_node_with_wild(root, left)))
 	{

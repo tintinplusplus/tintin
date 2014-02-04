@@ -58,8 +58,8 @@ DO_COMMAND(do_math)
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, result, 1);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0 || *result == 0)
 	{
@@ -67,8 +67,6 @@ DO_COMMAND(do_math)
 	}
 	else
 	{
-		substitute(ses, result, right, SUB_VAR|SUB_FUN);
-
 		sprintf(result, "{%s} {%lld}", left, mathexp(ses, right));
 
 		do_variable(ses, result);

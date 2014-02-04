@@ -56,7 +56,7 @@ feb 2004
                 is a bit tedious.
 
 - tintin.h      moved all header files into tintin.h cause the old setup with
-                40 different headerfiles was giving me a headache (not kidding)
+                40 different headerfiles was giving me a headache (literally)
                 grouped it into typedefs, globals, constants, macros,
                 structures and functions
 
@@ -84,7 +84,7 @@ feb 2004
 - buffer.c      scroll back buffer and a grep command added
 
 - rl.c          made the init_readline function actually initilize readline,
-                added 4 default keybind for the scrollback buffer.
+                added 4 default keybinds for the scrollback buffer.
 
 - tintin.h      added a keymap to the tintin_data structure, which will be
                 used for keybinding.
@@ -144,7 +144,7 @@ feb 2004
 
 - variable.c    rewrote subsitute_myvariables, no longer supporting $number
                 variables. ';' is stripped per default. This also easily 
-                allows a change so variables to contain numbers.
+                allows a change so variables can contain numbers.
 
 - variable.c    #format {variable} {format} {arguments}
                 This allows string formatting, numbers are not supported.
@@ -673,6 +673,7 @@ help.c         Removed David Chan from the credit screen shown when starting
                patches written by others, and stuffing his name in the credit
                list before vanishing into thin air.
 
+
 rl.c           Now adding all keyboard input to the scrollback buffer.
 
 rl.c           When in #split mode with no #prompt defined tintin tries to
@@ -681,3 +682,15 @@ rl.c           When in #split mode with no #prompt defined tintin tries to
 
 prompt.c       #prompt matched lines are now written to the scrollback buffer,
                to simulate the old behavior make an #action executing #gagline.
+
+
+main.c         Fixed #split mode being handled correctly when suspending a
+               session.
+
+llist.c        Removed excessive color usage when displaying triggers which was
+               resulting in crashes.
+
+rl.c           No longer clearing the screen when exiting tintin++.
+
+table.c        Added flags for commands, so far only automatically substituting
+               variables and functions for commands that have the sub flag.

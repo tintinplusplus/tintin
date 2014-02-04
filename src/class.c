@@ -195,9 +195,7 @@ DO_CLASS(class_write)
 
 	class = search_node_with_wild(ses->list[LIST_CLASS], arg);
 
-	get_arg_in_braces(class->pr, temp, TRUE);
-
-	substitute(ses, temp, filename, SUB_VAR|SUB_FUN);
+	get_arg_in_braces(class->pr, filename, TRUE);
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{

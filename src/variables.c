@@ -131,14 +131,11 @@ DO_COMMAND(do_unvariable)
 
 DO_COMMAND(do_getlistlength)
 {
-	char left[BUFFER_SIZE], list[BUFFER_SIZE], temp[BUFFER_SIZE], result[BUFFER_SIZE];
+	char left[BUFFER_SIZE], list[BUFFER_SIZE], result[BUFFER_SIZE];
 	int i = 0;
 
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, list, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, list, TRUE);
 
 	if (*left == 0)
 	{
@@ -174,14 +171,9 @@ DO_COMMAND(do_getitemnr)
 	char destvar[BUFFER_SIZE], itemval[BUFFER_SIZE], list[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int i;
 
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, destvar, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, temp, FALSE);
-	substitute(ses, temp, itemval, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, list, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, destvar, FALSE);
+	arg = get_arg_in_braces(arg, itemval, FALSE);
+	arg = get_arg_in_braces(arg, list,    TRUE);
 
 	if (*destvar == 0 || *itemval == 0)
 	{
@@ -248,10 +240,7 @@ DO_COMMAND(do_replacestring)
 	root = ses->list[LIST_VARIABLE];
 
 	arg = get_arg_in_braces(arg, var, FALSE);
-
-	arg = get_arg_in_braces(arg, result, FALSE);
-	substitute(ses, result, old, SUB_VAR|SUB_FUN);
-
+	arg = get_arg_in_braces(arg, old, FALSE);
 	arg = get_arg_in_braces(arg, new, TRUE);
 
 	if (*var == 0 || *old == 0)
@@ -436,16 +425,14 @@ void thousandgroupingstring(char *str)
 
 DO_COMMAND(do_format)
 {
-	char destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], temp[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
+	char destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
 
-	arg = get_arg_in_braces(arg, destvar, FALSE);
-	arg = get_arg_in_braces(arg, format,  FALSE);
-
-	arg = get_arg_in_braces(arg, temp,    TRUE);
-	substitute(ses, temp, argument, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, destvar,  FALSE);
+	arg = get_arg_in_braces(arg, format,   FALSE);
+	arg = get_arg_in_braces(arg, argument, TRUE);
 
 	if (*destvar == 0 || *format == 0)
 	{

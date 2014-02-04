@@ -82,6 +82,10 @@ RETSIGTYPE winchhandler(int no_care)
 
 RETSIGTYPE tstphandler(int no_care)
 {
+	printf("\e[r\e[%d;%dH", gtd->ses->rows, 1);
+
+	fflush(stdout);
+
 	kill(0, SIGSTOP);
 
 	dirty_screen(gtd->ses);

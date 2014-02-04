@@ -318,67 +318,27 @@ struct listnode *searchnode_list_begin(struct listroot *listhead, const char *cp
 
 void shownode_list(struct session *ses, struct listnode *nptr, int index)
 {
-	char buf[BUFFER_SIZE * BUFFER_SAFE], out[BUFFER_SIZE * BUFFER_SAFE], *pti, *pto;
-	int level = 0;
+	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
 
 	switch (list_table[index].args)
 	{
 		case 3:
-			sprintf(buf, "#%s {%s}<168>={%s} <168>@ {%s}", list_table[index].name, nptr->left, nptr->right, nptr->pr);
+			sprintf(buf, "#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>} <168>@ <118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right, nptr->pr);
 			break;
 		case 2:
-			sprintf(buf, "#%s {%s}<168>={%s}", list_table[index].name, nptr->left, nptr->right);
+			sprintf(buf, "#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right);
 			break;
 		case 1:
-			sprintf(buf, "#%s {%s}", list_table[index].name, nptr->left);
+			sprintf(buf, "#%s <118>{<088>%s<118>}", list_table[index].name, nptr->left);
 			break;
 		default:
 			sprintf(buf, "ERROR: list_table[index].args == 0");
 			break;
 	}
 
-	pto = out;
-	pti = buf;
+	substitute(ses, buf, out, SUB_COL);
 
-	while (*pti)
-	{
-		switch (*pti)
-		{
-			case DEFAULT_OPEN:
-				sprintf(pto, "<088><1%d8>%c<088>", level % 5 + 1, DEFAULT_OPEN);
-				level++;
-				pti++;
-				pto += strlen(pto);
-				break;
-
-			case DEFAULT_CLOSE:
-				level--;
-				sprintf(pto, "<088><1%d8>%c<088>", level % 5 + 1, DEFAULT_CLOSE);
-				pti++;
-				pto += strlen(pto);
-				break;
-
-			case '\\':
-				*pto++ = *pti++;
-				if (*pti)
-				{
-					*pto++ = *pti++;
-				}
-				break;
-
-			case ';':
-				sprintf(pto, "<088><168>;<088>");
-				pti++;
-				pto += strlen(pto);
-
-			default:
-				*pto++ = *pti++;
-				break;
-		}
-	}
-	substitute(ses, out, buf, SUB_COL);
-
-	tintin_puts2(buf, ses);
+	tintin_puts2(out, ses);
 }
 
 /*

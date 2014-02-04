@@ -50,9 +50,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 	int lvl, cnt, com, lnc, fix;
 	int counter[LIST_MAX];
 
-	get_arg_in_braces(arg, temp, TRUE);
-
-	substitute(ses, temp, filename, SUB_VAR|SUB_FUN);
+	get_arg_in_braces(arg, filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -310,9 +308,7 @@ DO_COMMAND(do_write)
 	struct listnode *node;
 	int cnt;
 
-	get_arg_in_braces(arg, temp, TRUE);
-
-	substitute(ses, temp, filename, SUB_VAR|SUB_FUN);
+	get_arg_in_braces(arg, filename, TRUE);
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{
@@ -347,7 +343,7 @@ DO_COMMAND(do_writesession)
 	struct listnode *node;
 	int cnt;
 
-	get_arg_in_braces(arg, buffer, 1);
+	get_arg_in_braces(arg, buffer, TRUE);
 
 	if (*buffer == 0 || (file = fopen(buffer, "w")) == NULL)
 	{

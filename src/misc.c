@@ -89,14 +89,12 @@ DO_COMMAND(do_suspend)
 
 DO_COMMAND(do_all)
 {
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 	struct session *sesptr, *next_ses;
 
 	if (gts->next)
 	{
-		get_arg_in_braces(arg, temp, 1);
-
-		substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+		get_arg_in_braces(arg, left, TRUE);
 
 		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
 		{
@@ -480,11 +478,9 @@ DO_COMMAND(do_snoop)
 
 DO_COMMAND(do_system)
 {
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, temp, TRUE);
-
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	get_arg_in_braces(arg, left, TRUE);
 
 	if (!*left)
 	{

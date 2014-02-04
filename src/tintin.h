@@ -116,7 +116,6 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define FILE_SIZE                150000
 #define BUFFER_SIZE               10000
 #define NUMBER_SIZE                 100
-#define BUFFER_SAFE                   4
 
 /*
 	NOTE: get rid of the DEVELOPMENT warning in main() when you update this!
@@ -187,8 +186,6 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SUB_ANC                       (1 <<  6)
 #define SUB_SEC                       (1 <<  7)
 
-#define SUB_DEF                       (SUB_VAR|SUB_FUN)
-
 #define SES_FLAG_NAWS                 (1 <<  0)
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
@@ -225,6 +222,9 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define NODE_FLAG_MAX                 (1 <<  1)
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
+
+#define CMD_FLAG_NONE                 (0 <<  0)
+#define CMD_FLAG_SUB                  (1 <<  0)
 
 
 #define MAX_COMMAND                   81
@@ -419,6 +419,7 @@ struct command_type
 {
 	char                  * name;
 	COMMAND               * command;
+	int                     flags;
 };
 
 struct list_type
