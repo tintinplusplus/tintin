@@ -210,11 +210,11 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 	newsession->name          = strdup(name);
 	newsession->host          = strdup(host);
 	newsession->port          = strdup(port);
-	newsession->timestamp     = strdup(gts->timestamp);
 
 	newsession->class         = strdup(gts->class);
 	newsession->flags         = gts->flags;
 	newsession->telopts       = gts->telopts;
+	newsession->auto_tab      = gts->auto_tab;
 
 	gtd->ses                  = newsession;
 
@@ -259,7 +259,7 @@ void connect_session(struct session *ses)
 {
 	int sock;
 
-	tintin_printf2(ses, "\n\r#Trying to connect to %s port %s.\n\r", ses->host, ses->port);
+	tintin_printf2(ses, "\n#Trying to connect to %s port %s.\n", ses->host, ses->port);
 
 	ses->connect_retry = utime() + gts->connect_retry;
 
@@ -283,7 +283,7 @@ void connect_session(struct session *ses)
 
 		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
 
-		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);
+		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n", ses->name, ses->host, ses->port);
 
 		if (atoi(ses->port) == TELNET_PORT)
 		{

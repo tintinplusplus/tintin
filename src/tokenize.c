@@ -27,6 +27,8 @@
 
 #include "tintin.h"
 
+int debug_level;
+
 struct scripttoken
 {
 	struct scripttoken   * next;
@@ -39,7 +41,7 @@ struct scripttoken
 
 void debugtoken(struct session *ses, struct scripttoken *token)
 {
-	if (HAS_BIT(ses->list[LIST_ALIAS]->flags, LIST_FLAG_DEBUG) && HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_DEBUG) && HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
+	if (debug_level)
 	{
 		switch (token->opr)
 		{
@@ -124,12 +126,11 @@ void tokenize_script(struct scripttoken *root, int lvl, char *str)
 
 	while (*str)
 	{
-
 		if (*str != gtd->tintin_char)
 		{
 			str = get_arg_all(str, line);
 
-			addtoken(root, lvl, TOKEN_OPR_STRING, cmd, line);
+			addtoken(root, lvl, TOKEN_OPR_STRING, -1, line);
 		}
 		else
 		{
@@ -276,7 +277,7 @@ struct scripttoken *parse_script(struct session *ses, int lvl, struct scripttoke
 			case TOKEN_OPR_REPEAT:
 				while (token->cmd-- > 0)
 				{
-					ses = script_driver(ses, token->str);
+					ses = script_driver(ses, -1, token->str);
 				}
 				break;
 
@@ -352,15 +353,22 @@ char *write_script(struct session *ses, struct scripttoken *root)
 	return buf;
 }
 
-struct session *script_driver(struct session *ses, char *str)
+struct session *script_driver(struct session *ses, int list, char *str)
 {
 	struct scripttoken *root;
+	int level;
 
 	root = calloc(1, sizeof(struct scripttoken));
 
 	tokenize_script(root, 0, str);
 
+	level = list != -1 ? HAS_BIT(ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
+
+	debug_level += level;
+
 	ses = (struct session *) parse_script(ses, 0, root->next);
+
+	debug_level -= level;
 
 	while (root->prev)
 	{

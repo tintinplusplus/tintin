@@ -85,7 +85,7 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 				substitute(ses, node->right, original, SUB_ARG);
 				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				show_debug(ses, LIST_SUBSTITUTE, "#SUBSTITUTE DEBUG: %s : %s", line, original);
+				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s}", node->left);
 			}
 			else
 			{

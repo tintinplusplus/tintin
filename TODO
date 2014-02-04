@@ -1,16 +1,10 @@
 * Stuff that needs to be done
 
-- Add end of path event.
-
 - Look into [A|An] parsing bug.
-
-- fix stunnel #run
 
 -------------------------------------------------------------------------------
 
 GENERAL STUFF:
-
-- Treat variables passed along to functions by value.
 
 - See if it's possible to add better #path run support.
 
@@ -61,8 +55,6 @@ MAPPING STUFF:
 
 - Perl compatible regular expressions.
 
-- Shift-tab complete on keywords from the scrollback buffer.
-
 - Buffer safe strings.
 
 - Fix up ipv6 support in chat.
@@ -78,11 +70,6 @@ MAPPING STUFF:
 -------------------------------------------------------------------------------
 
 * Stuff that has been request but that I'm not entirely sure about
-
-- Allow actions to use ! to repeat commands, possibly use #history 1. Not as
-  easy at it seems.
-
-- Place #grep output in the buffer. This may not be desirable however.
 
 - Add a command to manipulate the input buffer.
 

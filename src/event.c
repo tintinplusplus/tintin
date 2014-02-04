@@ -89,7 +89,7 @@ void check_all_events(struct session *ses, char *line)
 	{
 		if (!strcmp(node->left, line))
 		{
-			script_driver(ses, node->right);
+			script_driver(ses, LIST_EVENT, node->right);
 		}
 	}
 }

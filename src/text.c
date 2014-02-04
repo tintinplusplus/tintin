@@ -28,7 +28,6 @@
 #include "tintin.h"
 
 
-
 void printline(struct session *ses, char *str, int prompt)
 {
 	char wrapped_str[STRING_SIZE];
@@ -62,7 +61,7 @@ void printline(struct session *ses, char *str, int prompt)
 	}
 	else
 	{
-		printf("%s\r\n", wrapped_str);
+		printf("%s\n", wrapped_str);
 	}
 	pop_call();
 	return;
@@ -137,7 +136,6 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 
 		if (*pti == '\n')
 		{
-			*pto++ = '\r';
 			*pto++ = *pti++;
 			cnt = cnt + 1;
 			los = pto;
@@ -161,20 +159,14 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 
 			if (pto - los > 15 || !SCROLL(ses))
 			{
-				*pto = '\r';
-				pto++;
-				*pto = '\n';
-				pto++;
+				*pto++ = '\n';
 				los = pto;
 				lis = pti;
 			}
 			else
 			{
 				pto = los;
-				*pto = '\r';
-				pto++;
-				*pto = '\n';
-				pto++;
+				*pto++ = '\n';
 				pti = lis;
 				pti++;
 			}

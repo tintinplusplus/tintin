@@ -43,7 +43,7 @@ DO_COMMAND(do_all)
 		{
 			next_ses = sesptr->next;
 
-			script_driver(sesptr, left);
+			script_driver(sesptr, -1, left);
 		}
 	}
 	else
@@ -104,6 +104,7 @@ DO_COMMAND(do_cr)
 DO_COMMAND(do_echo)
 {
 	char temp[BUFFER_SIZE], output[BUFFER_SIZE];
+	int lnf;
 
 	sprintf(temp, "result %s", arg);
 
@@ -111,18 +112,22 @@ DO_COMMAND(do_echo)
 
 	do_format(ses, temp);
 
-	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN|SUB_COL);
+
+	lnf = !str_suffix(temp, "\\");
+
+	substitute(ses, temp, temp, SUB_ESC);
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
-		sprintf(output, "\r\n\033[0m%s\033[0m", temp);
+		sprintf(output, "\n\033[0m%s\033[0m", temp);
 	}
 	else
 	{
 		sprintf(output, "\033[0m%s\033[0m", temp);
 	}
 
-	add_line_buffer(ses, output, FALSE);
+	add_line_buffer(ses, output, lnf);
 
 	if (ses != gtd->ses)
 	{
@@ -135,7 +140,7 @@ DO_COMMAND(do_echo)
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	printline(ses, output, FALSE);
+	printline(ses, output, lnf);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
@@ -184,7 +189,7 @@ DO_COMMAND(do_forall)
 
 			substitute(ses, right, temp, SUB_CMD);
 
-			ses = script_driver(ses, temp);
+			ses = script_driver(ses, -1, temp);
 		}
 	}
 	return ses;
@@ -192,6 +197,8 @@ DO_COMMAND(do_forall)
 
 DO_COMMAND(do_gagline)
 {
+	tintin_printf2(ses, "#GAGLINE: Old command, please use #LINE GAG instead.");
+
 	SET_BIT(ses->flags, SES_FLAG_GAG);
 
 	return ses;
@@ -272,7 +279,7 @@ DO_COMMAND(do_loop)
 
 		substitute(ses, command, temp, SUB_CMD);
 
-		ses = script_driver(ses, temp);
+		ses = script_driver(ses, -1, temp);
 	}
 
 	return ses;
@@ -323,7 +330,7 @@ DO_COMMAND(do_parse)
 
 			substitute(ses, right, temp, SUB_CMD);
 
-			ses = script_driver(ses, temp);
+			ses = script_driver(ses, -1, temp);
 		}
 	}
 	return ses;
@@ -352,21 +359,24 @@ DO_COMMAND(do_send)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], output[STRING_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE];
+	int lnf;
 
 	arg = get_arg_in_braces(arg, left, TRUE);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+	lnf = !str_suffix(left, "\\");
+	substitute(ses, left, temp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
 	arg = get_arg_in_braces(arg, right, FALSE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*right)
 	{
-		do_one_prompt(ses, left, atoi(right));
+		do_one_prompt(ses, temp, atoi(right));
 
 		return ses;
 	}
-	do_one_line(left, ses);
+
+	do_one_line(temp, ses);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
@@ -377,14 +387,14 @@ DO_COMMAND(do_showme)
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
-		sprintf(output, "\r\n\033[0m%s\033[0m", left);
+		sprintf(right, "\n\033[0m%s\033[0m", temp);
 	}
 	else
 	{
-		sprintf(output, "\033[0m%s\033[0m", left);
+		sprintf(right, "\033[0m%s\033[0m", temp);
 	}
 
-	add_line_buffer(ses, output, FALSE);
+	add_line_buffer(ses, right, lnf);
 
 	if (ses != gtd->ses)
 	{
@@ -397,7 +407,7 @@ DO_COMMAND(do_showme)
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	printline(ses, output, FALSE);
+	printline(ses, right, lnf);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
@@ -473,7 +483,7 @@ DO_COMMAND(do_while)
 
 	while (get_number(ses, left))
 	{
-		ses = script_driver(ses, right);
+		ses = script_driver(ses, -1, right);
 	}
 	return ses;
 }

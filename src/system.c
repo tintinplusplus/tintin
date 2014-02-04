@@ -145,7 +145,7 @@ DO_COMMAND(do_script)
 				*cptr = 0;
 			}
 
-			ses = script_driver(ses, buffer);
+			ses = script_driver(ses, -1, buffer);
 		}
 
 		pclose(script);

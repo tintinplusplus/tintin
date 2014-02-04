@@ -30,31 +30,26 @@
 
 /* what we see from the remote end */
 
-char iac_do_ttype[]           = { IAC, DO,    TELOPT_TTYPE           };
-char iac_do_tspeed[]          = { IAC, DO,    TELOPT_TSPEED          };
-char iac_do_xdisploc[]        = { IAC, DO,    TELOPT_XDISPLOC        };
-char iac_do_new_environ[]     = { IAC, DO,    TELOPT_NEW_ENVIRON     };
 char iac_do_naws[]            = { IAC, DO,    TELOPT_NAWS            };
 char iac_will_naws[]          = { IAC, WILL,  TELOPT_NAWS            };
+
 char iac_do_sga[]             = { IAC, DO,    TELOPT_SGA             };
-char iac_do_echo[]            = { IAC, DO,    TELOPT_ECHO            };
-char iac_will_tspeed[]        = { IAC, WILL,  TELOPT_TSPEED          };
+char iac_will_sga[]           = { IAC, WILL,  TELOPT_SGA             };
+
 char iac_sb_tspeed[]          = { IAC, SB,    TELOPT_TSPEED, TELQUAL_SEND, IAC, SE };
 char iac_sb_ttype[]           = { IAC, SB,    TELOPT_TTYPE, TELQUAL_SEND, IAC, SE  };
-char iac_dont_status[]        = { IAC, DONT,  TELOPT_STATUS          };
-char iac_will_status[]        = { IAC, WILL,  TELOPT_STATUS          };
-char iac_will_sga[]           = { IAC, WILL,  TELOPT_SGA             };
-char iac_do_lflow[]           = { IAC, DO,    TELOPT_LFLOW           };
-char iac_do_oldenviron[]      = { IAC, DO,    TELOPT_OLD_ENVIRON     };
+
+char iac_do_echo[]            = { IAC, DO,    TELOPT_ECHO            };
 char iac_wont_echo[]          = { IAC, WONT,  TELOPT_ECHO            };
 char iac_will_echo[]          = { IAC, WILL,  TELOPT_ECHO            };
-char iac_will_mccp1[]         = { IAC, WILL,  TELOPT_MCCP1           };
+
 char iac_sb_mccp1[]           = { IAC, SB,    TELOPT_MCCP1, WILL, SE };
 char iac_will_mccp2[]         = { IAC, WILL,  TELOPT_MCCP2           };
 char iac_sb_mccp2[]           = { IAC, SB,    TELOPT_MCCP2, IAC, SE  };
-char iac_will_eor[]           = { IAC, WILL,  TELOPT_EOR             };
+
 char iac_eor[]                = { IAC, EOR                           };
 char iac_ga[]                 = { IAC, GA                            };
+
 char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
 
 struct iac_type
@@ -67,27 +62,17 @@ struct iac_type
 struct iac_type iac_table [] =
 {
 	{   3,  iac_do_sga,           &send_will_sga           },
-	{   3,  iac_do_ttype,         &send_will_ttype         },
-	{   3,  iac_do_xdisploc,      &send_wont_xdisploc      },
-	{   3,  iac_do_new_environ,   &send_wont_new_environ   },
+	{   3,  iac_will_sga,         &send_do_sga             },
 	{   3,  iac_do_naws,          &send_sb_naws            },
 	{   3,  iac_will_naws,        &send_sb_naws            },
-	{   3,  iac_do_lflow,         &send_wont_lflow         },
-	{   3,  iac_do_tspeed,        &send_will_tspeed        },
 	{   6,  iac_sb_tspeed,        &send_sb_tspeed          },
 	{   6,  iac_sb_ttype,         &send_sb_ttype           },
-	{   3,  iac_dont_status,      &send_wont_status        },
-	{   3,  iac_will_sga,         &send_do_sga             },
-	{   3,  iac_will_status,      &send_dont_status        },
-	{   3,  iac_do_oldenviron,    &send_wont_oldenviron    },
 	{   3,  iac_do_echo,          &send_echo_will          },
 	{   3,  iac_will_echo,        &send_echo_off           },
 	{   3,  iac_wont_echo,        &send_echo_on            },
-/*	{   3,  iac_will_mccp1,       &send_do_mccp1           }, */
-	{   5,  iac_sb_mccp1,         &init_mccp               },
 	{   3,  iac_will_mccp2,       &send_do_mccp2           },
+	{   5,  iac_sb_mccp1,         &init_mccp               },
 	{   5,  iac_sb_mccp2,         &init_mccp               },
-	{   3,  iac_will_eor,         &send_do_eor             },
 	{   2,  iac_eor,              &mark_prompt             },
 	{   2,  iac_ga,               &mark_prompt             },
 	{   3,  iac_sb_zmp,           &exec_zmp                },
@@ -236,9 +221,9 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case DONT:
 					case WILL:
 					case WONT:
-						if (TELOPT_OK(cpsrc[2]) && cplen > 2)
+						if (cplen > 2)
 						{
-							tintin_printf2(ses, "RCVD IAC %s %s", TELCMD(cpsrc[1]), TELOPT(cpsrc[2]));
+							tintin_printf2(ses, "RCVD IAC %s %s", TELCMD(cpsrc[1]), telopt_table[cpsrc[2]].name);
 						}
 						else
 						{
@@ -247,14 +232,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						break;
 
 					case SB:
-						if (TELOPT_OK(cpsrc[2]))
-						{
-							tintin_printf2(ses, "RCVD IAC SB %s SEND", TELOPT(cpsrc[2]));
-						}
-						else
-						{
-							tintin_printf2(ses, "RCVD IAC SB %d SEND", cpsrc[2]);
-						}
+						tintin_printf2(ses, "RCVD IAC SB %s SEND", telopt_table[cpsrc[2]].name);
 						break;
 
 					default:
@@ -316,11 +294,35 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					     break;
 
 					case WILL:
-						skip = send_dont_telopt(ses, cplen, cpsrc);
+						if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
+						{
+							if (telopt_table[cpsrc[2]].want)
+							{
+								skip = send_do_telopt(ses, cplen, cpsrc);
+							}
+							else
+							{
+								skip = send_dont_telopt(ses, cplen, cpsrc);
+							}
+							SET_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
+						}
+						skip = 3;
 						break;
 
 					case DO:
-						skip = send_wont_telopt(ses, cplen, cpsrc);
+						if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
+						{
+							if (telopt_table[cpsrc[2]].want)
+							{
+								skip = send_will_telopt(ses, cplen, cpsrc);
+							}
+							else
+							{
+								skip = send_wont_telopt(ses, cplen, cpsrc);
+							}
+							SET_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
+						}
+						skip = 3;
 						break;
 
 					case WONT:
@@ -371,13 +373,16 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			switch (*cpsrc)
 			{
 				case '\0':
-					break;
+					cpsrc++;
+					cplen--;
+					continue;
 
 				case '\r':
-					if (cplen > 1 && (cpsrc[1] == 0 || cpsrc[1] != '\n'))
+					if (cplen > 1 && cpsrc[1] == '\n')
 					{
-						*cpdst++ = *cpsrc;
-						gtd->mud_output_len++;
+						cpsrc++;
+						cplen--;
+						continue;
 					}
 					break;
 
@@ -386,18 +391,17 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					{
 						DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
 					}
-					if (cplen > 1 && cpsrc[1] == '\r')
+
+					*cpdst++ = *cpsrc++;
+					gtd->mud_output_len++;
+					cplen--;
+
+					while (*cpsrc == '\r')
 					{
-						*cpdst++ = *cpsrc++;
-						gtd->mud_output_len++;
+						cpsrc++;
 						cplen--;
 					}
-					else
-					{
-						*cpdst++ = *cpsrc;
-						gtd->mud_output_len++;
-					}
-					break;
+					continue;
 
 				default:
 					if (HAS_BIT(ses->telopts, TELOPT_FLAG_PROMPT))
@@ -414,85 +418,40 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 							gtd->mud_output_len++;
 						}
 					}
-					*cpdst++ = *cpsrc;
-					gtd->mud_output_len++;
 					break;
 			}
-			cpsrc++;
+			*cpdst++ = *cpsrc++;
+			gtd->mud_output_len++;
 			cplen--;
 		}
 	}
 	gtd->mud_output_buf[gtd->mud_output_len] = 0;
 }
 
+int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
+
+	if (!HAS_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32))
+	{
+		SET_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32);
+
+		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_SGA);
+
+		telopt_debug(ses, "SENT IAC DO %s", telopt_table[TELOPT_SGA].name);
+	}
+	return 3;
+}
+
 int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_SGA))
+	if (!HAS_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32))
 	{
-		SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
+		SET_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32);
 
 		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_SGA);
 
-		telopt_debug(ses, "SENT IAC WILL SGA");
-	}
-	return 3;
-}
-
-int send_wont_sga(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	if (HAS_BIT(ses->telopts, TELOPT_FLAG_SGA))
-	{
-		DEL_BIT(ses->telopts, TELOPT_FLAG_SGA);
-
-		socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_SGA);
-
-		telopt_debug(ses, "SENT IAC WONT SGA");
-	}
-	return 3;
-}
-
-int send_dont_sga(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, DONT, TELOPT_SGA);
-
-	telopt_debug(ses, "SENT IAC DONT SGA");
-
-	return 3;
-}
-
-int start_sga(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	SET_BIT(ses->telopts, TELOPT_FLAG_INIT_SGA);
-
-	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_SGA);
-
-	telopt_debug(ses, "SENT IAC DO SGA");
-
-	return 3;
-}
-
-int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_SGA))
-	{
-		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_SGA);
-
-		telopt_debug(ses, "SENT IAC DO SGA");
-	}
-	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
-
-	return 3;
-}
-
-int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_EOR))
-	{
-		SET_BIT(ses->telopts, TELOPT_FLAG_EOR);
-
-		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_EOR);
-
-		telopt_debug(ses, "SENT IAC DO EOR");
+		telopt_debug(ses, "SENT IAC WILL %s", telopt_table[TELOPT_SGA].name);
 	}
 	return 3;
 }
@@ -506,57 +465,33 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_will_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_TTYPE))
-	{
-		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_TTYPE);
+	SET_BIT(ses->telopt_flag[TELOPT_TTYPE / 32], 1 << TELOPT_TTYPE % 32);
 
-		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TTYPE);
+	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TTYPE);
 
-		telopt_debug(ses, "SENT WILL TERMINAL TYPE");
-	}
+	telopt_debug(ses, "SENT WILL TERMINAL TYPE");
+
 	return 3;
 }
 
 int send_will_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_TSPEED))
-	{
-		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_TSPEED);
+	SET_BIT(ses->telopt_flag[TELOPT_TSPEED / 32], 1 << TELOPT_TSPEED % 32);
 
-		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TSPEED);
+	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TSPEED);
 
-		telopt_debug(ses, "SENT WILL TSPEED");
-	}
+	telopt_debug(ses, "SENT WILL TSPEED");
+
 	return 3;
 }
 
 int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS))
-	{
-		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS);
+	SET_BIT(ses->telopt_flag[TELOPT_NAWS / 32], 1 << TELOPT_NAWS % 32);
 
-		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
+	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
 
-		telopt_debug(ses, "SENT IAC WILL NAWS");
-	}
-	return 3;
-}
-
-int send_wont_xdisploc(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_XDISPLOC);
-
-	telopt_debug(ses, "SENT IAC WONT XDISPLOC");
-
-	return 3;
-}
-
-int send_wont_new_environ(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_NEW_ENVIRON);
-
-	telopt_debug(ses, "SENT IAC WONT NEW_ENVIRON");
+	telopt_debug(ses, "SENT IAC WILL NAWS");
 
 	return 3;
 }
@@ -565,41 +500,27 @@ int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	int rows;
 
-	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS))
+	if (!HAS_BIT(ses->telopt_flag[TELOPT_NAWS / 32], 1 << TELOPT_NAWS % 32))
 	{
-		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS);
-
-		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
-
-		telopt_debug(ses, "SENT IAC WILL NAWS");
+		send_will_naws(ses, cplen, cpsrc);
 	}
 
 	rows = HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? ses->bot_row - ses->top_row + 1 : ses->rows;
 
-	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, 0, ses->cols % 255, 0, rows % 255, IAC, SE);
+	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, ses->cols % 256, rows / 256, rows % 256, IAC, SE);
 
 	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
 
-	telopt_debug(ses, "SENT IAC SB NAWS 0 %d 0 %d", ses->cols % 255, ses->rows % 255);
+	telopt_debug(ses, "SENT IAC SB NAWS %d %d %d %d", ses->cols / 256, ses->cols % 256, ses->rows / 256, ses->rows % 256);
 
 	return 3;
 }
-
-int send_wont_lflow(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_LFLOW);
-
-	telopt_debug(ses, "SENT IAC WONT LFLOW");
-
-	return 3;
-}
-
 
 int send_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
 
-	telopt_debug(ses, "SENT IAC SB TSPEED");
+	telopt_debug(ses, "SENT IAC SB %s 38400,38400 IAC SB", telopt_table[TELOPT_TSPEED].name);
 
 	return 6;
 }
@@ -616,41 +537,11 @@ int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 	else
 	{
 		socket_printf(ses, 15, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
-/*
-		socket_printf(ses, 21, "%c%c%c%c%s %s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TinTin++", VERSION_NUM, IAC, SE);
-*/
+
 		telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
 	}
 
 	return 6;
-}
-
-int send_wont_status(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_STATUS);
-
-	telopt_debug(ses, "SENT IAC WONT STATUS");
-
-	return 3;
-}
-
-int send_dont_status(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, DONT, TELOPT_STATUS);
-
-	telopt_debug(ses, "SENT IAC DONT STATUS");
-
-	return 3;
-}
-
-
-int send_wont_oldenviron(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_OLD_ENVIRON);
-
-	telopt_debug(ses, "SENT IAC WONT OLD_ENVIRON");
-
-	return 3;
 }
 
 int send_echo_on(struct session *ses, int cplen, unsigned char *cpsrc)
@@ -700,35 +591,34 @@ int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, WONT, cpsrc[2]);
 
-	if (TELOPT_OK(cpsrc[2]))
-	{
-		telopt_debug(ses, "SENT IAC WONT %s", TELOPT(cpsrc[2]));
-	}
-	else
-	{
-		telopt_debug(ses, "SENT IAC WONT %d", cpsrc[2]);
-	}
+	telopt_debug(ses, "SENT IAC WONT %s", telopt_table[cpsrc[2]].name);
 
 	return 3;
-}
-
-int ignore_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	return cplen;
 }
 
 int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, DONT, cpsrc[2]);
 
-	if (TELOPT_OK(cpsrc[2]))
-	{
-		telopt_debug(ses, "SENT IAC DONT %s", TELOPT(cpsrc[2]));
-	}
-	else
-	{
-		telopt_debug(ses, "SENT IAC DONT %d", cpsrc[2]);
-	}
+	telopt_debug(ses, "SENT IAC DONT %s", telopt_table[cpsrc[2]].name);
+
+	return 3;
+}
+
+int send_will_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	socket_printf(ses, 3, "%c%c%c", IAC, WILL, cpsrc[2]);
+
+	telopt_debug(ses, "SENT IAC WILL %s", telopt_table[cpsrc[2]].name);
+
+	return 3;
+}
+
+int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	socket_printf(ses, 3, "%c%c%c", IAC, DO, cpsrc[2]);
+
+	telopt_debug(ses, "SENT IAC DO %s", telopt_table[cpsrc[2]].name);
 
 	return 3;
 }
@@ -750,23 +640,6 @@ int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc)
 		}
 	}
 	return len + 1;
-}
-
-int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc)
-{
-	if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
-	{
-		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP1);
-
-		telopt_debug(ses, "SENT IAC DO MCCP1");
-	}
-	else
-	{
-		socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP1);
-
-		telopt_debug(ses, "SENT IAC WONT MCCP1 (MCCP HAS BEEN DISABLED)");
-	}
-	return 3;
 }
 
 int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
@@ -838,7 +711,7 @@ void zlib_free(void *opaque, void *address)
 
 void init_telnet_session(struct session *ses)
 {
-	start_sga(ses, 0, NULL);
+	send_do_sga(ses, 0, NULL);
 	send_will_ttype(ses, 0, NULL);
 	send_will_tspeed(ses, 0, NULL);
 	send_will_naws(ses, 0, NULL);

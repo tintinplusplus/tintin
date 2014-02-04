@@ -199,7 +199,7 @@ DO_PATH(path_save)
 		}
 		strcat(result, "}");
 
-		script_driver(ses, result);
+		script_driver(ses, LIST_PATH, result);
 	}
 }
 
@@ -332,7 +332,7 @@ DO_PATH(path_run)
 		{
 			while (root->f_node)
 			{
-				script_driver(ses, root->f_node->left);
+				script_driver(ses, LIST_PATH, root->f_node->left);
 
 				deletenode_list(ses, root->f_node, LIST_PATH);
 			}
@@ -365,19 +365,23 @@ DO_PATH(path_walk)
 		switch (tolower(*left))
 		{
 			case 'b':
-				script_driver(ses, root->l_node->right);
+				script_driver(ses, LIST_PATH, root->l_node->right);
 				deletenode_list(ses, root->l_node, LIST_PATH);
 				break;
 
 			case '\0':
 			case 'f':
-				script_driver(ses, root->f_node->left);
+				script_driver(ses, LIST_PATH, root->f_node->left);
 				deletenode_list(ses, root->f_node, LIST_PATH);
 				break;
 
 			default:
 				tintin_printf(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}.");
 				break;
+		}
+		if (root->f_node == NULL)
+		{
+			check_all_events(ses, "END OF PATH");
 		}
 		ses->flags = flags;
 	}

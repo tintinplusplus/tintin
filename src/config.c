@@ -568,21 +568,6 @@ DO_CONFIG(config_regexp)
 	return ses;
 }
 
-DO_CONFIG(config_timestamp)
-{
-	char str[BUFFER_SIZE];
-
-	substitute(ses, arg, str, SUB_COL|SUB_ESC);
-
-	RESTRING(ses->timestamp, str);
-
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, *ses->timestamp ? "ON" : "OFF", str, LIST_CONFIG);
-
-	return ses;
-}
-
 DO_CONFIG(config_mccp)
 {
 	char str[BUFFER_SIZE];
@@ -601,6 +586,33 @@ DO_CONFIG(config_mccp)
 
 		return NULL;
 	}
+	sprintf(str, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+
+	return ses;
+}
+
+DO_CONFIG(config_autotab)
+{
+	char str[BUFFER_SIZE];
+
+	if (!is_number(arg))
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {AUTO TAB} <NUMBER>");
+
+		return NULL;
+	}
+
+	if (atoi(arg) < 1 || atoi(arg) > 999999)
+	{
+		tintin_printf(ses, "#ERROR: #CONFIG BUFFER: PROVIDE A NUMBER BETWEEN 1 and 999999");
+
+		return NULL;
+	}
+
+	ses->auto_tab = atoi(arg);
+
 	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);

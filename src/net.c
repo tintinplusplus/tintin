@@ -206,7 +206,7 @@ int read_buffer_mud(struct session *ses)
 
 	buf[size] = 0;
 
-	translate_telopts(ses, buf, size);
+	translate_telopts(ses, (unsigned char *) buf, size);
 
 	pop_call();
 	return TRUE;

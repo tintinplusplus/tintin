@@ -815,13 +815,14 @@ DO_MAP(map_read)
 				ses = parse_tintin_command(ses, &buffer[1]);
 				break;
 
-			case 0:
+			case  0:
+			case 13:
 				break;
 
 			default:
 				gtd->quiet--;
 
-				tintin_printf2(ses, "#MAP: Invalid command '%c'. Aborting read.", buffer[0]);
+				tintin_printf2(ses, "#MAP: Invalid command '%d'. Aborting read.", buffer[0]);
 
 				fclose(myfile);
 
@@ -1820,7 +1821,7 @@ void show_vtmap(struct session *ses)
 				}
 				substitute(ses, buf, out, SUB_COL);
 
-				printf("%s\033[0K\r\n", out);
+				printf("%s\033[0K\n", out);
 			}
 		}
 	}
@@ -1836,7 +1837,7 @@ void show_vtmap(struct session *ses)
 			}
 			substitute(ses, buf, out, SUB_COL);
 
-			printf("%s\r\n", out);
+			printf("%s\n", out);
 		}
 	}
 
@@ -2384,7 +2385,7 @@ void shortest_path(struct session *ses, int run, char *left, char *right)
 		{
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				script_driver(ses, ses->list[LIST_PATH]->f_node->left);
+				script_driver(ses, LIST_PATH, ses->list[LIST_PATH]->f_node->left);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}
@@ -2591,7 +2592,7 @@ void explore_path(struct session *ses, int run, char *left, char *right)
 		{
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				script_driver(ses, ses->list[LIST_PATH]->f_node->left);
+				script_driver(ses, LIST_PATH, ses->list[LIST_PATH]->f_node->left);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}

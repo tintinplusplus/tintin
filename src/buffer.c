@@ -415,13 +415,13 @@ int show_buffer(struct session *ses)
 					}
 					continue;
 
-				case '\r':
+				case '\n':
 					temp_ptr++;
 					scroll_tmp--;
 					continue;
 
 				case '\0':
-					printf("\033[1;31m(buffer error)\n\r");
+					printf("\033[1;31m(buffer error)\n");
 					scroll_tmp--;
 					break;
 
@@ -434,7 +434,7 @@ int show_buffer(struct session *ses)
 
 		if (scroll_add >= 0)
 		{
-			printf("%s%s\n\r", wrap, temp_ptr);
+			printf("%s%s\n", wrap, temp_ptr);
 		}
 		else
 		{
@@ -442,10 +442,10 @@ int show_buffer(struct session *ses)
 
 			for (wrap_ptr = temp_ptr ; scroll_tmp++ < scroll_size ; temp_ptr++)
 			{
-				temp_ptr = strchr(temp_ptr, '\r');
+				temp_ptr = strchr(temp_ptr, '\n');
 			}
 			*temp_ptr = 0;
-			printf("%s", wrap_ptr);
+			printf("%s\n", wrap_ptr);
 
 			goto eof;
 		}
@@ -481,11 +481,11 @@ int show_buffer(struct session *ses)
 
 		scroll_add -= scroll_tmp;
 
-		printf("%s\n\r", temp);
+		printf("%s\n", temp);
 	}
 
 	/*
-		If the bottom line exits of multiple lines split in the middle
+		If the bottom line exists of multiple lines split in the middle
 	*/
 
 	if (scroll_tmp && ses->buffer[scroll_cnt])
@@ -494,12 +494,11 @@ int show_buffer(struct session *ses)
 
 		while (scroll_tmp--)
 		{
-			temp_ptr = strchr(temp_ptr, '\r');
-			temp_ptr++;
+			temp_ptr = strchr(temp_ptr, '\n');
 		}
 		*temp_ptr = 0;
 
-		printf("%s", temp);
+		printf("%s\n", temp);
 	}
 
 	eof:
@@ -574,7 +573,7 @@ DO_BUFFER(buffer_up)
 	{
 		if (ses->buffer[scroll_cnt] == NULL)
 		{
-			break;
+			return;
 		}
 
 		buffer_tmp = str_hash_lines(ses->buffer[scroll_cnt]);

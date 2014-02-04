@@ -304,9 +304,9 @@ void tick_update(void)
 			{
 				node->data += atof(node->pr) * 1000000LL;
 
-				show_debug(ses, LIST_TICKER, "#TICKER DEBUG: %s", node->right);
+				show_debug(ses, LIST_TICKER, "#DEBUG TICKER {%s}", node->right);
 
-				script_driver(ses, node->right);
+				script_driver(ses, LIST_TICKER, node->right);
 			}
 		}
 	}
@@ -338,9 +338,9 @@ void delay_update(void)
 
 			if (node->data <= gtd->time)
 			{
-				show_debug(ses, LIST_DELAY, "#DELAY DEBUG: %s", node->right);
+				show_debug(ses, LIST_DELAY, "#DEBUG DELAY {%s}", node->right);
 
-				script_driver(ses, node->right);
+				script_driver(ses, LIST_DELAY, node->right);
 
 				deletenode_list(ses, node, LIST_DELAY);
 			}
@@ -366,10 +366,6 @@ void packet_update(void)
 			{
 				save_pos(ses);
 				goto_rowcol(ses, ses->bot_row, 1);
-			}
-			else
-			{
-//				printf("\r");
 			}
 
 			SET_BIT(ses->flags, SES_FLAG_READMUD);

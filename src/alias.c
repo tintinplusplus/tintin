@@ -164,7 +164,7 @@ int check_all_aliases(struct session *ses, char *input)
 			{
 				substitute(ses, node->right, input, SUB_ARG);
 
-				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", node->left, input);
+				show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
 
@@ -204,7 +204,7 @@ int check_all_aliases(struct session *ses, char *input)
 					sprintf(input, "%s", right);
 				}
 
-				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", node->left, right);
+				show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
 

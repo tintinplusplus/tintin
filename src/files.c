@@ -309,7 +309,7 @@ DO_COMMAND(do_read)
 
 		if (bufi[0])
 		{
-			ses = script_driver(ses, bufi);
+			ses = script_driver(ses, -1, bufi);
 		}
 		pto = bufi;
 		pti++;

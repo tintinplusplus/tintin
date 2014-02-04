@@ -191,3 +191,44 @@
 		}
 	}   
 }
+
+011 Targetting script
+
+#list targets clr
+
+#alias {target}
+{
+	#if {"%0" == ""}
+	{
+		#showme {Current targets: $targets}
+	}
+
+	#list {targets} {fnd} {%0} {result};
+ 
+	#if {$result}
+	{
+		#list {targets} {del} {$result};
+		#showme Target '%0' removed.
+	}
+	{
+		#list {targets} {srt} {%0};
+		#showme Target '%0' added.
+	}
+}
+
+#act {%0 arrives}
+{
+	#if {"$targets" == "*{%0}*"} {kill %0}
+}
+
+#act {%0 is standing here}
+{
+	#if {"$targets" == "*{%0}*"} {kill %0}
+}
+
+#action {%0 is dead! R.I.P.}
+{
+	#if {"$targets" == "*{%0}*"} {target %0}
+}
+
+		

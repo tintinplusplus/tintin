@@ -99,8 +99,11 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 	A bunch of constants
 */
 
-#define TRUE                             1
 #define FALSE                            0
+#define TRUE                             1
+
+#define TEL_N                            0
+#define TEL_Y                            1
 
 #define SCREEN_WIDTH                    80
 #define SCREEN_HEIGHT                   24
@@ -120,7 +123,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.8"
+#define VERSION_NUM               "1.99.0"
 
 #define ESCAPE                          27
 
@@ -237,6 +240,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define CHAT_FILE_CANCEL                25
 #define CHAT_PING_REQUEST               26 
 #define CHAT_PING_RESPONSE              27 
+
 #define CHAT_PEEK_CONNECTIONS           28
 #define CHAT_PEEK_LIST                  29
 #define CHAT_SNOOP_START                30
@@ -264,6 +268,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define SUB_ANC                       (1 <<  6)
 #define SUB_SEC                       (1 <<  7)
 #define SUB_EOL                       (1 <<  8)
+#define SUB_LNF                       (1 <<  9)
 
 
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
@@ -302,17 +307,11 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define SES_FLAG_BREAK                (1 << 28) /* wasn't the greatest idea */
 
 
-#define TELOPT_FLAG_INIT_SGA          (1 <<  0)
-#define TELOPT_FLAG_SGA               (1 <<  1)
-#define TELOPT_FLAG_EOR               (1 <<  2)
-#define TELOPT_FLAG_ECHO              (1 <<  3)
-#define TELOPT_FLAG_NAWS              (1 <<  4)
-#define TELOPT_FLAG_PROMPT            (1 <<  5)
-#define TELOPT_FLAG_IAC               (1 <<  6)
-#define TELOPT_FLAG_DEBUG             (1 <<  7)
-#define TELOPT_FLAG_INIT_TSPEED       (1 <<  8)
-#define TELOPT_FLAG_INIT_TTYPE        (1 <<  9)
-#define TELOPT_FLAG_INIT_NAWS         (1 << 10)
+#define TELOPT_FLAG_SGA               (1 <<  0)
+#define TELOPT_FLAG_ECHO              (1 <<  1)
+#define TELOPT_FLAG_NAWS              (1 <<  2) 
+#define TELOPT_FLAG_PROMPT            (1 <<  3) 
+#define TELOPT_FLAG_DEBUG             (1 <<  4)
 
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
@@ -550,10 +549,10 @@ struct session
 	int                     vtc;
 	int                     socket;
 	int                     telopts;
+	int                     telopt_flag[8];
 	int                     flags;
 	char                  * host;
 	char                  * port;
-	char                  * timestamp;
 	unsigned char           telopt_buf[NUMBER_SIZE];
 	int                     telopt_len;
 	long long               connect_retry;
@@ -562,6 +561,7 @@ struct session
 	char                    color[100];
 	char                    command_color[100];
 	long long               check_output;
+	int                     auto_tab;
 };
 
 struct tintin_data
@@ -739,6 +739,13 @@ struct buffer_type
 	char                  * desc;
 };
 
+struct telopt_type
+{
+	char                  * name;
+	int                     want;
+	int                     flag;
+};
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
@@ -834,7 +841,7 @@ extern DO_CURSOR(cursor_right);
 extern DO_CURSOR(cursor_right_word);
 extern DO_CURSOR(cursor_suspend);
 extern DO_CURSOR(cursor_tab);
-
+extern DO_CURSOR(cursor_auto_tab);
 
 
 #endif
@@ -1115,8 +1122,8 @@ extern DO_CONFIG(config_convertmeta);
 extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
 extern DO_CONFIG(config_regexp);
-extern DO_CONFIG(config_timestamp);
 extern DO_CONFIG(config_mccp);
+extern DO_CONFIG(config_autotab);
 
 #endif
 
@@ -1411,6 +1418,8 @@ extern int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_ip(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_will_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1527,6 +1536,7 @@ extern struct path_type path_table[];
 extern struct line_type line_table[];
 extern struct history_type history_table[];
 extern struct buffer_type buffer_table[];
+extern struct telopt_type telopt_table[];
 
 #endif
 
@@ -1551,7 +1561,7 @@ extern DO_COMMAND(do_undelay);
 #ifndef __TOKENIZE_H__
 #define __TOKENIZE_H__
 
-extern struct session *script_driver(struct session *ses, char *str);
+extern struct session *script_driver(struct session *ses, int list, char *str);
 extern char *script_writer(struct session *ses, char *str);
 
 #endif
@@ -1581,11 +1591,11 @@ extern int is_color_code(char *str);
 extern int is_number(char *str);
 extern int hex_number(char *str);
 extern long long utime(void);
-extern char *timestamp(char *str);
 extern char *capitalize(char *str);
 extern char *indent(int cnt);
 extern void cat_sprintf(char *dest, char *fmt, ...);
 extern void ins_sprintf(char *dest, char *fmt, ...);
+extern int str_suffix(char *str1, char *str2);
 extern void syserr(char *msg);
 extern void show_message(struct session *ses, int index, char *format, ...);
 extern void show_debug(struct session *ses, int index, char *format, ...);

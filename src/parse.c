@@ -65,11 +65,11 @@ struct session *parse_input(struct session *ses, char *input)
 
 		if (parse_command(ses, line))
 		{
-			ses = script_driver(ses, line);
+			ses = script_driver(ses, -1, line);
 		}
 		else if (check_all_aliases(ses, line))
 		{
-			ses = script_driver(ses, line);
+			ses = script_driver(ses, LIST_ALIAS, line);
 		}
 		else if (is_speedwalk(ses, line))
 		{
@@ -221,7 +221,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 
 				substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
-				script_driver(sesptr, line);
+				script_driver(sesptr, -1, line);
 
 				return ses;
 			}
@@ -496,7 +496,7 @@ void write_mud(struct session *ses, char *command, int flags)
 		check_insert_path(command, ses);
 	}
 
-	substitute(ses, command, output, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
+	substitute(ses, command, output, flags);
 
 	write_line_mud(output, ses);
 }

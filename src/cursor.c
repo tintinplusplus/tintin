@@ -901,6 +901,13 @@ DO_CURSOR(cursor_tab)
 		input_now++;
 	}
 
+	if (gtd->ses->list[LIST_TAB]->f_node == NULL)
+	{
+		cursor_auto_tab(arg);
+
+		return;
+	}
+
 	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
 	{
 		substitute(gtd->ses, node->left, tab, SUB_VAR|SUB_FUN);
@@ -924,4 +931,97 @@ DO_CURSOR(cursor_tab)
 			break;
 		}
 	}
+}
+
+DO_CURSOR(cursor_auto_tab)
+{
+	char tab[BUFFER_SIZE], buf[BUFFER_SIZE];
+	int input_now, scroll_cnt, line_cnt;
+
+	if (gtd->input_len == 0)
+	{
+		return;
+	}
+
+	input_now = gtd->input_len - 1;
+
+	while (input_now && gtd->input_buf[input_now] != ' ')
+	{
+		input_now--;
+	}
+
+	if (input_now != 0 && input_now == gtd->input_len - 1)
+	{
+		return;
+	}
+
+	if (input_now)
+	{
+		input_now++;
+	}
+
+	line_cnt = 0;
+
+	scroll_cnt = gtd->ses->scroll_row;
+
+	do
+	{
+		if (scroll_cnt == gtd->ses->scroll_max -1)
+		{
+			scroll_cnt = 0;
+		}
+		else
+		{
+			scroll_cnt++;
+		}
+
+		if (gtd->ses->buffer[scroll_cnt] == NULL)
+		{
+			break;
+		}
+
+		if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+		{
+			continue;
+		}
+
+		if (line_cnt++ >= gtd->ses->auto_tab)
+		{
+			break;
+		}
+
+		strip_vt102_codes(gtd->ses->buffer[scroll_cnt], buf);
+
+		arg = buf;
+
+		while (*arg)
+		{
+			arg = get_arg_stop_spaces(arg, tab);
+
+			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
+			{
+				if (gtd->input_cur == gtd->input_len)
+				{
+					input_printf("\033[%dD\033[%dP%s", gtd->input_len - input_now, gtd->input_len - input_now, tab);
+				}
+				else
+				{
+					input_printf("\033[%dC\033[%dD\033[%dP%s", gtd->input_len - gtd->input_cur, gtd->input_len - input_now, gtd->input_len - input_now, tab);
+				}
+				strcpy(&gtd->input_buf[input_now], tab);
+
+				gtd->input_len = input_now + strlen(tab);
+				gtd->input_cur = gtd->input_len;
+				gtd->input_pos = gtd->input_len;
+
+				return;
+			}
+
+			if (*arg == ';')
+			{
+				arg++;
+			}
+		}
+	}
+	while (scroll_cnt != gtd->ses->scroll_row);
 }

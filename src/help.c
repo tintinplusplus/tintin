@@ -203,11 +203,13 @@ struct help_type help_table[] =
 		"         3 - Yellow               8 - Skip\n"
 		"         4 - Blue                 9 - Default\n"
 		"\n"
+		"         For xterm 256 colors support use <<888>aaa> to <<888>fff> for RGB foreground\n"
+		"         colors and <<888>AAA> to <<888>FFF> for RGB background colors. For the grayscale\n"
+		"         foreground colors use <<888>g00> to <<888>g23>, for grayscale background colors\n"
+		"         use <<888>G00> to <<888>G23>.\n"
+		"\n"
 		"<178>Example<078>: #showme <<888>115>t<<888>828>e<<888>838>s<<888>848>t<<888>088> <<888>468>!<<888>568>!<<888>088>\n"
 		"         This will show: <115>t<828>e<838>s<848>t<088> <468>!<568>!<088>.\n"
-		"\n"
-		"<178>Comment<078>: For xterm 256 colors support use <<888>aaa> to <<888>fff> for RGB foreground\n"
-		"         colors and <<888>AAA> to <<888>FFF> for RGB background colors.\n"
 	},
 	{
 		"CONFIG",
@@ -229,8 +231,6 @@ struct help_type help_table[] =
 		"         #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
 		"         #CONFIG {MCCP}         {ON|OFF} Enable or disable MCCP support.\n"
 		"         #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers\n"
-		"         #CONFIG {TIMESTAMP}    {FORMAT} Prepend given strftime format to log\n"
-		"                                         files.\n"
 	},
 	{
 		"CR",
@@ -304,15 +304,15 @@ struct help_type help_table[] =
 		"\n"
 		"         \\a   will beep the terminal.\n"
 		"         \\e   will start an escape sequence.\n"
-		"         \\n   will send a new line.\n"
+		"         \\n   will send a line feed.\n"
 		"         \\r   will send a carriage return.\n"
 		"         \\t   will send a tab.\n"
 		"         \\x   will print a hexadecimal value, \xFF for example.\n"
 		"         \\x7B will send the '{' character.\n"
 		"         \\x7D will send the '}' character.\n"
 		"\n"
-		"         Ending a line with \\ will stop tintin from appending \\r\\n. To escape\n"
-		"         arguments in an alias use %%0 %%1 %%2 etc.\n"
+		"         Ending a line with \\ will stop tintin from appending a line feed.\n"
+		"         To escape arguments in an alias use %%0 %%1 %%2 etc.\n"
 	},
 	{
 		"EVENT",
@@ -466,12 +466,12 @@ struct help_type help_table[] =
 	},
 	{
 		"HISTORY",
-//		"<178>Command<078>: #history <178>{<078>character<178>} {<078>character<178>}<078>  Set the repeat character.\n"
+/*		"<178>Command<078>: #history <178>{<078>character<178>} {<078>character<178>}<078>  Set the repeat character.\n" */
 		"<178>Command<078>: #history <178>{<078>delete<178>}<078>                 Delete the last command.\n"
 		"         #history <178>{<078>insert<178>}    {<078>command<178>}<078>    Insert a command.\n"
 		"         #history <178>{<078>list<178>}<078>                   Display the entire command history.\n"
 		"         #history <178>{<078>read<178>}      {<078>filename<178>}<078>   Read a command history from file.\n"
-//		"         #history <178>{<078>size<178>}      {<078>number<178>}<078>     Set the size of the command history.\n"
+/*		"         #history <178>{<078>size<178>}      {<078>number<178>}<078>     Set the size of the command history.\n" */
 		"         #history <178>{<078>write<178>}     {<078>filename<178>}<078>   Write a command history to file.\n"
 		"\n"
 		"         Without an argument all available options are shown.\n"
@@ -1115,6 +1115,9 @@ struct help_type help_table[] =
 		"<178>Command<078>: #tab <178>{<078>word<178>}<078>\n"
 		"\n"
 		"         Adds a word to the tab completion list, alphabetically sorted.\n"
+		"\n"
+		"         If no tabs are defined tintin will use the scrollback buffer\n"
+		"         for auto tab completion.\n"
 		"\n"
 		"<178>Comment<078>: You can remove a tab with the #untab command.\n"
 	},

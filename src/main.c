@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 			switch (c)
 			{
 				case 'e':
-					gtd->ses = script_driver(gtd->ses, optarg);
+					gtd->ses = script_driver(gtd->ses, -1, optarg);
 					break;
 
 				case 'h':
@@ -257,7 +257,6 @@ void init_tintin(void)
 	gts->class          = strdup("");
 	gts->host           = strdup("");
 	gts->port           = strdup("");
-	gts->timestamp      = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
 	gts->flags          = SES_FLAG_MCCP;
 	gts->socket         = 1;
@@ -302,22 +301,23 @@ void init_tintin(void)
 
 	printf("\033=\033[?1h");
 
-	do_configure(gts, "{SPEEDWALK}         {OFF}");
-	do_configure(gts, "{VERBATIM}          {OFF}");
-	do_configure(gts, "{REPEAT ENTER}      {OFF}");
+	do_configure(gts, "{AUTO TAB}         {5000}");
+	do_configure(gts, "{BUFFER SIZE}     {20000}");
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
 	do_configure(gts, "{COMMAND ECHO}       {ON}");
+	do_configure(gts, "{CONNECT RETRY}      {15}");
+	do_configure(gts, "{HISTORY SIZE}     {2500}");
+	do_configure(gts, "{LOG}               {RAW}");
+	do_configure(gts, "{PACKET PATCH}        {0}");
+	do_configure(gts, "{REPEAT CHAR}         {!}");
+	do_configure(gts, "{REPEAT ENTER}      {OFF}");
+	do_configure(gts, "{SCROLL LOCK}        {ON}");
+	do_configure(gts, "{SPEEDWALK}         {OFF}");
+	do_configure(gts, "{TINTIN CHAR}         {#}");
+	do_configure(gts, "{VERBATIM}          {OFF}");
+	do_configure(gts, "{VERBATIM CHAR}      {\\}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
-	do_configure(gts, "{LOG}               {RAW}");
-	do_configure(gts, "{BUFFER SIZE}     {20000}");
-	do_configure(gts, "{SCROLL LOCK}        {ON}");
-	do_configure(gts, "{HISTORY SIZE}     {2500}");
-	do_configure(gts, "{CONNECT RETRY}      {15}");
-	do_configure(gts, "{PACKET PATCH}        {0}");
-	do_configure(gts, "{TINTIN CHAR}         {#}");
-	do_configure(gts, "{VERBATIM CHAR}      {\\}");
-	do_configure(gts, "{REPEAT CHAR}         {!}");
 
 	insertnode_list(gts,  "n",  "s",  "1", LIST_PATHDIR);
 	insertnode_list(gts,  "e",  "w",  "2", LIST_PATHDIR);

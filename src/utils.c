@@ -154,22 +154,6 @@ long long utime()
 	return gtd->time;
 }
 
-char *timestamp(char *str)
-{
-	static char outbuf[BUFFER_SIZE];
-	struct tm timeval_tm;
-	time_t    timeval_t;
-
-	timeval_t = (time_t) time(NULL);
-
-	timeval_tm = *localtime(&timeval_t);
-
-	strftime(outbuf, 100, str, &timeval_tm);
-
-	return outbuf;
-}
-
-
 char *capitalize(char *str)
 {
 	static char outbuf[BUFFER_SIZE];
@@ -221,6 +205,23 @@ void ins_sprintf(char *dest, char *fmt, ...)
 	strcpy(tmp, dest);
 	strcpy(dest, buf);
 	strcat(dest, tmp);
+}
+
+int str_suffix(char *str1, char *str2)
+{
+	int len1, len2;
+
+	len1 = strlen(str1);
+	len2 = strlen(str2);
+
+	if (len1 >= len2)
+	{
+		if (!strcasecmp(str1 + len1 - len2, str2))
+		{
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 
 void show_message(struct session *ses, int index, char *format, ...)
@@ -285,14 +286,14 @@ void show_debug(struct session *ses, int index, char *format, ...)
 	char buf[STRING_SIZE];
 	va_list args;
 
+	push_call("show_debug(%p,%p,%p)",ses,index,format);
+
 	root = ses->list[index];
 
 	if (!HAS_BIT(root->flags, LIST_FLAG_DEBUG) && !HAS_BIT(root->flags, LIST_FLAG_LOG))
 	{
 		return;
 	}
-
-	push_call("show_debug(%p,%p,%p)",ses,index,format);		
 
 	va_start(args, format);
 
@@ -402,7 +403,7 @@ void tintin_puts3(struct session *ses, char *string)
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
-		sprintf(output, "\r\n%s", string);
+		sprintf(output, "\n%s", string);
 	}
 	else
 	{
@@ -451,7 +452,7 @@ void tintin_puts2(struct session *ses, char *string)
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
-		sprintf(output, "\r\n\033[0m%s\033[0m", string);
+		sprintf(output, "\n\033[0m%s\033[0m", string);
 	}
 	else
 	{

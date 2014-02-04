@@ -38,7 +38,7 @@ void save_pos(struct session *ses)
 
 void restore_pos(struct session *ses)
 {
-	printf("\0338"); 
+	printf("\0338\0338"); 
 
 	ses->cur_row = ses->sav_row;
 	ses->cur_col = ses->sav_col;

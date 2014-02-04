@@ -88,7 +88,7 @@ DO_COMMAND(do_if)
 	{
 		if (mathexp(ses, left))
 		{
-			ses = script_driver(ses, right);
+			ses = script_driver(ses, -1, right);
 		}
 		else
 		{
@@ -96,7 +96,7 @@ DO_COMMAND(do_if)
 
 			if (*right)
 			{
-				ses = script_driver(ses, right);
+				ses = script_driver(ses, -1, right);
 			}
 		}
 	}
@@ -250,7 +250,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 						break;
 
 					case ',':
-						*pti++;
+						pti++;
 						break;
 
 					case '.':

@@ -1044,6 +1044,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 
 			case CHAT_SNOOP_DATA:
 				SET_BIT(buddy->flags, CHAT_FLAG_FORWARDBY);
+				DEL_BIT(buddy->flags, CHAT_FLAG_FORWARD);
 				chat_receive_snoop_data(buddy, txt);
 				break;
 
@@ -2249,7 +2250,7 @@ DO_CHAT(chat_color)
 {
 	if (*left == 0 || get_highlight_codes(gtd->ses, left, right) == FALSE)
 	{
-		chat_printf("Valid colors are:\r\n\r\nreset, bold, dim, light, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
+		chat_printf("Valid colors are:\n\nreset, bold, dim, light, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 
 		return;
 	}
@@ -2428,7 +2429,7 @@ void chat_forward_session(struct session *ses, char *linelog)
 }
 
 /*
-	Pussy version of the ignore feature
+	The ignore feature.
 */
 
 DO_CHAT(chat_ignore)

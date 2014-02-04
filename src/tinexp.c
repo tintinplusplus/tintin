@@ -157,11 +157,11 @@ DO_COMMAND(do_regexp)
 		{
 			substitute(ses, true, true, SUB_CMD);
 
-			ses = script_driver(ses, true);
+			ses = script_driver(ses, -1, true);
 		}
 		else if (*false)
 		{
-			ses = script_driver(ses, false);
+			ses = script_driver(ses, -1, false);
 		}
 	}
 	return ses;
@@ -300,6 +300,10 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 				if (HAS_BIT(flags, SUB_EOL))
 				{
 					*pto++ = '\r';
+					*pto++ = '\n';
+				}
+				if (HAS_BIT(flags, SUB_LNF))
+				{
 					*pto++ = '\n';
 				}
 				*pto = 0;
@@ -469,7 +473,7 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = ';';
 						*pto++ = '5';
 						*pto++ = ';';
-						cnt = 16 + (pti[1] - 'A') + (pti[2] - 'A') * 6 + (pti[3] - 'A') * 36;
+						cnt = 16 + (pti[1] - 'A') * 36 + (pti[2] - 'A') * 6 + (pti[3] - 'A');
 						*pto++ = '0' + cnt / 100;
 						*pto++ = '0' + cnt % 100 / 10;
 						*pto++ = '0' + cnt % 10;
@@ -539,9 +543,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 					pti = get_arg_in_braces(&pti[i], temp, FALSE);
 
-					substitute(ses, temp, buf, flags_neol);
+					substitute(ses, temp, buf, SUB_VAR|SUB_FUN);
 
-					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}.", node->left, buf);
+					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->left);
 
 					RESTRING(gtd->vars[0], buf);
 
@@ -561,11 +565,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 					substitute(ses, node->right, buf, SUB_ARG);
 
-					script_driver(ses, buf);
+					script_driver(ses, LIST_FUNCTION, buf);
 
 					substitute(ses, "$result", pto, flags_neol|SUB_VAR);
-
-					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}.", node->left, pto);
 
 					pto += strlen(pto);
 				}
@@ -754,6 +756,7 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 							break;
 						case '\0':
 							DEL_BIT(flags, SUB_EOL);
+							DEL_BIT(flags, SUB_LNF);
 							continue;
 						default:
 							*pto++ = *pti;

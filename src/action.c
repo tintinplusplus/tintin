@@ -86,11 +86,11 @@ void check_all_actions(struct session *ses, char *original, char *line)
 
 		if (check_one_action(line, original, node->left, ses))
 		{
-			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", node->left);
+			show_debug(ses, LIST_ACTION, "#DEBUG ACTION {%s}", node->left);
 
 			substitute(ses, node->right, buf, SUB_ARG|SUB_SEC);
 
-			script_driver(ses, buf);
+			script_driver(ses, LIST_ACTION, buf);
 
 			return;
 		}

@@ -23,6 +23,11 @@ All data dealing with needs to follow this format with a couple exceptions.
 The connection process doesn't use the data blocks and the file transfer
 blocks are a fixed size and don't need the <end of data> byte.
 
+Default Port
+
+The default port should always be 4050.
+
+
 Below is a list of the <block ID> values:
 
 #define CHAT_NAME_CHANGE                      1
@@ -44,6 +49,11 @@ Below is a list of the <block ID> values:
 #define CHAT_PING_REQUEST                    26
 #define CHAT_PING_RESPONSE                   27
 
+#define CHAT_PEEK_CONNECTIONS                28
+#define CHAT_PEEK_LIST                       29
+#define CHAT_SNOOP_START                     30
+#define CHAT_SNOOP_DATA                      31
+
 #define CHAT_END_OF_COMMAND                 255
 
 The <end of data> byte is 255:
@@ -59,7 +69,7 @@ all of their connections.
 
 <CHAT_REQUEST_CONNECTIONS><CHAT_END_OF_COMMAND>
 
-Sender: Requesting connections from another connection asking to see all the
+The sender requests connections from another connection asking to see all the
 people that person has marked as public, then try to connect to all of those
 yourself.
 
@@ -67,9 +77,8 @@ yourself.
 
 <CHAT_CONNECTION_LIST><address>,<port>,<address>,<port><CHAT_END_OF_COMMAND>
 
-The receiver needs to put all the IPs and port numbers of the public
-connections in a comma delimited string and send them back as a connection
-list.
+The receiver needs to put all the ip addresses and port numbers in a comma
+delimited string and send them back as a connection list.
 
 
 
@@ -211,9 +220,38 @@ Either side can send this command to abort a file transfer in progress.
 
 <CHAT_PING_REQUEST><timing data><CHAT_END_OF_COMMAND>
 
-The timing data is up to the ping requester. TinTin sents a 64 bit time stamp.
+The timing data is up to the ping requester. TinTin sends a 64 bit time stamp.
+
 
 
 <CHAT_PING_RESPONSE><timing data><CHAT_END_OF_COMMAND>
 
 Send back the timing data is the data that was sent with the CHAT_PING_REQUEST.
+
+
+
+<CHAT_PEEK_CONNECTIONS><CHAT_END_OF_COMMAND>
+
+The sender requests connections from another connection asking to see all the
+people that person has marked as public.
+
+
+
+<CHAT_PEEK_LIST><address>~<port>~<name>~<CHAT_END_OF_COMMAND>
+
+The receiver needs to put all the ip addresses, port numbers, and names in a
+tilda delimited string and send them back as a peek list.
+
+
+
+<CHAT_SNOOP_START><CHAT_END_OF_COMMAND>
+
+The sender requests to start or stop snooping data from a chat connection.
+The Receiver decides whether to allow snooping or not.
+
+
+
+<CHAT_SNOOP_DATA><message><CHAT_END_OF_COMMAND>
+
+Send by a client in snoop or forward mode. The message should be echoed by
+the receiver, but not be further forwarded to avoid infinite loops.

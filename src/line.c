@@ -90,7 +90,7 @@ DO_LINE(line_log)
 
 		if (*right)
 		{
-			substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_EOL);
+			substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_LNF);
 
 			logit(ses, right, ses->logline, FALSE);
 

@@ -9,16 +9,16 @@ David Hedbot                               original GNU autoconfig
 Andrew Chernov                             FreeBSD bug fixes
 Jim Goddard                                SOCKS #ifdefs
 Greg Jarman                                original #if code
-Yoon-Chan Jhi                              see mods/ycjhi.mods
 Peter Kjellerstedt                         see mods/pkj.mods
+Sean Butler                                see mods/xin.mods
 Robert Ellsworth                           see mods/rse.mods
-Sverre Norrman                             see mods/sverre.mods
+Sverre Norrman                             see mods/dsc.mods mods/svr.mods
 Davin Chan                                 see mods/dsc.mods
 Chitchat                                   see mods/dsc.mods
 Kuang-che Wu                               see mods/dsc.mods
-Sean Butler                                see mods/xin.mods
-Igor van den Hoven                         see mods/igor.mods
-Julia Longtin                              see mods/juri.mods
+Yoon-Chan Jhi                              see mods/dsc.mods mods/ycj.mods
+Julia Longtin                              see mods/igr.mods mods/jul.mods
+Igor van den Hoven                         see mods/igr.mods
 
 Modification History
 --------------------
@@ -40,4 +40,5 @@ Current Tintin++ Development Team
 Igor van den Hoven - mudclient@gmail.com
 
 The email must contain either tintin, tintin++, mud, or client in
-the subject / message. Otherwise it'll go straight to the spambox.
+the subject / message, otherwise it won't be forwarded to my main
+email account.

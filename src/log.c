@@ -30,28 +30,19 @@
 
 void logit(struct session *ses, char *txt, FILE *file, int newline)
 {
-	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
+	char out[BUFFER_SIZE];
 
-	if (*ses->timestamp)
-	{
-		sprintf(buf, "%s%s", timestamp(ses->timestamp), txt);
-	}
-	else
-	{
-		strcpy(buf, txt);
-	}
-	
 	if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
 	{
-		strip_vt102_codes(buf, out);
+		strip_vt102_codes(txt, out);
 	}
 	else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 	{
-		vt102_to_html(ses, buf, out);
+		vt102_to_html(ses, txt, out);
 	}
 	else
 	{
-		strcpy(out, buf);
+		strcpy(out, txt);
 	}
 
 	if (newline)
@@ -128,6 +119,8 @@ DO_COMMAND(do_logline)
 
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 1);
+
+	tintin_printf2(ses, "#LOGLINE: Old command, use #LINE LOG instead.");
 
 	substitute(ses, right, right, SUB_ESC|SUB_COL);
 
@@ -340,10 +333,6 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 			case '<':
 				sprintf(pto, "&lt;");
 				pto += strlen(pto);
-				pti++;
-				break;
-
-			case '\r':
 				pti++;
 				break;
 

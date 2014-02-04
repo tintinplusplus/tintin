@@ -74,7 +74,7 @@ void process_input(void)
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
 
-	script_driver(gtd->ses, gtd->input_buf);
+	script_driver(gtd->ses, -1, gtd->input_buf);
 
 	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
 
@@ -121,7 +121,7 @@ void read_line()
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				script_driver(gtd->ses, node->right);
+				script_driver(gtd->ses, LIST_MACRO, node->right);
 
 				gtd->macro_buf[0] = 0;
 
@@ -251,7 +251,7 @@ void read_key(void)
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				script_driver(gtd->ses, node->right);
+				script_driver(gtd->ses, LIST_MACRO, node->right);
 
 				gtd->macro_buf[0] = 0;
 				return;
@@ -272,11 +272,11 @@ void read_key(void)
 	{
 		switch (gtd->macro_buf[cnt])
 		{
-			case '\r':
+/*			case '\r': */
 			case '\n':
 				gtd->input_buf[0] = 0;
 				gtd->macro_buf[0] = 0;
-				socket_printf(gtd->ses, 1, "%c", '\r'); 
+				socket_printf(gtd->ses, 2, "%c%c", '\r', '\n'); 
 				break;
 
 			default:
@@ -334,8 +334,12 @@ void convert_meta(char *input, char *output)
 				pti++;
 				break;
 
-			case '\n':
 			case '\r':
+				*pto++ = '\\';
+				*pto++ = 'r';
+				pti++;
+				break;
+			case '\n':
 				*pto++ = *pti++;
 				break;
 
