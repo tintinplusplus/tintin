@@ -74,7 +74,7 @@ DO_COMMAND(do_unalias)
 
 int alias_regexp(char *exp, char *str)
 {
-	short cnt;
+	short cnt, arg;
 
 	while (*exp)
 	{
@@ -94,29 +94,27 @@ int alias_regexp(char *exp, char *str)
 		switch (exp[0])
 		{
 			case '%':
-				if (exp[1] >= '0' && exp[1] <= '9')
+				if (isdigit(exp[1]))
 				{
-					if (exp[2] == 0)
+					arg = isdigit(exp[2]) ? (exp[1] - '0') * 10 + exp[2] - '0' : exp[1] - '0';
+
+					if (exp[isdigit(exp[2]) ? 3 : 2] == 0)
 					{
-						gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
+						RESTRING(gtd->vars[arg], str);
 
 						return TRUE;
 					}
 
-					for (cnt = 0 ; cnt < 1000 ; cnt++)
+					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (alias_regexp(exp + 2, &str[cnt]))
+						if (alias_regexp(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt]))
 						{
-							gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
-							gtd->vars[exp[1] - '0'][cnt] = 0;
+							RESTRING(gtd->vars[arg], stringf_alloc("%.*s", cnt, str));
 
 							return TRUE;
 						}
-						if (str[cnt] == 0)
-						{
-							return FALSE;
-						}
 					}
+					return FALSE;
 				}
 				break;
 
@@ -147,18 +145,20 @@ int check_all_aliases(struct session *ses, char *str1, char *str2, char **comman
 {
 	struct listnode *node;
 	struct listroot *root;
-	char *arg;
+	char *arg, *tmp;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
 
-	gtd->vars[0] = string_alloc(str2);
+	RESTRING(gtd->vars[0], str2);
 
 	arg = str2;
 
 	for (i = 1 ; i < 10 ; i++)
 	{
-		arg = get_arg_in_braces(arg, &gtd->vars[i], FALSE);
+		arg = get_arg_in_braces(arg, &tmp, FALSE);
+
+		RESTRING(gtd->vars[i], tmp);
 	}
 
 	arg = stringf_alloc("%s%s%s", str1, *str2 ? " " : "", str2);

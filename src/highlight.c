@@ -91,7 +91,7 @@ DO_COMMAND(do_unhighlight)
 	return ses;
 }
 
-
+/*
 void check_all_highlights(struct session *ses, char **original, char *line)
 {
 	struct listnode *node;
@@ -109,7 +109,7 @@ void check_all_highlights(struct session *ses, char **original, char *line)
 
 			if (pt2 == NULL)
 			{
-				break;
+				continue;
 			}
 			*pt2 = 0;
 			pt3 = pt2 + strlen(buf1);
@@ -122,6 +122,53 @@ void check_all_highlights(struct session *ses, char **original, char *line)
 			sprintf(temp, "%s%s%s\033[0m%s%s", pt1, buf2, buf1, buf3, pt3);
 
 			substitute(ses, temp, original, 0);
+		}
+	}
+}
+*/
+
+void check_all_highlights(struct session *ses, char **original, char *line)
+{
+	struct listnode *node;
+	char *pt1, *pt2;
+	char *match, color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], temp[BUFFER_SIZE];
+
+	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
+	{
+		if (check_one_action(line, *original, node->left, ses))
+		{
+			substitute(ses, node->left, &match, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
+
+			if (strstr(*original, match) == NULL)
+			{
+				continue;
+			}
+
+			*output = *reset = 0;
+
+			pt1 = *original;
+
+			get_highlight_codes(ses, node->right, color);
+
+			strip_vt102_codes(match, temp);
+
+			strcat(color, temp);
+
+			while ((pt2 = strstr(pt1, match)) != NULL)
+			{
+				*pt2 = 0;
+
+				strip_non_vt102_codes(pt1, temp);
+
+				strcat(reset, temp);
+
+				cat_sprintf(output, "%s%s\033[0m%s", pt1, color, reset);
+
+				pt1 = pt2 + strlen(match);
+			}
+			strcat(output, pt1);
+
+			substitute(ses, output, original, 0);
 		}
 	}
 }

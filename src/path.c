@@ -38,7 +38,7 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|WALK|DEL|INS|MAP} {argument}");
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|RUN|WALK|DEL|INS|MAP} {argument}");
 	}
 	else
 	{
@@ -286,6 +286,57 @@ DO_PATH(path_ins)
 		show_message(ses, LIST_PATH, "#OK. #PATH - {%s} = {%s} ADDED.", left, right);
 	}
 }
+
+DO_PATH(path_run)
+{
+	char *left, time[BUFFER_SIZE], name[BUFFER_SIZE];
+	struct listroot *root;
+	int wait;
+	long long flags;
+
+	root = ses->list[LIST_PATH];
+
+	arg = get_arg_in_braces(arg, &left, FALSE);
+
+	if (root->f_node == NULL)
+	{
+		tintin_puts(ses, "#END OF PATH.");
+	}
+	else
+	{
+		flags = ses->flags;
+
+		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+
+		if (*left)
+		{
+			wait = 0;
+
+			while (root->f_node)
+			{
+				sprintf(time, "%lld", utime() + wait);
+				sprintf(name, "%lld", gtd->time);
+
+				wait += (long long) (get_number(ses, left) * 1000000LL);
+
+				updatenode_list(ses, name, root->f_node->left, time, LIST_DELAY);
+
+				deletenode_list(ses, root->f_node, LIST_PATH);
+			}
+		}
+		else
+		{
+			while (root->f_node)
+			{
+				parse_input(ses, root->f_node->left);
+
+				deletenode_list(ses, root->f_node, LIST_PATH);
+			}
+		}
+		ses->flags = flags;
+	}
+}
+
 
 DO_PATH(path_walk)
 {

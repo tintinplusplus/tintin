@@ -376,9 +376,10 @@ char *get_arg_in_braces(char *string, char **result, int flag)
 		if (*pti & 0x80)
 		{
 			*pto++ = *pti++;
-			if (*pti == 0)
+
+			if (*pti)
 			{
-				break;
+				*pto++ = *pti++;
 			}
 			continue;
 		}
@@ -434,9 +435,10 @@ char *get_arg_with_spaces(char *string, char **result)
 		if (*pti & 0x80)
 		{
 			*pto++ = *pti++;
-			if (*pti == 0)
+
+			if (*pti)
 			{
-				break;
+				*pto++ = *pti++;
 			}
 			continue;
 		}
@@ -482,9 +484,10 @@ char *get_arg_stop_spaces(char *string, char **result)
 	while (*pti)
 	{
 #ifdef BIG5
-		if(*pti & 0x80)
+		if (*pti & 0x80)
 		{
 			*pto++ = *pti++;
+
 			if (*pti)
 			{
 				*pto++ = *pti++;
@@ -553,9 +556,10 @@ char *cpy_arg_in_braces(char *pti, char *pto, int flag)
 		if (*pti & 0x80)
 		{
 			*pto++ = *pti++;
-			if (*pti == 0)
+
+			if (*pti)
 			{
-				break;
+				*pto++ = *pti++;
 			}
 			continue;
 		}
@@ -607,9 +611,10 @@ char *cpy_arg_with_spaces(char *pti, char *pto)
 		if (*pti & 0x80)
 		{
 			*pto++ = *pti++;
-			if (*pti == 0)
+
+			if (*pti)
 			{
-				break;
+				*pto++ = *pti++;
 			}
 			continue;
 		}
@@ -654,6 +659,7 @@ char *cpy_arg_stop_spaces(char *pti, char *pto)
 		if(*pti & 0x80)
 		{
 			*pto++ = *pti++;
+
 			if (*pti)
 			{
 				*pto++ = *pti++;

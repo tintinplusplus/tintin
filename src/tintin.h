@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.7"
+#define VERSION_NUM               "1.97.8"
 
 #define ESCAPE                          27
 
@@ -234,7 +234,6 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define SUB_ANC                       (1 <<  6)
 #define SUB_SEC                       (1 <<  7)
 #define SUB_EOL                       (1 <<  8)
-#define SUB_FMT                       (1 <<  9)
 
 
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
@@ -537,8 +536,9 @@ struct tintin_data
 	unsigned char         * mccp_buf;
 	int                     mccp_buf_max;
 	char                    input_buf[STRING_SIZE];
-	char                    input_tmp[BUFFER_SIZE];
-	char                    macro_buf[BUFFER_SIZE];
+	char                    input_tmp[STRING_SIZE];
+	char                    macro_buf[STRING_SIZE];
+	char                    paste_buf[STRING_SIZE];
 	int                     input_len;
 	int                     input_cur;
 	int                     input_pos;
@@ -556,8 +556,8 @@ struct tintin_data
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
-	char                  * vars[10];
-	char                  * cmds[10];
+	char                  * vars[100];
+	char                  * cmds[100];
 };
 
 struct chat_data
@@ -1345,6 +1345,7 @@ extern DO_PATH(path_ins);
 extern DO_PATH(path_load);
 extern DO_PATH(path_map);
 extern DO_PATH(path_new);
+extern DO_PATH(path_run);
 extern DO_PATH(path_save);
 extern DO_PATH(path_walk);
 

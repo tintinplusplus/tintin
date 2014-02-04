@@ -671,6 +671,7 @@ struct path_type path_table[] =
 	{    "LOAD",                       path_load              },
 	{    "MAP",                        path_map               },
 	{    "NEW",                        path_new               },
+	{    "RUN",                        path_run               },
 	{    "SAVE",                       path_save              },
 	{    "WALK",                       path_walk              },
 	{    "",                           NULL                   }

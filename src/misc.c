@@ -152,9 +152,11 @@ DO_COMMAND(do_forall)
 
 		while (*arg)
 		{
-			arg = get_arg_in_braces(arg, &gtd->cmds[0], FALSE);
+			arg = get_arg_in_braces(arg, &temp, FALSE);
 
-			internal_variable(ses, "{forall} {%s}", gtd->cmds[0]);
+			internal_variable(ses, "{forall} {%s}", temp);
+			
+			RESTRING(gtd->cmds[0], temp);
 
 			substitute(ses, right, &temp, SUB_CMD);
 
@@ -243,7 +245,7 @@ DO_COMMAND(do_loop)
 
 		for (counter = bound1 ; counter != bound2 ; counter += step)
 		{
-			gtd->cmds[0] = stringf_alloc("%lld", counter);
+			RESTRING(gtd->cmds[0], stringf_alloc("%lld", counter));
 
 			internal_variable(ses, "{loop} {%lld}", counter);
 
@@ -289,14 +291,14 @@ DO_COMMAND(do_parse)
 #ifdef BIG5
 			if (left[cnt] & 0x80 && left[cnt+1] != 0)
 			{
-				gtd->cmds[0] = stringf_alloc("%c%c", left[cnt], left[++cnt]);
+				RESTRING(gtd->cmds[0], stringf_alloc("%c%c", left[cnt], left[++cnt]));
 			}
 			else
 			{
-				gtd->cmds[0] = stringf_alloc("%c", left[cnt]);
+				RESTRING(gtd->cmds[0], stringf_alloc("%c", left[cnt]));
 			}
 #else
-			gtd->cmds[0] = stringf_alloc("%c", left[cnt]);
+			RESTRING(gtd->cmds[0], stringf_alloc("%c", left[cnt]));
 #endif
 			internal_variable(ses, "{parse} {%s}", gtd->cmds[0]);
 

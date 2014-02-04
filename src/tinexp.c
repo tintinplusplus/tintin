@@ -124,7 +124,7 @@ DO_COMMAND(do_regexp)
 
 		if (regex(exp, str))
 		{
-			substitute(ses, true,  &true,  SUB_CMD);
+			substitute(ses, true, &true, SUB_CMD);
 
 			ses = parse_input(ses, true);
 		}
@@ -139,7 +139,7 @@ DO_COMMAND(do_regexp)
 int regex(char *exp, char *str)
 {
 	regex_t regex;
-	regmatch_t match[10];
+	regmatch_t match[100];
 	int i;
 
 	if (regcomp(&regex, exp, REG_EXTENDED))
@@ -147,22 +147,22 @@ int regex(char *exp, char *str)
 		return FALSE;
 	}
 
-	if (regexec(&regex, str, 10, match, 0))
+	if (regexec(&regex, str, 100, match, 0))
 	{
 		regfree(&regex);
 
 		return FALSE;
 	}
 
-	for (i = 0 ; i < 10 ; i++)
+	for (i = 0 ; i < 100 ; i++)
 	{
 		if (match[i].rm_so != -1)
 		{
-			gtd->cmds[i] = stringf_alloc("%.*s", match[i].rm_eo - match[i].rm_so, &str[match[i].rm_so]);
+			RESTRING(gtd->cmds[i], stringf_alloc("%.*s", match[i].rm_eo - match[i].rm_so, &str[match[i].rm_so]));
 		}
 		else
 		{
-			gtd->cmds[i] = stringf_alloc("");
+			break;
 		}
 	}
 	regfree(&regex);
@@ -407,19 +407,21 @@ void substitute(struct session *ses, char *string, char **result, int flags)
 
 					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, pte);
 
-					gtd->vars[0] = string_alloc(pte);
+					RESTRING(gtd->vars[0], pte);
 
-					for (i = 0 ; i < 10 ; i++)
+					for (i = 1 ; i < 100 ; i++)
 					{
-						pte = get_arg_in_braces(pte, &gtd->cmds[i], FALSE);
+						pte = get_arg_in_braces(pte, &tmp, FALSE);
+
+						RESTRING(gtd->vars[i], tmp);
+
+						if (*gtd->vars[i] == 0)
+						{
+							break;
+						}
 					}
 
-					for (i = 0 ; i < 9 ; i++)
-					{
-						gtd->vars[i+1] = gtd->cmds[i];
-					}
-
-					substitute(ses, node->right, &tmp, SUB_CMD|SUB_ARG);
+					substitute(ses, node->right, &tmp, SUB_ARG);
 
 					parse_input(ses, tmp);
 
@@ -440,54 +442,69 @@ void substitute(struct session *ses, char *string, char **result, int flags)
 				break;
 
 			case '%':
-				if (HAS_BIT(flags, SUB_ARG) && isdigit(pti[1]))
+				if (HAS_BIT(flags, SUB_ARG) && (isdigit(pti[1]) || pti[1] == '%'))
 				{
-					ptt = gtd->vars[pti[1] - '0'];
-
-					while (*ptt)
+					if (pti[1] == '%')
 					{
-#ifdef BIG5
-						if (*ptt & 0x80)
+						while (pti[1] == '%')
 						{
-							*pto++ = *ptt++;
-							if (*ptt)
-							{
-								*pto++ = *ptt++;
-							}
-							continue;
+							*pto++ = *pti++;
 						}
-#endif
-						if (HAS_BIT(flags, SUB_SEC))
+						if (isdigit(pti[1]))
 						{
-							switch (*ptt)
-							{
-								case COMMAND_SEPARATOR:
-									*pto++ = '\\';
-									*pto++ = COMMAND_SEPARATOR;
-									break;
-
-								case '\\':
-									*pto++ = '\\';
-									*pto++ = '\\';
-									break;
-
-								default:
-									*pto++ = *ptt;
-									break;
-							}
-							ptt++;
+							pti++;
 						}
 						else
 						{
-							*pto++ = *ptt++;
+							*pto++ = *pti++;
 						}
 					}
-					pti += 2;
-				}
-				else if (HAS_BIT(flags, SUB_FMT))
-				{
-					*pto++ = '%';
-					*pto++ = *pti++;
+					else
+					{
+						i = isdigit(pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
+
+						ptt = gtd->vars[i];
+
+						while (*ptt)
+						{
+#ifdef BIG5
+							if (*ptt & 0x80)
+							{
+								*pto++ = *ptt++;
+								if (*ptt)
+								{
+									*pto++ = *ptt++;
+								}
+								continue;
+							}
+#endif
+							if (HAS_BIT(flags, SUB_SEC))
+							{
+								switch (*ptt)
+								{
+									case COMMAND_SEPARATOR:
+										*pto++ = '\\';
+										*pto++ = COMMAND_SEPARATOR;
+										break;
+
+									case '\\':
+										*pto++ = '\\';
+										*pto++ = '\\';
+										break;
+
+									default:
+										*pto++ = *ptt;
+										break;
+								}
+								ptt++;
+							}
+							else
+							{
+								*pto++ = *ptt++;
+							}
+						}
+						pti += isdigit(pti[2]) ? 3 : 2;
+					}
 				}
 				else
 				{
@@ -519,13 +536,33 @@ void substitute(struct session *ses, char *string, char **result, int flags)
 				break;
 
 			case '&':
-				if (HAS_BIT(flags, SUB_CMD) && isdigit(pti[1]))
+				if (HAS_BIT(flags, SUB_CMD) && (isdigit(pti[1]) || pti[1] == '&'))
 				{
-					for (cnt = 0 ; gtd->cmds[pti[1] - '0'][cnt] ; cnt++)
+					if (pti[1] == '&')
 					{
-						*pto++ = gtd->cmds[pti[1] - '0'][cnt];
+						while (pti[1] == '&')
+						{
+							*pto++ = *pti++;
+						}
+						if (isdigit(pti[1]))
+						{
+							pti++;
+						}
+						else
+						{
+							*pto++ = *pti++;
+						}
 					}
-					pti += 2;
+					else
+					{
+						i = isdigit(pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
+
+						for (cnt = 0 ; gtd->cmds[i][cnt] ; cnt++)
+						{
+							*pto++ = gtd->cmds[i][cnt];
+						}
+						pti += isdigit(pti[2]) ? 3 : 2;
+					}
 				}
 				else
 				{
@@ -606,12 +643,6 @@ int check_one_action(char *line, char *original, char *action, struct session *s
 {
 	char *result, *ptr;
 	char *ptl;
-	int cnt;
-
-	for (cnt = 0 ; cnt < 10 ; cnt++)
-	{
-		gtd->vars[cnt] = string_alloc("");
-	}
 
 	substitute(ses, action, &result, SUB_VAR|SUB_FUN|SUB_ESC);
 
@@ -675,26 +706,23 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 		switch (exp[0])
 		{
 			case '%':
-				if (exp[1] >= '0' && exp[1] <= '9')
+				if (isdigit(exp[1]))
 				{
-					arg = exp[1] - '0';
+					arg = isdigit(exp[2]) ? (exp[1] - '0') * 10 + exp[2] - '0' : exp[1] - '0';
 
-					if (exp[2] == 0)
+					if (exp[isdigit(exp[2]) ? 3 : 2] == 0)
 					{
-						gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
+						RESTRING(gtd->vars[arg], str);
 
 						return TRUE;
 					}
 
 					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (action_regexp(exp + 2, &str[cnt], arg))
+						if (action_regexp(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt], arg))
 						{
-							gtd->vars[exp[1] - '0'] = stringf_realloc(gtd->vars[exp[1] - '0'], "%.*s", cnt, str);
-/*
-							gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
-							gtd->vars[exp[1] - '0'][cnt] = 0;
-*/
+							RESTRING(gtd->vars[arg], stringf_alloc("%.*s", cnt, str));
+
 							return TRUE;
 						}
 					}
@@ -719,7 +747,7 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 					{
 						if (exp[cnt] == '|' || exp[cnt] == ']')
 						{
-							arg = (arg == 9) ? arg : arg + 1;
+							arg = (arg == 99) ? arg : arg + 1;
 							cnt--;
 							cnt2 = 0;
 
@@ -729,7 +757,7 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 								cnt2++;
 								str++;
 							}
-							gtd->vars[arg] = stringf_alloc("%.*s", cnt2, &exp[cnt+1]);
+							RESTRING(gtd->vars[arg], stringf_alloc("%.*s", cnt2, &exp[cnt+1]));
 
 							while (*exp != ']')
 							{

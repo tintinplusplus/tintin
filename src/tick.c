@@ -41,8 +41,6 @@ DO_COMMAND(do_tick)
 	arg = get_arg_in_braces(arg, &right, TRUE);
 	arg = get_arg_in_braces(arg, &temp,  TRUE);
 
-
-
 	if (*temp == 0)
 	{
 		rank = string_alloc("60");
@@ -52,7 +50,7 @@ DO_COMMAND(do_tick)
 		get_number_string(ses, temp, &rank);
 	}
 
-	if (!*left)
+	if (*left == 0)
 	{
 		show_list(ses, root, LIST_TICKER);
 	}
@@ -105,8 +103,6 @@ DO_COMMAND(do_delay)
 	}
 	else
 	{
-		time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));
-
 		if (*arg3 == 0)
 		{
 			time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));

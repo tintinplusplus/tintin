@@ -8,8 +8,6 @@ GENERAL STUFF:
 
 - events for text and input and prompt lines
 
-- look into packet defragmentation for chat
-
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:
@@ -40,6 +38,8 @@ MAPPING STUFF:
 - Buffer safe strings (partial implementation finished)
 
 - fix up ipv6 support in chat.c
+
+- look into packet defragmentation for chat
 
 -------------------------------------------------------------------------------
 

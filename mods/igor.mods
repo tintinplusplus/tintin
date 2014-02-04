@@ -879,3 +879,21 @@ input.c        Macros no longer trigger with config convert meta enabled.
 net.c          Fixed prompt handling issue for triggers in split mode.
 
 tinexp.c       Added the regexp command to use regexp string comparisons.
+
+
+November 2007  1.97.8
+
+
+input.c        Fixed some chinese character related issues.
+
+parse.c        Fixed some chinese character related issues.
+
+tinexp.c       Added the option to use %00 to %99
+
+tinexp.c       Must now escape using %% rather than %%90
+
+path.c         Added #path run <delay> option.
+
+highlights.c   #highlight now colors all matches on a line.
+
+tinexp.c       Functions now only use %0 to %99 rather than &*

@@ -786,7 +786,7 @@ struct help_type help_table[] =
 	},
 	{
 		"PATH",
-		"<178>Command<078>: #path <178>{<078>del|end|ins|load|map|new|save|walk<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<078>: #path <178>{<078>del|end|ins|load|map|new|run|save|walk<178>}<078> <178>{<078>argument<178>}<078>\n"
 		"\n"
 		"         #path del:  Will delete the last move of the path.\n"
 		"         #path end:  Movement commands are no longer added to the path.\n"
@@ -794,6 +794,8 @@ struct help_type help_table[] =
 		"         #path load: Load the given alias as the new path.\n"
 		"         #path map:  Display the so far created path.\n"
 		"         #path new:  Movement commands will be added to the path.\n"
+		"         #path run:  Enter all the steps of the current path, with\n"
+		"                     an optional given delay.\n"
 		"         #path save: Save the created path to an alias. You must specify whether\n"
 		"                     you want to save the path forward or backward.\n"
 		"         #path walk: Take one step forward of the current path. You can walk\n"

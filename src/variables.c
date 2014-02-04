@@ -384,6 +384,13 @@ void wrapstring(struct session *ses, char *str)
 	strcpy(str, buf);
 }
 
+int stringlength(struct session *ses, char *str)
+{
+     substitute(ses, str, &str, SUB_VAR|SUB_FUN|SUB_COL);
+
+	return strip_vt102_strlen(str);
+}
+
 DO_COMMAND(do_format)
 {
 	char *destvar, *format, *argument, arglist[20][BUFFER_SIZE], *ptf, *tmp;
@@ -516,7 +523,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'L':
-						sprintf(arglist[i], "%d", (int) strlen(arglist[i]));
+						sprintf(arglist[i], "%d", stringlength(ses, arglist[i]));
 						break;
 
 					case 'M':

@@ -279,7 +279,11 @@ void init_tintin(void)
 	gtd->mud_output_max = 64;
 	gtd->mud_output_buf = calloc(1, gtd->mud_output_max);
 
-	gtd->cmds[9]        = strdup("");
+	for (cnt = 0 ; cnt < 99 ; cnt++)
+	{
+		gtd->vars[cnt] = strdup("");
+		gtd->cmds[cnt] = strdup("");
+	}
 
 	for (ref = 0 ; ref < 26 ; ref++)
 	{

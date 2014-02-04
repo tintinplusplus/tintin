@@ -190,17 +190,28 @@ void read_line(char *line)
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT) && gtd->input_len != gtd->input_cur)
 				{
 					gtd->input_buf[gtd->input_cur] = gtd->macro_buf[cnt];
+
 					gtd->input_cur++;
 					gtd->input_pos++;
+
 					input_printf("%c", gtd->macro_buf[cnt]);
 				}
 				else
 				{
 					ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
+
 					gtd->input_len++;
 					gtd->input_cur++;
 					gtd->input_pos++;
-					input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+
+					if (gtd->input_len != gtd->input_cur)
+					{
+						input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+					}
+					else
+					{
+						input_printf("%c", gtd->macro_buf[cnt]);
+					}
 				}
 
 				gtd->macro_buf[0] = 0;
@@ -287,8 +298,14 @@ void read_key(char *line)
 			default:
 				if (gtd->macro_buf[cnt] == gtd->tintin_char && gtd->input_buf[0] == 0)
 				{
-					printf("\033[1@%c", gtd->macro_buf[cnt]);
-
+					if (gtd->input_len != gtd->input_cur)
+					{
+						printf("\033[1@%c", gtd->macro_buf[cnt]);
+					}
+					else
+					{
+						printf("%c", gtd->macro_buf[cnt]);
+					}
 					gtd->input_buf[0] = gtd->tintin_char;
 					gtd->input_buf[1] = 0;
 					gtd->macro_buf[0] = 0;

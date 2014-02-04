@@ -1773,7 +1773,7 @@ void search_path(short room, short size)
 
 void shortest_path(struct session *ses, int walk, char *left, char *right)
 {
-	char time[BUFFER_SIZE], delay[BUFFER_SIZE];
+	char time[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct exit_data *exit;
 	int room, vnum, wait;
 
@@ -1873,13 +1873,12 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				sprintf(time, "%lld", utime());
+				sprintf(time, "%lld", utime() + wait);
+				sprintf(name, "%lld", gtd->time);
 
-				wait += atoi(right);
+				wait += (long long) (get_number(ses, left) * 1000000LL);
 
-				sprintf(delay, "%d", wait);
-
-				updatenode_list(ses, time, ses->list[LIST_PATH]->f_node->left, delay, LIST_DELAY);
+				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}
@@ -1978,7 +1977,7 @@ void search_coord(int vnum, short x, short y, short z)
 
 void explore_path(struct session *ses, int walk, char *left, char *right)
 {
-	char time[BUFFER_SIZE], delay[BUFFER_SIZE];
+	char time[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct exit_data *exit;
 	int room, vnum, wait;
 
@@ -2030,13 +2029,12 @@ void explore_path(struct session *ses, int walk, char *left, char *right)
 
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				sprintf(time, "%lld", utime());
+				sprintf(time, "%lld", utime() + wait);
+				sprintf(name, "%lld", gtd->time);
 
-				wait += atoi(right);
+				wait += (long long) (get_number(ses, left) * 1000000LL);
 
-				sprintf(delay, "%d", wait);
-
-				updatenode_list(ses, time, ses->list[LIST_PATH]->f_node->left, delay, LIST_DELAY);
+				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}
