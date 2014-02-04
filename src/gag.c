@@ -1,6 +1,6 @@
 /******************************************************************************
 *   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   Copyright (C) 2007 (See CREDITS file)                                     *
 *                                                                             *
 *   This program is protected under the GNU GPL (See COPYING)                 *
 *                                                                             *
@@ -17,114 +17,77 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                         coded by Peter Unold 1992                           *
-*                     recoded by Igor van den Hoven 2004                      *
+*                       coded by Igor van den Hoven 2007                      *
 ******************************************************************************/
 
 
 #include "tintin.h"
 
-
-DO_COMMAND(do_tick)
+DO_COMMAND(do_gag)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 	struct listroot *root;
 
-	root = ses->list[LIST_TICKER];
+	root = ses->list[LIST_GAG];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, left, TRUE);
 
-	arg = get_arg_in_braces(arg, right, TRUE);
-
-	arg = get_arg_in_braces(arg, temp,  TRUE);
-	get_number_string(ses, temp, pr);
-
-	if (!*pr)
+	if (*left == 0)
 	{
-		sprintf(pr, "%s", "60"); 
-	}
-
-	if (!*left)
-	{
-		show_list(ses, root, LIST_TICKER);
-	}
-	else if (*left && *right == 0)
-	{
-		if (show_node_with_wild(ses, left, LIST_TICKER) == FALSE) 
-		{
-			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}", left);
-		}
+		show_list(ses, root, LIST_GAG);
 	}
 	else
 	{
-		updatenode_list(ses, left, right, pr, LIST_TICKER);
+		updatenode_list(ses, left, "", "", LIST_GAG);
 
-		show_message(ses, LIST_TICKER, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", left, right, pr);
+		show_message(ses, LIST_GAG, "#OK. {%s} IS NOW GAGGED.", left);
 	}
 	return ses;
 }
 
 
-DO_COMMAND(do_untick)
+DO_COMMAND(do_ungag)
 {
 	char left[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 	int found = FALSE;
 
-	root = ses->list[LIST_TICKER];
+	root = ses->list[LIST_GAG];
 
 	arg = get_arg_in_braces(arg, left, 1);
 
-	while ((node = search_node_with_wild(root, left))) 
+	while ((node = search_node_with_wild(root, left)))
 	{
-		show_message(ses, LIST_TICKER, "#OK {%s} IS NO LONGER A TICKER.", node->left);
+		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NO LONGER GAGGED.", node->left);
 
-		deletenode_list(ses, node, LIST_TICKER);
+		deletenode_list(ses, node, LIST_SUBSTITUTE);
 
 		found = TRUE;
 	}
-
 	if (found == FALSE)
 	{
-		show_message(ses, LIST_TICKER, "#NO MATCH(ES) FOUND FOR {%s}", left);
+		show_message(ses, LIST_SUBSTITUTE, "#UNGAG: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
 }
 
-
-DO_COMMAND(do_delay)
+void check_all_gags(struct session *ses, char *original, char *line)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-	struct listroot *root;
+	struct listnode *node;
 
-	root = ses->list[LIST_DELAY];
-
-	arg = get_arg_in_braces(arg, temp,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-
-	if (!*right)
+	for (node = ses->list[LIST_GAG]->f_node ; node ; node = node->next)
 	{
-		show_list(ses, root, LIST_DELAY);
-	}
-	else if (*left && *right == 0)
-	{
-		tintin_puts2("#SYNTAX: #DELAY {seconds} {command}", ses);
-	}
-	else
-	{
-		get_number_string(ses, temp, left);
-		sprintf(temp, "%lld", utime());
+		if (check_one_action(line, original, node->left, ses))
+		{
+			SET_BIT(ses->flags, SES_FLAG_GAG);
 
-		updatenode_list(ses, temp, right, left, LIST_DELAY);
-
-		show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", left, right);
+			return;
+		}
 	}
-	return ses;
 }
-

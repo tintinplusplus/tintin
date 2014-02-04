@@ -41,7 +41,7 @@ DO_COMMAND(do_read)
 	FILE *fp;
 	struct stat filedata;
 	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
-	int lvl, cnt, com, lnc, fix;
+	int lvl, cnt, com, lnc, fix, ok;
 	int counter[LIST_MAX];
 
 	get_arg_in_braces(arg, filename, TRUE);
@@ -89,7 +89,7 @@ DO_COMMAND(do_read)
 	pti = bufi;
 	pto = bufo;
 
-	lvl = com = lnc = fix = 0;
+	lvl = com = lnc = fix = ok = 0;
 
 	while (*pti)
 	{
@@ -137,17 +137,33 @@ DO_COMMAND(do_read)
 				case '\n':
 					lnc++;
 
-					if (fix == 0 && pti[1] == gtd->tintin_char && lvl)
+					if (fix == 0 && pti[1] == gtd->tintin_char)
 					{
-						fix = lnc;
-					}
+						if (lvl == 0)
+						{
+							ok = lnc + 1;
+						}
+						else
+						{
+							fix = lnc;
+						}
 
+					}
 					if (lvl)
 					{
 						pti++;
 
 						while (isspace(*pti))
 						{
+							if (*pti == '\n')
+							{
+								lnc++;
+
+								if (fix == 0 && pti[1] == gtd->tintin_char)
+								{
+									fix = lnc;
+								}
+							}
 							pti++;
 						}
 					}
@@ -227,7 +243,7 @@ DO_COMMAND(do_read)
 
 	if (lvl)
 	{
-		tintin_printf(ses, "#ERROR: #READ {%s} - MISSING %d '%c' ON OR BEFORE LINE %d.", filename, abs(lvl), lvl < 0 ? DEFAULT_OPEN : DEFAULT_CLOSE, fix == 0 ? lnc + 1 : fix);
+		tintin_printf(ses, "#ERROR: #READ {%s} - MISSING %d '%c' BETWEEN LINE %d AND %d.", filename, abs(lvl), lvl < 0 ? DEFAULT_OPEN : DEFAULT_CLOSE, fix == 0 ? 1 : ok, fix == 0 ? lnc + 1 : fix);
 
 		fclose(fp);
 

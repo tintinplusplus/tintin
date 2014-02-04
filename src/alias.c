@@ -161,7 +161,7 @@ int alias_regexp(const char *exp, const char *str)
 }
 
 
-int check_all_aliases(char *original, char *line, struct session *ses)
+int check_all_aliases(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 	struct listroot *root;

@@ -106,7 +106,7 @@ struct session *parse_input(struct session *ses, const char *input)
 				cat_sprintf(command, " %s", arg);
 			}
 
-			if (check_all_aliases(command, arg, ses))
+			if (check_all_aliases(ses, command, arg))
 			{
 				DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND); /* get rid of spam for aliasses */
 
@@ -543,7 +543,7 @@ void do_one_line(char *line, struct session *ses)
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_actions(line, strip, ses);
+		check_all_actions(ses, line, strip);
 	}
 
 	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
@@ -554,14 +554,19 @@ void do_one_line(char *line, struct session *ses)
 		}
 	}
 
+	if (!HAS_BIT(ses->list[LIST_GAG]->flags, LIST_FLAG_IGNORE))
+	{
+		check_all_gags(ses, line, strip);
+	}
+
 	if (!HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_substitutions(line, strip, ses);
+		check_all_substitutions(ses, line, strip);
 	}
 
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_highlights(line, strip, ses);
+		check_all_highlights(ses, line, strip);
 	}
 
 	pop_call();

@@ -331,9 +331,9 @@ void cleanup_session(struct session *ses)
 		gtd->ses = newactive_session();
 	}
 
-	tintin_printf(ses, "");
+	tintin_printf(gtd->ses, "");
 
-	tintin_printf(ses, "#SESSION '%s' DIED.", ses->name);
+	tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
 
 	do_killall(ses, NULL);
 

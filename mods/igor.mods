@@ -1201,3 +1201,21 @@ mapper.c       Can now use case insenstive room finding with wildcards in
 tintin.h       Placed lists in alphabetical order.
 
 event.c        Added a basic event system, check #event
+
+January 2007   1.96.7
+
+mapper.c       Fixed fast forwarding shortest path searches through void rooms.
+
+mapper.c       Fixed #map link not deleting old links.
+
+mapper.c       Fixed drawing of void rooms.
+
+help.c         Added a cleaned up version by Simon.
+
+cursor.c       History next and prev now put the cursor at the end of the line.
+
+gag.c          Seperated gags from substitutions.
+
+files.c        Inproved accuracy of #read's error report.
+
+path.c         Merged all path commands into one generic path command.

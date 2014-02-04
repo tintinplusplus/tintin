@@ -28,34 +28,6 @@
 
 #include "tintin.h"
 
-DO_COMMAND(do_gag)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-
-	get_arg_in_braces(arg, left, TRUE);
-
-	if (*left)
-	{
-		sprintf(right, "{%s} {.}", left);
-	}
-	else
-	{
-		strcpy(right, "");
-	}
-	return do_substitute(ses, right);
-}
-
-DO_COMMAND(do_ungag)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-
-	get_arg_in_braces(arg, left, TRUE);
-
-	sprintf(right, "{%s}", left);
-
-	return do_unsubstitute(ses, right);
-}
-
 DO_COMMAND(do_substitute)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
@@ -119,9 +91,7 @@ DO_COMMAND(do_unsubstitute)
 	return ses;
 }
 
-
-
-void check_all_substitutions(char *original, char *line, struct session *ses)
+void check_all_substitutions(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 

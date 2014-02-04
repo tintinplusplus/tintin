@@ -109,7 +109,7 @@ DO_COMMAND(do_unhighlight)
 }
 
 
-void check_all_highlights(char *original, char *line, struct session *ses)
+void check_all_highlights(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 	char *pt1, *pt2, *pt3;

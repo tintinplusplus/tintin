@@ -504,6 +504,7 @@ DO_MAP(map_link)
 {
 	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listnode *node;
+	struct exit_data *exit;
 	int room;
 
 	arg = get_arg_in_braces(arg, left, FALSE);
@@ -515,6 +516,13 @@ DO_MAP(map_link)
 	{
 		tintin_printf2(ses, "#MAP: Couldn't find room {%s}", right);
 		return;
+	}
+
+	exit = find_exit(ses, ses->map->in_room, left);
+
+	if (exit)
+	{
+		delete_exit(ses, ses->map->in_room, exit);
 	}
 
 	sprintf(temp, "{%d} {%s} {%s}", room, left, left);
@@ -1274,7 +1282,7 @@ void create_map_grid(struct session *ses, short room, short x, short y)
 
 void show_map(struct session *ses, char *argument)
 {
-	char buf[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
 	int x, y, line, size;
 
 	push_call("show_map(%p,%p)",ses,argument);
@@ -1291,10 +1299,7 @@ void show_map(struct session *ses, char *argument)
 		map_grid_y = get_scroll_size(ses) - 1;
 		map_grid_x = ses->cols - 1;
 	}
-/*
-	map_grid_y = URANGE(12, size * 2, map_grid_y);
-	map_grid_x = URANGE(28, size * 4, map_grid_x);
-*/
+
 	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
@@ -1303,15 +1308,16 @@ void show_map(struct session *ses, char *argument)
 		{
 			for (line = 1 ; line <= 3 ; line++)
 			{
-				strcpy(buf, "{");
+				strcpy(buf, "");
 
 				for (x = 0 ; x <= map_grid_x ; x++)
 				{
 					strcat(buf, draw_room(ses, map_grid[x][y], line));
 				}
-				strcat(buf, "}");
 
-				do_showme(ses, buf);
+				substitute(ses, buf, out, SUB_COL);
+
+				tintin_printf2(ses, "%s", out);
 			}
 		}
 		pop_call();
@@ -1320,15 +1326,16 @@ void show_map(struct session *ses, char *argument)
 		
 	for (y = map_grid_y ; y >= 0 ; y--)
 	{
-		strcpy(buf, "{");
+		strcpy(buf, "");
 
 		for (x = 0 ; x <= map_grid_x ; x++)
 		{
 			strcat(buf, draw_room(ses, map_grid[x][y], 0));
 		}
-		strcat(buf, "}");
 
-		do_showme(ses, buf);
+		substitute(ses, buf, out, SUB_COL);
+
+		tintin_printf2(ses, "%s", out);
 	}
 
 	pop_call();
@@ -1476,7 +1483,24 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 				{
 					if (HAS_BIT(room->flags, ROOM_FLAG_VOID))
 					{
-						cat_sprintf(buf, " * ");
+						switch (exits)
+						{
+							case MAP_EXIT_N|MAP_EXIT_S:
+								cat_sprintf(buf, " | ");
+								break;
+							case MAP_EXIT_E|MAP_EXIT_W:
+								cat_sprintf(buf, "---");
+								break;
+							case MAP_EXIT_NE|MAP_EXIT_SW:
+								cat_sprintf(buf, " / ");
+								break;
+							case MAP_EXIT_NW|MAP_EXIT_SE:
+								cat_sprintf(buf, " \\ ");
+								break;
+							default:
+								cat_sprintf(buf, " * ");
+								break;
+						}
 					}
 					else
 					{
@@ -1590,11 +1614,57 @@ struct exit_data *find_exit(struct session *ses, int room, char *arg)
 	Fast, short distance node weighted algorithm - Igor
 */
 
+void search_void(short from, short room)
+{
+	if (map_search_ses->map->room_list[room]->f_exit == NULL)
+	{
+		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
+		map_search_exit_best = NULL;
+
+		return;
+	}
+
+	if (map_search_ses->map->room_list[room]->f_exit == map_search_ses->map->room_list[room]->l_exit)
+	{
+		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
+		map_search_exit_best = NULL;
+
+		return;
+	}
+
+	if (map_search_ses->map->room_list[room]->f_exit->next != map_search_ses->map->room_list[room]->l_exit)
+	{
+		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
+		map_search_exit_best = NULL;
+
+		return;
+	}
+
+	if (map_search_ses->map->room_list[room]->f_exit->vnum != from)
+	{
+		map_search_exit_best = map_search_ses->map->room_list[room]->f_exit;
+	}
+	else
+	{
+		map_search_exit_best = map_search_ses->map->room_list[room]->l_exit;
+	}
+
+	if (HAS_BIT(map_search_ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
+	{
+		search_void(room, map_search_exit_best->vnum);
+	}
+}
+
 void search_path(short room, short size)
 {
 	struct exit_data *exit;
 
 	map_search_ses->map->room_list[room]->size = size;
+
+	if (size >= map_search_max_size)
+	{
+		return;
+	}
 
 	if (room == map_search_tar_room)
 	{
@@ -1603,19 +1673,24 @@ void search_path(short room, short size)
 	}
 	else
 	{
-		if (!HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID))
-		{
-			size++;
-		}
-
 		if (HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_AVOID))
 		{
 			return;
 		}
 
+		if (!HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID))
+		{
+			size++;
+		}
+
 		for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
 		{
-			if (map_search_ses->map->room_list[exit->vnum] && map_search_ses->map->room_list[exit->vnum]->size > size)
+			if (map_search_ses->map->room_list[exit->vnum] == NULL)
+			{
+				continue;
+			}
+
+			if (map_search_ses->map->room_list[exit->vnum]->size > size)
 			{
 				search_path(exit->vnum, size);
 			}
@@ -1674,7 +1749,7 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 		if (ses->map->room_list[exit->vnum])
 		{
 			map_search_exit_node = exit;
-			search_path(exit->vnum, 0);
+			search_path(exit->vnum, 1);
 		}
 	}
 
@@ -1684,17 +1759,8 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 		return;
 	}
 
-	addnode_list(ses->list[LIST_PATH], map_search_exit_best->cmd, "", "0");
-
 	while (TRUE)
 	{
-		if (map_search_exit_best->vnum == map_search_tar_room)
-		{
-			break;
-		}
-
-		room = map_search_exit_best->vnum;
-
 		ses->map->room_list[room]->size = 0;
 
 		for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
@@ -1702,13 +1768,28 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 			if (ses->map->room_list[exit->vnum])
 			{
 				map_search_exit_node = exit;
-				search_path(exit->vnum, 0);
+				search_path(exit->vnum, 1);
 			}
 		}
-		if (!HAS_BIT(ses->map->room_list[room]->flags, ROOM_FLAG_VOID))
+
+		if (HAS_BIT(ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
 		{
-			addnode_list(ses->list[LIST_PATH], map_search_exit_best->cmd, "", "0");
+			search_void(room, map_search_exit_best->vnum);
 		}
+
+		if (map_search_exit_best == NULL)
+		{
+			return;
+		}
+
+		addnode_list(ses->list[LIST_PATH], map_search_exit_best->cmd, "", "0");
+
+		if (map_search_exit_best->vnum == map_search_tar_room)
+		{
+			break;
+		}
+
+		room = map_search_exit_best->vnum;
 	}
 
 	if (walk)

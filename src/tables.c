@@ -61,14 +61,12 @@ const struct command_type command_table[] =
 	{	"info",              do_info,              CMD_FLAG_NONE    },
 	{	"killall",           do_killall,           CMD_FLAG_NONE    },
 	{	"list",              do_list,              CMD_FLAG_SUB     },
-	{	"loadpath",          do_loadpath,          CMD_FLAG_SUB     },
 	{	"log",               do_log,               CMD_FLAG_SUB     },
 	{	"logline",           do_logline,           CMD_FLAG_SUB     },
 	{	"loop",              do_loop,              CMD_FLAG_NONE    },
 	{	"macro",             do_macro,             CMD_FLAG_NONE    },
 	{	"map",               do_map,               CMD_FLAG_SUB     },
 	{	"math",              do_math,              CMD_FLAG_SUB     },
-	{	"mark",              do_mark,              CMD_FLAG_NONE    },
 	{	"message",           do_message,           CMD_FLAG_SUB     },
 	{	"nop",               do_nop,               CMD_FLAG_NONE    },
 	{	"parse",             do_parse,             CMD_FLAG_NONE    },
@@ -78,7 +76,6 @@ const struct command_type command_table[] =
 	{	"read",              do_read,              CMD_FLAG_SUB     },
 	{	"replacestring",     do_replacestring,     CMD_FLAG_SUB     },
 	{	"return",            do_return,            CMD_FLAG_NONE    },
-	{	"savepath",          do_savepath,          CMD_FLAG_SUB     },
 	{	"scan",              do_scan,              CMD_FLAG_SUB     },
 	{	"send",              do_send,              CMD_FLAG_NONE    },
 	{	"session",           do_session,           CMD_FLAG_SUB     },
@@ -97,7 +94,7 @@ const struct command_type command_table[] =
 	{	"ungag",             do_ungag,             CMD_FLAG_NONE    },
 	{	"unhighlight",       do_unhighlight,       CMD_FLAG_NONE    },
 	{	"unmacro",           do_unmacro,           CMD_FLAG_NONE    },
-	{	"unpath",            do_unpath,            CMD_FLAG_NONE    },
+	{	"unpathdir",         do_unpathdir,         CMD_FLAG_NONE    },
 	{	"unprompt",          do_unprompt,          CMD_FLAG_NONE    },
 	{	"unsplit",           do_unsplit,           CMD_FLAG_NONE    },
 	{	"unsubstitute",      do_unsubstitute,      CMD_FLAG_NONE    },
@@ -105,7 +102,6 @@ const struct command_type command_table[] =
 	{	"unticker",          do_untick,            CMD_FLAG_NONE    },
 	{	"unvariable",        do_unvariable,        CMD_FLAG_NONE    },
 	{	"variable",          do_variable,          CMD_FLAG_NONE    },
-	{	"walk",              do_walk,              CMD_FLAG_NONE    },
 	{	"write",             do_write,             CMD_FLAG_SUB     },
 	{	"zap",               do_zap,               CMD_FLAG_NONE    },
 	{	"",                  NULL,                 CMD_FLAG_NONE    }
@@ -121,6 +117,7 @@ const struct list_type list_table[LIST_MAX] =
 	{    "DELAY",             "DELAYS",             PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
 	{    "EVENT",             "EVENTS",             ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "GAG",               "GAGS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
 	{    "MACRO",             "MACROS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
@@ -129,7 +126,7 @@ const struct list_type list_table[LIST_MAX] =
 	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
 	{    "PATHDIR",           "PATHDIRS",           PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "TICKER",            "TICKERS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT }
@@ -274,40 +271,41 @@ const struct config_type config_table[] =
 
 const struct color_type color_table[] =
 {
-	{	"reset",          "0", "<088>" },
-	{	"light",          "1", "<188>" },
-	{	"bold",           "1", "<188>" },
+	{    "reset",          "0", "<088>" },
+	{    "light",          "1", "<188>" },
+	{    "bold",           "1", "<188>" },
 	{    "faint",          "2", "<288>" },
-	{	"underscore",     "4", "<488>" },
-	{	"blink",          "5", "<588>" },
-	{	"reverse",        "7", "<788>" },
+	{    "underscore",     "4", "<488>" },
+	{    "blink",          "5", "<588>" },
+	{    "reverse",        "7", "<788>" },
 	{    "dim",           "22", "<288>" },
-	{	"black",         "30", "<808>" },
-	{	"red",           "31", "<818>" },
+	{    "black",         "30", "<808>" },
+	{    "red",           "31", "<818>" },
 	{    "green",         "32", "<828>" },
 	{    "yellow",        "33", "<838>" },
 	{    "blue",          "34", "<848>" },
-	{	"magenta",       "35", "<858>" },
+	{    "magenta",       "35", "<858>" },
 	{    "cyan",          "36", "<868>" },
 	{    "white",         "37", "<878>" },
 	{    "b black",       "40", "<880>" },
 	{    "b red",         "41", "<881>" },
-	{	"b green",       "42", "<882>" },
-	{	"b yellow",      "43", "<883>" },
-	{	"b blue",        "44", "<884>" },
-	{	"b magenta",     "45", "<885>" },
-	{	"b cyan",        "46", "<886>" },
-	{	"b white",       "47", "<887>" },
-	{	"",              ""  , "<888>" }
+	{    "b green",       "42", "<882>" },
+	{    "b yellow",      "43", "<883>" },
+	{    "b blue",        "44", "<884>" },
+	{    "b magenta",     "45", "<885>" },
+	{    "b cyan",        "46", "<886>" },
+	{    "b white",       "47", "<887>" },
+	{    "",              ""  , "<888>" }
 };
 
-const struct class_type class_table[CLASS_MAX] =
+const struct class_type class_table[] =
 {
 	{    "OPEN",                       class_open             },
 	{	"CLOSE",                      class_close            },
 	{    "READ",                       class_read             },
 	{    "WRITE",                      class_write            },
-	{    "KILL",                       class_kill             }
+	{    "KILL",                       class_kill             },
+	{    "",                           NULL                   },
 };
 
 const struct chat_type chat_table[] =
@@ -621,4 +619,17 @@ const struct event_type event_table[] =
 	{    "MAP ENTER ROOM",               "Triggers when entering a map room."    },
 	{    "SESSION CONNECTED",            "Triggers when a new session connects." },
 	{    "",                             ""                                      }
+};
+
+const struct path_type path_table[] =
+{
+	{    "DEL",                        path_del               },
+	{    "END",                        path_end               },
+	{    "INS",                        path_ins               },
+	{    "LOAD",                       path_load              },
+	{    "MAP",                        path_map               },
+	{    "NEW",                        path_new               },
+	{    "SAVE",                       path_save              },
+	{    "WALK",                       path_walk              },
+	{    "",                           NULL                   }
 };

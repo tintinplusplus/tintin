@@ -92,7 +92,7 @@ DO_COMMAND(do_unaction)
 }
 
 
-void check_all_actions(const char *original, char *line, struct session *ses)
+void check_all_actions(struct session *ses, const char *original, char *line)
 {
 	struct listnode *node;
 	struct listroot *root;

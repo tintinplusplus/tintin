@@ -12,8 +12,9 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
-#CONFIG           {VERBOSE}               {ON}
+#CONFIG           {VERBOSE}               {OFF}
 #alias {oops} {#showme <118>Problem with check %1}
+#unvar bla
 #class bla open
 #var bla 1
 #class bla close

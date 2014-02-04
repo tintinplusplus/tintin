@@ -312,7 +312,7 @@ void cursor_history_next(void)
 	}
 
 	gtd->input_len = strlen(gtd->input_buf);
-	gtd->input_cur = 0;
+	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = 0;
 
 	cursor_redraw_line();
@@ -371,7 +371,7 @@ void cursor_history_prev(void)
 	strcpy(gtd->input_buf, gtd->input_his->left);
 
 	gtd->input_len = strlen(gtd->input_his->left);
-	gtd->input_cur = 0;
+	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = 0;
 
 	cursor_redraw_line();

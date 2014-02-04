@@ -61,7 +61,7 @@ OFILES = action.o alias.o files.o help.o highlight.o strhash.o \
          history.o tab.o vt102.o terminal.o session.o function.o \
          text.o substitute.o tick.o math.o variables.o debug.o \
          tinexp.o mapper.o tables.o buffer.o prompt.o telopt.o \
-         class.o  split.o utils.o   macro.o  config.o \
+         class.o  split.o utils.o   macro.o  config.o gag.o \
          chat.o array.o input.o cursor.o event.o
 
 
@@ -81,7 +81,7 @@ Makefile: Makefile.in
 
 
 install: tt++
-	cp tt++* /usr/bin
+	cp tt++ /usr/bin
 
 
 # Autocompile all .c files into .o files using this rule:
@@ -90,8 +90,8 @@ install: tt++
 
 
 clean:
-	rm -f *.o *~ ../*~ ../mods/*~ Makefile tt++ tt++.exe core config.h config.cache config.status config.log
+	rm -f *.o *~ ../*~ ../mods/*~ tt++*
 
 
 distclean: clean
-	rm -f Makefile config.h config.status config.log config.cache
+	rm -f *.o *~ ../*~ ../mods/*~ tt++* Makefile config.h config.status config.log config.cache

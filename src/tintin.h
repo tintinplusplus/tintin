@@ -90,6 +90,7 @@ typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *COMMAND (struct session *ses, const char *arg);
 typedef void            MAP     (struct session *ses, const char *arg);
 typedef void            CURSOR  (void);
+typedef void            PATH    (struct session *ses, const char *arg);
 
 /*
 	A bunch of constants
@@ -113,7 +114,7 @@ typedef void            CURSOR  (void);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.96.6"
+#define VERSION_NUM               "1.96.7"
 
 #define ESCAPE                          27
 
@@ -153,21 +154,20 @@ typedef void            CURSOR  (void);
 #define LIST_DELAY                       4
 #define LIST_EVENT                       5
 #define LIST_FUNCTION                    6
-#define LIST_HIGHLIGHT                   7
-#define LIST_HISTORY                     8
-#define LIST_MACRO                       9
-#define LIST_MAP                        10
-#define LIST_MATH                       11
-#define LIST_PATH                       12
-#define LIST_PATHDIR                    13
-#define LIST_PROMPT                     14
-#define LIST_SUBSTITUTE                 15
-#define LIST_TAB                        16
-#define LIST_TICKER                     17
-#define LIST_VARIABLE                   18
-#define LIST_MAX                        19
-
-#define CLASS_MAX                        5
+#define LIST_GAG                         7
+#define LIST_HIGHLIGHT                   8
+#define LIST_HISTORY                     9
+#define LIST_MACRO                      10
+#define LIST_MAP                        11
+#define LIST_MATH                       12
+#define LIST_PATH                       13
+#define LIST_PATHDIR                    14
+#define LIST_PROMPT                     15
+#define LIST_SUBSTITUTE                 16
+#define LIST_TAB                        17
+#define LIST_TICKER                     18
+#define LIST_VARIABLE                   19
+#define LIST_MAX                        20
 
 /*
 	Various flags
@@ -432,7 +432,7 @@ typedef void            CURSOR  (void);
 #define DO_COMMAND(command) struct session  *command (struct session *ses, const char *arg)
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
 #define DO_MAP(map) void map (struct session *ses, const char *arg)
-
+#define DO_PATH(path) void path (struct session *ses, const char *arg)
 
 
 
@@ -645,15 +645,21 @@ struct map_type
 
 struct cursor_type
 {
-	char                  *name;
-	char                  *desc;
-	char                  *code;
-	CURSOR                *fun;
+	char                  * name;
+	char                  * desc;
+	char                  * code;
+	CURSOR                * fun;
 };
 
 struct timer_type
 {
-	char                  *name;
+	char                  * name;
+};
+
+struct path_type
+{
+	char                  * name;
+	PATH                  * fun;
 };
 
 struct str_hash_data
@@ -711,7 +717,7 @@ struct exit_data
 #ifndef __CURSOR_H__
 #define __CURSOR_H__
 
-DO_COMMAND(do_cursor);
+extern DO_COMMAND(do_cursor);
 
 extern void cursor_backspace(void);
 extern void cursor_check_line(void);
@@ -953,8 +959,8 @@ extern DO_COMMAND(do_unsplit);
 extern void init_split(struct session *ses, int top, int bot);
 extern void clean_screen(struct session *ses);
 extern void dirty_screen(struct session *ses);
-DO_COMMAND(do_prompt);
-DO_COMMAND(do_unprompt);
+extern DO_COMMAND(do_prompt);
+extern DO_COMMAND(do_unprompt);
 extern void check_all_prompts(struct session *ses, char *original, char *line);
 extern void do_one_prompt(struct session *ses, char *prompt, int row);
 
@@ -1016,7 +1022,7 @@ extern unsigned short str_hash_lines(char *str);
 extern unsigned short str_hash_grep(char *str, int write);
 extern void reset_hash_table(void);
 
-DO_COMMAND(do_hash);
+extern DO_COMMAND(do_hash);
 
 #endif
 
@@ -1060,7 +1066,7 @@ extern void check_all_events(struct session *ses, char *line);
 extern struct session *do_action(struct session *ses, const char *arg);
 extern struct session *do_unaction(struct session *ses, const char *arg);
 
-extern void check_all_actions(const char *original, char *line, struct session *ses);
+extern void check_all_actions(struct session *ses, const char *original, char *line);
 
 #endif
 
@@ -1069,16 +1075,7 @@ extern void check_all_actions(const char *original, char *line, struct session *
 
 extern struct session *do_alias(struct session *ses, const char *arg);
 extern struct session *do_unalias(struct session *ses, const char *arg);
-extern int check_all_aliases(char *original, char *line, struct session *ses);
-
-#endif
-
-#ifndef __ANTISUB_H__
-#define __ANTISUB_H__
-
-extern DO_COMMAND(do_antisubstitute);
-extern DO_COMMAND(do_unantisubstitute);
-extern int check_all_antisubstitutions(const char *original, char *line, struct session *ses);
+extern int check_all_aliases(struct session *ses, char *original, char *line);
 
 #endif
 
@@ -1090,8 +1087,8 @@ extern DO_COMMAND(do_read);
 extern DO_COMMAND(do_write);
 extern DO_COMMAND(do_session);
 extern void prepare_for_write(int mode, struct listnode *node, char *result);
-DO_COMMAND(do_textin);
-DO_COMMAND(do_scan);
+extern DO_COMMAND(do_textin);
+extern DO_COMMAND(do_scan);
 
 #endif 
 
@@ -1101,9 +1098,17 @@ DO_COMMAND(do_scan);
 extern DO_COMMAND(do_function);
 extern DO_COMMAND(do_unfunction);
 
-
 #endif
 
+
+#ifndef __GAG_H__
+#define __GAG_H__
+
+extern DO_COMMAND(do_gag);
+extern DO_COMMAND(do_ungag);
+extern void check_all_gags(struct session *ses, char *original, char *line);
+
+#endif
 
 
 #ifndef __HELP_H__
@@ -1119,7 +1124,7 @@ extern DO_COMMAND(do_help);
 extern DO_COMMAND(do_highlight);
 extern int is_high_arg(const char *s);
 extern DO_COMMAND(do_unhighlight);
-extern void check_all_highlights(char *original, char *line, struct session *ses);
+extern void check_all_highlights(struct session *ses, char *original, char *line);
 extern int get_highlight_codes(struct session *ses, const char *htype, char *result);
 
 #endif
@@ -1276,13 +1281,18 @@ extern void do_one_line(char *line, struct session *ses);
 #ifndef __PATH_H__
 #define __PATH_H__
 
-extern DO_COMMAND(do_mark);
-extern DO_COMMAND(do_savepath);
-extern DO_COMMAND(do_loadpath);
 extern DO_COMMAND(do_path);
-extern DO_COMMAND(do_unpath);
+extern DO_PATH(path_del);
+extern DO_PATH(path_end);
+extern DO_PATH(path_ins);
+extern DO_PATH(path_load);
+extern DO_PATH(path_map);
+extern DO_PATH(path_new);
+extern DO_PATH(path_save);
+extern DO_PATH(path_walk);
+
 extern DO_COMMAND(do_pathdir);
-extern DO_COMMAND(do_walk);
+extern DO_COMMAND(do_unpathdir);
 extern void check_insert_path(const char *command, struct session *ses);
 
 #endif
@@ -1306,7 +1316,7 @@ extern void terminal_update(void);
 #ifndef __HISTORY_H__
 #define __HISTORY_H__
 
-DO_COMMAND(do_history);
+extern DO_COMMAND(do_history);
 
 extern void add_line_history(struct session *ses, char *line);
 extern void search_line_history(struct session *ses, char *line);
@@ -1367,10 +1377,8 @@ extern void cleanup_session(struct session *ses);
 #define __SUBSTITUTE_H__
 
 extern DO_COMMAND(do_substitute);
-extern DO_COMMAND(do_gag);
 extern DO_COMMAND(do_unsubstitute);
-extern DO_COMMAND(do_ungag);
-extern void check_all_substitutions(char *original, char *line, struct session *ses);
+extern void check_all_substitutions(struct session *ses, char *original, char *line);
 
 #endif
 
@@ -1388,6 +1396,7 @@ extern const struct event_type event_table[];
 extern const struct list_type list_table[LIST_MAX];
 extern const struct map_type map_table[];
 extern const struct timer_type timer_table[];
+extern const struct path_type path_table[];
 
 #endif
 

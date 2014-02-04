@@ -64,7 +64,7 @@ DO_COMMAND(do_math)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #MATH {variable} {expression}");
+		tintin_printf2(ses, "#SYNTAX: #MATH {variable} {expression}");
 	}
 	else
 	{
@@ -86,7 +86,7 @@ DO_COMMAND(do_if)
 
 	if (*left == 0 || *true == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #IF {expression} {true} {false}");
+		tintin_printf2(ses, "#SYNTAX: #IF {expression} {true} {false}");
 	}
 	else
 	{
@@ -134,7 +134,7 @@ double mathexp(struct session *ses, const char *str)
 
 	if (mathexp_tokenize(ses, str) == FALSE)
 	{
-		tintin_printf(ses, "#MATH EXP: INVALID INPUT {%s}", str);
+		tintin_printf2(ses, "#MATH EXP: INVALID INPUT {%s}", str);
 
 		return 0;
 	}
@@ -517,7 +517,7 @@ void mathexp_compute(struct listnode *node)
 		case 'd':
 			if (tintoi(node->next->pr) <= 0)
 			{
-				tintin_printf(NULL, "#MATHEXP: INVALID DICE: %s", node->next->pr);
+				tintin_printf2(NULL, "#MATHEXP: INVALID DICE: %s", node->next->pr);
 				value = 0;
 			}
 			else
@@ -531,7 +531,7 @@ void mathexp_compute(struct listnode *node)
 		case '/':
 			if (tintoi(node->next->pr) == 0)
 			{
-				tintin_printf(NULL, "#MATH ERROR: DIVISION ZERO.");
+				tintin_printf2(NULL, "#MATH ERROR: DIVISION ZERO.");
 				value = tintoi(node->prev->pr);
 			}
 			else
@@ -549,7 +549,7 @@ void mathexp_compute(struct listnode *node)
 		case '%':
 			if (tintoi(node->next->pr) == 0)
 			{
-				tintin_printf(NULL, "#MATH ERROR: MODULO ZERO.");
+				tintin_printf2(NULL, "#MATH ERROR: MODULO ZERO.");
 				value = tintoi(node->prev->pr);
 			}
 			else

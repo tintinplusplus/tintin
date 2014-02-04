@@ -1,8 +1,24 @@
 * Stuff that needs to be done
 
+-------------------------------------------------------------------------------
+
+GENERAL STUFF:
+
+Add changable command seperator.
+
+Add insert toggle
+
+Look into prompt handling in #split with #showme and macros.
+
+Add #cursor option to write to the input line.
+
+Add a show_debug message
+
 --------------------------------------------------------------------------------
 
 MAPPING STUFF:
+
+- add a method to easily insert a (void) room.
 
 - a method to double check correct movement.
 
@@ -19,13 +35,9 @@ MAPPING STUFF:
 - a method to find a generic room more precisely by giving exits and other
   identifying information.
 
--------------------------------------------------------------------------------
+- check #map undo integrity.
 
-GENERAL STUFF:
-
-Add insert toggle
-
-Look into prompt handling in #split with #showme and macros.
+- Add info about which room you're in when leaving the map.
 
 -------------------------------------------------------------------------------
 
@@ -34,6 +46,10 @@ Look into prompt handling in #split with #showme and macros.
 - add more events
 
 - Buffer safe strings
+
+- improved #system command
+
+- ipv6
 
 -------------------------------------------------------------------------------
 
@@ -78,21 +94,3 @@ Look into prompt handling in #split with #showme and macros.
   execute it. 
 
 ---
-
-chat.c: In function 'chat_new':
-chat.c:213: warning: pointer targets in passing argument 3 of 'getsockname'
-differ in signedness
-chat.c:215: warning: pointer targets in passing argument 3 of 'accept'
-differ in signedness
-chat.c: In function 'get_chat_commands':
-chat.c:691: warning: pointer targets in assignment differ in signedness
-chat.c:692: warning: pointer targets in assignment differ in signedness
-chat.c:728: warning: pointer targets in assignment differ in signedness
-
-telopt.c: In function 'translate_telopts':
-telopt.c:232: warning: pointer targets in passing argument 1 of 'sprintf'
-differ in signedness
-telopt.c:233: warning: pointer targets in passing argument 1 of 'strlen'
-differ in signedness
-telopt.c:234: warning: pointer targets in passing argument 1 of 'strlen'
-differ in signedness

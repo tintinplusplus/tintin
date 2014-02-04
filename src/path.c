@@ -29,24 +29,106 @@
 #include "tintin.h"
 
 
-DO_COMMAND(do_mark)
+DO_COMMAND(do_path)
+{
+	char left[BUFFER_SIZE];
+	int cnt;
+
+	arg = get_arg_in_braces(arg, left, FALSE);
+
+	if (*left == 0)
+	{
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|WALK|DEL|INS|MAP} {argument}");
+
+
+	}
+	else
+	{
+		for (cnt = 0 ; *path_table[cnt].name ; cnt++)
+		{
+			if (is_abbrev(left, path_table[cnt].name))
+			{
+				break;
+			}
+		}
+
+		if (*path_table[cnt].name == 0)
+		{
+			do_path(ses, "");
+		}
+		else
+		{
+			path_table[cnt].fun(ses, arg);
+		}
+	}
+	return ses;
+}
+
+DO_PATH(path_new)
 {
 	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{
-		tintin_puts2("#YOU ARE NO LONGER MAPPING.", ses);
+		show_message(ses, LIST_PATH, "#PATH: YOU ARE ALREADY MAPPING A PATH.");
 	}
 	else
 	{
 		kill_list(ses, LIST_PATH);
 
-		tintin_puts2("#YOU ARE NOW MAPPING.", ses);
-	}
-	TOG_BIT(ses->flags, SES_FLAG_MAPPING);
+		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOW MAPPING A PATH.");
 
-	return ses;
+		SET_BIT(ses->flags, SES_FLAG_MAPPING);
+	}
 }
 
-DO_COMMAND(do_savepath)
+DO_PATH(path_end)
+{
+	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	{
+		show_message(ses, LIST_PATH, "#PATH: YOU ARE NO LONGER MAPPING A PATH.");
+
+		SET_BIT(ses->flags, SES_FLAG_MAPPING);
+	}
+	else
+	{
+		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOT MAPPING A PATH.");
+	}
+}
+
+DO_PATH(path_map)
+{
+	struct listroot *root;
+	struct listnode *node;
+	char left[BUFFER_SIZE];
+
+	root = ses->list[LIST_PATH];
+
+	if (root->f_node == NULL)
+	{
+		show_message(ses, LIST_PATH, "#PATH MAP: EMPTY PATH.");
+	}
+	else
+	{
+		sprintf(left, "%-8s", "#PATH:");
+
+		for (node = root->f_node ; node ; node = node->next)
+		{
+			if (strlen(left) + strlen(node->left) > ses->cols)
+			{
+				tintin_puts2(left, ses);
+				sprintf(left, "%-8s", "");
+			}
+			strcat(left, node->left);
+			strcat(left, " ");
+		}
+
+		if (strlen(left) > 8)
+		{
+			tintin_puts2(left, ses);
+		}
+	}
+}
+
+DO_PATH(path_save)
 {
 	char result[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
@@ -59,15 +141,15 @@ DO_COMMAND(do_savepath)
 
 	if (!is_abbrev(left, "FORWARD") && !is_abbrev(left, "BACKWARD"))
 	{
-		tintin_puts2("#SYNTAX: #SAVEPATH <FORWARD|BACKWARD> <ALIAS NAME>", ses);
+		tintin_puts2("#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <ALIAS NAME>", ses);
 	}
 	else if (root->f_node == NULL)
 	{
-		tintin_puts2("#LOAD OR CREATE A PATH FIRST.", ses);
+		tintin_puts2("#PATH SAVE: LOAD OR CREATE A PATH FIRST.", ses);
 	}
 	else if (*right == 0)
 	{
-		tintin_puts2("#YOU MUST PROVIDE AN ALIAS TO SAVE THE PATH INTO.", ses);
+		tintin_puts2("#PATH SAVE: YOU MUST PROVIDE AN ALIAS TO SAVE THE PATH TO.", ses);
 	}
 	else
 	{
@@ -117,11 +199,10 @@ DO_COMMAND(do_savepath)
 
 		parse_input(ses, result);
 	}
-	return ses;
 }
 
 
-DO_COMMAND(do_loadpath)
+DO_PATH(path_load)
 {
 	char left[BUFFER_SIZE];
 	struct listroot *root;
@@ -167,39 +248,39 @@ DO_COMMAND(do_loadpath)
 
 		show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", root->count);
 	}
-	return ses;
 }
 
-DO_COMMAND(do_path)
+
+
+DO_PATH(path_del)
 {
 	struct listroot *root;
 	struct listnode *node;
+
+	root = ses->list[LIST_PATH];
+	node = root->l_node;
+
+	if (root->l_node)
+	{
+		show_message(ses, LIST_PATH, "#PATH DEL: DELETED MOVE {%s}", root->l_node->left);
+		deletenode_list(ses, root->l_node, LIST_PATH);
+	}
+	else
+	{
+		tintin_puts("#PATH DEL: NO MOVES LEFT.", ses);
+	}
+}
+
+DO_PATH(path_ins)
+{
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	if (*left == 0)
 	{
-		root = ses->list[LIST_PATH];
-
-		sprintf(left, "%-8s", "#PATH:");
-
-		for (node = root->f_node ; node ; node = node->next)
-		{
-			if (strlen(left) + strlen(node->left) > ses->cols)
-			{
-				tintin_puts2(left, ses);
-				sprintf(left, "%-8s", "");
-			}
-			strcat(left, node->left);
-			strcat(left, " ");
-		}
-
-		if (strlen(left) > 8)
-		{
-			tintin_puts2(left, ses);
-		}
+		show_message(ses, LIST_PATH, "#PATH INS: YOU MUST GIVE A DIRECTION TO INSERT");
 	}
 	else if (*right == 0 && searchnode_list(ses->list[LIST_PATHDIR], left))
 	{
@@ -211,32 +292,9 @@ DO_COMMAND(do_path)
 
 		show_message(ses, LIST_PATH, "#OK. #PATH - {%s} = {%s} ADDED.", left, right);
 	}
-	return ses;
 }
 
-
-DO_COMMAND(do_unpath)
-{
-	struct listroot *root;
-	struct listnode *node;
-
-	root = ses->list[LIST_PATH];
-	node = root->l_node;
-
-	if (root->l_node)
-	{
-		show_message(ses, LIST_PATH, "#OK. #UNPATH - DELETED MOVE {%s}", root->l_node->left);
-		deletenode_list(ses, root->l_node, LIST_PATH);
-	}
-	else
-	{
-		tintin_puts("#ERROR: #UNPATH - NO MOVES LEFT.", ses);
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_walk)
+DO_PATH(path_walk)
 {
 	char left[BUFFER_SIZE];
 	struct listroot *root;
@@ -277,7 +335,17 @@ DO_COMMAND(do_walk)
 		}
 		ses->flags = flags;
 	}
-	return ses;
+}
+
+
+void check_insert_path(const char *command, struct session *ses)
+{
+	struct listnode *node;
+
+	if ((node = searchnode_list(ses->list[LIST_PATHDIR], command)))
+	{
+		addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+	}
 }
 
 
@@ -316,12 +384,28 @@ DO_COMMAND(do_pathdir)
 	return ses;
 }
 
-void check_insert_path(const char *command, struct session *ses)
-{
-	struct listnode *node;
 
-	if ((node = searchnode_list(ses->list[LIST_PATHDIR], command)))
+DO_COMMAND(do_unpathdir)
+{
+	char left[BUFFER_SIZE];
+	struct listroot *root;
+	struct listnode *node;
+	int flag = FALSE;
+
+	root = ses->list[LIST_PATHDIR];
+
+	arg = get_arg_in_braces(arg, left,  TRUE);
+
+	while ((node = search_node_with_wild(root, left)))
 	{
-		addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+		show_message(ses, LIST_PATHDIR, "#OK. {%s} IS NO LONGER A PATHDIR.", node->left);
+
+		deletenode_list(ses, node, LIST_PATHDIR);
+		flag = TRUE;
 	}
+	if (!flag)
+	{
+		show_message(ses, LIST_PATHDIR, "#UNPATHDIR: NO MATCH(ES) FOUND FOR {%s}.", left);
+	}
+	return ses;
 }

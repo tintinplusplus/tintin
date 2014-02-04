@@ -79,7 +79,7 @@ DO_COMMAND(do_class)
 	else
 	{
 			
-		for (cnt = 0 ; cnt < CLASS_MAX ; cnt++)
+		for (cnt = 0 ; *class_table[cnt].name ; cnt++)
 		{
 			if (is_abbrev(right, class_table[cnt].name))
 			{
@@ -87,7 +87,7 @@ DO_COMMAND(do_class)
 			}
 		}
 
-		if (cnt == CLASS_MAX)
+		if (*class_table[cnt].name == 0)
 		{
 			tintin_printf2(ses, "#SYNTAX: CLASS {name} {OPEN|CLOSE|READ|WRITE|KILL}.", left, capitalize(right));
 		}
