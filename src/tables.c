@@ -73,7 +73,6 @@ const struct command_type command_table[] =
 	{	"pathdir",           do_pathdir,           CMD_FLAG_NONE    },
 	{	"prompt",            do_prompt,            CMD_FLAG_NONE    },
 	{	"read",              do_read,              CMD_FLAG_SUB     },
-	{	"redit",             do_redit,             CMD_FLAG_SUB     },
 	{	"replacestring",     do_replacestring,     CMD_FLAG_SUB     },
 	{	"return",            do_return,            CMD_FLAG_NONE    },
 	{	"savepath",          do_savepath,          CMD_FLAG_SUB     },
@@ -461,7 +460,7 @@ const struct chat_type chat_table[] =
 };
 
 
-const struct array_type array_table[ARRAY_MAX] =
+const struct array_type array_table[] =
 {
 	{     "DEL",                       array_del              },
 	{     "FND",                       array_fnd              },
@@ -469,4 +468,33 @@ const struct array_type array_table[ARRAY_MAX] =
 	{     "INS",                       array_ins              },
 	{     "LEN",                       array_len              },
 	{     "SET",                       array_set              },
+	{     "",                          NULL                   }
+};
+
+const struct map_type map_table[] =
+{
+	{     "COLOR",                     map_color              },
+	{     "CREATE",                    map_create             },
+	{     "DELETE",                    map_delete             },
+	{     "DESTROY",                   map_destroy            },
+	{     "DIG",                       map_dig                },
+	{     "EXIT",                      map_exit               },
+	{     "FIND",                      map_find               },
+	{     "FLAG",                      map_flag               },
+	{     "GOTO",                      map_goto               },
+	{     "INFO",                      map_info               },
+	{     "LEAVE",                     map_leave              },
+	{     "LEGENDA",                   map_legenda            },
+	{     "LINK",                      map_link               },
+	{     "LIST",                      map_list               },
+	{     "MAP",                       map_map                },
+	{     "MOVE",                      map_move               },
+	{     "NAME",                      map_name               },
+	{     "READ",                      map_read               },
+	{     "ROOMFLAG",                  map_roomflag           },
+	{     "UNDO",                      map_undo               },
+	{     "UNLINK",                    map_unlink             },
+	{     "WALK",                      map_walk               },
+	{     "WRITE",                     map_write              },
+	{     "",                          NULL                   }
 };

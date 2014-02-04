@@ -47,7 +47,7 @@ DO_COMMAND(do_list)
 	}
 	else
 	{
-		for (cnt = 0 ; cnt < ARRAY_MAX ; cnt++)
+		for (cnt = 0 ; *array_table[cnt].name ; cnt++)
 		{
 			if (is_abbrev(right, array_table[cnt].name))
 			{
@@ -55,7 +55,7 @@ DO_COMMAND(do_list)
 			}
 		}
 
-		if (cnt == ARRAY_MAX)
+		if (*array_table[cnt].name == 0)
 		{
 			show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {%s} {DEL|FND|INS|GET|SET|LEN} {argument}", left);
 		}
@@ -170,9 +170,9 @@ DO_ARRAY(array_fnd)
 
 	index = get_list_length(list);
 
-	sprintf(buf, "%d", 0);
-
 	arg = list->right;
+
+	sprintf(buf, "%d", 0);
 
 	for (cnt = 1 ; cnt <= index ; cnt++)
 	{

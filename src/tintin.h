@@ -81,14 +81,15 @@
 /*
 	Typedefs
 */
-
 typedef struct listnode LNODE;
 
-typedef struct session *COMMAND (struct session *ses, const char *arg);
-typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
-typedef struct session *CLASS   (struct session *ses, char *left, char *right);
-typedef void CHAT (const char *arg);
 typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *arg);
+typedef void            CHAT    (const char *arg);
+typedef struct session *CLASS   (struct session *ses, char *left, char *right);
+typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
+typedef struct session *COMMAND (struct session *ses, const char *arg);
+typedef void            MAP     (struct session *ses, const char *arg);
+
 /*
 	A bunch of constants
 */
@@ -160,8 +161,6 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define LIST_ALL                      LIST_MAX + 3
 
 #define CLASS_MAX                      5
-
-#define ARRAY_MAX                      6
 
 /*
 	Various flags
@@ -244,7 +243,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
 #define SES_FLAG_GAG                  (1 << 18)
-
+#define SES_FLAG_UPDATEVTMAP          (1 << 19)
 #define SES_FLAG_USERCOMMAND          (1 << 20)
 #define SES_FLAG_SCROLLLOCK           (1 << 21)
 #define SES_FLAG_SCAN                 (1 << 22)
@@ -273,8 +272,14 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define LIST_FLAG_LOG                 (1 <<  3)
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
-#define NODE_FLAG_CLASS               (1 <<  0)
-#define NODE_FLAG_MAX                 (1 <<  1)
+#define NODE_FLAG_MAX                 (1 <<  0)
+
+#define ROOM_FLAG_AVOID               (1 <<  0)
+#define ROOM_FLAG_HIDE                (1 <<  1)
+#define ROOM_FLAG_LEAVE               (1 <<  2)
+
+#define MAP_FLAG_STATIC               (1 <<  0)
+#define MAP_FLAG_VTMAP                (1 <<  1)
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
@@ -283,7 +288,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define MAX_STR_HASH                  5000
 
-#define MAX_ROOM                      5000
+#define MAX_ROOM                      15000
 
 /*
 	Some macros to deal with double linked lists
@@ -366,6 +371,22 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
      (link)->prev = NULL;                                        \
 }
 
+/*
+	string allocation
+*/
+
+#define RESTRING(point, value)   \
+{                                \
+	free(point);                \
+	point = strdup((value));    \
+}
+
+#define STRFREE(point)           \
+{                                \
+	free((point));              \
+	point = NULL;               \
+}
+
 #define URANGE(a, b, c)           ((b) < (a) ? (a) : (b) > (c) ? (c) : (b))
 #define UMAX(a, b)                ((a) > (b) ? (a) : (b))
 #define UMIN(a, b)                ((a) < (b) ? (a) : (b))
@@ -374,12 +395,15 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define SCROLL(ses)               (((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
+#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, const char *arg)
+#define DO_CHAT(chat) void chat (const char *arg)
+#define DO_CLASS(class) struct session *class (struct session *ses, char *left, char *right)
 #define DO_COMMAND(command) struct session  *command (struct session *ses, const char *arg)
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
-#define DO_CLASS(class) struct session *class (struct session *ses, char *left, char *right)
-#define DO_ARRAY(array) struct session *array (struct session *ses, LNODE *list, const char *arg)
+#define DO_MAP(map) void map (struct session *ses, const char *arg)
 
-#define DO_CHAT(chat) void chat (const char *arg)
+
+
 
 
 
@@ -414,10 +438,10 @@ struct listnode
 {
 	struct listnode   * next;
 	struct listnode   * prev;
-	struct listnode   * class;
 	char              * left;
 	char              * right;
 	char              * pr;
+	char              * class;
 	long long           data;
 	short               flags;
 };
@@ -426,16 +450,15 @@ struct session
 {
 	struct session        * next;
 	struct session        * prev;
-	struct room_data      * room_list[MAX_ROOM];
-	int                     in_room;
+	struct map_data       * map;
 	z_stream              * mccp;
 	char                 ** buffer;
 	char                  * name;
+	char                  * class;
 	FILE                  * logfile;
 	FILE                  * logline;
 	struct listroot       * list[LIST_ALL];
 	struct listroot       * history;
-	struct listnode       * class;
 	int                     rows;
 	int                     cols;
 	int                     top_row;
@@ -468,12 +491,12 @@ struct tintin_data
 	struct session        * ses;
 	struct session        * update;
 	struct chat_data      * chat;
+	Keymap                  keymap;
 	char                  * mud_output_buf;
 	int                     mud_output_max;
 	int                     mud_output_len;
 	unsigned char         * mccp_buf;
 	int                     mccp_buf_max;
-	Keymap                  keymap;
 	long long               time;
 	int                     str_hash_size;
 	int                     history_size;
@@ -511,11 +534,48 @@ struct chat_data
 	long long               file_start_time;
 };
 
+/*
+	Structures for tables.c
+*/
+
+struct array_type
+{
+	char                  * name;
+	ARRAY                 * array;
+};
+
+struct chat_type
+{
+	char                  * name;
+	CHAT                  * chat;
+};
+
+struct class_type
+{
+	char                  * name;
+	CLASS                 * class;
+};
+
+struct color_type
+{
+	char                  * name;
+	char                  * number;
+	char                  * code;
+};
+
 struct command_type
 {
 	char                  * name;
 	COMMAND               * command;
 	int                     flags;
+};
+
+struct config_type
+{
+	char                  * name;
+	char                  * msg_on;
+	char                  * msg_off;
+	CONFIG                * config;
 };
 
 struct list_type
@@ -526,38 +586,10 @@ struct list_type
 	int                     args;
 };
 
-
-struct config_type
+struct map_type
 {
 	char                  * name;
-	char                  * msg_on;
-	char                  * msg_off;
-	CONFIG                * config;
-};
-
-struct color_type
-{
-	char                  * name;
-	char                  * number;
-	char                  * code;
-};
-
-struct class_type
-{
-	char                  * name;
-	CLASS                 * class;
-};
-
-struct chat_type
-{
-	char                  * name;
-	CHAT                  * chat;
-};
-
-struct array_type
-{
-	char                  * name;
-	ARRAY                 * array;
+	MAP                   * map;
 };
 
 struct str_hash_data
@@ -576,6 +608,15 @@ struct str_hash_index_data
 	struct str_hash_data    * l_node;
 };
 
+struct map_data
+{
+	struct room_data      * room_list[MAX_ROOM];
+	int                     flags;
+	int                     in_room;
+	int                     last_room;
+	int                     prev_room;
+	unsigned char           legenda[17];
+};
 
 struct room_data
 {
@@ -623,7 +664,6 @@ extern void echo_command(struct session *ses, char *line, int newline);
 #define __ARRAY_H__
 
 extern DO_COMMAND(do_list);
-
 extern DO_ARRAY(array_ins);
 extern DO_ARRAY(array_del);
 extern DO_ARRAY(array_fnd);
@@ -727,7 +767,6 @@ extern void check_character_mode(struct session *ses);
 
 extern DO_COMMAND(do_class);
 extern int count_class(struct session *ses, struct listnode *class);
-extern void kill_classes(struct session *ses);
 extern DO_CLASS(class_open);
 extern DO_CLASS(class_close);
 extern DO_CLASS(class_read);
@@ -740,21 +779,54 @@ extern void parse_class(struct session *ses, char *input, struct listnode *class
 #ifndef __MAPPER_H__
 #define __MAPPER_H__
 
-extern DO_COMMAND(do_redit);
+extern DO_COMMAND(do_map);
+
+extern DO_MAP(map_color);
+extern DO_MAP(map_create);
+extern DO_MAP(map_delete);
+extern DO_MAP(map_destroy);
+extern DO_MAP(map_dig);
+extern DO_MAP(map_exit);
+extern DO_MAP(map_find);
+extern DO_MAP(map_flag);
+extern DO_MAP(map_goto);
+extern DO_MAP(map_info);
+extern DO_MAP(map_leave);
+extern DO_MAP(map_legenda);
+extern DO_MAP(map_link);
+extern DO_MAP(map_list);
+extern DO_MAP(map_map);
+extern DO_MAP(map_move);
+extern DO_MAP(map_name);
+extern DO_MAP(map_read);
+extern DO_MAP(map_roomflag);
+extern DO_MAP(map_undo);
+extern DO_MAP(map_unlink);
+extern DO_MAP(map_walk);
+extern DO_MAP(map_write);
+
+extern void create_map(struct session *ses);
+extern void delete_map(struct session *ses);
 extern int  create_room(struct session *ses, const char *arg);
-extern void create_exit(struct session *ses, const char *arg);
-extern int find_room(struct session *ses, char *arg);
-extern int get_map_exit(struct exit_data *exit);
-extern void create_map(struct session *ses, short room, short x, short y);
-extern void follow_map(struct session *ses, const char *argument);
-extern void build_map(short room, short x, short y);
+extern void delete_room(struct session *ses, int room);
+extern void create_exit(struct session *ses, int room, const char *arg);
+extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
+extern void create_legenda(struct session *ses, const char *arg);
+extern int  find_room(struct session *ses, char *arg);
+extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
+extern int  get_map_exit(char *arg);
+extern void create_map_grid(struct session *ses, short room, short x, short y);
+extern void build_map_grid(short room, short x, short y);
+extern void follow_map(struct session *ses, char *argument);
 extern char *draw_room(struct session *ses, struct room_data *room);
 
 extern void search_path(short room, short size);
-extern void shortest_path(struct session *ses, char *arg);
+extern void shortest_path(struct session *ses, int walk, char *arg);
 
 extern int find_coord(struct session *ses, char *arg);
 extern void search_coord(int vnum, short x, short y, short z);
+
+extern void show_vtmap(struct session *ses);
 
 #endif
 
@@ -910,9 +982,7 @@ extern int check_all_antisubstitutions(const char *original, char *line, struct 
 #define __FILES_H__
 
 extern DO_COMMAND(do_read);
-extern DO_COMMAND(do_readmap);
 extern DO_COMMAND(do_write);
-extern DO_COMMAND(do_writemap);
 extern DO_COMMAND(do_session);
 extern void prepare_for_write(int mode, struct listnode *node, char *result);
 DO_COMMAND(do_textin);
@@ -1094,7 +1164,6 @@ extern void do_one_line(char *line, struct session *ses);
 #define __PATH_H__
 
 extern DO_COMMAND(do_mark);
-extern DO_COMMAND(do_map);
 extern DO_COMMAND(do_savepath);
 extern DO_COMMAND(do_loadpath);
 extern DO_COMMAND(do_path);
@@ -1204,15 +1273,14 @@ extern void check_all_substitutions(char *original, char *line, struct session *
 #ifndef __TABLES_H__
 #define __TABLES_H__
 
-
-extern const struct command_type command_table[];
-extern const struct list_type list_table[LIST_ALL];
-extern const struct config_type config_table[];
-extern const struct color_type color_table[];
-extern const struct class_type class_table[CLASS_MAX];
+extern const struct array_type array_table[];
 extern const struct chat_type chat_table[];
-extern const struct array_type array_table[ARRAY_MAX];
-
+extern const struct class_type class_table[];
+extern const struct color_type color_table[];
+extern const struct command_type command_table[];
+extern const struct config_type config_table[];
+extern const struct list_type list_table[LIST_ALL];
+extern const struct map_type map_table[];
 #endif
 
 #ifndef __TEXT_H__

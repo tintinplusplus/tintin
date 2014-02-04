@@ -33,7 +33,7 @@ DO_COMMAND(do_class)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
 	struct listroot *root;
-	struct listnode *node, *class;
+	struct listnode *node;
 	int cnt;
 
 	root = ses->list[LIST_CLASS];
@@ -51,14 +51,12 @@ DO_COMMAND(do_class)
 			tintin_printf2(ses, "%-20s %3d %s",
 			node->left,
 			count_class(ses, node),
-			HAS_BIT(node->flags, NODE_FLAG_CLASS) ? "OPEN" : "CLOSED");
+			!strcmp(ses->class, node->left) ? "OPEN" : "CLOSED");
 		}
 	}
 	else if (*right == 0)
 	{
-		class = search_node_with_wild(root, left);
-
-		if (class)
+		if (search_node_with_wild(root, left))
 		{
 			tintin_header(ses, " %s ", left);
 
@@ -66,7 +64,7 @@ DO_COMMAND(do_class)
 			{
 				for (node = ses->list[cnt]->f_node ; node ; node = node->next)
 				{
-					if (node->class == class)
+					if (!strcmp(node->class, left))
 					{
 						shownode_list(ses, node, cnt);
 					}
@@ -146,7 +144,7 @@ int count_class(struct session *ses, struct listnode *class)
 	{
 		for (node = ses->list[list]->f_node ; node ; node = node->next)
 		{
-			if (node->class == class)
+			if (!strcmp(node->class, class->left))
 			{
 				cnt++;
 			}
@@ -155,30 +153,14 @@ int count_class(struct session *ses, struct listnode *class)
 	return cnt;
 }
 
-void kill_classes(struct session *ses)
-{
-	int list;
-	struct listnode *node, *node_next;
-
-	for (list = 0 ; list < LIST_ALL ; list++)
-	{
-		for (node = ses->list[list]->f_node ; node ; node = node_next)
-		{
-			node_next = node->next;
-
-			if (node->class || list == LIST_CLASS)
-			{
-				deletenode_list(ses, node, list);
-			}
-		}
-	}
-}
 
 DO_CLASS(class_open)
 {
-	ses->class = search_node_with_wild(ses->list[LIST_CLASS], left);
+	struct listnode *node;
 
-	SET_BIT(ses->class->flags, NODE_FLAG_CLASS);
+	node = search_node_with_wild(ses->list[LIST_CLASS], left);
+
+	RESTRING(ses->class, left);
 
 	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", left);
 
@@ -191,34 +173,26 @@ DO_CLASS(class_close)
 
 	node = search_node_with_wild(ses->list[LIST_CLASS], left);
 
-	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", node->left);
-
-	DEL_BIT(node->flags, NODE_FLAG_CLASS);
-
-	if (node == ses->class)
+	if (!strcmp(ses->class, left))
 	{
-		ses->class = NULL;
+		RESTRING(ses->class, "");
 
-		for (node = ses->list[LIST_CLASS]->l_node ; node ; node = node->prev)
-		{
-			if (HAS_BIT(node->flags, NODE_FLAG_CLASS))
-			{
-				class_open(ses, node->left, "");
-
-				break;
-			}
-		}
+		show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", left);
+	}
+	else
+	{
+		show_message(ses, LIST_CLASS, "#CLASS {%s} IS ALREADY CLOSED.", left);
 	}
 	return ses;
 }
 
 DO_CLASS(class_read)
 {
-	class_open(ses, left, "");
+	class_open(ses, left, right);
 
 	do_read(ses, right);
 
-	class_close(ses, left, "");
+	class_close(ses, left, right);
 
 	return ses;
 }
@@ -227,10 +201,8 @@ DO_CLASS(class_write)
 {
 	FILE *file;
 	char temp[BUFFER_SIZE];
-	struct listnode *node, *class;
+	struct listnode *node;
 	int cnt;
-
-	class = search_node_with_wild(ses->list[LIST_CLASS], left);
 
 	if (*right == 0 || (file = fopen(right, "w")) == NULL)
 	{
@@ -245,7 +217,7 @@ DO_CLASS(class_write)
 	{
 		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
 		{
-			if (node->class == class)
+			if (!strcmp(node->class, left))
 			{
 				prepare_for_write(cnt, node, temp);
 
@@ -270,23 +242,28 @@ DO_CLASS(class_kill)
 
 	class = search_node_with_wild(ses->list[LIST_CLASS], left);
 
+	if (!strcmp(ses->class, left))
+	{
+		RESTRING(ses->class, "");
+	}
+
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
 		if (cnt == LIST_CLASS)
 		{
 			continue;
 		}
+
 		for (node = ses->list[cnt]->f_node ; node ; node = node_next)
 		{
 			node_next = node->next;
 
-			if (node->class == class)
+			if (!strcmp(node->class, left))
 			{
 				deletenode_list(ses, node, cnt);
 			}
 		}
 	}
-
 	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLEARED.", left);
 
 	deletenode_list(ses, class, LIST_CLASS);

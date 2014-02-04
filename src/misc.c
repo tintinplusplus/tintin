@@ -261,9 +261,19 @@ DO_COMMAND(do_parse)
 	{
 		for (cnt = 0 ; left[cnt] != 0 ; cnt++)
 		{
+#ifdef BIG5
+			if (left[cnt] & 0x80 && left[cnt+1] != 0)
+			{
+				sprintf(gtd->cmds[0], "%c%c", left[cnt], left[++cnt]);
+			}
+			else
+			{
+				sprintf(gtd->cmds[0], "%c", left[cnt]);
+			}
+#else
 			sprintf(gtd->cmds[0], "%c", left[cnt]);
-
-			sprintf(temp, "parse {%c}", left[cnt]);
+#endif
+			sprintf(temp, "parse {%s}", gtd->cmds[0]);
 			do_internal_variable(ses, temp);
 
 			substitute(ses, right, temp, SUB_CMD);

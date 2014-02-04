@@ -11,9 +11,9 @@
 
 - Add color bleeding for #split. Bloats the code though.
 
-- upgrade the #write command to format.
+- upgrade the #write command to format. Format should be up to the user.
 
-- place #grep output in the buffer. This might not be desirable.
+- place #grep output in the buffer. This is not be desirable however.
 
 -------------------------------------------------------------------------------
 
@@ -27,8 +27,8 @@
 
 -------------------------------------------------------------------------------
 
-* This is a list of new features/improvements the author of this version has
-  no interest in.
+* This is a list of new features/improvements the author version has no
+  interest in.
 
 - X window support: console is just fine.
 

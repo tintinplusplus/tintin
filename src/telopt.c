@@ -566,14 +566,20 @@ int send_wont_new_environ(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (atoi(ses->port) != TELNET_PORT)
+	int rows;
+
+	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS))
 	{
+		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS);
+
 		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
 
 		telopt_debug(ses, "SENT IAC WILL NAWS");
 	}
 
-	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, 0, ses->cols % 255, 0, ses->rows % 255, IAC, SE);
+	rows = HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? ses->bot_row - ses->top_row + 1 : ses->rows;
+
+	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, 0, ses->cols % 255, 0, rows % 255, IAC, SE);
 
 	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
 

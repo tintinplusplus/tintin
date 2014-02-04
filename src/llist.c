@@ -62,18 +62,27 @@ void kill_list(struct session *ses, int index)
 
 
 /*
-	make a copy of a list - return: ptr to copy
+	make a copy of a list and return its pointer
 */
 
 struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int index)
 {
-	struct listnode *node;
+	struct listnode *node, *newnode;
 
 	ses->list[index] = init_list();
 
 	for (node = sourcelist->f_node ; node ; node = node->next)
 	{
-		insertnode_list(ses, node->left, node->right, node->pr, index);
+		newnode = calloc(1, sizeof(struct listnode));
+
+		newnode->left  = strdup(node->left);
+		newnode->right = strdup(node->right);
+		newnode->pr    = strdup(node->pr);
+		newnode->class = strdup(node->class);
+
+		ses->list[index]->count++;
+
+		LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
 	}
 	ses->list[index]->flags = sourcelist->flags;
 
@@ -81,10 +90,7 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 }
 
 /*
-	create a node containing the ltext, rtext fields and stuff it
-	into the list - in lexicographical order, or by numerical
-	priority (dependent on mode) - Mods by Joann Ellsworth 2/2/94
-	- More mods by Scandum
+	create a node and stuff it into the list in the desired order
 */
 
 void insertnode_list(struct session *ses, const char *ltext, const char *rtext, const char *prtext, int index)
@@ -93,21 +99,12 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 
 	push_call("insertnode_list(%p,%p,%p)",ses,ltext,rtext);
 
-	if ((newnode = calloc(1, sizeof(struct listnode))) == NULL)
-	{
-		fprintf(stderr, "couldn't calloc listhead\n");
-		dump_stack();
-		exit(1);
-	}
+	newnode = calloc(1, sizeof(struct listnode));
 
 	newnode->left  = strdup(ltext);
 	newnode->right = strdup(rtext);
 	newnode->pr    = strdup(prtext);
-
-	if (ses->class && index != LIST_CLASS)
-	{
-		newnode->class = ses->class;
-	}
+	newnode->class = strdup(ses->class);
 
 	ses->list[index]->count++;
 
@@ -230,16 +227,16 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 			ses->list[index]->update = node->next;
 		}
 
-		if (ses->class == node)
-		{
-			ses->class = NULL;
-		}
-
 		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
 
+		if (index == LIST_CLASS && !strcmp(ses->class, node->left))
+		{
+			RESTRING(ses->class, "");
+		}
 		free(node->left);
 		free(node->right);
 		free(node->pr);
+		free(node->class);
 		free(node);
 
 		ses->list[index]->count--;
@@ -426,7 +423,7 @@ DO_COMMAND(do_killall)
 		}
 		if (arg != NULL)
 		{
-			tintin_printf(ses, "#OK: #KILL - ALL LISTS CLEARED.");
+			tintin_printf(ses, "#KILL - ALL LISTS CLEARED.");
 		}
 		return ses;
 	}
@@ -439,18 +436,10 @@ DO_COMMAND(do_killall)
 		{
 			continue;
 		}
+		kill_list(ses, cnt);
 
-		switch (cnt)
-		{
-			case LIST_CLASS:
-				kill_classes(ses);
-				break;
-
-			default:
-				kill_list(ses, cnt);
-				break;
-		}
 		tintin_printf(ses, "#OK: #%s LIST CLEARED.", list_table[cnt].name);
+
 		fnd = TRUE;
 	}
 	if (fnd == FALSE)

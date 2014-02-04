@@ -278,4 +278,10 @@ oops 5
     }
 }
 
+#var {servers}
+{
+	global village: globalonline.org 23,
+	isca: bbs.iscabbs.com 23
+}
+
 #showme t00t

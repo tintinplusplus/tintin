@@ -248,6 +248,15 @@ void tick_update(void)
 		}
 	}
 
+	for (ses = gts ; ses ; ses = ses->next)
+	{
+		if (HAS_BIT(ses->flags, SES_FLAG_UPDATEVTMAP))
+		{
+			DEL_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
+
+			show_vtmap(ses);
+		}
+	}
 	fflush(stdout);
 
 	pop_call();

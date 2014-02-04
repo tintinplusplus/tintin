@@ -481,7 +481,7 @@ void tintin_puts2(const char *cptr, struct session *ses)
 		return;
 	}
 
-	sprintf(output, "\033[0m\033[0K%s\033[0m", cptr);
+	sprintf(output, "\033[0m%s\033[0m", cptr);
 
 	add_line_buffer(ses, output, FALSE);
 

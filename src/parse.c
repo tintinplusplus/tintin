@@ -87,6 +87,15 @@ struct session *parse_input(const char *input, struct session *ses)
 
 		substitute(ses, arg, command, SUB_VAR|SUB_FUN);
 
+		if (strcmp(arg, command))
+		{
+			sprintf(arg, "%s%s", command, input);
+
+			ses = parse_input(arg, ses);
+
+			pop_call();
+			return ses;
+		}
 		input = get_arg_all(input, arg);
 
 		if (*command == gtd->tintin_char)
@@ -289,6 +298,7 @@ const char *get_arg_all(const char *s, char *arg)
 		if (*s & 0x80)
 		{
 			*arg++ = *s++;
+
 			if (*s)
 			{
 				*arg++ = *s++;
@@ -396,6 +406,8 @@ const char *get_arg_with_spaces(const char *s, char *arg)
 {
 	int nest = 0;
 
+	s = space_out(s);
+
 	while (*s)
 	{
 #ifdef BIG5
@@ -406,18 +418,13 @@ const char *get_arg_with_spaces(const char *s, char *arg)
 			{
 				break;
 			}
+			continue;
 		}
-		continue;
 #endif
 
-		if (*s == '\\')
+		if (*s == '\\' && s[1] == ';')
 		{
 			*arg++ = *s++;
-
-			if (*s)
-			{
-				*arg++ = *s++;
-			}
 		}
 		else if (*s == ';' && nest == 0)
 		{
@@ -425,18 +432,13 @@ const char *get_arg_with_spaces(const char *s, char *arg)
 		}
 		else if (*s == DEFAULT_OPEN)
 		{
-			*arg++ = *s++;
 			nest++;
 		}
 		else if (*s == DEFAULT_CLOSE)
 		{
-			*arg++ = *s++;
 			nest--;
 		}
-		else
-		{
-			*arg++ = *s++;
-		}
+		*arg++ = *s++;
 	}
 	*arg = '\0'; 
 	return s;
@@ -449,6 +451,8 @@ const char *get_arg_with_spaces(const char *s, char *arg)
 const char *get_arg_stop_spaces(const char *s, char *arg)
 {
 	int nest = 0;
+
+	s = space_out(s);
 
 	while (*s)
 	{
@@ -464,14 +468,9 @@ const char *get_arg_stop_spaces(const char *s, char *arg)
 		}
 #endif
 
-		if (*s == '\\')
+		if (*s == '\\' && s[1] == ';')
 		{
 			*arg++ = *s++;
-
-			if (*s)
-			{
-				*arg++ = *s++;
-			}
 		}
 		else if (*s == ';' && nest == 0)
 		{
@@ -483,18 +482,13 @@ const char *get_arg_stop_spaces(const char *s, char *arg)
 		}
 		else if (*s == DEFAULT_OPEN)
 		{
-			*arg++ = *s++;
 			nest++;
 		}
 		else if (*s == DEFAULT_CLOSE)
 		{
-			*arg++ = *s++;
 			nest--;
 		}
-		else
-		{
-			*arg++ = *s++;
-		}
+		*arg++ = *s++;
 	}
 	*arg = '\0';
 
@@ -522,12 +516,11 @@ void write_mud(struct session *ses, const char *command)
 {
 	char output[BUFFER_SIZE];
 
-	if (ses->in_room)
+	if (ses->map && ses->map->in_room)
 	{
-		follow_map(ses, command);
+		follow_map(ses, (char *) command);
 	}
-
-	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	else if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{
 		check_insert_path(command, ses);
 	}

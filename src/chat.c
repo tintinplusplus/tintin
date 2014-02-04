@@ -44,18 +44,6 @@
 #define DEFAULT_PORT 4050
 #define TINTIN_VERSION "TinTin++ 1.96.3"
 
-#define RESTRING(point, value)   \
-{                                \
-	free(point);                \
-	point = strdup((value));    \
-}
-
-#define STRFREE(point)           \
-{                                \
-	free((point));              \
-	point = NULL;               \
-}
-
 DO_COMMAND(do_chat)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];

@@ -918,7 +918,7 @@ parse.c        Removed old code that allowed using " " instead of { } in
 llist.c        Can now use #unmacro by exactly matching the macro instead of
                having to use \\ for a single \.
 
-input.c        TinTin now enabled character mode with echo off and SGA enabled.
+input.c        TinTin now enables character mode with echo off and SGA enabled.
 
 
                - 1.95.9
@@ -1036,4 +1036,17 @@ tinexp.c       Can now add lists of keywords between square brackets divided
 array.c        array_fnd function allows searching for words in lists.
 
 path.c         can now save loaded paths backward.
+
+
+December 2006  - 1.96.4
+
+class.c        classes are now properly inherited from the main session.
+
+misc.c         fixed chinese character issue with #parse.
+
+parse.c        fixed parsing issues introduced in 1.96.3.
+
+mapper.c       debugged and updated alpha mapping code to beta.
+
+tables.c       added a mapping related sub-command table.
 

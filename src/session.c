@@ -194,7 +194,8 @@ struct session *new_session(const char *name, const char *address, struct sessio
 
 	newsession                = calloc(1, sizeof(struct session));
 
-	newsession->name          = name ? strdup(name) : strdup("run");
+	newsession->name          = strdup(name);
+	newsession->class         = strdup(gts->class);
 	newsession->flags         = gts->flags;
 	newsession->telopts       = gts->telopts;
 	newsession->host          = strdup(host);
@@ -335,6 +336,11 @@ void cleanup_session(struct session *ses)
 	}
 
 	do_killall(ses, NULL);
+
+	if (ses->map)
+	{
+		delete_map(ses);
+	}
 
 	if (ses->logfile)
 	{

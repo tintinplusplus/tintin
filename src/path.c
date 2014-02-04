@@ -55,40 +55,6 @@ DO_COMMAND(do_mark)
 	return ses;
 }
 
-/*
-	the #map command
-*/
-
-DO_COMMAND(do_map)
-{
-	struct listroot *root;
-	struct listnode *node;
-	char buf[BUFFER_SIZE];
-
-	root = ses->list[LIST_PATH];
-
-	tintin_printf(ses, "#NOTE: This command will be used for the automapper in a future update. You can use #PATH instead.");
-
-	sprintf(buf, "%-8s", "#PATH:");
-
-	for (node = root->f_node ; node ; node = node->next)
-	{
-		if (strlen(buf) + strlen(node->left) > ses->cols)
-		{
-			tintin_puts2(buf, ses);
-			sprintf(buf, "%-8s", "");
-		}
-		strcat(buf, node->left);
-		strcat(buf, " ");
-	}
-	if (strlen(buf) > 8)
-	{
-		tintin_puts2(buf, ses);
-	}
-	return ses;
-}
-
-
 DO_COMMAND(do_savepath)
 {
 	char result[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
