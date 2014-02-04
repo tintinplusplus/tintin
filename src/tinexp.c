@@ -26,6 +26,8 @@
 *                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
+#include <regex.h>
+
 #include "tintin.h"
 
 
@@ -100,6 +102,72 @@ int regexp(char *exp, char *str, unsigned char cs)
 		}
 	}
 	return (*exp == *str);
+}
+
+DO_COMMAND(do_regexp)
+{
+	char *left, *right, *true, *false, *str, *exp;
+
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &right, 0);
+	arg = get_arg_in_braces(arg, &true,  1);
+	arg = get_arg_in_braces(arg, &false, 1);
+
+	if (*left == 0 || *right == 0 || *true == 0)
+	{
+		tintin_printf2(ses, "SYNTAX: #REGEXP {string} {expression} {true} {false}");
+	}
+	else
+	{
+		substitute(ses, left,  &str, SUB_VAR|SUB_FUN);
+		substitute(ses, right, &exp, SUB_VAR|SUB_FUN);
+
+		if (regex(exp, str))
+		{
+			substitute(ses, true,  &true,  SUB_CMD);
+
+			ses = parse_input(ses, true);
+		}
+		else if (*false)
+		{
+			ses = parse_input(ses, false);
+		}
+	}
+	return ses;
+}
+		
+int regex(char *exp, char *str)
+{
+	regex_t regex;
+	regmatch_t match[10];
+	int i;
+
+	if (regcomp(&regex, exp, REG_EXTENDED))
+	{
+		return FALSE;
+	}
+
+	if (regexec(&regex, str, 10, match, 0))
+	{
+		regfree(&regex);
+
+		return FALSE;
+	}
+
+	for (i = 0 ; i < 10 ; i++)
+	{
+		if (match[i].rm_so != -1)
+		{
+			gtd->cmds[i] = stringf_alloc("%.*s", match[i].rm_eo - match[i].rm_so, &str[match[i].rm_so]);
+		}
+		else
+		{
+			gtd->cmds[i] = stringf_alloc("");
+		}
+	}
+	regfree(&regex);
+
+	return TRUE;
 }
 
 /******************************************************************************

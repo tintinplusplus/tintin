@@ -105,44 +105,48 @@ void read_line(char *line)
 	{
 		strcat(gtd->macro_buf, buffer);
 	}
-	match = 0;
-	root  = gtd->ses->list[LIST_MACRO];
 
-	for (node = root->f_node ; node ; node = root->update)
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
 	{
-		root->update = node->next;
+		match = 0;
+		root  = gtd->ses->list[LIST_MACRO];
 
-		if (!strcmp(gtd->macro_buf, node->pr))
+		for (node = root->f_node ; node ; node = root->update)
 		{
-			parse_input(gtd->ses, node->right);
-			gtd->macro_buf[0] = 0;
+			root->update = node->next;
 
+			if (!strcmp(gtd->macro_buf, node->pr))
+			{
+				parse_input(gtd->ses, node->right);
+				gtd->macro_buf[0] = 0;
+
+				return;
+			}
+			else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
+			{
+				match = 1;
+			}
+		}
+
+		for (cnt = 0 ; *cursor_table[cnt].code != 0 ; cnt++)
+		{
+			if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
+			{
+				cursor_table[cnt].fun("");
+				gtd->macro_buf[0] = 0;
+
+				return;
+			}
+			else if (!strncmp(gtd->macro_buf, cursor_table[cnt].code, strlen(gtd->macro_buf)))
+			{
+				match = 1;
+			}
+		}
+
+		if (match)
+		{
 			return;
 		}
-		else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
-		{
-			match = 1;
-		}
-	}
-
-	for (cnt = 0 ; *cursor_table[cnt].code != 0 ; cnt++)
-	{
-		if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
-		{
-			cursor_table[cnt].fun("");
-			gtd->macro_buf[0] = 0;
-
-			return;
-		}
-		else if (!strncmp(gtd->macro_buf, cursor_table[cnt].code, strlen(gtd->macro_buf)))
-		{
-			match = 1;
-		}
-	}
-
-	if (match)
-	{
-		return;
 	}
 
 	if (gtd->macro_buf[0] == ESCAPE)
@@ -241,28 +245,32 @@ void read_key(char *line)
 		strcat(gtd->macro_buf, buffer);
 	}
 
-	match = 0;
-	root  = gtd->ses->list[LIST_MACRO];
-
-	for (node = root->f_node ; node ; node = root->update)
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
 	{
-		root->update = node->next;
+		match = 0;
+	
+		root  = gtd->ses->list[LIST_MACRO];
 
-		if (!strcmp(gtd->macro_buf, node->pr))
+		for (node = root->f_node ; node ; node = root->update)
 		{
-			parse_input(gtd->ses, node->right);
-			gtd->macro_buf[0] = 0;
+			root->update = node->next;
+
+			if (!strcmp(gtd->macro_buf, node->pr))
+			{
+				parse_input(gtd->ses, node->right);
+				gtd->macro_buf[0] = 0;
+				return;
+			}
+			else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
+			{
+				match = 1;
+			}
+		}
+
+		if (match)
+		{
 			return;
 		}
-		else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
-		{
-			match = 1;
-		}
-	}
-
-	if (match)
-	{
-		return;
 	}
 
 	for (cnt = 0 ; gtd->macro_buf[cnt] ; cnt++)
@@ -395,9 +403,9 @@ void unconvert_meta(char *input, char *output)
 
 void echo_command(struct session *ses, char *line, int newline)
 {
-	char buffer[STRING_SIZE];
+	char buffer[STRING_SIZE], result[STRING_SIZE];
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT) && ses->more_output[0] == 0)
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
 		sprintf(buffer, "\033[0;37m%s", line);
 	}
@@ -433,23 +441,27 @@ void echo_command(struct session *ses, char *line, int newline)
 		{
 			return;
 		}
-		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
 		if (ses->more_output[0])
 		{
-			ses->check_output = 0;
-
-			sprintf(buffer, "%s\033[0;37m%s", ses->more_output, line);
+			sprintf(result, "%s\033[0;37m%s", ses->more_output, line);
 		}
-		add_line_buffer(ses, buffer, -1);
+		else
+		{
+			sprintf(result, "\033[0;37m%s", line);
+		}
 
-		tintin_printf2(ses, "%s", buffer);
+		add_line_buffer(ses, buffer, 0);
+
+		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+
+		tintin_printf2(ses, "%s", result);
 
 		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 	}
 	else
 	{
-		add_line_buffer(ses, buffer, -1);
+		add_line_buffer(ses, buffer, 0);
 	}
 }
 

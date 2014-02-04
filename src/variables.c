@@ -351,16 +351,18 @@ void wrapstring(struct session *ses, char *str)
 
 			if (pti - lis > 15)
 			{
-				sprintf(tmp, "%.*s", pti - str, str);
+				sprintf(tmp, "%.*s", sos - str, str);
 				strip_non_vt102_codes(tmp, tmp);
+
 				cat_sprintf(buf, "{%s%.*s}", tmp, pti - sos, sos);
 
 				lis = sos = pti;
 			}
 			else
 			{
-				sprintf(tmp, "%.*s", lis - str, str);
+				sprintf(tmp, "%.*s", sos - str, str);
 				strip_non_vt102_codes(tmp, tmp);
+
 				cat_sprintf(buf, "{%s%.*s}", tmp, lis - sos, sos);
 
 				lis++;
@@ -374,7 +376,7 @@ void wrapstring(struct session *ses, char *str)
 			col++;
 		}
 	}
-	sprintf(tmp, "%.*s", pti - str, str);
+	sprintf(tmp, "%.*s", sos - str, str);
 	strip_non_vt102_codes(tmp, tmp);
 
 	cat_sprintf(buf, "{%s%s}", tmp, sos);
@@ -384,7 +386,7 @@ void wrapstring(struct session *ses, char *str)
 
 DO_COMMAND(do_format)
 {
-	char *destvar, *format, *argument, arglist[20][BUFFER_SIZE], *ptf;
+	char *destvar, *format, *argument, arglist[20][BUFFER_SIZE], *ptf, *tmp;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
@@ -494,6 +496,8 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'w':
+						substitute(ses, arglist[i], &tmp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+						strcpy(arglist[i], tmp);
 						wrapstring(ses, arglist[i]);
 						break;
 

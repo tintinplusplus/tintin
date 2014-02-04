@@ -74,6 +74,7 @@ struct command_type command_table[] =
 	{	"pathdir",           do_pathdir,           CMD_FLAG_NONE    },
 	{	"prompt",            do_prompt,            CMD_FLAG_NONE    },
 	{	"read",              do_read,              CMD_FLAG_SUB     },
+	{    "regexp",            do_regexp,            CMD_FLAG_NONE    },
 	{	"replacestring",     do_replacestring,     CMD_FLAG_SUB     },
 	{	"return",            do_return,            CMD_FLAG_NONE    },
 	{    "run",               do_run,               CMD_FLAG_SUB     },

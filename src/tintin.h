@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.6"
+#define VERSION_NUM               "1.97.7"
 
 #define ESCAPE                          27
 
@@ -993,10 +993,12 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 #endif
 
 
-#ifndef __REGEXP_H__
-#define __REGEXP_H__
+#ifndef __TINEXP_H__
+#define __TINEXP_H__
 
 extern int regexp(char *exp, char *str, unsigned char cs);
+extern int regex(char *exp, char *str);
+DO_COMMAND(do_regexp);
 extern void substitute(struct session *ses, char *string, char **result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
 extern int action_regexp(char *exp, char *str, unsigned char arg);

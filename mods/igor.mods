@@ -848,7 +848,9 @@ August 2007    1.97.5
 
                Fixed a bug with #config {packet patch}.
 
+
 August 2007    1.97.6
+
 
 input.c        Fixed some server side VT issues with command echoing.
 
@@ -865,3 +867,15 @@ files.c        Fixed verbose behavior when reading a file which reads a file.
 net.c          Fixed address reporting in #session.
 
 variable.c     Added %w option to wrap text.
+
+
+October 2007   1.97.7
+
+
+variable.c     Fixed some coloring issues with the %w format option.
+
+input.c        Macros no longer trigger with config convert meta enabled.
+
+net.c          Fixed prompt handling issue for triggers in split mode.
+
+tinexp.c       Added the regexp command to use regexp string comparisons.

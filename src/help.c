@@ -851,6 +851,16 @@ struct help_type help_table[] =
 		"         You can comment out triggers using /* text */\n"
 	},
 	{
+		"REGEXP",
+		"<178>Command<078>: #regexp <178>{<078>string<178>}<078> <178>{<078>expression<178>}<078> <178>{<078>true<178>}<078> <178>{<078>false<178>}<078>\n"
+		"\n"
+		"         Compares the string to the given regular expression.\n"
+		"\n"
+		"         Variables are stored in &1 to &9 with &0 holding the matched substring.\n"
+		"\n"
+		"<178>Example<078>: #regexp {bli bla blo} {bli (.*) blo} {#showme &1}\n"
+	},
+	{
 		"REPLACESTRING",
 		"<178>Command<078>: #replacestring <178>{<078>variable<178>}<078> <178>{<078>oldtext<178>}<078> <178>{<078>newtext<178>}<078>\n"
 		"\n"
