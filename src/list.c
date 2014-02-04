@@ -153,6 +153,11 @@ DO_ARRAY(array_create)
 				str++;
 			}
 		}
+
+		if (*arg == COMMAND_SEPARATOR)
+		{
+			arg++;
+		}
 	}
 	return ses;
 }

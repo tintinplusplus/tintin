@@ -241,10 +241,6 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	init_buffer(newsession, gts->scroll_max);
 
-	gtd->ses = newsession;
-
-	dirty_screen(newsession);
-
 	if (desc)
 	{
 		tintin_printf2(ses, "#TRYING TO LAUNCH '%s' RUNNING '%s'.", newsession->name, newsession->host);
@@ -254,7 +250,9 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		tintin_printf2(ses, "#TRYING TO CONNECT '%s' TO '%s' PORT '%s'.", newsession->name, newsession->host, newsession->port);
 	}
 
+	gtd->ses = newsession;
 
+	dirty_screen(newsession);
 
 	if (desc == 0)
 	{

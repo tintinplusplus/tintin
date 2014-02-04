@@ -88,27 +88,27 @@ DO_CURSOR(cursor_backspace)
 
 DO_CURSOR(cursor_buffer_down)
 {
-	buffer_down(gtd->ses, "");
+	do_buffer(gtd->ses, "DOWN");
 }
 
 DO_CURSOR(cursor_buffer_end)
 {
-	buffer_end(gtd->ses, "");
+	do_buffer(gtd->ses, "END");
 }
 
 DO_CURSOR(cursor_buffer_home)
 {
-	buffer_home(gtd->ses, "");
+	do_buffer(gtd->ses, "HOME");
 }
 
 DO_CURSOR(cursor_buffer_lock)
 {
-	buffer_lock(gtd->ses, "");
+	do_buffer(gtd->ses, "LOCK");
 }
 
 DO_CURSOR(cursor_buffer_up)
 {
-	buffer_up(gtd->ses, "");
+	do_buffer(gtd->ses, "UP");
 }
 
 

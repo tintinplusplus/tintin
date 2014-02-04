@@ -83,6 +83,7 @@ DO_COMMAND(do_unevent)
 
 int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 {
+	struct session *ses_ptr;
 	struct listnode *node;
 	char buf[BUFFER_SIZE];
 	va_list list;
@@ -94,32 +95,39 @@ int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 
 	va_end(list); 
 
-	node = search_node_list(ses->list[LIST_EVENT], buf);
-
-	if (node)
+	for (ses_ptr = ses ? ses : gts ; ses_ptr ; ses_ptr = ses_ptr->next)
 	{
-		va_start(list, fmt);
+		node = search_node_list(ses_ptr->list[LIST_EVENT], buf);
 
-		for (cnt = 0 ; cnt < args ; cnt++)
+		if (node)
 		{
-			va_arg(list, char *);
-		}
+			va_start(list, fmt);
 
-		for (cnt = 0 ; cnt < vars ; cnt++)
+			for (cnt = 0 ; cnt < args ; cnt++)
+			{
+				va_arg(list, char *);
+			}
+
+			for (cnt = 0 ; cnt < vars ; cnt++)
+			{
+				RESTRING(gtd->vars[cnt], va_arg(list, char *));
+			}
+
+			substitute(ses_ptr, node->right, buf, SUB_ARG);
+
+			script_driver(ses_ptr, LIST_EVENT, buf);
+
+			va_end(list);
+
+			if (ses)
+			{
+				return 1;
+			}
+		}
+		if (ses)
 		{
-			RESTRING(gtd->vars[cnt], va_arg(list, char *));
+			return 0;
 		}
-
-		substitute(ses, node->right, buf, SUB_ARG);
-
-		script_driver(ses, LIST_EVENT, buf);
-
-		va_end(list);
-
-		return 1;
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }

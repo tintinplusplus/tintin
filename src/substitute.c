@@ -71,18 +71,17 @@ DO_COMMAND(do_unsubstitute)
 
 void check_all_substitutions(struct session *ses, char *original, char *line)
 {
-	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *pt1, *pt2, *ptm;
+	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *ptl, *ptm;
 	struct listroot *root = ses->list[LIST_SUBSTITUTE];
 	struct listnode *node;
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], original, original, 0))
 		{
 			node = root->list[root->update];
 
-			pt1 = line;
-			pt2 = original;
+			ptl = original;
 
 			*output = 0;
 
@@ -92,29 +91,24 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 				{
 					break;
 				}
+
 				strcpy(match, gtd->vars[0]);
 
 				substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				ptm = strstr(pt2, match);
-
-				if (ptm == NULL)
-				{
-					break;
-				}
+				ptm = strstr(ptl, match);
 
 				*ptm = 0;
 
-				cat_sprintf(output, "%s%s", pt2, subst);
+				cat_sprintf(output, "%s%s", ptl, subst);
 
-				pt1 = pt1 + strip_vt102_strlen(pt2) + strip_vt102_strlen(match);
-				pt2 = ptm + strlen(match);
+				ptl = ptm + strlen(match);
 
 				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
 			}
-			while (check_one_regexp(ses, node, pt1, pt2, 0));
+			while (check_one_regexp(ses, node, ptl, ptl, 0));
 
-			strcat(output, pt2);
+			strcat(output, ptl);
 
 			strcpy(original, output);
 		}

@@ -65,7 +65,10 @@ DO_COMMAND(do_variable)
 		{
 			arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
-			add_nest_node(root, arg1, "%s", arg2);
+			if (*arg2)
+			{
+				add_nest_node(root, arg1, "%s", arg2);
+			}
 		}
 		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, str);
 	}
@@ -92,14 +95,14 @@ DO_COMMAND(do_unvariable)
 
 DO_COMMAND(do_replace)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], buf[STRING_SIZE], *pti, *ptr, *pto;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], buf[BUFFER_SIZE], tmp[BUFFER_SIZE], *pti, *ptm;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_VARIABLE];
 
 	arg = get_arg_in_braces(arg, arg1, GET_NST);
-	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN|SUB_ESC);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg3, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0 || *arg2 == 0)
@@ -110,40 +113,45 @@ DO_COMMAND(do_replace)
 	{
 		show_message(ses, LIST_VARIABLE, "#REPLACE: VARIABLE {%s} NOT FOUND.", arg1);
 	}
-	else if ((ptr = strstr(node->right, arg2)) == NULL)
+	else if (tintin_regexp(NULL, node->right, arg2, 0, SUB_CMD) == FALSE)
 	{
 		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", arg2, node->right);
 	}
 	else
 	{
 		pti = node->right;
-		pto = buf;
+		*buf = 0;
 
-		while ((ptr = strstr(pti, arg2)) != NULL)
+		do
 		{
-			while (pti != ptr)
+			if (*gtd->cmds[0] == 0) // Set by tintin_regexp
 			{
-				*pto++ = *pti++;
+				break;
 			}
 
-			strcpy(pto, arg3);
-			pto += strlen(arg3);
+			ptm = strstr(pti, gtd->cmds[0]);
 
-			pti += strlen(arg2);
+			if (ptm == NULL)
+			{
+				break;
+			}
+
+			*ptm = 0;
+
+			substitute(ses, arg3, tmp, SUB_CMD);
+
+			cat_sprintf(buf, "%s%s", pti, tmp);
+
+			pti = ptm + strlen(gtd->cmds[0]);
 		}
+		while (tintin_regexp(NULL, pti, arg2, 0, SUB_CMD));
 
-		while (*pti)
-		{
-			*pto++ = *pti++;
-		}
-
-		*pto = 0;
+		strcat(buf, pti);
 
 		set_nest_node(ses->list[LIST_VARIABLE], arg1, "%s", buf);
 	}
 	return ses;
 }
-
 
 /*
 	support routines for #format - Igor
@@ -478,7 +486,7 @@ DO_COMMAND(do_format)
 
 				if (is_number(ptt))
 				{
-					sprintf(ptt, "%d", atoi(ptt) + strlen(arglist[i]) - stringlength(ses, arglist[i]));
+					sprintf(ptt, "%d", atoi(ptt) + (int) strlen(arglist[i]) - stringlength(ses, arglist[i]));
 				}
 				
 				while (*ptt)

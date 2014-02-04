@@ -26,7 +26,7 @@ MAKE = @MAKE@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-bindir = @bindir@
+bindir = ${DESTDIR}@bindir@
 docdir = @prefix@/doc
 
 #this is the standard CFLAGS options, this is what most people should use

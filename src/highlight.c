@@ -83,41 +83,47 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 {
 	struct listroot *root = ses->list[LIST_HIGHLIGHT];
 	struct listnode *node;
-	char *pt1, *pt2;
+	char *ptl, *ptm;
 	char match[BUFFER_SIZE], color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], plain[BUFFER_SIZE];
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], original, original, 0))
 		{
 			node = root->list[root->update];
 
-			if (*gtd->vars[0] == 0)
-			{
-				continue;
-			}
-
-			strcpy(match, gtd->vars[0]);
+			get_highlight_codes(ses, node->right, color);
 
 			*output = *reset = 0;
 
-			pt1 = original;
+			ptl = original;
 
-			get_highlight_codes(ses, node->right, color);
-
-			strip_vt102_codes(match, plain);
-
-			while ((pt2 = strstr(pt1, match)) != NULL)
+			do
 			{
-				*pt2 = 0;
+				if (*gtd->vars[0] == 0)
+				{
+					break;
+				}
 
-				get_color_codes(reset, pt1, reset);
+				strcpy(match, gtd->vars[0]);
 
-				cat_sprintf(output, "%s%s%s\033[0m%s", pt1, color, plain, reset);
+				strip_vt102_codes(match, plain);
 
-				pt1 = pt2 + strlen(match);
+				ptm = strstr(ptl, match);
+
+				*ptm = 0;
+
+				get_color_codes(reset, ptl, reset);
+
+				cat_sprintf(output, "%s%s%s\033[0m%s", ptl, color, plain, reset);
+
+				ptl = ptm + strlen(match);
+
+				show_debug(ses, LIST_HIGHLIGHT, "#DEBUG HIGHLIGHT {%s} {%s}", node->left, match);
 			}
-			strcat(output, pt1);
+			while (check_one_regexp(ses, node, ptl, ptl, 0));
+
+			strcat(output, ptl);
 
 			strcpy(original, output);
 		}

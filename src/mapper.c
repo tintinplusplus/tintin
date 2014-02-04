@@ -74,7 +74,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map create   [size]                   (creates the initial map)");
 		tintin_printf2(ses, "#map destroy                           (destroys the map)");
 		tintin_printf2(ses, "#map delete   <direction>              (delete the room at given dir)");
-		tintin_printf2(ses, "#map dig      <direction> [new]        (creates a new room)");
+		tintin_printf2(ses, "#map dig      <direction> [new] [vnum] (creates a new room)");
 		tintin_printf2(ses, "#map exit     <direction>  <command>   (sets the exit command)");
 		tintin_printf2(ses, "#map exitflag <direction> <exit flag>  (set the exit direction)");
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
@@ -92,6 +92,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map map      <radius>                 (shows an ascii map)");
 		tintin_printf2(ses, "#map name     <room name>              (set the room's name)");
 		tintin_printf2(ses, "#map read     <filename>               (load your map from a file)");
+		tintin_printf2(ses, "#map resize   <size>                   (resize the maximum size)");
 		tintin_printf2(ses, "#map roomflag <room flag>              (set room based flags)");
 		tintin_printf2(ses, "#map set      <option>     <value>     (set various values)");
 		tintin_printf2(ses, "#map return                            (return to last room.)");
@@ -269,6 +270,13 @@ DO_MAP(map_dig)
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
+	if (*arg1 == 0)
+	{
+		tintin_printf2(ses, "#SYNTAX: #MAP DIG {<DIRECTION>} {NEW|<VNUM>}");
+
+		return;
+	}
+
 	for (room = 1 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room] == NULL)
@@ -315,7 +323,6 @@ DO_MAP(map_dig)
 	if (strcasecmp(arg2, "new") && find_coord(ses, arg1))
 	{
 		room = map_search_tar_room;
-
 		show_message(ses, -1, "#MAP CREATE LINK %5d {%s}.", room, ses->map->room_list[room]->name);
 	}
 	else
@@ -323,6 +330,7 @@ DO_MAP(map_dig)
 		sprintf(temp, "{%d} {0} {} {%d} { }", room, room);
 		create_room(ses, temp);
 	}
+
 	sprintf(temp, "{%d} {%s} {%s}", room, arg1, arg1);
 	create_exit(ses, ses->map->in_room, temp);
 
@@ -338,7 +346,7 @@ DO_MAP(map_dig)
 
 DO_MAP(map_exit)
 {
-	char temp[BUFFER_SIZE], arg3[BUFFER_SIZE];
+	char arg3[BUFFER_SIZE];
 	struct exit_data *exit;
 	struct listnode *node;
 	int room;
@@ -355,16 +363,19 @@ DO_MAP(map_exit)
 
 		return;
 	}
-
-	if (is_abbrev(arg2, "COMMAND"))
+	if (*arg2 == 0)
 	{
-		sprintf(temp, "{%d} {%s} {%s}", exit->vnum, exit->name, arg3);
+		tintin_printf2(ses, "  command: %s", exit->cmd);
+		tintin_printf2(ses, "direction: %d", exit->dir);
+		tintin_printf2(ses, "    flags: %d", exit->flags);
+		tintin_printf2(ses, "     name: %s", exit->name);
+		tintin_printf2(ses, "     vnum: %d", exit->vnum);
+	}
+	else if (is_abbrev(arg2, "COMMAND"))
+	{
+		exit->cmd = restring(exit->cmd, arg3);
 
-		delete_exit(ses, ses->map->in_room, exit);
-
-		create_exit(ses, ses->map->in_room, temp);
-
-		show_message(ses, -1, "#MAP EXIT {%s} : COMMAND SET TO {%s}.", arg1, arg3);
+		show_message(ses, -1, "#MAP EXIT {%s} : COMMAND SET TO {%s}.", arg1, exit->cmd);
 	}
 	else if (is_abbrev(arg2, "DIRECTION"))
 	{
@@ -379,19 +390,17 @@ DO_MAP(map_exit)
 
 		show_message(ses, -1, "#MAP EXIT {%s} : DIRECTION SET TO {%s}.", arg1, arg3);
 	}
-	else if (is_abbrev(arg2, "FLAG"))
+	else if (is_abbrev(arg2, "FLAGS"))
 	{
-		show_message(ses, -1, "#MAP EXIT {%s} : FLAG SET TO {%s}.", arg1, arg3);		
+		exit->flags = atoi(arg3);
+
+		show_message(ses, -1, "#MAP EXIT {%s} : FLAGS SET TO {%d}.", arg1, exit->flags);
 	}
 	else if (is_abbrev(arg2, "NAME"))
 	{
-		sprintf(temp, "{%d} {%s} {%s}", exit->vnum, arg3, arg3);
+		exit->name = restring(exit->name, arg3);
 
-		delete_exit(ses, ses->map->in_room, exit);
-
-		create_exit(ses, ses->map->in_room, temp);
-
-		show_message(ses, -1, "#MAP EXIT {%s} : NAME SET TO {%s}.", arg1, arg3);
+		show_message(ses, -1, "#MAP EXIT {%s} : NAME SET TO {%s}.", arg1, exit->name);
 	}
 	else if (is_abbrev(arg2, "VNUM"))
 	{
@@ -414,7 +423,7 @@ DO_MAP(map_exit)
 	}
 	else
 	{
-		tintin_printf2(ses, "Syntax: #MAP EXIT {<NAME>} {COMMAND|DIRECTION|NAME|FLAG} {<argument>}");
+		tintin_printf2(ses, "Syntax: #MAP EXIT {<NAME>} {COMMAND|DIRECTION|NAME|FLAGS|VNUM} {<argument>}");
 	}
 }
 
@@ -449,6 +458,12 @@ DO_MAP(map_exitflag)
 
 			return;
 		}
+	}
+	else
+	{
+		tintin_printf2(ses, "#MAP: Hide flag is set to %s.", HAS_BIT(exit->flags, EXIT_FLAG_HIDE) ? "on" : "off");
+
+		return;
 	}
 
 	if (is_abbrev("on", arg3))
@@ -626,10 +641,13 @@ DO_MAP(map_get)
 		tintin_printf2(ses, "  roomarea: %s", room->area);
 		tintin_printf2(ses, " roomcolor: %s", room->color);
 		tintin_printf2(ses, "  roomdesc: %s", room->desc);
+		tintin_printf2(ses, " roomexits: %d", get_map_exits(ses, room->vnum));
 		tintin_printf2(ses, " roomflags: %d", room->flags);
 		tintin_printf2(ses, "  roomname: %s", room->name);
 		tintin_printf2(ses, "  roomnote: %s", room->note);
 		tintin_printf2(ses, "roomsymbol: %s", room->symbol);
+		tintin_printf2(ses, "worldflags: %d", ses->map->flags);
+		tintin_printf2(ses, " worldsize: %d", ses->map->size);
 	}
 	else
 	{
@@ -674,6 +692,14 @@ DO_MAP(map_get)
 				cat_sprintf(buf, "{%s}{%d}", exit->name, exit->vnum);
 			}
 			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", buf);
+		}
+		else if (is_abbrev(arg1, "worldflags"))
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%d", ses->map->flags);
+		}
+		else if (is_abbrev(arg1, "worldsize"))
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%d", ses->map->size);
 		}
 		else
 		{
@@ -1250,6 +1276,27 @@ DO_MAP(map_read)
 	show_message(ses, -1, "#MAP READ: Map file {%s} loaded.", arg1);
 
 
+}
+
+DO_MAP(map_resize)
+{
+	int size;
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+
+	size = atoi(arg1);
+
+	if (size <= ses->map->size)
+	{
+		tintin_printf2(ses, "#MAP RESIZE: NEW SIZE (%d) MUST BE GREATER THAN CURRENT SIZE (%d).", size, ses->map->size);
+		return;
+	}
+
+	ses->map->size = size;
+
+	ses->map->room_list = (struct room_data **) realloc(ses->map->room_list, ses->map->size * sizeof(struct room_data *));
+
+	show_message(ses, -1, "#MAP RESIZE: MAP RESIZED TO %d ROOMS.", size);
 }
 
 DO_MAP(map_return)
@@ -1890,14 +1937,14 @@ int get_map_exits(struct session *ses, int room)
 {
 	struct exit_data *exit;
 
-	int exits = 0;
+	int count = 0;
 
 	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
 	{
-		exits++;
+		count++;
 	}
 
-	return exits;
+	return count;
 }
 
 int follow_map(struct session *ses, char *argument)

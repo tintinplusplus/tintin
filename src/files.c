@@ -37,7 +37,7 @@ DO_COMMAND(do_read)
 {
 	FILE *fp;
 	struct stat filedata;
-	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto, last;
+	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto, last = 0;
 	int lvl, cnt, com, lnc, fix, ok;
 	int counter[LIST_MAX];
 
@@ -375,13 +375,13 @@ DO_COMMAND(do_write)
 	FILE *file;
 	char filename[BUFFER_SIZE];
 	struct listroot *root;
-	int i, j;
+	int i, j, cnt = 0;
 
 	get_arg_in_braces(arg, filename, TRUE);
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #write {%s} - COULDN'T OPEN FILE TO WRITE.", filename);
+		tintin_printf(ses, "#ERROR: #WRITE: COULDN'T OPEN {%s} TO WRITE.", filename);
 		return ses;
 	}
 
@@ -399,13 +399,15 @@ DO_COMMAND(do_write)
 			if (*root->list[j]->group == 0)
 			{
 				write_node(ses, i, root->list[j], file);
+
+				cnt++;
 			}
 		}
 	}
 
 	fclose(file);
 
-	show_message(ses, LIST_MESSAGE, "#OK. COMMAND FILE WRITTEN.", filename);
+	show_message(ses, LIST_MESSAGE, "#WRITE: %d COMMANDS WRITTEN TO {%s}.", cnt, filename);
 
 	return ses;
 }

@@ -222,6 +222,8 @@ DO_CONFIG(config_wordwrap)
 	}
 	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
+	SET_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
+
 	return ses;
 }
 

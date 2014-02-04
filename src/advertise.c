@@ -166,6 +166,26 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
+		1291140000, /* 30 Nov 2010 */
+		1354280000, /* 30 Nov 2012 */
+		100,
+		"\n"
+		"<138>                Northern Crossroads - http://www.ncmud.org\n"
+		"\n"
+		"<078>Northern Crossroads is a diverse world of blade wielders, assassins and magic\n"
+		"<078>users who use their powers together to seek out the darkest dungeons. Decide\n"
+		"<078>between five classes, as allowed by your choice of ten races, and prove your\n"
+		"<078>strength to ascend to an Advanced class. Venture to dangerous zones with other\n"
+		"<078>mortals, claim the rarest of items, join one of several clubs and build your\n"
+		"<078>character to challenge other mortals. NC has enthralled players with hundreds\n"
+		"<078>of detailed areas of various themes since 1993 and is one of the oldest MUDs\n"
+		"<078>in the world.\n"
+		"\n"
+		"<178>To connect to Northern Crossroads enter: #session NC ncmud.org 9000\n"
+		"\n"
+	},
+
+	{
 		0,
 		0,
 		0,

@@ -246,6 +246,11 @@ void readmud(struct session *ses)
 
 	push_call("readmud(%p)", ses);
 
+	if (gtd->mud_output_len < BUFFER_SIZE)
+	{
+		check_all_events(ses, 0, 1, "RECEIVED OUTPUT", gtd->mud_output_buf);
+	}
+
 	gtd->mud_output_len = 0;
 
 	/* separate into lines and print away */
@@ -257,6 +262,8 @@ void readmud(struct session *ses)
 	}
 
 	SET_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+
+
 
 	for (line = gtd->mud_output_buf ; line && *line ; line = next_line)
 	{
@@ -331,6 +338,8 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		linebuf = line;
 	}
+
+
 
 	do_one_line(linebuf, ses);   /* changes linebuf */
 

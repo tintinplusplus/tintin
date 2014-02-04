@@ -185,6 +185,12 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 		cpsrc = src;
 	}
 
+	if (HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL) && ses->logfile)
+	{
+		fwrite(cpsrc, 1, cplen, ses->logfile);
+		fflush(ses->logfile);
+	}
+
  	if (ses->read_len + cplen >= ses->read_max)
 	{
 		ses->read_max = ses->read_len + cplen + 1000;
@@ -194,7 +200,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	memcpy(ses->read_buf + ses->read_len, cpsrc, cplen);
 
 	cpsrc = ses->read_buf;
-
+	cplen = ses->read_len + cplen;
 
 	if (gtd->mud_output_len + cplen >= gtd->mud_output_max)
 	{
@@ -203,13 +209,6 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	}
 
 	cpdst = (unsigned char *) gtd->mud_output_buf + gtd->mud_output_len;
-
-
-	if (HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL) && ses->logfile)
-	{
-		fwrite(cpsrc, 1, cplen, ses->logfile);
-		fflush(ses->logfile);
-	}
 
 	while (cplen > 0)
 	{
@@ -1092,7 +1091,6 @@ int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 	return UMIN(i + 1, cplen);
 }
 
-
 int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 {
 	char mod[BUFFER_SIZE], val[BUFFER_SIZE], json[BUFFER_SIZE], *pto;
@@ -1206,10 +1204,16 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 					switch (src[i])
 					{
 						case '\\':
-							*pto++ = src[i++];
-							if (i < cplen && src[i] != IAC)
+							i++;
+
+							if (i < cplen && src[i] == '"')
 							{
 								*pto++ = src[i++];
+							}
+							else
+							{
+								*pto++ = '\\';
+								*pto++ = '\\';
 							}
 							break;
 
@@ -1295,7 +1299,49 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 		i++;
 	}
 
-	sprintf(json, "%.*s", i - 4, src + 3);
+	// Raw json data for debugging purposes.
+
+	pto = json;
+	i = 3;
+
+	while (i < cplen && src[i] != IAC)
+	{
+		switch (src[i])
+		{
+			case '\\':
+				i++;
+				*pto++ = '\\';
+				*pto++ = '\\';
+				break;
+
+			case '{':
+				i++;
+				*pto++ = '\\';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'B';
+				break;
+
+			case '}':
+				i++;
+				*pto++ = '\\';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'D';
+				break;
+
+			case COMMAND_SEPARATOR:
+				i++;
+				*pto++ = '\\';
+				*pto++ = COMMAND_SEPARATOR;
+				break;
+
+			default:
+				*pto++ = src[i++];
+				break;
+		}
+	}
+	*pto = 0;
 
 	telopt_debug(ses, "IAC SB GMCP %s IAC SE", mod);
 

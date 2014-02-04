@@ -112,12 +112,6 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		}
 	}
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER))
-	{
-		DEL_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
-
-		reset_hash_table();
-	}
 
 	strcat(ses->more_output, line);
 
@@ -204,7 +198,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 DO_COMMAND(do_grep)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	int scroll_cnt, grep_cnt, grep_min, grep_max, grep_add;
+	int scroll_cnt, grep_cnt, grep_min, grep_max, grep_add, page;
 
 	grep_cnt = grep_add = scroll_cnt = grep_min = 0;
 	grep_max = ses->bot_row - ses->top_row - 2;
@@ -222,107 +216,178 @@ DO_COMMAND(do_grep)
 	}
 	else
 	{
-		if (is_number(left))
+		page = get_number(ses, left);
+
+		if (page)
 		{
-			arg = get_arg_in_braces(arg, left,  FALSE);
+			arg = get_arg_in_braces(arg, left, FALSE);
 			arg = get_arg_in_braces(arg, right, TRUE);
 
 			if (*right == 0)
 			{
-				tintin_printf2(ses, "#GREP WHAT OF PAGE {%s} ?", left);
+				tintin_printf2(ses, "#GREP PAGE {%s} FOR WHAT?", left);
 
 				return ses;
 			}
-			grep_min += grep_max * atoi(left);
-			grep_max += grep_max * atoi(left);
 		}
 		else
 		{
+			page = 1;
+
 			arg = get_arg_in_braces(arg, right, TRUE);
+		}
+
+		if (page > 0)
+		{
+			grep_min = grep_max * page - grep_max;
+			grep_max = grep_max * page;
+		}
+		else
+		{
+			grep_min = grep_max * (page * -1) - grep_max;
+			grep_max = grep_max * (page * -1);
 		}
 
 		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
-		tintin_header(ses, " GREP %s ", right);
+		tintin_header(ses, " GREPPING PAGE %d FOR %s ", page, right);
 
-		scroll_cnt = ses->scroll_row;
-
-		do
+		if (page > 0)
 		{
-			if (scroll_cnt == ses->scroll_max -1)
-			{
-				scroll_cnt = 0;
-			}
-			else
-			{
-				scroll_cnt++;
-			}
+			scroll_cnt = ses->scroll_row;
 
-			if (ses->buffer[scroll_cnt] == NULL)
+			do
 			{
-				break;
-			}
+				if (scroll_cnt == ses->scroll_max - 1)
+				{
+					scroll_cnt = 0;
+				}
+				else
+				{
+					scroll_cnt++;
+				}
 
-			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
-			{
-				continue;
-			}
-
-			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
-			{
-				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
-
-				if (grep_cnt + grep_add > grep_max)
+				if (ses->buffer[scroll_cnt] == NULL)
 				{
 					break;
 				}
 
-				grep_cnt += grep_add;
-			}
-		}
-		while (scroll_cnt != ses->scroll_row);
+				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+				{
+					continue;
+				}
 
-		if (grep_cnt <= grep_min)
-		{
-			tintin_puts2(ses, "#NO MATCHES FOUND.");
-		}
-		else do
-		{
-			if (scroll_cnt == 0)
-			{
-				scroll_cnt = ses->scroll_max -1;
-			}
-			else
-			{
-				scroll_cnt--;
-			}
+				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+				{
+					grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
-			if (ses->buffer[scroll_cnt] == NULL)
-			{
-				break;
+					if (grep_cnt + grep_add > grep_max)
+					{
+						break;
+					}
+
+					grep_cnt += grep_add;
+				}
 			}
+			while (scroll_cnt != ses->scroll_row);
 
-			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			if (grep_cnt <= grep_min)
 			{
-				continue;
+				tintin_puts2(ses, "#NO MATCHES FOUND.");
 			}
-
-			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+			else do
 			{
-				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+				if (scroll_cnt == 0)
+				{
+					scroll_cnt = ses->scroll_max - 1;
+				}
+				else
+				{
+					scroll_cnt--;
+				}
 
-				if (grep_cnt - grep_add < grep_min)
+				if (ses->buffer[scroll_cnt] == NULL)
 				{
 					break;
 				}
 
-				grep_cnt -= grep_add;
+				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+				{
+					continue;
+				}
 
-				tintin_puts2(ses, ses->buffer[scroll_cnt]);
+				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+				{
+					grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+
+					if (grep_cnt - grep_add < grep_min)
+					{
+						break;
+					}
+
+					grep_cnt -= grep_add;
+
+					tintin_puts2(ses, ses->buffer[scroll_cnt]);
+				}
+			}
+			while (scroll_cnt != ses->scroll_row);
+		}
+		else
+		{
+			if (ses->buffer[0])
+			{
+				scroll_cnt = ses->scroll_row - 1;
+			}
+			else
+			{
+				scroll_cnt = ses->scroll_max - 1;
+			}
+
+			do
+			{
+				if (scroll_cnt == -1)
+				{
+					scroll_cnt = 0;
+				}
+				else
+				{
+					scroll_cnt--;
+				}
+
+				if (ses->buffer[scroll_cnt] == NULL)
+				{
+					break;
+				}
+
+				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+				{
+					continue;
+				}
+
+				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+				{
+					grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+
+					if (grep_cnt >= grep_min)
+					{
+						tintin_puts2(ses, ses->buffer[scroll_cnt]);
+					}
+
+					if (grep_cnt + grep_add >= grep_max)
+					{
+						break;
+					}
+
+					grep_cnt += grep_add;
+				}
+			}
+			while (scroll_cnt != ses->scroll_row);
+
+			if (grep_cnt <= grep_min)
+			{
+				tintin_puts2(ses, "#NO MATCHES FOUND.");
 			}
 		}
-		while (scroll_cnt != ses->scroll_row);
-
 		tintin_header(ses, "");
 
 		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
@@ -332,8 +397,8 @@ DO_COMMAND(do_grep)
 
 int show_buffer(struct session *ses)
 {
-	char temp[STRING_SIZE], wrap[STRING_SIZE], *temp_ptr, *wrap_ptr;
-	int scroll_size, scroll_cnt, scroll_tmp, scroll_add, skip;
+	char temp[STRING_SIZE];
+	int scroll_size, scroll_cnt, scroll_tmp, scroll_add, scroll_cut;
 
 	if (ses != gtd->ses)
 	{
@@ -344,7 +409,7 @@ int show_buffer(struct session *ses)
 	scroll_add  = 0 - ses->scroll_base;
 	scroll_tmp  = 0;
 	scroll_cnt  = ses->scroll_line;
-
+	scroll_cut  = 0;
 	/*
 		Find the upper limit of the buffer shown
 	*/
@@ -362,11 +427,11 @@ int show_buffer(struct session *ses)
 		{
 			if (scroll_add == scroll_size)
 			{
-				scroll_tmp = 0;
+				scroll_cut = 0;
 			}
 			else
 			{
-				scroll_tmp -= scroll_size - scroll_add;
+				scroll_cut = scroll_tmp - (scroll_size - scroll_add);
 			}
 			break;
 		}
@@ -397,60 +462,20 @@ int show_buffer(struct session *ses)
 	}
 
 	/*
-		If the top line exists of multiple lines split in the middle.
+		If the top line exists of multiple lines split it in the middle.
 	*/
 
-	if (ses->buffer[scroll_cnt] && scroll_tmp)
+	if (ses->buffer[scroll_cnt] && scroll_cut)
 	{
-		word_wrap(ses, ses->buffer[scroll_cnt], temp, FALSE);
-
-		temp_ptr = temp;
-		wrap_ptr = wrap;
-
-		while (scroll_tmp)
-		{
-			switch (*temp_ptr)
-			{
-				case ESCAPE:
-					for (skip = skip_vt102_codes(temp_ptr) ; skip > 0 ; skip--)
-					{
-						*wrap_ptr = *temp_ptr;
-						temp_ptr++;
-						wrap_ptr++;
-					}
-					continue;
-
-				case '\n':
-					temp_ptr++;
-					scroll_tmp--;
-					continue;
-
-				case '\0':
-					printf("\033[1;31m(buffer error)\n");
-					scroll_tmp--;
-					break;
-
-				default:
-					temp_ptr++;
-					break;
-			}
-		}
-		*wrap_ptr = 0;
-
 		if (scroll_add >= 0)
 		{
-			printf("%s%s\n", wrap, temp_ptr);
+			word_wrap_split(ses, ses->buffer[scroll_cnt], temp, scroll_tmp - scroll_cut, scroll_cut);
+
+			printf("%s\n", temp);
 		}
 		else
 		{
-			wrap_ptr = temp_ptr;
-
-			for (wrap_ptr = temp_ptr ; scroll_tmp++ < scroll_size ; temp_ptr++)
-			{
-				temp_ptr = strchr(temp_ptr, '\n');
-			}
-			*temp_ptr = 0;
-			printf("%s\n", wrap_ptr);
+			word_wrap_split(ses, ses->buffer[scroll_cnt], temp, ses->scroll_base, scroll_size);
 
 			goto eof;
 		}
@@ -480,7 +505,7 @@ int show_buffer(struct session *ses)
 
 		if (scroll_add - scroll_tmp < 0)
 		{
-			scroll_tmp = scroll_add;
+			scroll_cut = scroll_add;
 			break;
 		}
 
@@ -490,24 +515,12 @@ int show_buffer(struct session *ses)
 	}
 
 	/*
-		If the bottom line exists of multiple lines split in the middle
+		If the bottom line exists of multiple lines split it in the middle
 	*/
 
 	if (scroll_tmp && ses->buffer[scroll_cnt])
 	{
-		temp_ptr = temp;
-
-		while (scroll_tmp--)
-		{
-			temp_ptr = strchr(temp_ptr, '\n');
-		}
-
-		if (temp_ptr)
-		{
-			*temp_ptr = 0;
-		}
-
-		printf("%s\n", temp);
+		word_wrap_split(ses, ses->buffer[scroll_cnt], temp, 0, scroll_cut);
 	}
 
 	eof:
@@ -529,6 +542,13 @@ DO_COMMAND(do_buffer)
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
+
+		reset_hash_table();
+	}
 
 	if (*left == 0)
 	{
@@ -769,7 +789,7 @@ DO_BUFFER(buffer_lock)
 DO_BUFFER(buffer_find)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	int scroll_cnt, grep_cnt, grep_max;
+	int scroll_cnt, grep_cnt, grep_max, page;
 
 	grep_cnt = grep_max = scroll_cnt = 0;
 
@@ -785,25 +805,28 @@ DO_BUFFER(buffer_find)
 	}
 	else
 	{
-		if (is_number(left))
+		page = get_number(ses, left);
+
+		if (page)
 		{
 			arg = get_arg_in_braces(arg, left,  FALSE);
 			arg = get_arg_in_braces(arg, right, TRUE);
 
 			if (*right == 0)
 			{
-				tintin_printf2(NULL, "#BUFFER, FIND WHAT OF OCCURANCE {%s} ?", left);
+				tintin_printf2(NULL, "#BUFFER, FIND OCCURANCE %d OF WHAT?", page);
 
 				return;
 			}
-			grep_max = atoi(left);
 		}
 		else
 		{
+			page = 1;
+
 			arg = get_arg_in_braces(arg, right, TRUE);
 		}
 
-		if (grep_max >= 0)
+		if (page > 0)
 		{
 			scroll_cnt = ses->scroll_row;
 
@@ -830,11 +853,12 @@ DO_BUFFER(buffer_find)
 
 				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
 				{
-					if (grep_cnt == grep_max)
+					grep_cnt++;
+
+					if (grep_cnt == page)
 					{
 						break;
 					}
-					grep_cnt++;
 				}
 			}
 			while (scroll_cnt != ses->scroll_row);
@@ -875,7 +899,7 @@ DO_BUFFER(buffer_find)
 				{
 					grep_cnt--;
 
-					if (grep_cnt == grep_max)
+					if (grep_cnt == page)
 					{
 						break;
 					}

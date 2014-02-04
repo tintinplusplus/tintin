@@ -351,11 +351,7 @@ void init_tintin(int greeting)
 
 	init_screen_size(gts);
 
-	/*
-		Set application keypad mode and  ESC 0 prefix
-	*/
-
-	printf("\033=\033[?1h");
+	printf("\033="); // set application keypad mode
 
 	gts->input_level++;
 

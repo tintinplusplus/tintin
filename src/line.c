@@ -36,7 +36,7 @@ DO_COMMAND(do_line)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #LINE {GAG|LOG} {argument}.");
+		tintin_printf(ses, "#SYNTAX: #LINE {<OPTION>} {argument}.");
 	}
 	else
 	{
@@ -59,6 +59,7 @@ DO_COMMAND(do_line)
 	}
 	return ses;
 }
+
 
 DO_LINE(line_gag)
 {
@@ -186,3 +187,29 @@ DO_LINE(line_substitute)
 
 	return ses;
 }
+
+DO_LINE(line_verbose)
+{
+	struct session *sesptr;
+	char left[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(arg, left,  TRUE);
+
+	if (*left == 0)
+	{
+		tintin_printf(ses, "#SYNTAX: #LINE {VERBOSE} {command}.");
+
+		return ses;
+	}
+
+	sesptr = ses;
+
+	SET_BIT(sesptr->flags, SES_FLAG_VERBOSELINE);
+
+	ses = script_driver(ses, -1, left);
+
+	DEL_BIT(sesptr->flags, SES_FLAG_VERBOSELINE);
+
+	return ses;
+}
+	

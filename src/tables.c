@@ -453,6 +453,7 @@ struct map_type map_table[] =
 	{     "MOVE",             map_move,            2    },
 	{     "NAME",             map_name,            2    },
 	{     "READ",             map_read,            0    },
+	{     "RESIZE",           map_resize,          1    },
 	{     "RETURN",           map_return,          1    },
 	{     "ROOMFLAG",         map_roomflag,        2    },
 	{     "RUN",              map_run,             2    },
@@ -602,7 +603,7 @@ struct cursor_type cursor_table[] =
 	{
 		"MIXED TAB BACKWARD",
 		"Tab completion on last word, search backward",
-		"[Z",
+		"[Z", // shift-tab
 		cursor_mixed_tab_backward
 	},
 	{
@@ -660,14 +661,12 @@ struct cursor_type cursor_table[] =
 	{
 		"", "", "[6~",   cursor_buffer_down
 	},
-	{
-		"", "", "[H",    cursor_buffer_home
-	},
-	{
-		"", "", "[F",    cursor_buffer_end
-	},
+
 	{
 		"", "", "",      cursor_buffer_lock
+	},
+	{
+		"", "", "OM",    cursor_enter
 	},
 	{
 		"", "", "[7~",   cursor_home
@@ -677,6 +676,9 @@ struct cursor_type cursor_table[] =
 	},
 	{
 		"", "", "OH",    cursor_home
+	},
+	{
+		"", "", "[H",    cursor_home
 	},
 	{
 		"", "", "OD",    cursor_left
@@ -692,6 +694,9 @@ struct cursor_type cursor_table[] =
 	},
 	{
 		"", "", "OF",    cursor_end
+	},
+	{
+		"", "", "[F",    cursor_end
 	},
 	{
 		"", "", "OC",    cursor_right
@@ -738,28 +743,39 @@ struct timer_type timer_table[] =
 	{    "Update Packet Patcher"       },
 	{    "Update Chat Server"          },
 	{    "Update Terminal"             },
+	{    "Update Time Events"          },
 	{    "Update Memory"               },
 	{    "Stall Program"               }
 };
 
 struct event_type event_table[] =
 {
+	{    "DATE",                                   "Triggers on the given date."             },
+	{    "DAY",                                    "Triggers each day or given day."         },
+	{    "HOUR",                                   "Triggers each hour or given hour."       },
 	{    "END OF PATH",                            "Triggers when walking the last room."    },
 	{    "IAC ",                                   "Triggers on telopt negotiation."         },
 	{    "MAP ENTER MAP",                          "Triggers when entering the map."         },
 	{    "MAP ENTER ROOM",                         "Triggers when entering a map room."      },
 	{    "MAP EXIT MAP",                           "Triggers when exiting the map."          },
 	{    "MAP EXIT ROOM",                          "Triggers when exiting a map room."       },
+	{    "MINUTE",                                 "Triggers each minute or given minute."   },
+	{    "MONTH",                                  "Triggers each month or given month."     },
 	{    "PROGRAM START",                          "Triggers when main session starts."      },
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."      },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },
 	{    "RECEIVED LINE",                          "Triggers when a new line is received."   },
+	{    "RECEIVED OUTPUT",                        "Triggers when new output is received."   },
 	{    "SCREEN RESIZE",                          "Triggers when the screen is resized."    },
+	{    "SECOND",                                 "Trigers each second or given second."    },
 	{    "SEND OUTPUT",                            "Triggers when sending output."           },
 	{    "SESSION ACTIVATED",                      "Triggers when a session is activated."   },
 	{    "SESSION CONNECTED",                      "Triggers when a new session connects."   },
 	{    "SESSION DEACTIVATED",                    "Triggers when a session is deactivated." },
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
+	{    "TIME",                                   "Triggers on the given time."             },
+	{    "WEEK",                                   "Triggers each week or given week."       },
+	{    "YEAR",                                   "Triggers each year or given year."       },
 	{    "",                                       ""                                        }
 };
 
@@ -784,6 +800,7 @@ struct line_type line_table[] =
 	{    "LOG",               line_log               },
 	{    "LOGVERBATIM",       line_logverbatim       },
 	{    "SUBSTITUTE",        line_substitute        },
+	{    "VERBOSE",           line_verbose           },
 	{    "",                  NULL                   }
 };
 

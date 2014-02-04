@@ -1,6 +1,8 @@
 * Stuff that needs to be done
 
-- Regex support for #replace
+- Fix '#var {bli} {bla} ' bug
+
+- Fix brace related GMCP crashes.
 
 - Check if Cygwin install info is still correct.
 
@@ -13,6 +15,12 @@
 - look into getting rid of node->data
 
 - garbage collection for deleted nodes.
+
+- global flag to only show the same area.
+
+- map color setting for hidden exits.
+
+- look into Launchpad PPA
 
 -------------------------------------------------------------------------------
 
@@ -41,7 +49,7 @@ GENERAL STUFF:
 
 - crash on: #map exit {2}{command}{s;#map read floobity.map} 
 
-- add #line gag {lines} option.
+- add #line gag {lines} option or #lines {lines} {gag}.
 
 - auto adjust max vnum size of mapper.
 
@@ -103,6 +111,8 @@ ERROR: close in cleanup (9: Bad file descriptor)
 - Look into using speech-dispatcher for text to speech.
 
 - A way to set specific speedwalk delays for exits.
+
+- MXP script http://tintin.sourceforge.net/board/viewtopic.php?t=1396
 
 -------------------------------------------------------------------------------
 

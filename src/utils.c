@@ -66,40 +66,72 @@ int is_color_code(char *str)
 }
 
 /*
-	return TRUE if the string is a number
+	Keep synched with tintoi()
 */
 
 int is_number(char *str)
 {
-	int i = 0;
+	char *ptr = str;
+	int i = 1, d = 0;
 
-	if (str[i] == '-' || str[i] == '+')
-	{
-		i++;
-	}
-
-	if (!isdigit((int) str[i]))
+	if (*ptr == 0)
 	{
 		return FALSE;
 	}
 
-	for (i = 1 ; str[i] != 0 ; i++)
+	switch (*ptr)
 	{
-		if (!isdigit((int) str[i]))
-		{
-			if (str[i] != '.')
-			{
-				return FALSE;
-			}
+		case '!':
+		case '~':
+		case '+':
+		case '-':
+			ptr++;
+			break;
+	}
 
-			for (i++ ; str[i] != 0 ; i++)
-			{
-				if (!isdigit((int) str[i]))
+	ptr = str + strlen(str);
+
+	while (TRUE)
+	{
+		ptr--;
+
+		switch (*ptr)
+		{
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				break;
+
+			case '.':
+				if (d)
 				{
 					return FALSE;
 				}
-			}
-			return TRUE;
+				d = 1;
+				break;
+
+			case ':':
+				if (i == 4)
+				{
+					return FALSE;
+				}
+				i++;
+				break;
+
+			default:
+				return FALSE;
+		}
+
+		if (ptr == str)
+		{
+			break;
 		}
 	}
 	return TRUE;
@@ -275,12 +307,19 @@ void show_message(struct session *ses, int index, char *format, ...)
 	vsprintf(buf, format, args);
 
 	va_end(args);
-	
+
+	if (HAS_BIT(ses->flags, SES_FLAG_VERBOSELINE))
+	{
+		tintin_puts2(ses, buf);
+
+		pop_call();
+		return;
+	}
+
 	if (index == -1)
 	{
 		if (ses->input_level == 0)
 		{
-
 			tintin_puts2(ses, buf);
 		}
 		pop_call();

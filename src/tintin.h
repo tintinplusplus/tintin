@@ -122,7 +122,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION             "2.00.5"
+#define CLIENT_VERSION             "2.00.6"
 
 #define ESCAPE                          27
 
@@ -136,9 +136,11 @@
 #define TIMER_UPDATE_PACKETS             5
 #define TIMER_UPDATE_CHAT                6
 #define TIMER_UPDATE_TERMINAL            7
-#define TIMER_UPDATE_MEMORY              8
-#define TIMER_STALL_PROGRAM              9
-#define TIMER_CPU                       10
+#define TIMER_UPDATE_TIME                8
+#define TIMER_UPDATE_MEMORY              9
+#define TIMER_STALL_PROGRAM             10
+#define TIMER_CPU                       11
+
 
 #define PULSE_PER_SECOND                20
 
@@ -151,6 +153,7 @@
 #define PULSE_UPDATE_CHAT                2
 #define PULSE_UPDATE_TERMINAL            1
 #define PULSE_UPDATE_MEMORY              2
+#define PULSE_UPDATE_TIME               20
 
 /*
 	Index for lists used by tintin
@@ -309,7 +312,7 @@ enum operators
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
-#define SES_FLAG_REGEXP               (1 << 14) /* Unused */
+#define SES_FLAG_VERBOSELINE          (1 << 14) /* Unused */
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
@@ -1121,6 +1124,7 @@ extern DO_MAP(map_map);
 extern DO_MAP(map_move);
 extern DO_MAP(map_name);
 extern DO_MAP(map_read);
+extern DO_MAP(map_resize);
 extern DO_MAP(map_return);
 extern DO_MAP(map_roomflag);
 extern DO_MAP(map_run);
@@ -1430,6 +1434,7 @@ extern DO_LINE(line_gag);
 extern DO_LINE(line_log);
 extern DO_LINE(line_logverbatim);
 extern DO_LINE(line_substitute);
+extern DO_LINE(line_verbose);
 
 #endif
 
@@ -1686,6 +1691,7 @@ extern struct telopt_type telopt_table[];
 
 extern void printline(struct session *ses, char *str, int isaprompt);
 int word_wrap(struct session *ses, char *textin, char *textout, int display);
+int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, int keep);
 
 #endif
 
@@ -1720,7 +1726,7 @@ extern void packet_update(void);
 extern void chat_update(void);
 extern void terminal_update(void);
 extern void memory_update(void);
-
+extern void time_update(void);
 #endif
 
 #ifndef __UTILS_H__

@@ -47,6 +47,7 @@ void mainloop(void)
 	short int pulse_update_chat     = 0 + PULSE_UPDATE_CHAT;
 	short int pulse_update_terminal = 0 + PULSE_UPDATE_TERMINAL;
 	short int pulse_update_memory   = 0 + PULSE_UPDATE_MEMORY;
+	short int pulse_update_time     = 1 + PULSE_UPDATE_TIME;
 
 	wait_time.tv_sec = 0;
 
@@ -119,6 +120,13 @@ void mainloop(void)
 			pulse_update_memory = PULSE_UPDATE_MEMORY;
 
 			memory_update();
+		}
+
+		if (--pulse_update_time == 0)
+		{
+			pulse_update_time = PULSE_UPDATE_TIME;
+
+			time_update();
 		}
 
 		gettimeofday(&curr_time, NULL);
@@ -453,4 +461,134 @@ void memory_update(void)
 	}
 
 	close_timer(TIMER_UPDATE_MEMORY);
+}
+
+void time_update(void)
+{
+	static char sec[3], min[3], hrs[3], day[3], wks[3], mon[3], yrs[5];
+	static char old_sec[3], old_min[3], old_hrs[3], old_day[3], old_wks[3], old_mon[3], old_yrs[5];
+
+	time_t timeval_t = (time_t) time(NULL);
+	struct tm timeval_tm = *localtime(&timeval_t);
+
+	open_timer(TIMER_UPDATE_TIME);
+
+	// Initialize on the first call.
+
+	if (old_sec[0] == 0)
+	{
+		strftime(old_sec, 3, "%S", &timeval_tm);
+		strftime(old_min, 3, "%M", &timeval_tm);
+		strftime(old_hrs, 3, "%H", &timeval_tm);
+		strftime(old_day, 3, "%d", &timeval_tm);
+		strftime(old_wks, 3, "%W", &timeval_tm);
+		strftime(old_mon, 3, "%m", &timeval_tm);
+		strftime(old_yrs, 5, "%Y", &timeval_tm);
+
+		strftime(sec, 3, "%S", &timeval_tm);
+		strftime(min, 3, "%M", &timeval_tm);
+		strftime(hrs, 3, "%H", &timeval_tm);
+		strftime(day, 3, "%d", &timeval_tm);
+		strftime(wks, 3, "%W", &timeval_tm);
+		strftime(mon, 3, "%m", &timeval_tm);
+		strftime(yrs, 5, "%Y", &timeval_tm);
+	}
+
+	strftime(sec, 3, "%S", &timeval_tm);
+	strftime(min, 3, "%M", &timeval_tm);
+
+	if (min[0] == old_min[0] && min[1] == old_min[1])
+	{
+		goto time_event_sec;
+	}
+
+	strcpy(old_min, min);
+
+	strftime(hrs, 3, "%H", &timeval_tm);
+
+	if (hrs[0] == old_hrs[0] && hrs[1] == old_hrs[1])
+	{
+		goto time_event_min;
+	}
+
+	strcpy(old_hrs, hrs);
+
+	strftime(day, 3, "%d", &timeval_tm);
+	strftime(wks, 3, "%W", &timeval_tm);
+
+	if (day[0] == old_day[0] && day[1] == old_day[1])
+	{
+		goto time_event_hrs;
+	}
+
+	strcpy(old_day, day);
+
+	strftime(mon, 3, "%m", &timeval_tm);
+
+	if (mon[0] == old_mon[0] && mon[1] == old_mon[1])
+	{
+		goto time_event_day;
+	}
+
+	strcpy(old_mon, mon);
+
+	strftime(yrs, 5, "%Y", &timeval_tm);
+
+	if (yrs[0] == old_yrs[0] && yrs[1] == old_yrs[1] && yrs[2] == old_yrs[2] && yrs[3] == old_yrs[3])
+	{
+		goto time_event_mon;
+	}
+
+	strcpy(old_yrs, yrs);
+
+	check_all_events(NULL, 0, 7, "YEAR", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, 1, 7, "YEAR %s", yrs, yrs, mon, wks, day, hrs, min, sec);
+
+
+	time_event_mon:
+
+	check_all_events(NULL, 0, 7, "MONTH", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, 1, 7, "MONTH %s", mon, yrs, mon, wks, day, hrs, min, sec);
+
+
+	time_event_day:
+
+	if (wks[0] != old_wks[0] || wks[1] != old_wks[1])
+	{
+		strcpy(old_wks, wks);
+
+		check_all_events(NULL, 0, 7, "WEEK", yrs, mon, wks, day, hrs, min, sec);
+		check_all_events(NULL, 1, 7, "WEEK %s", wks, yrs, mon, wks, day, hrs, min, sec);
+	}
+
+	check_all_events(NULL, 2, 7, "DATE %s-%s", mon, day, yrs, mon, wks, day, hrs, min, sec);
+
+	check_all_events(NULL, 0, 7, "DAY", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, 1, 7, "DAY %s", day, yrs, mon, wks, day, hrs, min, sec);
+
+
+	time_event_hrs:
+
+	check_all_events(NULL, 0, 7, "HOUR", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, 1, 7, "HOUR %s", hrs, yrs, mon, wks, day, hrs, min, sec);
+
+
+	time_event_min:
+
+	check_all_events(NULL, 4, 7, "DATE %s-%s %s:%s", mon, day, hrs, min, yrs, mon, wks, day, hrs, min, sec);
+
+	check_all_events(NULL, 2, 7, "TIME %s:%s", hrs, min, yrs, mon, wks, day, hrs, min, sec);
+
+	check_all_events(NULL, 0, 7, "MINUTE", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, 1, 7, "MINUTE %s", min, yrs, mon, wks, day, hrs, min, sec);
+
+
+	time_event_sec:
+
+	check_all_events(NULL, 3, 7, "TIME %s:%s:%s", hrs, min, sec, yrs, mon, wks, day, hrs, min, sec);
+
+	check_all_events(NULL, 0, 7, "SECOND", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, 1, 7, "SECOND %s", sec, yrs, mon, wks, day, hrs, min, sec);
+
+	close_timer(TIMER_UPDATE_TIME);
 }

@@ -1,5 +1,62 @@
+Jan 2011       2.00.6
+
+telopt.c       Braces are now properly converted in raw gmcp data.
+
+highlight.c    Fixed a bug causing only the first highlight on a line to
+               trigger.
+
+line.c         Added a #line {verbose} {<commands>} option which forces
+               verbosity on the given commands.
+
+buffer.c       The first match for #buffer find is now 1 instead of 0.
+
+buffer.c       Added support for negative page numbers, causing #grep to search
+               from the beginning to the end of the scroll back buffer. The
+               first page is now page 1 instead of page 0.
+
+buffer.c       Added a NULL check to prevent possible crashes, not ideal as it
+               hides an underlying bug.
+
+net.c          Added the RECEIVED OUTPUT event with %0 containing the received
+               output from the server. Can be used to create multi-line
+               triggers, though it wouldn't be very efficient.
+
+main.c         No longer enabling DECCKM on startup so keypad mode works
+               correctly with MinTTY, it should also result in more reliable
+               cross-terminal behavior. This might change the sequence of key
+               presses on some systems, so remap macros that stop working.
+
+mapper.c       Added #map resize <size> option to increase the maximum number
+               of rooms.
+
+mapper.c       Added #map get worldsize option.
+
+mapper.c       Added #map get worldflags option and fixed some displaying issues
+               in the #map exit command.
+
+update.c       Added several time events, YEAR, MONTH, WEEK, DAY, HOUR, MINUTE,
+               SECOND, DATE mm-dd, DATE mm-dd hh:mm, TIME hh:mm, TIME hh:mm:ss.
+
+               Events like YEAR 2012, MONTH 04, HOUR 13, are valid as well.
+
+               %0 to %6 hold year, month, week, day, hour, minute, and second
+               for each event.
+
+math.c         Added support for automatic dd:hh:mm:ss time to second
+               conversion. For example, #math test 1:12:32:17 would store
+               131537 in test. #delay 10:00 #bell would ring the terminal bell
+               after 10 minutes. This change will effect associative arrays
+               consisting of numbers and colons.
+
+tinexp.c       Updated #replace to support regular expressions. Like with the
+               #regex command the &1..&99 arguments can be used.
+
+
 Oct 2010       2.00.5
 --------------------------------------------------------------------------------
+
+session.c      Fixed split settings not getting properly inherited from the
+               startup session.
 
 advertise.c    Updated with 2011 sponsors.
 
@@ -1782,9 +1839,9 @@ February 2004  1.88.0
 - tintin.h     Changed architecture further turning the lists from individual
                lists into an array of lists. Added an array in tables.c for
                additional data.
-- substitute.c Changed the default #gag char from '.' to 'ÿ' this to prevent
-               weird behavior when a dot is displayed on an empty line for
-               any kind of reason.
+- substitute.c Changed the default #gag char from '.' to character 255, this
+               to prevent weird behavior when a dot is displayed on an empty
+               line for any kind of reason.
 - config.c     Added a configuration menu, defaults are loaded upon startup.
 - walk.c       Removed, didn't really look into it deeply, but I adjusted
                path.c to allow user progged walking using a ticker.

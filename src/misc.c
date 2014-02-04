@@ -260,10 +260,6 @@ DO_COMMAND(do_info)
 
 DO_COMMAND(do_nop)
 {
-	if (*arg == '-')
-	{
-		ses->input_level++;
-	}
 	return ses;
 }
 
@@ -328,7 +324,7 @@ DO_COMMAND(do_send)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE], *ptf;
 	int lnf;
 
 	arg = get_arg_in_braces(arg, left, TRUE);
@@ -339,51 +335,69 @@ DO_COMMAND(do_showme)
 
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
-	do_one_line(temp, ses);
-
-	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
-	{
-		DEL_BIT(ses->flags, SES_FLAG_GAG);
-
-		return ses;
-	}
-
 	if (*right)
 	{
-		do_one_prompt(ses, temp, (int) get_number(ses, right));
+		do_one_line(temp, ses);
 
+		if (HAS_BIT(ses->flags, SES_FLAG_GAG))
+		{
+			DEL_BIT(ses->flags, SES_FLAG_GAG);
+		}
+		else
+		{
+			do_one_prompt(ses, temp, (int) get_number(ses, right));
+		}
 		return ses;
 	}
 
-	if (strip_vt102_strlen(ses->more_output) != 0)
-	{
-		sprintf(right, "\n\033[0m%s\033[0m", temp);
-	}
-	else
-	{
-		sprintf(right, "\033[0m%s\033[0m", temp);
-	}
-
-	add_line_buffer(ses, right, lnf);
-
-	if (ses != gtd->ses)
-	{
-		return ses;
-	}
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	if (ses == gtd->ses && !HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
 		save_pos(ses);
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	printline(ses, right, lnf);
+	arg = temp;
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	while (arg)
+	{
+		ptf = strchr(arg, '\n');
+
+		if (ptf != NULL)
+		{
+			*ptf++ = 0;
+		}
+
+		do_one_line(arg, ses);
+
+		if (HAS_BIT(ses->flags, SES_FLAG_GAG))
+		{
+			DEL_BIT(ses->flags, SES_FLAG_GAG);
+		}
+		else
+		{
+			if (strip_vt102_strlen(ses->more_output) != 0)
+			{
+				sprintf(left, "\n\033[0m%s\033[0m", arg);
+			}
+			else
+			{
+				sprintf(left, "\033[0m%s\033[0m", arg);
+			}
+
+			add_line_buffer(ses, left, ptf ? lnf : 0);
+
+			if (ses == gtd->ses)
+			{
+				printline(ses, left, lnf);
+			}
+		}
+		arg = ptf;
+	}
+
+	if (ses == gtd->ses && !HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
 		restore_pos(ses);
 	}
-
 	return ses;
 }
 
@@ -439,14 +453,6 @@ DO_COMMAND(do_suspend)
 
 DO_COMMAND(do_test)
 {
-	char buf[BUFFER_SIZE];
-
-	strcpy(buf, get_alnum(ses, arg));
-
-	tintin_printf2(ses, "is_number: %d", is_number(buf));
-
-	tintin_printf2(ses, "%s", get_alnum(ses, buf));
-
 	return ses;
 }
 

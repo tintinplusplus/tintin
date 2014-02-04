@@ -212,10 +212,11 @@ void del_math_node(struct link_data *node)
 int mathexp_tokenize(struct session *ses, char *str)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[STRING_SIZE], *pti, *pta;
-	int level, status, valid, point;
+	int level, status, valid, point, colon;
 
 	level     = 0;
 	point     = -1;
+	colon     = 0;
 	status    = EXP_VARIABLE;
 	valid     = FALSE;
 	precision = 0;
@@ -298,6 +299,16 @@ int mathexp_tokenize(struct session *ses, char *str)
 						pti++;
 						break;
 
+					case ':':
+						*pta++ = *pti++;
+						if (colon >= 3)
+						{
+							show_message(ses, -1, "#MATH EXP: MORE THAN THREE COLONS FOUND INSIDE A NUMBER");
+							return FALSE;
+						}
+						colon++;
+						break;
+						
 					case '.':
 						*pta++ = *pti++;
 						if (point >= 0)
@@ -701,9 +712,15 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 	node->str3 = strdup(temp);
 }
 
+/*
+	Keep synced with is_number()
+*/
+
 double tintoi(char *str)
 {
 	char *ptr = str;
+	double values[5] = {0, 0, 0, 0, 0}, m = 1;
+	int i = 1, d = 0;
 
 	if (*ptr == 0)
 	{
@@ -718,6 +735,120 @@ double tintoi(char *str)
 		case '-':
 			ptr++;
 			break;
+	}
+
+	ptr = str + strlen(str);
+
+	while (TRUE)
+	{
+		ptr--;
+
+		switch (*ptr)
+		{
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				values[i] += (*ptr - '0') * m;
+				m *= 10;
+				break;
+
+			case '.':
+				if (d)
+				{
+					return 0;
+				}
+				d = 1;
+
+				values[0] = values[1] / m;
+				values[1] = 0;
+				m = 1;
+				break;
+
+			case ':':
+				switch (i)
+				{
+					case 2:
+						values[i] *= 60;
+						break;
+					case 3:
+						values[i] *= 60 * 60;
+						break;
+					case 4:
+						return 0;
+				}
+				i++;
+				m = 1;
+				break;
+
+			case '!':
+			case '~':
+			case '+':
+			case '-':
+				if (ptr == str)
+				{
+					break;
+				}
+				return 0;
+
+			default:
+				return 0;
+		}
+
+		if (ptr == str)
+		{
+			switch (i)
+			{
+				case 2:
+					values[i] *= 60;
+					break;
+				case 3:
+					values[i] *= 60 * 60;
+					break;
+				case 4:
+					values[i] *= 60 * 60 * 24;
+					break;
+			}
+			break;
+		}
+	}
+
+	switch (*str)
+	{
+		case '!':
+			return !(values[0] + values[1] + values[2] + values[3] + values[4]);
+		case '~':
+			return ~ (long long) (values[0] + values[1] + values[2] + values[3] + values[4]);
+		case '+':
+			return +(values[0] + values[1] + values[2] + values[3] + values[4]);
+		case '-':
+			return -(values[0] + values[1] + values[2] + values[3] + values[4]);
+		default:
+			return (values[0] + values[1] + values[2] + values[3] + values[4]);
+	}
+
+	switch (str[0])
+	{
+		case '!':
+			return !atof(&str[1]);
+
+		case '~':
+			return (double) ~atoll(&str[1]);
+
+		case '+':
+			return +atof(&str[1]);
+
+		case '-':
+			return -atof(&str[1]);
+
+		default:
+			return atof(str);
 	}
 
 	while (*ptr)
