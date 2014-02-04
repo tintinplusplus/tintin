@@ -79,13 +79,14 @@ DO_COMMAND(do_variable)
 
 DO_COMMAND(do_unvariable)
 {
-	char arg1[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (delete_nest_node(ses->list[LIST_VARIABLE], arg1))
+	if (delete_nest_node(ses->list[LIST_VARIABLE], arg2))
 	{
-		show_message(ses, LIST_VARIABLE, "#OK. {%s} IS NO LONGER A VARIABLE.", arg1);
+		show_message(ses, LIST_VARIABLE, "#OK. {%s} IS NO LONGER A VARIABLE.", arg2);
 	}
 	else
 	{
@@ -158,6 +159,38 @@ DO_COMMAND(do_replace)
 /*
 	support routines for #format - Igor
 */
+
+void charactertonumber(struct session *ses, char *str)
+{
+	unsigned int result;
+
+	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && str[0] & 128)
+	{
+		result = (unsigned char) str[0] + (unsigned char) str[1] * 256;
+	}
+	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (str[0] & 192) == 192)
+	{
+		result = (unsigned char) str[0];
+
+		if ((str[1] & 192) == 128)
+		{
+			result += (unsigned char) str[1] * 256;
+		}
+		if ((str[2] & 192) == 128)
+		{
+			result += (unsigned char) str[2] * 256 * 256;
+		}
+		if ((str[3] & 192) == 128)
+		{
+			result += (unsigned char) str[3] * 256 * 256 * 256;
+		}
+	}
+	else
+	{
+		result = (unsigned char) str[0];
+	}
+	sprintf(str, "%d", result);
+}
 
 void colorstring(char *str)
 {
@@ -592,8 +625,16 @@ DO_COMMAND(do_format)
 
 					if (*ptn == 0)
 					{
-						sprintf(temp, "%%%d",
-							atoi(arg1) + (int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE));
+						if (atoi(arg1) < 0)
+						{
+							sprintf(temp, "%%%d",
+								atoi(arg1) - ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)));
+						}
+						else
+						{
+							sprintf(temp, "%%%d",
+								atoi(arg1) + ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)));
+						}
 					}
 					else
 					{
@@ -607,11 +648,18 @@ DO_COMMAND(do_format)
 
 						*ptt = 0;
 
-						sprintf(temp, "%%%d.%d",
-							atoi(arg1) + (atoi(arg1) >= 0 ?
-								(int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE) :
-								(int) (strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)) * -1),
-							string_str_raw_len(ses, arglist[i], 0, atoi(arg2)));
+						if (atoi(arg1) < 0)
+						{
+							sprintf(temp, "%%%d.%d",
+								atoi(arg1) - ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)),
+								string_str_raw_len(ses, arglist[i], 0, atoi(arg2)));
+						}
+						else
+						{
+							sprintf(temp, "%%%d.%d",
+								atoi(arg1) + ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)),
+								string_str_raw_len(ses, arglist[i], 0, atoi(arg2)));
+						}
 					}
 
 					ptt = temp;
@@ -690,8 +738,9 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'A':
-						sprintf(arglist[i], "%d", (int) arglist[i][0]);
+						charactertonumber(ses, arglist[i]);
 						break;
+
 					case 'C':
 						sprintf(arglist[i], "%d", ses->cols);
 						break;

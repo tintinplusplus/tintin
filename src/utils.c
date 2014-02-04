@@ -42,10 +42,6 @@ int is_abbrev(char *s1, char *s2)
 	{
 		return FALSE;
 	}
-/*	if (strlen(s2) < strlen(s1))
-	{
-		return FALSE;
-	} */
 	return !strncasecmp(s2, s1, strlen(s1));
 }
 

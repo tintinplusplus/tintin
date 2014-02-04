@@ -196,6 +196,69 @@ int skip_vt102_codes(char *str)
 	return skip;
 }
 
+int skip_escaped_vt102_codes(char *str)
+{
+	int skip;
+
+	if (str[0] != '\\' || str[1] != 'e')
+	{
+		return 0;
+	}
+
+	switch (str[2])
+	{
+		case '\0':
+			return 2;
+
+		case '%':
+		case '#':
+		case '(':
+		case ')':
+			return str[2] ? 4 : 3;
+
+		case ']':
+			switch (str[3])
+			{
+				case 'P':
+					for (skip = 4 ; skip < 11 ; skip++)
+					{
+						if (str[skip] == 0)
+						{
+							break;
+						}
+					}
+					return skip;
+
+				case 'R':
+					return 4;
+			}
+			return 3;
+
+		case '[':
+			break;
+
+		default:
+			return 3;
+	}
+
+	for (skip = 3 ; str[skip] != 0 ; skip++)
+	{
+		if (isalpha((int) str[skip]))
+		{
+			return skip + 1;
+		}
+
+		switch (str[skip])
+		{
+			case '@':
+			case '`':
+			case ']':
+				return skip + 1;
+		}
+	}
+	return skip;
+}
+
 int find_non_color_codes(char *str)
 {
 	int skip;
@@ -290,13 +353,20 @@ int skip_vt102_codes_non_graph(char *str)
 		case '#':
 		case '(':
 		case ')':
-			return 3;
+			return str[2] ? 3 : 2;
 
 		case ']':
 			switch (str[2])
 			{
 				case 'P':
-					return 10;
+					for (skip = 3 ; skip < 10 ; skip++)
+					{
+						if (str[skip] == 0)
+						{
+							break;
+						}
+					}
+					return skip;
 				case 'R':
 					return 3;
 			}
@@ -654,14 +724,11 @@ int strip_vt102_strlen(struct session *ses, char *str)
 
 	while (*pti)
 	{
-		while (skip_vt102_codes(pti))
+		if (skip_vt102_codes(pti))
 		{
 			pti += skip_vt102_codes(pti);
-		}
 
-		if (*pti == 0)
-		{
-			break;
+			continue;
 		}
 
 		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
@@ -682,7 +749,7 @@ int strip_vt102_strlen(struct session *ses, char *str)
 	return i;
 }
 
-int strip_color_strlen(char *str)
+int strip_color_strlen(struct session *ses, char *str)
 {
 	char *pti;
 	int i = 0;
@@ -694,12 +761,35 @@ int strip_color_strlen(char *str)
 		if (pti[0] == '<' && isalnum((int) pti[1]) && isalnum((int) pti[2]) && isalnum((int) pti[3]) && pti[4] == '>')
 		{
 			pti += 5;
+			continue;
+		}
+
+		if (skip_vt102_codes(pti))
+		{
+			pti += skip_vt102_codes(pti);
+			continue;
+		}
+
+		if (skip_escaped_vt102_codes(pti))
+		{
+			pti += skip_escaped_vt102_codes(pti);
+			continue;
+		}
+
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
+		{
+			pti++;
+
+			while ((*pti & 192) == 128)
+			{
+				pti++;
+			}
 		}
 		else
-		{   
+		{
 			pti++;
-			i++;  
-		}	   
+		}
+		i++;
 	}
 	return i;
 }

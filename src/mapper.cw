@@ -293,8 +293,6 @@ DO_MAP(map_dig)
 	{
 		if (ses->map->room_list[room] == NULL)
 		{
-			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_CREATE);
-
 			create_room(ses, "{%d} {0} {} {} { } {} {} {} {} {} {1.0}", room);
 		}
 		return;
@@ -320,17 +318,10 @@ DO_MAP(map_dig)
 
 		if (ses->map->room_list[room] == NULL)
 		{
-			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_CREATE|MAP_UNDO_LINK);
-
 			create_room(ses, "{%d} {0} {} {} { } {} {} {} {} {} {1.0}", room);
-			create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, arg1, arg1);
 		}
-		else
-		{
-			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_LINK);
+		create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, arg1, arg1);
 
-			create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, arg1, arg1);
-		}
 		return;
 	}
 
@@ -339,10 +330,6 @@ DO_MAP(map_dig)
 	if (room && strcasecmp(arg2, "new"))
 	{
 		show_message(ses, -1, "#MAP CREATE LINK %5d {%s}.", room, ses->map->room_list[room]->name);
-
-		add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_LINK);
-
-		create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, arg1, arg1);
 	}
 	else
 	{
@@ -359,11 +346,11 @@ DO_MAP(map_dig)
 			tintin_printf2(ses, "#MAP DIG: Maximum amount of rooms of %d reached.", ses->map->size);
 			return;
 		}
-		add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_CREATE|MAP_UNDO_LINK);
 
 		create_room(ses, "{%d} {0} {} {} { } {} {} {} {} {} {1.0}", room);
-		create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, arg1, arg1);
 	}
+
+	create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, arg1, arg1);
 
 	if ((node = search_node_list(ses->list[LIST_PATHDIR], arg1)) != NULL)
 	{
@@ -444,17 +431,6 @@ DO_MAP(map_exit)
 
 		show_message(ses, -1, "#MAP EXIT {%s} : NAME SET TO {%s}.", arg1, exit->name);
 	}
-	else if (is_abbrev(arg2, "SAVE"))
-	{
-		if (*arg3)
-		{
-			set_nest_node(ses->list[LIST_VARIABLE], arg3, "{command}{%s}{destination}{%d}{dir}{%d}{flags}{%d}{name}{%s}{vnum}{%d}", exit->cmd, tunnel_void(ses, ses->map->in_room, exit->vnum, exit->dir), exit->dir, exit->flags, exit->name, exit->vnum);
-		}
-		else
-		{
-			tintin_printf2(ses, "#MAP EXIT SAVE: No destination variable.");
-		}
-	}
 	else if (is_abbrev(arg2, "SET"))
 	{
 		exit->data = restring(exit->data, arg3);
@@ -482,7 +458,7 @@ DO_MAP(map_exit)
 	}
 	else
 	{
-		tintin_printf2(ses, "Syntax: #MAP EXIT {<NAME>} {COMMAND|DIRECTION|GET|NAME|FLAGS|SAVE|SET|VNUM} {<argument>}");
+		tintin_printf2(ses, "Syntax: #MAP EXIT {<NAME>} {COMMAND|DIRECTION|GET|NAME|FLAGS|SET|VNUM} {<argument>}");
 	}
 }
 
@@ -671,7 +647,7 @@ DO_MAP(map_flag)
 	{
 		show_message(ses, -1, "#MAP: Static flag set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
 	}
-	else if (is_abbrev(arg1, "symbolgraphics"))
+	else if (is_abbrev(arg1, "symbolfgraphics"))
 	{
 		show_message(ses, -1, "#MAP: Symbolgraphics flag set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_SYMBOLGRAPHICS) ? "on" : "off");
 	}
@@ -804,16 +780,13 @@ DO_MAP(map_get)
 
 DO_MAP(map_goto)
 {
-	char buf[BUFFER_SIZE], var[BUFFER_SIZE];
 	int room;
 
-	search_keywords(ses, arg, buf, var);
-
-	room = find_room(ses, buf);
+	room = find_room(ses, arg);
 
 	if (room != 0)
 	{
-		add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_MOVE);
+		add_undo(ses, "%d %d %d", room, ses->map->in_room, 0);
 
 		goto_room(ses, room);
 
@@ -821,7 +794,7 @@ DO_MAP(map_goto)
 	}
 	else
 	{
-		show_message(ses, -1, "#MAP GOTO: COULDN'T FIND ROOM %s.", buf);
+		show_message(ses, -1, "#MAP GOTO: COULDN'T FIND ROOM {%s}.", arg);
 	}
 }
 
@@ -944,8 +917,6 @@ DO_MAP(map_insert)
 	in_room = ses->map->in_room;
 	to_room = exit->vnum;
 
-	add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_INSERT);
-
 	create_room(ses, "{%d} {0} {} {} { } {} {} {} {} {} {1.0}", room);
 
 	create_exit(ses, room, "{%d} {%s} {%s}", to_room, node->left, node->left);
@@ -988,7 +959,7 @@ DO_MAP(map_jump)
 
 	if (room)
 	{
-		add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_MOVE);
+		add_undo(ses, "%d %d %d", room, ses->map->in_room, 0);
 
 		goto_room(ses, room);
 
@@ -1099,25 +1070,15 @@ DO_MAP(map_link)
 
 DO_MAP(map_list)
 {
-	char buf[BUFFER_SIZE], var[BUFFER_SIZE];
 	int room;
-
-	search_keywords(ses, arg, buf, var);
 
 	searchgrid_find(ses, ses->map->in_room, "0");
 
 	for (room = 0 ; room < ses->map->size ; room++)
 	{
-		if (match_room(ses, room, buf))
+		if (match_room(ses, room, arg))
 		{
-			if (*var)
-			{
-				add_nest_node(ses->list[LIST_VARIABLE], var, "{%d} {%.3f}", ses->map->room_list[room]->vnum, ses->map->search_stamp == ses->map->room_list[room]->search_stamp ? ses->map->room_list[room]->length  : -1);
-			}
-			else
-			{
-				tintin_printf2(ses, "vnum: %5d   distance: %8.3f   name: %s", ses->map->room_list[room]->vnum, ses->map->search_stamp == ses->map->room_list[room]->search_stamp ? ses->map->room_list[room]->length  : -1, ses->map->room_list[room]->name);
-			}
+			tintin_printf2(ses, "vnum: %5d   distance: %8.3f   name: %s", ses->map->room_list[room]->vnum, ses->map->search_stamp == ses->map->room_list[room]->search_stamp ? ses->map->room_list[room]->length  : -1, ses->map->room_list[room]->name);
 		}
 	}
 }
@@ -1205,7 +1166,7 @@ DO_MAP(map_map)
 					strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], line));
 				}
 
-				substitute(ses, buf, out, SUB_COL|SUB_CMP);
+				substitute(ses, buf, out, SUB_COL);
 
 				if (logfile)
 				{
@@ -1239,7 +1200,7 @@ DO_MAP(map_map)
 
 			buf[x+1] = 0;
 
-			substitute(ses, buf, out, SUB_COL|SUB_CMP);
+			substitute(ses, buf, out, SUB_COL);
 
 			if (logfile)
 			{
@@ -1737,9 +1698,8 @@ DO_MAP(map_uninsert)
 DO_MAP(map_undo)
 {
 	struct link_data *link;
-	struct room_data *room;
 	int undo_flag;
-	struct exit_data *exit1, *exit2, *exit3;
+	struct exit_data *exit;
 
 	link = ses->map->undo_tail;
 
@@ -1750,89 +1710,48 @@ DO_MAP(map_undo)
 		return;
 	}
 
-	room = ses->map->room_list[atoi(link->str1)];
-
-	if (room == NULL)
+	if (ses->map->in_room != atoi(link->str1))
 	{
-		tintin_printf2(ses, "#MAP UNDO: Room %s does not exist.", link->str2);
+		tintin_printf2(ses, "#MAP UNDO: Invalid last move.");
+
 		return;
 	}
 
 	if (ses->map->room_list[atoi(link->str2)] == NULL)
 	{
 		tintin_printf2(ses, "#MAP UNDO: Invalid last move.");
+
 		return;
 	}
 
 	undo_flag = atoi(link->str3);
 
-	if (HAS_BIT(undo_flag, MAP_UNDO_MOVE))
-	{
- 		if (ses->map->in_room != room->vnum)
-		{
-			tintin_printf2(ses, "#MAP UNDO: Invalid last move.");
-			return;
-		}
-		tintin_printf2(ses, "#MAP UNDO: Moving to room %s.", link->str2);
+	tintin_printf2(ses, "#MAP UNDO: Moving to room %s.", link->str2);
 
-		goto_room(ses, atoi(link->str2));
-	}
+	goto_room(ses, atoi(link->str2));
 
 	if (HAS_BIT(undo_flag, MAP_UNDO_CREATE))
 	{
-		tintin_printf2(ses, "#MAP UNDO: Deleting room %d.", room->vnum);
-		delete_room(ses, room->vnum, TRUE);
+		tintin_printf2(ses, "#MAP UNDO: Deleting room %s.", link->str1);
+		delete_room(ses, atoi(link->str1), TRUE);
 	}
 	else if (HAS_BIT(undo_flag, MAP_UNDO_LINK))
 	{
-		exit1 = find_exit(ses, room->vnum, link->str2);
+		exit = find_exit(ses, atoi(link->str1), link->str2);
 
-		if (exit1)
+		if (exit)
 		{
-			tintin_printf2(ses, "#MAP UNDO: Deleting exit leading %s.", exit1->name);
-			delete_exit(ses, room->vnum, exit1);
+			tintin_printf2(ses, "#MAP UNDO: Deleting exit leading %s.", exit->name);
+			delete_exit(ses, atoi(link->str1), exit);
 		}
 
-		exit2 = find_exit(ses, atoi(link->str2), link->str1);
+		exit = find_exit(ses, atoi(link->str2), link->str1);
 
-		if (exit2)
+		if (exit)
 		{
-			tintin_printf2(ses, "#MAP UNDO: Deleting exit leading %s.", exit2->name);
-			delete_exit(ses, atoi(link->str2), exit2);
+			tintin_printf2(ses, "#MAP UNDO: Deleting exit leading %s.", exit->name);
+			delete_exit(ses, atoi(link->str2), exit);
 		}
-	}
-	else if (HAS_BIT(undo_flag, MAP_UNDO_INSERT))
-	{
-		exit1 = find_exit(ses, atoi(link->str2), link->str1);
-
-		if (exit1 == NULL)
-		{
-			tintin_printf2(ses, "#MAP UNDO: Can't find exit between %s and %s.", link->str2, link->str1);
-			return;
-		}
-
-		exit2 = find_exit(ses, room->vnum, exit1->name);
-
-		if (exit2 == NULL)
-		{
-			tintin_printf2(ses, "#MAP UNDO: No valid exit found in room %d.", room->vnum);
-			return;
-		}
-
-		exit3 = find_exit(ses, exit2->vnum, ntos(room->vnum));
-
-		if (exit3 == NULL)
-		{
-			tintin_printf2(ses, "#MAP UNDO: Can't find exit between %d and %d.", room->vnum, exit2->vnum);
-			return;
-		}
-
-		exit1->vnum = exit2->vnum;
-		exit3->vnum = atoi(link->str2);
-
-		delete_room(ses, room->vnum, TRUE);
-
-		tintin_printf2(ses, "#MAP UNDO: Uninserting room %s.", link->str1);
 	}
 	del_undo(ses, link);
 }
@@ -2022,6 +1941,8 @@ DO_MAP(map_write)
 
 void create_map(struct session *ses, char *arg)
 {
+	int index;
+
 	if (ses->map)
 	{
 		delete_map(ses);
@@ -2046,7 +1967,7 @@ void create_map(struct session *ses, char *arg)
 
 	create_room(ses, "%s", "{1} {0} {} {} { } {} {} {} {} {} {1.0}");
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_UTF8))
+	if (!HAS_BIT(ses->flags, SES_FLAG_UTF8)
 	{
 		create_legend(ses, "{*}{#}{#}{+}{#}{|}{+}{+}{#}{+}{-}{+}{+}{+}{+}{+}{x}");
 	}
@@ -2285,7 +2206,7 @@ int follow_map(struct session *ses, char *argument)
 	{
 		room = ses->map->in_room;
 
-		add_undo(ses, "%d %d %d", exit->vnum, room, MAP_UNDO_MOVE);
+		add_undo(ses, "%d %d %d", exit->vnum, room, 0);
 
 		if (ses->map->nofollow == 0)
 		{
@@ -2369,7 +2290,7 @@ int follow_map(struct session *ses, char *argument)
 		{
 			show_message(ses, -1, "#MAP CREATE LINK %5d {%s}.", room, ses->map->room_list[room]->name);
 
-			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_MOVE|MAP_UNDO_LINK);
+			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_LINK);
 		}
 		else
 		{
@@ -2388,9 +2309,10 @@ int follow_map(struct session *ses, char *argument)
 				pop_call();
 				return 1;
 			}
-			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_MOVE|MAP_UNDO_CREATE|MAP_UNDO_LINK);
 
 			create_room(ses, "{%d} {0} {} {} { } {} {} {} {} {} {1.0}", room);
+
+			add_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_CREATE|MAP_UNDO_LINK);
 		}
 		create_exit(ses, ses->map->in_room, "{%d} {%s} {%s}", room, node->left, node->left);
 
@@ -2633,6 +2555,8 @@ void show_vtmap(struct session *ses)
 	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
 	int x, y, line;
 
+	tintin_printf2(ses, "vtmap drawn");
+
 	push_call("show_vtmap(%p)",ses);
 
 	if (ses->map == NULL || !HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
@@ -2686,7 +2610,7 @@ void show_vtmap(struct session *ses)
 				{
 					strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], line));
 				}
-				substitute(ses, buf, out, SUB_COL|SUB_CMP);
+				substitute(ses, buf, out, SUB_COL);
 
 				printf("%s\033[0K\n", out);
 			}
@@ -2702,7 +2626,7 @@ void show_vtmap(struct session *ses)
 			{
 				strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], 0));
 			}
-			substitute(ses, buf, out, SUB_COL|SUB_CMP);
+			substitute(ses, buf, out, SUB_COL);
 
 			printf("%s\n", out);
 		}
@@ -2818,7 +2742,7 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 						{
 							cat_sprintf(buf, "%s%05d%s", HAS_BIT(room->flags, ROOM_FLAG_PATH) && room->search_stamp == ses->map->search_stamp ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, room->vnum, ses->map->exit_color);
 						}
-						else if (strip_color_strlen(ses, room->symbol) <= 1)
+						else if (strip_vt102_strlen(ses, room->symbol) <= 1)
 						{
 							cat_sprintf(buf, "%s[%-1s%s]%s", HAS_BIT(room->flags, ROOM_FLAG_PATH) && room->search_stamp == ses->map->search_stamp ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, room->symbol, HAS_BIT(room->flags, ROOM_FLAG_PATH) && room->search_stamp == ses->map->search_stamp ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, ses->map->exit_color);
 						}
@@ -3024,74 +2948,6 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 	return buf;
 }
 
-void search_keywords(struct session *ses, char *arg, char *out, char *var)
-{
-	char buf[MAP_SEARCH_MAX][BUFFER_SIZE], tmp[BUFFER_SIZE];
-	int type, max;
-
-	for (type = 0 ; type < MAP_SEARCH_MAX ; type++)
-	{
-		buf[type][0] = 0;
-	}
-
-	var[0] = 0;
-
-	type = 0;
-
-	while (*arg && type < MAP_SEARCH_MAX)
-	{
-		arg = sub_arg_in_braces(ses, arg, tmp, GET_ALL, SUB_VAR|SUB_FUN);
-
-		if (!strcasecmp(tmp, "roomname"))
-		{
-			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_NAME], GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else if (!strcasecmp(tmp, "roomexits"))
-		{
-			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_EXITS], GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else if (!strcasecmp(tmp, "roomdesc"))
-		{
-			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_DESC], GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else if (!strcasecmp(tmp, "roomarea"))
-		{
-			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_AREA], GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else if (!strcasecmp(tmp, "roomnote"))
-		{
-			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_NOTE], GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else if (!strcasecmp(tmp, "roomterrain"))
-		{
-			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_TERRAIN], GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else if (!strcasecmp(tmp, "variable"))
-		{
-			arg = sub_arg_in_braces(ses, arg, var, GET_ALL, SUB_VAR|SUB_FUN);
-		}
-		else
-		{
-			strcpy(buf[type++], tmp);
-		}
-	}
-
-	for (max = MAP_SEARCH_MAX - 1 ; max >= 0 ; max--)
-	{
-		if (*buf[max])
-		{
-			break;
-		}
-	}
-
-	out[0] = 0;
-
-	for (type = 0 ; type <= max ; type++)
-	{
-		cat_sprintf(out, "{%s}", buf[type]);
-	}
-}
-
 int match_room(struct session *ses, int room, char *arg)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], arg4[BUFFER_SIZE], arg5[BUFFER_SIZE], arg6[BUFFER_SIZE];
@@ -3105,7 +2961,7 @@ int match_room(struct session *ses, int room, char *arg)
 
 	if (*arg1)
 	{
-		if (!match(ses, ses->map->room_list[room]->name, arg1, SUB_VAR|SUB_FUN) && atoi(arg1) != ses->map->room_list[room]->vnum)
+		if (!match(ses, ses->map->room_list[room]->name, arg1, SUB_VAR|SUB_FUN))
 		{
 			return 0;
 		}
@@ -3208,7 +3064,7 @@ int find_room(struct session *ses, char *arg)
 			return room;
 		}
 
-		if (!strcasecmp(arg2, "dig"))
+		if (!strcmp(arg2, "dig"))
 		{
 			create_room(ses, "{%d} {0} {} {} { } {} {} {} {} {} {1.0}", room);
 
@@ -3484,7 +3340,6 @@ int searchgrid_walk(struct session *ses, int offset, int from, int dest)
 
 void shortest_path(struct session *ses, int run, char *delay, char *arg)
 {
-	char buf[BUFFER_SIZE], var[BUFFER_SIZE];
 	struct exit_data *exit;
 	struct room_data *room;
 	int vnum, dest;
@@ -3498,13 +3353,11 @@ void shortest_path(struct session *ses, int run, char *delay, char *arg)
 
 	kill_list(ses->list[LIST_PATH]);
 
-	search_keywords(ses, arg, buf, var);
-
-	dest = searchgrid_find(ses, ses->map->in_room, buf);
+	dest = searchgrid_find(ses, ses->map->in_room, arg);
 
 	if (dest == 0)
 	{
-		tintin_printf2(ses, "#SHORTEST PATH: NO PATH FOUND TO %s.", buf);
+		tintin_printf2(ses, "#SHORTEST PATH: NO PATH FOUND TO {%s}.", arg);
 		return;
 	}
 

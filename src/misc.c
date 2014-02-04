@@ -70,7 +70,7 @@ DO_COMMAND(do_commands)
 
 	for (cmd = 0 ; *command_table[cmd].name != 0 ; cmd++)
 	{
-		if (!is_abbrev(arg, command_table[cmd].name))
+		if (*arg && !is_abbrev(arg, command_table[cmd].name))
 		{
 			continue;
 		}

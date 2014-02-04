@@ -399,7 +399,7 @@ void init_tintin(int greeting)
 
 	if (greeting)
 	{
-//		do_advertise(gts, "");
+		do_advertise(gts, "");
 
 		do_help(gts, "GREETING");
 	}

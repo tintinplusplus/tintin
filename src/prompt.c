@@ -143,6 +143,8 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 	}
 	else
 	{
+		show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", prompt);
+
 		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", len, ses->cols);
 	}
 

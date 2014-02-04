@@ -367,6 +367,8 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	}
 }
 
+// Like set, but don't erase old data.
+
 struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, ...)
 {
 	struct listnode *node;

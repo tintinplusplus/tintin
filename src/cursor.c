@@ -1128,7 +1128,7 @@ int cursor_tab_add(int input_now, int stop_after_first)
 int cursor_auto_tab_add(int input_now, int stop_after_first)
 {
 	char tab[BUFFER_SIZE], buf[BUFFER_SIZE];
-	int scroll_cnt, line_cnt;
+	int scroll_cnt, line_cnt, tab_len;
 	char *arg;
 
 	line_cnt = 0;
@@ -1171,6 +1171,16 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
+				tab_len = strlen(tab) -1;
+
+				if (tab_len > 0)
+				{
+					if (tab[tab_len] == '.' || tab[tab_len] == ',')
+					{
+						tab[tab_len] = 0;
+					}
+				}
+
 				if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
 				{
 					continue;

@@ -57,6 +57,7 @@ DO_COMMAND(do_run)
 	size.ws_col = ses->cols;
 
 	pid = forkpty(&desc, temp, &gtd->old_terminal, &size);
+//	pid = forkpty(&desc, temp, &gtd->new_terminal, &size);
 
 	switch (pid)
 	{

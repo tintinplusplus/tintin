@@ -300,7 +300,7 @@ DO_PATH(path_run)
 
 DO_PATH(path_walk)
 {
-	char left[BUFFER_SIZE];
+	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_PATH];
@@ -318,14 +318,16 @@ DO_PATH(path_walk)
 		switch (tolower((int) *left))
 		{
 			case 'b':
-				script_driver(ses, LIST_PATH, root->list[root->used - 1]->right);
+				strcpy(temp, root->list[root->used - 1]->right);
 				delete_index_list(ses->list[LIST_PATH], root->used - 1);
+				script_driver(ses, LIST_PATH, temp);
 				break;
 
 			case '\0':
 			case 'f':
-				script_driver(ses, LIST_PATH, root->list[0]->left);
+				strcpy(temp, root->list[0]->left);
 				delete_index_list(ses->list[LIST_PATH], 0);
+				script_driver(ses, LIST_PATH, temp);
 				break;
 
 			default:

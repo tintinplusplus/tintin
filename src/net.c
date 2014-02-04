@@ -62,18 +62,10 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	error = getaddrinfo(host, port, &hints, &address);
 
-	switch (error)
+	if (error)
 	{
-		case 0:
-			break;
-
-		case -2:
-			tintin_printf(ses, "#SESSION ERROR - UNKNOWN HOST.");
-			return -1;
-
-		default:
-			tintin_printf(ses, "#SESSION ERROR - CANNOT CONNECT.");
-			return -1;
+		tintin_printf(ses, "#SESSION '%s' COULD NOT CONNECT - UNKNOWN HOST.", ses->name);
+		return -1;
 	}
 
 	sock = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
@@ -333,6 +325,11 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 	strip_vt102_codes(linebuf, line);
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED LINE", linebuf, line);
+
+	if (prompt)
+	{
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED PROMPT", linebuf, line);
+	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_COLORPATCH))
 	{

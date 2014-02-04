@@ -89,6 +89,8 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 	va_list list;
 	int cnt;
 
+	push_call("check_all_events(%p,%d,%d,%d, ...)",ses,flags,args,vars);
+
 	va_start(list, fmt);
 
 	vsprintf(buf, fmt, list);
@@ -126,14 +128,17 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 
 			if (ses)
 			{
+				pop_call();
 				return 1;
 			}
 		}
 
 		if (ses)
 		{
+			pop_call();
 			return 0;
 		}
 	}
+	pop_call();
 	return 0;
 }

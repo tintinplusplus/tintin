@@ -95,7 +95,9 @@ DO_ARRAY(array_add)
 		{
 			str = get_arg_in_braces(ses, str, arg2, GET_ALL);
 
-			insert_node_list(list->root, ntos(index++), arg2, "");
+			set_nest_node(list->root, ntos(index++), "%s", arg2);
+
+//			insert_node_list(list->root, ntos(index++), arg2, "");
 
 			if (*str == COMMAND_SEPARATOR)
 			{
@@ -146,7 +148,9 @@ DO_ARRAY(array_create)
 		{
 			str = get_arg_in_braces(ses, str, arg2, GET_ALL);
 
-			insert_node_list(list->root, ntos(index++), arg2, "");
+			set_nest_node(list->root, ntos(index++), "%s", arg2);
+
+//			insert_node_list(list->root, ntos(index++), arg2, "");
 
 			if (*str == COMMAND_SEPARATOR)
 			{
@@ -308,9 +312,9 @@ DO_ARRAY(array_insert)
 		list->root->list[cnt]->left = refstring(list->root->list[cnt]->left, "%d", cnt + 2);
 	}
 
-	sprintf(arg1, "%d", index + 1);
+	set_nest_node(list->root, ntos(index + 1), "%s", arg2);
 
-	insert_node_list(list->root, arg1, arg2, "");
+//	insert_node_list(list->root, ntos(index + 1), arg2, "");
 
 	return ses;
 }

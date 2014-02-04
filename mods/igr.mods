@@ -1,3 +1,60 @@
+Mar 2012       2.00.9
+
+line.c         Added a #line strip option to strip color and escape codes.
+
+mapper.c       Fixed the handling of colored symbols in the ascii map.
+
+input.c        RECEIVED INPUT now triggers before input is parsed.
+
+mapper.c       Fixed #map undo handling for #map insert.
+
+nest.c         Fixed crash when using #var a[b]c x
+
+tokenize.c     Fixed crash when using #case outside a #switch.
+
+cursor.c       Added stripping of tailing dots and commas when auto tabbing.
+
+variables.c    #format %A now properly handles BIG5 and UTF-8.
+
+session.c      Added SESSION TIMED OUT event.
+
+variable.c     Fixed substitution problem with #unvariable.
+
+mapper.c       Added support for a {variable} argument to #map list to store
+               the returned data into a variable. Using {roomname} and
+               other keywords from #map set will work as well.
+
+mapper.c       Added #map exit <dir> save to store exit data in a variable.
+
+mapper.c       Added basic color compression support.
+
+mapper.c       Fixed the #map legend display in vtgraphics mode.
+
+mapper.c       Added automatic initialization of a UTF-8 based legend when
+               creating a map with #config CHARSET set to UTF-8.
+
+mapper.c       Fixed unnecessary redrawing of the VT map.
+
+list.c         Now properly handles nested arguments.
+
+telopt.c       Disabled telnet handling when using #run.
+
+mapper.c       Added better UTF-8 handling for room symbols.
+
+net.c          Added the RECEIVED PROMPT event.
+
+variable.c     Fixed a bug in #format with left aligning meta text.
+
+mapper.c       Fixed a bug with path finding related to weighted rooms.
+
+mapper.c       Added #map flag symbolgraphics option to display the room symbol
+               instead of a drawing symbol when in non asciigrahpics mode.
+
+mapper.c       Added #map color here option to set the color of the current
+               location.
+
+mapper.c       Fixed a path finding issue related to the avoid flag.
+
 Sep 2011       2.00.8
 
 main.c         No more advertisements.
@@ -21,15 +78,15 @@ variable.c     Added support to #format for %f to print floating point numbers.
 
 variable.c     Fixed color spacing bug in #format's %s handling.
 
-map.c          Added terrain as a searchable option to #map list, goto, find,
+mapper.c       Added terrain as a searchable option to #map list, goto, find,
                and run.
 
-map.c          Added roomweight to the #map get and #map set options. By
+mapper.c       Added roomweight to the #map get and #map set options. By
                default the weight of a room is set to 1.0 and can be anywhere
                from 0.001 to 1000. The path finder will favor rooms with a low
                weight.
 
-map.c          Made the layout of #map info more aesthetically pleasing and
+mapper.c       Made the layout of #map info more aesthetically pleasing and
                added the listing of entrances.
 
 substitute.c   Fixed bug where functions could overwrite the original
@@ -55,10 +112,10 @@ telopt.c       Added basic low level VT100 stripping for answer back codes.
 
 telopt.c       Added MSDP array support.
 
-map.c          Added a set and get option to #map exit that stores and
+mapper.c       Added a set and get option to #map exit that stores and
                retrieves from a data field.
 
-map.c          Added the terrain and data fields to #map set and #map get. The
+mapper.c       Added the terrain and data fields to #map set and #map get. The
                data field is intended to contain a table, eliminating the need
                for future extensions.
 
@@ -513,7 +570,7 @@ parse.c        brackets now provide nesting so #var bla[bli bli] x will
 
 data.c         Accessing an variable index now requires +1 instead of 1.
 
-map.c          Added MAP EXIT ROOM event.
+mapper.c       Added MAP EXIT ROOM event.
 
 tokenize.c     Added #switch #case and #default commands.
 
@@ -732,7 +789,7 @@ misc.c         #echo no longer triggers actions.
 
 help.c         Updated the showme and echo help entries.
 
-map.c          #map map now takes an optional <x>x<y> size argument and an
+mapper.c       #map map now takes an optional <x>x<y> size argument and an
                optional filename argument to log the map output to file.
                Useful for people who want to tail -f -s 0.1 a map window.
 

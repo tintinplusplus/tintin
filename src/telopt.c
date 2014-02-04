@@ -218,7 +218,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	while (cplen > 0)
 	{
-		if (*cpsrc == IAC)
+		if (!HAS_BIT(ses->flags, SES_FLAG_RUN) && *cpsrc == IAC)
 		{
 			skip = 2;
 
@@ -400,8 +400,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				return cplen;
 			}
 		}
-#ifdef BIG5
-		else if (*cpsrc & 0x80)
+		else if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *cpsrc & 0x80)
 		{
 			*cpdst++ = *cpsrc++;
 			gtd->mud_output_len++;
@@ -414,7 +413,6 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				cplen--;
 			}
 		}
-#endif
 		else
 		{
 			/*
@@ -1424,17 +1422,20 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 
 int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL MCCP2"))
 	{
-		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP2);
+		if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
+		{
+			socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP2);
 
-		telopt_debug(ses, "SENT IAC DO MCCP2");
-	}
-	else
-	{
-		socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP2);
+			telopt_debug(ses, "SENT IAC DO MCCP2");
+		}
+		else
+		{
+			socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP2);
 
-		telopt_debug(ses, "SENT IAC WONT MCCP2 (MCCP HAS BEEN DISABLED)");
+			telopt_debug(ses, "SENT IAC WONT MCCP2 (MCCP HAS BEEN DISABLED)");
+		}
 	}
 	return 3;
 }

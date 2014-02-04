@@ -704,8 +704,9 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				continue;
 
 			case TOKEN_TYPE_CASE:
-				if (mathswitch(root->ses, shift->data->str, token->str))
+				if (shift->data && mathswitch(root->ses, shift->data->str, token->str))
 				{
+
 					token = token->next;
 
 					token = parse_script(root, lvl + 1, token, shift);

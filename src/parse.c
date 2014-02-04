@@ -512,10 +512,12 @@ char *space_out(char *string)
 
 char *get_arg_to_brackets(struct session *ses, char *string, char *result)
 {
-	char *pti, *pto;
+	char *pti, *pto, *ptii, *ptoo;
+	int nest1 = 0, nest2 = 0, nest3 = 0;
 
 	pti = space_out(string);
 	pto = result;
+	ptii = NULL;
 
 	while (*pti)
 	{
@@ -528,7 +530,39 @@ char *get_arg_to_brackets(struct session *ses, char *string, char *result)
 
 		if (*pti == '[')
 		{
-			break;
+			nest2++;
+
+			if (nest1 == 0 && ptii == NULL)
+			{
+				ptii = pti;
+				ptoo = pto;
+			}
+		}
+		else if (*pti == ']')
+		{
+			if (nest2)
+			{
+				nest2--;
+			}
+			else
+			{
+				nest3 = 1;
+			}
+
+			if (*(pti+1) == 0 && ptii && nest1 == 0 && nest2 == 0 && nest3 == 0)
+			{
+				*ptoo = 0;
+
+				return ptii;
+			}
+		}
+		else if (*pti == DEFAULT_OPEN)
+		{
+			nest1++;
+		}
+		else if (*pti == DEFAULT_CLOSE)
+		{
+			nest1--;
 		}
 		*pto++ = *pti++;
 	}

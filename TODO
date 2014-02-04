@@ -1,15 +1,70 @@
 * Stuff that's going to be done.
 
-  - Fix double calling of draw vt map.
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=7425
 
-  - Fix traveling through bend void rooms.
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=7421
 
-  - Nothing
+  ! #commands is broken
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=7394
+
+  ? http://tintin.sourceforge.net/board/viewtopic.php?p=7385#7385
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1882 
+
+  # Check GA prompt handling with GAG. (?)
+
+  * http://tintin.sourceforge.net/board/viewtopic.php?t=1739 crash (?)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1869 #var {{a[b]}} {x}
+
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=7288 (fixed crash with #case)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1862 (ending dots in auto tabs)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=7249 (Cygwin install info)
+
+  * http://tintin.sourceforge.net/board/viewtopic.php?t=1851 (maybe highlight exits on a rainy day)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=7152 (fixed %a handling)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1840 (fixed timeout problem)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1822 (fixed #unvar problem)
+
+  * http://tintin.sourceforge.net/board/viewtopic.php?p=7053 (?)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=6999 (var support to map list)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1795 (add color compression)
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?p=6970 (can't fix)
+
+  * http://tintin.sourceforge.net/board/viewtopic.php?t=1787
+
+  ! http://tintin.sourceforge.net/board/viewtopic.php?t=1718 (EOR)
+
+  ! Make class kill take regex syntax. (annoying to handle)
+
+  * Fix double calling of draw vt map.
+
+  * http://tintin.sourceforge.net/board/viewtopic.php?p=6976#6976
+
+  * http://tintin.sourceforge.net/board/viewtopic.php?p=6648 (RUN)
+
+  * Add prompt received event. Or mark prompts with \x1E aka \036
+
+  - Weirdness with joe
 
 --------------------------------------------------------------------------------
 
 
 * Stuff that might be implemented
+
+  - Make &0 to &99 local.
+
+  - Color compression
 
   - SGA disabling
 
@@ -35,8 +90,11 @@
 
   - Crash on multiple session close
 
+  - \x7B\x7D_____\x7B\x7D_ doesn't match in #regex.
 
 * Bugs that might be fixed.
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=7124
 
   - There's a bug with prompt repetitions with packet patch set.
 
@@ -54,6 +112,12 @@
 
 
 * Mapping related stuff
+
+  - add option to add a delay to each exit for #map run
+
+  - map where command that shows relative coordinates.
+
+  - Room creation event
 
   - Add better table support for data fields.
 

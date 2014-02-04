@@ -68,37 +68,37 @@ DO_LINE(line_gag)
 	return ses;
 }
 
+// Without an argument mark next line to be logged, otherwise log the given line to file.
+
 DO_LINE(line_log)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	FILE *logfile;
 
-	arg = get_arg_in_braces(ses, arg, left, 0);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_ESC|SUB_COL|SUB_VAR|SUB_FUN|SUB_LNF);
 
-	arg = get_arg_in_braces(ses, arg, right, 1);
-
-	if (ses->logline)
+	if ((logfile = fopen(left, "a")))
 	{
-		return ses;
-	}
-
-	if ((ses->logline = fopen(left, "a")))
-	{
-		fseek(ses->logline, 0, SEEK_END);
-
-		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 		{
-			write_html_header(ses->logline);
+			fseek(logfile, 0, SEEK_END);
+
+			if (ftell(logfile) == 0)
+			{
+				write_html_header(logfile);
+			}
 		}
 
 		if (*right)
 		{
-			substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_VAR|SUB_FUN|SUB_LNF);
+			logit(ses, right, logfile, FALSE);
 
-			logit(ses, right, ses->logline, FALSE);
-
-			fclose(ses->logline);
-			ses->logline = NULL;
+			fclose(logfile);
+		}
+		else
+		{
+			ses->logline = logfile;
 		}
 	}
 	else
@@ -108,39 +108,55 @@ DO_LINE(line_log)
 	return ses;
 }
 
+
 DO_LINE(line_logverbatim)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	FILE *logfile;
 
 	arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(ses, arg, right, 1);
 
-	if (ses->logline)
+	if ((logfile = fopen(left, "a")))
 	{
-		return ses;
-	}
-
-	if ((ses->logline = fopen(left, "a")))
-	{
-		fseek(ses->logline, 0, SEEK_END);
-
-		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 		{
-			write_html_header(ses->logline);
+			fseek(logfile, 0, SEEK_END);
+
+			if (ftell(logfile) == 0)
+			{
+				write_html_header(logfile);
+			}
 		}
 
-		if (*right)
-		{
-			logit(ses, right, ses->logline, TRUE);
+		logit(ses, right, logfile, TRUE);
 
-			fclose(ses->logline);
-			ses->logline = NULL;
-		}
+		fclose(logfile);
 	}
 	else
 	{
 		tintin_printf(ses, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
 	}
+	return ses;
+}
+
+DO_LINE(line_strip)
+{
+	char left[BUFFER_SIZE], strip[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_ESC|SUB_COL);
+
+	if (*left == 0)
+	{
+		tintin_printf(ses, "#SYNTAX: #LINE {STRIP} {command}.");
+
+		return ses;
+	}
+
+	strip_vt102_codes(left, strip);
+
+	ses = script_driver(ses, -1, strip);
+
 	return ses;
 }
 

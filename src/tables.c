@@ -32,7 +32,7 @@
 struct command_type command_table[] =
 {
 	{    "action",            do_action,            TOKEN_TYPE_COMMAND },
-//	{    "advertise",         do_advertise,         TOKEN_TYPE_COMMAND },
+	{    "advertise",         do_advertise,         TOKEN_TYPE_COMMAND },
 	{    "alias",             do_alias,             TOKEN_TYPE_COMMAND },
 	{    "all",               do_all,               TOKEN_TYPE_COMMAND },
 	{    "bell",              do_bell,              TOKEN_TYPE_COMMAND },
@@ -468,7 +468,7 @@ struct map_type map_table[] =
 	{     "EXIT",             map_exit,            2    },
 	{     "EXITFLAG",         map_exitflag,        2    },
 	{     "EXPLORE",          map_explore,         2    },
-	{     "FIND",             map_find,            1    },
+	{     "FIND",             map_find,            2    },
 	{     "FLAG",             map_flag,            1    },
 	{     "GET",              map_get,             2    },
 	{     "GOTO",             map_goto,            1    },
@@ -809,6 +809,7 @@ struct event_type event_table[] =
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },
 	{    "RECEIVED LINE",                          "Triggers when a new line is received."   },
 	{    "RECEIVED OUTPUT",                        "Triggers when new output is received."   },
+	{    "RECEIVED PROMPT",                        "Triggers when a prompt is received."     },
 	{    "SCREEN RESIZE",                          "Triggers when the screen is resized."    },
 	{    "SECOND",                                 "Trigers each second or given second."    },
 	{    "SEND OUTPUT",                            "Triggers when sending output."           },
@@ -816,7 +817,12 @@ struct event_type event_table[] =
 	{    "SESSION CONNECTED",                      "Triggers when a new session connects."   },
 	{    "SESSION DEACTIVATED",                    "Triggers when a session is deactivated." },
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
+	{    "SESSION TIMED OUT",                      "Triggers when a session doesn't connect."},
 	{    "TIME",                                   "Triggers on the given time."             },
+	{    "VT100 CPR",                              "Triggers on an ESC [ 6 n call."          },
+	{    "VT100 DA",                               "Triggers on an ESC [ c call."            },
+	{    "VT100 DECID",                            "Triggers on an ESC Z call."              },
+	{    "VT100 DSR",                              "Triggers on an ESC [ 5 n call."          },
 	{    "WEEK",                                   "Triggers each week or given week."       },
 	{    "YEAR",                                   "Triggers each year or given year."       },
 	{    "",                                       ""                                        }
@@ -845,6 +851,7 @@ struct line_type line_table[] =
 	{    "IGNORE",            line_ignore            },
 	{    "LOG",               line_log               },
 	{    "LOGVERBATIM",       line_logverbatim       },
+	{    "STRIP",             line_strip             },
 	{    "SUBSTITUTE",        line_substitute        },
 	{    "VERBOSE",           line_verbose           },
 	{    "",                  NULL                   }

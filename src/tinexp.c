@@ -184,7 +184,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 {
 	struct listnode *node;
 	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt;
-	char *pte;
+	char *pte, old[6] = { 0 };
 	int i, cnt, escape = FALSE, flags_neol = flags;
 
 	push_call("substitute(%p,%p,%p,%d)",ses,string,result,flags);
@@ -238,6 +238,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				{
 					return pto - result;
 				}
+				break;
 
 			case '$':
 				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalpha((int) pti[1]) || pti[1] == '$'))
@@ -302,7 +303,11 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 			case '<':
 				if (HAS_BIT(flags, SUB_COL))
 				{
-					if (isdigit((int) pti[1]) && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
+					if (HAS_BIT(flags, SUB_CMP) && !strncmp(old, pti, 5))
+					{
+						pti += 5;
+					}
+					else if (isdigit((int) pti[1]) && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
 					{
 						if (pti[1] != '8' || pti[2] != '8' || pti[3] != '8')
 						{
@@ -345,7 +350,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 							pto--;
 							*pto++ = 'm';
 						}
-						pti += 5;
+						pti += sprintf(old, "<%c%c%c>", pti[1], pti[2], pti[3]);
 					}
 					else if (pti[1] >= 'a' && pti[1] <= 'f' && pti[2] >= 'a' && pti[2] <= 'f' && pti[3] >= 'a' && pti[3] <= 'f' && pti[4] == '>')
 					{
@@ -361,7 +366,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = '0' + cnt % 100 / 10;
 						*pto++ = '0' + cnt % 10;
 						*pto++ = 'm';
-						pti += 5;
+						pti += sprintf(old, "<%c%c%c>", pti[1], pti[2], pti[3]);
 					}
 					else if (pti[1] >= 'A' && pti[1] <= 'F' && pti[2] >= 'A' && pti[2] <= 'F' && pti[3] >= 'A' && pti[3] <= 'F' && pti[4] == '>')
 					{
@@ -377,7 +382,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = '0' + cnt % 100 / 10;
 						*pto++ = '0' + cnt % 10;
 						*pto++ = 'm';
-						pti += 5;
+						pti += sprintf(old, "<%c%c%c>", pti[1], pti[2], pti[3]);
 					}
 					else if (pti[1] == 'g' && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
 					{
@@ -393,7 +398,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = '0' + cnt % 100 / 10;
 						*pto++ = '0' + cnt % 10;
 						*pto++ = 'm';
-						pti += 5;
+						pti += sprintf(old, "<%c%c%c>", pti[1], pti[2], pti[3]);
 					}
 					else if (pti[1] == 'G' && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
 					{
@@ -409,7 +414,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = '0' + cnt % 100 / 10;
 						*pto++ = '0' + cnt % 10;
 						*pto++ = 'm';
-						pti += 5;
+						pti += sprintf(old, "<%c%c%c>", pti[1], pti[2], pti[3]);
 					}
 					else
 					{
@@ -515,10 +520,10 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 						while (*ptt)
 						{
-							if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
+							if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *ptt & 128 && ptt[1] != 0)
 							{
-								*pto++ = *pti++;
-								*pto++ = *pti++;
+								*pto++ = *ptt++;
+								*pto++ = *ptt++;
 								continue;
 							}
 
@@ -719,6 +724,10 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				{
 					*pto++ = *pti++;
 				}
+				break;
+
+			case ESCAPE:
+				*pto++ = *pti++;
 				break;
 
 			default:

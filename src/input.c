@@ -71,9 +71,9 @@ void process_input(void)
 		buffer_end(gtd->ses, "");
 	}
 
-	gtd->ses = script_driver(gtd->ses, -1, gtd->input_buf);
-
 	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED INPUT", gtd->input_buf);
+
+	gtd->ses = script_driver(gtd->ses, -1, gtd->input_buf);
 
 	if (IS_SPLIT(gtd->ses))
 	{

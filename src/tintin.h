@@ -122,7 +122,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.00.8  "
+#define CLIENT_VERSION           "2.00.9  "
 
 #define ESCAPE                          27
 
@@ -287,6 +287,7 @@ enum operators
 #define SUB_EOL                       (1 <<  7)
 #define SUB_LNF                       (1 <<  8)
 #define SUB_FIX                       (1 <<  9)
+#define SUB_CMP                       (1 << 10)
 
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
 #define TINTIN_FLAG_CONVERTMETACHAR   (1 <<  1)
@@ -371,6 +372,15 @@ enum operators
 #define MAP_FLAG_ASCIIVNUMS           (1 <<  4)
 #define MAP_FLAG_MUDFONT              (1 <<  5)
 #define MAP_FLAG_NOFOLLOW             (1 <<  6)
+#define MAP_FLAG_SYMBOLGRAPHICS       (1 <<  7)
+
+#define MAP_SEARCH_NAME               0
+#define MAP_SEARCH_EXITS              1
+#define MAP_SEARCH_DESC               2
+#define MAP_SEARCH_AREA               3
+#define MAP_SEARCH_NOTE               4
+#define MAP_SEARCH_TERRAIN            5
+#define MAP_SEARCH_MAX                6
 
 #define MAP_EXIT_N                    (1 <<  0)
 #define MAP_EXIT_E                    (1 <<  1)
@@ -383,8 +393,10 @@ enum operators
 #define MAP_EXIT_SE                   (1 <<  8)
 #define MAP_EXIT_SW                   (1 <<  9)
 
-#define MAP_UNDO_CREATE               (1 <<  0)
-#define MAP_UNDO_LINK                 (1 <<  1)
+#define MAP_UNDO_MOVE                 (1 <<  0)
+#define MAP_UNDO_CREATE               (1 <<  1)
+#define MAP_UNDO_LINK                 (1 <<  2)
+#define MAP_UNDO_INSERT               (1 <<  3)
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
@@ -607,7 +619,7 @@ struct session
 	int                     input_level;
 	long long               connect_retry;
 	int                     connect_error;
-	char                    more_output[BUFFER_SIZE];
+	char                    more_output[BUFFER_SIZE * 2];
 	char                    color[100];
 	long long               check_output;
 	int                     auto_tab;
@@ -872,6 +884,7 @@ struct map_data
 	struct grid_data      * grid_head;
 	struct grid_data      * grid_tail;
 	char                  * exit_color;
+	char                  * here_color;
 	char                  * path_color;
 	char                  * room_color;
 	int                     max_grid_x;
@@ -1183,6 +1196,7 @@ extern void delete_room(struct session *ses, int room, int exits);
 extern void create_exit(struct session *ses, int room, char *format, ...);
 extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
 extern void create_legend(struct session *ses, char *arg);
+extern void search_keywords(struct session *ses, char *arg, char *out, char *var);
 extern int match_room(struct session *ses, int room, char *arg);
 extern int  find_room(struct session *ses, char *arg);
 extern void goto_room(struct session *ses, int room);
@@ -1196,9 +1210,10 @@ extern void del_undo(struct session *ses, struct link_data *link);
 extern void del_gridnode(struct session *ses, struct grid_data *node);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
 extern int searchgrid_find(struct session *ses, int from, char *arg);
-extern int searchgrid_walk(struct session *ses, int from, int dest);
+extern int searchgrid_walk(struct session *ses, int offset, int from, int dest);
 extern void shortest_path(struct session *ses, int run, char *delay, char *arg);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
+extern int tunnel_void(struct session *ses, int from, int room, int dir);
 extern int find_coord(struct session *ses, char *arg);
 extern int spatialgrid_find(struct session *ses, int vnum, int x, int y, int z);
 extern void show_vtmap(struct session *ses);
@@ -1475,6 +1490,7 @@ extern DO_LINE(line_gag);
 extern DO_LINE(line_ignore);
 extern DO_LINE(line_log);
 extern DO_LINE(line_logverbatim);
+extern DO_LINE(line_strip);
 extern DO_LINE(line_substitute);
 extern DO_LINE(line_verbose);
 
@@ -1851,7 +1867,7 @@ extern void strip_vt102_codes_non_graph(char *str, char *buf);
 extern void strip_non_vt102_codes(char *str, char *buf);
 extern void get_color_codes(char *old, char *str, char *buf);
 extern int strip_vt102_strlen(struct session *ses, char *str);
-extern int strip_color_strlen(char *str);
+extern int strip_color_strlen(struct session *ses, char *str);
 extern int interpret_vt102_codes(struct session *ses, char *str, int real);
 
 #endif

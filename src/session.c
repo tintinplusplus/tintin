@@ -315,31 +315,9 @@ void connect_session(struct session *ses)
 		goto reconnect;
 	}
 
-	switch (ses->connect_error)
+	if (ses->connect_error)
 	{
-		case EINTR:
-			tintin_puts(ses, "#COULD NOT CONNECT - CALL INTERUPTED.");
-			break;
-
-		case ECONNREFUSED:
-			tintin_puts(ses, "#COULD NOT CONNECT - REMOTE SERVER IS NOT REACHABLE.");
-			break;
-
-		case ENETUNREACH:
-			tintin_puts(ses, "#COULD NOT CONNECT - THE NETWORK IS NOT REACHABLE FROM THIS HOST.");
-			break;
-
-		case ETIMEDOUT:
-			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION TIMED OUT.");
-			break;
-
-		case EINPROGRESS:
-			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION TIMED OUT.");
-			break;
-
-		default:
-			tintin_puts(ses, "#COULD NOT CONNECT.");
-			break;
+		tintin_printf(ses, "#SESSION '%s' FAILED TO CONNECT.", ses->name);
 	}
 
 	cleanup_session(ses);
@@ -377,9 +355,18 @@ void cleanup_session(struct session *ses)
 
 	}
 
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
+	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+	{
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
-	tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
+		tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
+	}
+	else
+	{
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION TIMED OUT", ses->name, ses->host, ses->ip, ses->port);
+
+		tintin_printf(gtd->ses, "#SESSION '%s' TIMED OUT.", ses->name);
+	}
 
 	if (ses == gtd->ses)
 	{

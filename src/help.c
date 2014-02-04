@@ -444,6 +444,7 @@ struct help_type help_table[] =
 		"         RECEIVED INPUT       %0 raw text\n"
 		"         RECEIVED LINE        %0 raw text %1 plain text\n"
 		"         RECEIVED OUTPUT      %0 raw text\n"
+		"         RECEIVED PROMPT      %0 raw text %1 plain text\n"
 		"         SCREEN RESIZE        %0 cols %1 rows\n"
 		"         SECOND               %6 second\n"
 		"         SEND OUTPUT          %0 raw text\n"
@@ -526,7 +527,7 @@ struct help_type help_table[] =
 		"\n"
 		"         To use a function use the @ character before the function name.\n"
 		"         The function arguments should be placed between braces behind the\n"
-		"         function name.\n"
+		"         function name with argument separated by semi-colons.\n"
 		"\n"
 		"         The function itself can use the provided arguments which are stored\n"
 		"         in %1 to %9, with %0 holding all arguments.\n"
@@ -549,7 +550,7 @@ struct help_type help_table[] =
 		"\n"
 		"<178>Comment<078>: You can remove a gag with the #ungag command.\n"
 	},
-
+/*
 	{
 		"GREETING",
 		"<068>      #<068>##################################################################<068>#\n"
@@ -564,7 +565,19 @@ struct help_type help_table[] =
 		"<068>      #<078>                             1992, 2012                           <068>#\n"
 		"<068>      #<068>##################################################################<068>#<088>\n"
 	},
+*/
 
+	{
+		"GREETING",
+		"<068>      #<068>##################################################################<068>#\n"
+		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,         <068>#\n"
+		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.      <068>#\n"
+		"<068>      #<068>##################################################################<068>#<088>\n"
+	},
 	{
 		"GREP",
 		"<178>Command<078>: #grep <178>[<078>page<178>]<078> <178>{<078>search string<178>}<078>\n"
@@ -709,6 +722,9 @@ struct help_type help_table[] =
 		"         #line ignore {argument}                Argument is executed without\n"
 		"                                                any triggers being checked.\n"
 		"\n"
+		"         #line strip {argument}                 Strips the argument next\n"
+		"                                                executes it a command.\n"
+		"\n"
 		"         #line substitute {options} {argument}  Substitutes the given options:\n"
 		"                                                variables, functions, colors,\n"
 		"                                                escapes, secure, eol, lnf, in\n"
@@ -829,7 +845,7 @@ struct help_type help_table[] =
 		"                  created to the given room vnum. If the direction argument is\n"
 		"                  a valid unused vnum that room is created.\n"
 		"\n"
-		"         #map exit <exit> <COMMAND|DIRECTION|FLAG|GET|NAME|SET|VNUM> <argument>\n"
+		"         #map exit <exit> <COMMAND|DIRECTION|FLAG|GET|NAME|SAVE|SET|VNUM> <arg>\n"
 		"                  Set the exit data. Useful with a closed door where you can\n"
 		"                  set the exit command: '#map exit e command {open east;e}'.\n"
 		"\n"
@@ -842,12 +858,12 @@ struct help_type help_table[] =
 		"                  intersection is found. The route is stored in #path and can\n"
 		"                  subsequently be used with #walk\n"
 		"\n"
-		"         #map find <roomname> <exits> <roomdesc> <roomarea> <roomnote> Searches\n"
-		"                  for the given room name. If found the shortest path from your\n"
-		"                  current location to the target location is calculated. The\n"
-		"                  route is stored in #path and can subsequently be used with the\n"
-		"                  various #path commands. If <exits> is provided all exits must\n"
-		"                  be matched, if <roomdesc>, <roomarea> or <roomnote> is\n"
+		"         #map find <name> <exits> <desc> <area> <note> <terrain>\n"
+		"                  searches for the given room name. If found the shortest path\n"
+		"                  from your current location to the destination is calculated.\n"
+		"                  The route is stored in #path and can subsequently be used with\n"
+		"                  the various #path commands. If <exits> is provided all exits\n"
+		"                  must be matched, if <roomdesc>, <roomarea> or <roomnote> is\n"
 		"                  provided these are matched as well against the room to be\n"
 		"                  found. These options are also available to the goto, and link\n"
 		"                  commands.\n"
@@ -875,8 +891,8 @@ struct help_type help_table[] =
 		"         #map goto <room vnum> [dig]: Takes you to the given room vnum, with the\n"
 		"                  dig argument a new room will be created if non exists.\n"
 		"\n"
-		"         #map goto <room name> [exits]: Takes you to the given room name, if\n"
-		"                  you provide exits those must match as well.\n"
+		"         #map goto <name> <exits> <desc> <area> <note> <terrain>: Takes you to\n"
+		"                  the given room name, if you provide exits those must match.\n"
 		"\n"
 		"         #map get <option> <variable> [vnum]: Store a map value into a\n"
 		"                    variable, if no vnum is given the current room is used.\n"
@@ -907,8 +923,11 @@ struct help_type help_table[] =
 		"         #map link <direction> <room name> [both]: Links two rooms. If the both\n"
 		"                  argument and a valid direction is given the link is two way.\n"
 		"\n"
-		"         #map list <roomname> <exits> <roomdesc> <roomarea> <roomnote> <terrain>\n"
+		"         #map list <name> <exits> <desc> <area> <note> <terrain>\n"
 		"                  Lists all matching rooms and their distance.\n"
+		"\n"
+		"                  Use {variable} {<variable>} to save the output to a variable.\n"
+		"                  {roomname} {<name>}, {roomarea} {<area>}, etc, are valid too.\n"
 		"\n"
 		"         #map map {<x>x<y>} {filename} {a}: shows a map of surrounding rooms.\n"
 		"                  The {horizontal x vertical} argument i.e 80x25 is optional,\n"
@@ -1540,7 +1559,7 @@ DO_COMMAND(do_help)
 			}
 			cat_sprintf(add, "%19s", help_table[cnt].name);
 		}
-		tintin_puts2(ses, add);
+		tintin_puts(ses, add);
 	}
 	else
 	{
