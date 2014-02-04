@@ -113,15 +113,6 @@ void write_line_mud(const char *line, struct session *ses)
 		return;
 	}
 
-	sprintf(outtext, "\033[0m%s", line);
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_LOCALECHO))
-	{
-		memset(&outtext[4], '*', strlen(line));
-	}
-
-	add_line_buffer(ses, outtext, FALSE);
-
 	sprintf(outtext, "%s\r\n", line);
 
 	if (write(ses->socket, outtext, strlen(outtext)) == -1)

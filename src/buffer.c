@@ -98,7 +98,7 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 
 	strcat(ses->more_output, line);
 
-	if (more_output && strlen(ses->more_output) < BUFFER_SIZE / 2)
+	if (more_output == TRUE && strlen(ses->more_output) < BUFFER_SIZE / 2)
 	{
 		return;
 	}
@@ -141,6 +141,11 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 	lines = word_wrap(ses, linebuf, linelog, FALSE);
 
 	ses->buffer[ses->scroll_row] = str_hash(linebuf, lines);
+
+	if (more_output == -1)
+	{
+		str_hash_grep(ses->buffer[ses->scroll_row], TRUE);
+	}
 
 	if (ses->logfile)
 	{
@@ -230,6 +235,11 @@ DO_COMMAND(do_grep)
 				break;
 			}
 
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
 			if (regexp(left, ses->buffer[scroll_cnt]))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
@@ -262,6 +272,11 @@ DO_COMMAND(do_grep)
 			if (ses->buffer[scroll_cnt] == NULL)
 			{
 				break;
+			}
+
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
 			}
 
 			if (regexp(left, ses->buffer[scroll_cnt]))

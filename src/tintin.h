@@ -161,8 +161,7 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define LIST_PROMPT                   12
 #define LIST_TAB                      13
 #define LIST_CLASS                    14
-#define LIST_EVENT                    15
-#define LIST_MAX                      16
+#define LIST_MAX                      15
 
 #define LIST_MATH                     LIST_MAX + 0
 #define LIST_DELAY                    LIST_MAX + 1
@@ -173,8 +172,6 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define COLOR_MAX                     24
 
 #define CLASS_MAX                      5
-
-#define EVENT_MAX                      4
 
 /*
 	Various flags
@@ -214,18 +211,20 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SES_FLAG_DEBUGTELNET          (1 << 19)
 #define SES_FLAG_USERCOMMAND          (1 << 20)
 #define SES_FLAG_SCROLLLOCK           (1 << 21)
-#define SES_FLAG_MORE_OUTPUT          (1 << 22)
+#define SES_FLAG_MORE_OUTPUT          (1 << 22) /* unused */
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
+#define SES_FLAG_GAGPROMPT            (1 << 25)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
 #define LIST_FLAG_DEBUG               (1 <<  2)
+#define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
 #define NODE_FLAG_CLASS               (1 <<  0)
 #define NODE_FLAG_MAX                 (1 <<  1)
 
-#define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
+#define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
 
 #define MAX_COMMAND                   81
@@ -457,7 +456,8 @@ struct str_hash_data
 {
 	struct str_hash_data    * next;
 	struct str_hash_data    * prev;
-	int                       count;
+	unsigned short            count;
+        unsigned short            flags;
 	unsigned short            lines;
 	unsigned short            hash;
 };
@@ -621,13 +621,15 @@ extern DO_COMMAND(do_unmacro);
 extern void macro_update(void);
 #endif
 
-#ifndef __STRALLOC_H__
-#define __STRALLOC_H__
+#ifndef __STRHASH_H__
+#define __STRHASH_H__
 
 extern char *str_hash(char *str, int lines);
 extern char *str_unhash(char *str);
-extern short str_hash_lines(char *str);
+extern unsigned short str_hash_lines(char *str);
+extern unsigned short str_hash_grep(char *str, int write);
 extern void reset_hash_table(void);
+
 DO_COMMAND(do_hash);
 
 #endif

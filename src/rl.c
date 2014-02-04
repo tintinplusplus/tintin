@@ -78,7 +78,7 @@ void printline(struct session *ses, const char *str, int prompt)
 
 	word_wrap(ses, str, wrapped_str, TRUE);
 
-	if (prompt && !HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	if (prompt)
 	{
 		printf("%s", wrapped_str);
 	}
@@ -160,7 +160,7 @@ void mainloop(void)
 
 void commandloop(void)
 {
-	char *line;
+	char *line, buffer[BUFFER_SIZE];
 
 	while (TRUE)
 	{
@@ -186,10 +186,33 @@ void commandloop(void)
 			}
 		}
 
-		if (IS_SPLIT(gtd->ses) && HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND))
+
+		sprintf(buffer, "\033[0m%s", line);
+
+		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
 		{
-			tintin_puts2(line, gtd->ses);
+			memset(&buffer[4], '*', strlen(line));
 		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+		{
+			if (HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND) || gtd->ses->list[LIST_PROMPT]->f_node == NULL)
+			{
+				SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+
+				if (gtd->ses->more_output[0] && gtd->ses->list[LIST_PROMPT]->f_node == NULL)
+				{
+					tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
+				}
+				else
+				{
+					tintin_puts2(buffer, gtd->ses);
+				}
+				DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+			}
+		}
+
+		add_line_buffer(gtd->ses, buffer, -1);
 
 		SET_BIT(gts->flags, SES_FLAG_USERCOMMAND);
 
@@ -323,14 +346,36 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		ses->more_output[0] = 0;
 
+		DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
 
 		return;
 	}
 
+	if (!HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
+	{
+		if (ses == gtd->ses || HAS_BIT(ses->flags, SES_FLAG_SNOOP))
+		{
+			if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+			{
+				if (gtd->ses->more_output[0])
+				{
+					if (linebuf[0])
+					{
+						printf("\n");
+					}
+				}
+			}
+		}
+	}
+
 	add_line_buffer(ses, linebuf, prompt);
 
-	if (ses == gtd->ses)
+	if (HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
+	}
+	else if (ses == gtd->ses)
 	{
 		printline(ses, linebuf, prompt);
 	}

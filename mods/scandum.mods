@@ -673,3 +673,11 @@ help.c         Removed David Chan from the credit screen shown when starting
                patches written by others, and stuffing his name in the credit
                list before vanishing into thin air.
 
+rl.c           Now adding all keyboard input to the scrollback buffer.
+
+rl.c           When in #split mode with no #prompt defined tintin tries to
+               mimic normal behavior, which includes placing input at the
+               end of the prompt.
+
+prompt.c       #prompt matched lines are now written to the scrollback buffer,
+               to simulate the old behavior make an #action executing #gagline.

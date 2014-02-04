@@ -90,9 +90,23 @@ char *str_unhash(char *str)
 }
 
 
-short str_hash_lines(char *str)
+unsigned short str_hash_lines(char *str)
 {
 	return ((struct str_hash_data *) (str - gtd->str_hash_size))->lines;
+}
+
+unsigned short str_hash_grep(char *str, int write)
+{
+	struct str_hash_data *hash_ptr;
+
+	hash_ptr = ((struct str_hash_data *) (str - gtd->str_hash_size));
+
+	if (write)
+	{
+		SET_BIT(hash_ptr->flags, STR_HASH_FLAG_NOGREP);
+	}
+
+	return HAS_BIT(hash_ptr->flags, STR_HASH_FLAG_NOGREP);
 }
 
 void reset_hash_table(void)

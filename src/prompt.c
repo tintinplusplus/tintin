@@ -113,7 +113,7 @@ void check_all_prompts(char *original, char *line, struct session *ses)
 
 			do_one_prompt(ses, original, atoi(node->pr));
 
-			SET_BIT(ses->flags, SES_FLAG_GAG);
+			SET_BIT(ses->flags, SES_FLAG_GAGPROMPT);
 		}
 	}
 }
@@ -163,5 +163,5 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 		goto row, erase to eol, print prompt, goto bot row
 	*/
 
-	printf("\033[%d;1H\033[K\033[0m%s\033[%d;1H", row, temp, ses->bot_row);
+	printf("\033[%d;1H\033[K%s\033[%d;1H", row, temp, ses->bot_row);
 }

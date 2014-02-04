@@ -51,7 +51,7 @@ Q03) Where can I get the readline library?
 A03) You can get the readline library from many ftp sites.  The main ftp
      site for the readline library is ftp.gnu.org.  The most recent version
      should be available there.
-     It has been reported that readline 2.0 does not work, so make sure you
+     It has been reported that readline 4.1 does not work, so make sure you
      get a recent version of readline.
 
 Q04) When I do a ./configure, it complains that it can't find the readline
@@ -66,15 +66,14 @@ A04) Configure normally only checks the standard default directories for
 
      to tell ./configure where to find them.  
 
-     If you put readline in /tmp/readline-4.1 then you would need to do the 
+     If you put readline in /tmp/readline-5.0 then you would need to do the 
      following:
 
-  1) rename it to be called readline: mv readline-4.1 readline
+  1) rename it to be called readline: mv readline-5.0 readline
 
   2) tell configure to look there: ./configure --includedir=/tmp --libdir=tmp
 
   3) You must use the full path when specifying the directory.
-
 
 Q06) I can't get tintin compiled still.  Where can I get more help?
 

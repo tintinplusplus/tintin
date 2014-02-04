@@ -15,6 +15,7 @@ you can do
 
 ./configure --includedir=/tmp --libdir=/tmp/readline
 
+You need Readline 4.2 or higher in order to compile TinTin++.
 
 Options configure current supports:
 --includedir    Additional include directory

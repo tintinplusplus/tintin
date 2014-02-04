@@ -199,7 +199,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.94.5                           <068>#\n"
+		"<068>    #<078>                           Version 1.94.6                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -594,9 +594,9 @@ const struct help_type help_table[81] =
 		"         will take the status prompt from the mud, and display it on the status\n"
 		"         line of the split window.  You would define <string> the same way you\n"
 		"         would a substitution (see #help substitution). The row number is\n"
-		"         optional if you use a non standard split mode. In which case a positive\n"
-		"         number draws #row lines above your cursor, and a negative number draws\n"
-		"         #row lines above your topline\n"
+		"         optional if you use a non standard split mode. In which case a\n"
+		"         positive number draws #row lines above your cursor, and a negative\n"
+		"         number draws #row lines below your topline\n"
 	},
 	{
 		"READ",

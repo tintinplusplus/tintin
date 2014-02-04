@@ -210,10 +210,14 @@ void tick_update(void)
 				goto_rowcol(ses, ses->bot_row, 1);
 			}
 
+			SET_BIT(ses->flags, SES_FLAG_READMUD);
+
 			strcpy(result, ses->more_output);
 			ses->more_output[0] = 0;
 
 			process_mud_output(ses, result, TRUE);
+
+			DEL_BIT(ses->flags, SES_FLAG_READMUD);
 
 			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 			{
