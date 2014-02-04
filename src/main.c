@@ -75,6 +75,24 @@ void winch_handler(int signal)
 
 void abort_handler(int signal)
 {
+	static char crashed = FALSE;
+
+	if (crashed)
+	{
+		exit(-1);
+	}
+	crashed = TRUE;
+
+	reset_terminal();
+
+	clean_screen(gtd->ses);
+
+	dump_stack();
+
+	fflush(NULL);
+
+	exit(-1);
+
 	if (gtd->ses->connect_retry > utime())
 	{
 		gtd->ses->connect_retry = 0;

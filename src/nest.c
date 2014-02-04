@@ -420,7 +420,7 @@ void copy_nest_node(struct listroot *dst_root, struct listnode *dst, struct list
 
 		if (src->root->list[index]->root)
 		{
-			copy_nest_node(dst_root, dst, src);
+			copy_nest_node(dst_root, dst, src->root->list[index]);
 		}
 	}
 }

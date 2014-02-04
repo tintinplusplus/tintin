@@ -74,7 +74,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map create                            (creates the initial map)");
 		tintin_printf2(ses, "#map destroy                           (destroys the map)");
 		tintin_printf2(ses, "#map delete   <direction>              (delete the room at given dir)");
-		tintin_printf2(ses, "#map dig      <direction>              (creates a new room)");
+		tintin_printf2(ses, "#map dig      <direction> [new]        (creates a new room)");
 		tintin_printf2(ses, "#map exit     <direction>  <command>   (sets the exit command)");
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
@@ -93,10 +93,11 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map read     <filename>               (load your map from a file)");
 		tintin_printf2(ses, "#map roomflag <room flag>              (set room based flags)");
 		tintin_printf2(ses, "#map set      <option>     <value>     (set various values)");
+		tintin_printf2(ses, "#map return                            (return to last room.)");
 		tintin_printf2(ses, "#map run      <room name>  <delay>     (run to given room)");
 		tintin_printf2(ses, "#map travel   <direction>  <delay>     (run in given direction)");
 		tintin_printf2(ses, "#map undo                              (undo last move)");
-		tintin_printf2(ses, "#map unlink   <direction>              (deletes an exit)");
+		tintin_printf2(ses, "#map unlink   <direction> [both]       (deletes an exit)");
 		tintin_printf2(ses, "#map write    <filename>               (save the map to a file)");
 
 		return ses;
@@ -210,6 +211,7 @@ DO_MAP(map_dig)
 	struct listnode *node;
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
 	for (room = 1 ; room < ses->map->size ; room++)
 	{
@@ -234,7 +236,7 @@ DO_MAP(map_dig)
 		return;
 	}
 
-	if (find_coord(ses, arg1))
+	if (strcasecmp(arg2, "new") && find_coord(ses, arg1))
 	{
 		room = map_search_tar_room;
 
@@ -256,7 +258,7 @@ DO_MAP(map_dig)
 			create_exit(ses, room, temp);
 		}
 	}
-	tintin_printf2(ses, "#MAP: Created room {%d}.", room);
+	tintin_printf(ses, "#MAP: Created room {%d}.", room);
 }
 
 DO_MAP(map_exitcmd)
@@ -426,6 +428,7 @@ DO_MAP(map_get)
 
 	if (*arg1 == 0 || *arg2 == 0)
 	{
+		tintin_printf2(ses, "  roomvnum: %d", room->vnum);
 		tintin_printf2(ses, "  roomarea: %s", room->area);
 		tintin_printf2(ses, " roomcolor: %s", room->color);
 		tintin_printf2(ses, "  roomdesc: %s", room->desc);
@@ -474,7 +477,7 @@ DO_MAP(map_get)
 
 			for (exit = room->f_exit ; exit ; exit = exit->next)
 			{
-				cat_sprintf(buf, "{%s}{1}", exit->name);
+				cat_sprintf(buf, "{%s}{%d}", exit->name, exit->vnum);
 			}
 			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", buf);
 		}
@@ -1196,7 +1199,7 @@ DO_MAP(map_write)
 
 	fprintf(file, "F %d\n\n", ses->map->flags);
 
-	fprintf(file, "I %d\n\n", ses->map->in_room);
+	fprintf(file, "I %d\n\n", ses->map->in_room ? ses->map->in_room : ses->map->last_room);
 
 	fprintf(file, "L %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n\n",
 		ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],
@@ -1346,7 +1349,7 @@ int create_room(struct session *ses, char *arg)
 
 	ses->map->room_list[newroom->vnum] = newroom;
 
-	tintin_printf2(ses, "#READMAP R %5s {%s}.", vnum, name);
+	tintin_printf(ses, "#READMAP R %5s {%s}.", vnum, name);
 
 	return newroom->vnum;
 }
@@ -1420,7 +1423,7 @@ void create_exit(struct session *ses, int room, char *arg)
 
 	LINK(newexit, ses->map->room_list[room]->f_exit, ses->map->room_list[room]->l_exit);
 
-	tintin_printf2(ses, "#READMAP E %5s {%s} {%s}.", vnum, name, cmd);
+	tintin_printf(ses, "#READMAP E %5s {%s} {%s}.", vnum, name, cmd);
 }
 
 void delete_exit(struct session *ses, int room, struct exit_data *exit)

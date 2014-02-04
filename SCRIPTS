@@ -183,10 +183,8 @@
 		};
 		#else
 		{
-			#loop $cnt 0 cnt
-			{
-				#send $char
-			}
+			#$cnt #send $char;
+			#var cnt {}
 		}
 	}
 }
@@ -236,11 +234,11 @@
 
 #var temp {}
 
-#foreach {a b c d e f} {var1}
+#foreach {a;b;c;d;e;f} {var1}
 {
-	#foreach {a b c d e f} {var2}
+	#foreach {a;b;c;d;e;f} {var2}
 	{
-		#forall {a b c d e f} {var3}
+		#foreach {a;b;c;d;e;f} {var3}
 		{
 			#var temp {$temp <$var1$var2$var3><<888>$var1$var2$var3>}
 		};

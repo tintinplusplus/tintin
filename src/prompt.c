@@ -84,7 +84,7 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 			if (*node->right)
 			{
 				substitute(ses, node->right, original, SUB_ARG);
-				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL);
+				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 			}
 
 			show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", node->left);

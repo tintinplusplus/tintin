@@ -111,6 +111,22 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
+		1260469590, /* 10 Dec 2009 */
+		1323541590, /* 10 Dec 2011 */
+		"\n"
+		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"
+		"\n"
+		"<078>Join us as Threshold RPG, one of the oldest RP enforced games on the\n"
+		"<078>internet. Add to thirteen years of player created history and make your own\n"
+		"<078>mark on the world today. Join a hundred other players who are vying for\n"
+		"<078>political and religious power in complex systems that reward skill, effort,\n"
+		"<078>and social interactions. Threshold RPG is a custom code-base written in\n"
+		"<078>LPC and features a completely unique and original world.\n"
+		"\n"
+		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
+	},
+
+	{
 		0,
 		0,
 		""

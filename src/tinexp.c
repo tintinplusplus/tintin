@@ -34,12 +34,12 @@
 
 int match(struct session *ses, char *str, char *exp)
 {
-	char expbuf[BUFFER_SIZE];
+	char expbuf[BUFFER_SIZE], strbuf[BUFFER_SIZE];
 
 	if (ses)
 	{
 		sprintf(expbuf, "^%s$", exp);
-		
+
 		substitute(ses, expbuf, expbuf, SUB_VAR|SUB_FUN);
 	}
 	else
@@ -49,19 +49,20 @@ int match(struct session *ses, char *str, char *exp)
 	return tintin_regexp(NULL, str, expbuf, 0, 0);
 }
 
-int find(struct session *ses, char *str, char *exp)
+int find(struct session *ses, char *str, char *exp, int sub)
 {
-	char expbuf[BUFFER_SIZE];
+	char expbuf[BUFFER_SIZE], strbuf[BUFFER_SIZE];
 
 	if (ses)
 	{
+		substitute(ses, str, strbuf, SUB_VAR|SUB_FUN);
 		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
 
-		return tintin_regexp(NULL, str, expbuf, 0, 0);
+		return tintin_regexp(NULL, strbuf, expbuf, 0, sub);
 	}
 	else
 	{
-		return tintin_regexp(NULL, str, exp, 0, 0);
+		return tintin_regexp(NULL, str, exp, 0, sub);
 	}
 }
 
@@ -190,7 +191,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 	struct listnode *node;
 	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt;
 	char *pte;
-	int i, cnt, flags_neol = flags;
+	int i, cnt, escape = FALSE, flags_neol = flags;
 
 	push_call("substitute(%p,%p,%p,%d)",ses,string,result,flags);
 
@@ -434,6 +435,14 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 			case '@':
 				if (HAS_BIT(flags, SUB_FUN))
 				{
+					if (pti[1] == '@')
+					{
+						escape = TRUE;
+						*pto++ = *pti++;
+
+						continue;
+					}
+
 					for (ptt = temp, i = 1 ; isalnum(pti[i]) || pti[i] == '_' ; i++)
 					{
 						*ptt++ = pti[i];
@@ -444,8 +453,14 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					if (node == NULL || pti[i] != DEFAULT_OPEN)
 					{
+						escape = FALSE;
 						*pto++ = *pti++;
+						continue;
+					}
 
+					if (escape)
+					{
+						pti++;
 						continue;
 					}
 
@@ -541,6 +556,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 									case COMMAND_SEPARATOR:
 										*pto++ = '\\';
 										*pto++ = COMMAND_SEPARATOR;
+										break;
 
 									default:
 										*pto++ = *ptt;

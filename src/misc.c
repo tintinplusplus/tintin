@@ -123,7 +123,11 @@ DO_COMMAND(do_echo)
 
 		if (*temp)
 		{
-			do_one_prompt(ses, left, (int) get_number(ses, temp));
+			int row = (int) get_number(ses, temp);
+
+			substitute(ses, left, temp, SUB_ESC);
+
+			do_one_prompt(ses, temp, row);
 
 			return ses;
 		}

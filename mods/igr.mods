@@ -1,4 +1,26 @@
+Jan 2010       2.00.0
+--------------------------------------------------------------------------------
+
+list.c         Changed substitution order for #list add to substitute before
+               breaking up the arguments.
+
+tinexp.c       Added escaping of existing functions using @@
+
+tokenize.c     Added tokenization of #regex.
+
+data.c         A trigger's priority can now be a floating point numbers.
+
+tinexp.c       Fixed COMMAND_SEPARATOR related bug introduce in 1.99.9.
+
+misc.c         Added escape substitutions to vt row echo calls.
+
+buffer.c       Added #buffer get option.
+
 Nov 2009       1.99.9
+--------------------------------------------------------------------------------
+update.c       Fixed crash bug with delays.
+
+math.c         Fixed issue with negative numbers.
 
 main.c         Fixed infinite reconnect trigger loop with #end.
 
@@ -11,8 +33,9 @@ math.c         Fixed bug with ~ handling.
 
 tick.c         Fixed a bug with delays not substituting variables right away.
 
-Sep 2009       1.99.8
 
+Sep 2009       1.99.8
+--------------------------------------------------------------------------------
 math.c         Added check to bypass inf and nan in tintoi.
 
 update.c       Fixed a potential memory overflow in the input parser.
@@ -39,7 +62,7 @@ mapper.c       Updated the map grid to allocate memory for a future
                #map dump 99x99 <file> command.
 
 Jul 2009       1.99.7
-
+--------------------------------------------------------------------------------
 mapper.c       Added #map color <rooms|exits> <color> option.
 
 mapper.c       #map list uses all location fields now, displays distance, and
@@ -135,14 +158,14 @@ cursor.c       Modifying the input buffer while tabbing will reset the
                tab finder.
 
 May 2009       1.99.6
-
+--------------------------------------------------------------------------------
 cursor.c       Added forward and backward tab completion patch by Ben Love.
 
 forkpty.c      Added forkpty patch by David Champion. It allows tintin to
                run on Solaris and other systems that lack forkpty().
 
 April 2009     1.99.5
-
+--------------------------------------------------------------------------------
 *.c            Made code c++ compatible.
 
 system.c       Added 2nd argument to textin for a cumulative per line delay.
@@ -155,7 +178,7 @@ substitute.c   Now allowing multiple substitutions per line which are
                automatically substring substitutions.
 
 March 2009     1.99.4
-
+--------------------------------------------------------------------------------
 utils.c        Fixed 100 move map crash bug.
 
 input.c        Now sending \r on enter when using #run, seems to give the best
@@ -166,7 +189,7 @@ log.c          Added xterm 256 color html logging.
 terminal.c     Disabled default ctrl-s and ctrl-q behavior.
 
 March 2009     1.99.3
-
+--------------------------------------------------------------------------------
 data.c         Now properly inheriting triggers from the startup session.
 
 net.c          Now fetching IP address when connecting to a server.

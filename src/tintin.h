@@ -115,12 +115,12 @@
 
 #define HISTORY_FILE         ".tt_history"
 
-#define STRING_SIZE                  40000
-#define BUFFER_SIZE                  15000
+#define STRING_SIZE                  80000
+#define BUFFER_SIZE                  40000
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
-#define VERSION_NUM               "1.99.9"
+#define VERSION_NUM               "2.00.0"
 
 #define ESCAPE                          27
 
@@ -182,27 +182,28 @@
 
 enum operators
 {
-	TOKEN_TYP_BREAK,
-	TOKEN_TYP_CASE,
-	TOKEN_TYP_COMMAND,
-	TOKEN_TYP_CONTINUE,
-	TOKEN_TYP_DEFAULT,
-	TOKEN_TYP_END,
-	TOKEN_TYP_ELSE,
-	TOKEN_TYP_ELSEIF,
-	TOKEN_TYP_FOREACH,
-	TOKEN_TYP_BROKEN_FOREACH,
-	TOKEN_TYP_IF,
-	TOKEN_TYP_LOOP,
-	TOKEN_TYP_BROKEN_LOOP,
-	TOKEN_TYP_PARSE,
-	TOKEN_TYP_BROKEN_PARSE,
-	TOKEN_TYP_RETURN,
-	TOKEN_TYP_SESSION,
-	TOKEN_TYP_STRING,
-	TOKEN_TYP_SWITCH,
-	TOKEN_TYP_WHILE,
-	TOKEN_TYP_BROKEN_WHILE
+	TOKEN_TYPE_BREAK,
+	TOKEN_TYPE_CASE,
+	TOKEN_TYPE_COMMAND,
+	TOKEN_TYPE_CONTINUE,
+	TOKEN_TYPE_DEFAULT,
+	TOKEN_TYPE_END,
+	TOKEN_TYPE_ELSE,
+	TOKEN_TYPE_ELSEIF,
+	TOKEN_TYPE_FOREACH,
+	TOKEN_TYPE_BROKEN_FOREACH,
+	TOKEN_TYPE_IF,
+	TOKEN_TYPE_LOOP,
+	TOKEN_TYPE_BROKEN_LOOP,
+	TOKEN_TYPE_PARSE,
+	TOKEN_TYPE_BROKEN_PARSE,
+	TOKEN_TYPE_REGEX,
+	TOKEN_TYPE_RETURN,
+	TOKEN_TYPE_SESSION,
+	TOKEN_TYPE_STRING,
+	TOKEN_TYPE_SWITCH,
+	TOKEN_TYPE_WHILE,
+	TOKEN_TYPE_BROKEN_WHILE
 };
 
 
@@ -1176,7 +1177,7 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 extern int substitute(struct session *ses, char *string, char *result, int flags);
 
 extern int match(struct session *ses, char *str, char *exp);
-extern int find(struct session *ses, char *str, char *exp);
+extern int find(struct session *ses, char *str, char *exp, int sub);
 DO_COMMAND(do_regexp);
 extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int flag);
 extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
@@ -1252,6 +1253,7 @@ extern int show_buffer(struct session *ses);
 extern DO_BUFFER(buffer_up);
 extern DO_BUFFER(buffer_clear);
 extern DO_BUFFER(buffer_down);
+extern DO_BUFFER(buffer_get);
 extern DO_BUFFER(buffer_home);
 extern DO_BUFFER(buffer_end);
 extern DO_BUFFER(buffer_lock);

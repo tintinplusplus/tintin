@@ -52,7 +52,7 @@ DO_COMMAND(do_read)
 
 	temp[0] = getc(fp);
 
-	if (!isgraph(temp[0]) || isalpha(temp[0]))
+	if (!isgraph((int) temp[0]) || isalpha((int) temp[0]))
 	{
 		tintin_printf(ses, "#ERROR: #READ {%s} - INVALID START OF FILE.", filename);
 
@@ -152,7 +152,7 @@ DO_COMMAND(do_read)
 
 					pto--;
 
-					while (isspace(*pto))
+					while (isspace((int) *pto))
 					{
 						pto--;
 					}
@@ -175,7 +175,7 @@ DO_COMMAND(do_read)
 					{
 						pti++;
 
-						while (isspace(*pti))
+						while (isspace((int) *pti))
 						{
 							if (*pti == '\n')
 							{
@@ -206,7 +206,7 @@ DO_COMMAND(do_read)
 						if (pti[cnt] == DEFAULT_OPEN)
 						{
 							pti++;
-							while (isspace(*pti))
+							while (isspace((int) *pti))
 							{
 								pti++;
 							}
@@ -214,7 +214,7 @@ DO_COMMAND(do_read)
 							break;
 						}
 
-						if (!isspace(pti[cnt]))
+						if (!isspace((int) pti[cnt]))
 						{
 							*pto++ = *pti++;
 							break;

@@ -412,7 +412,7 @@ DO_CURSOR(cursor_history_next)
 
 		for (root->update++ ; root->update < root->used ; root->update++)
 		{
-			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf))
+			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
 			{
 				break;
 			}
@@ -478,7 +478,7 @@ DO_CURSOR(cursor_history_prev)
 
 		for (root->update-- ; root->update >= 0 ; root->update--)
 		{
-			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf))
+			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
 			{
 				break;
 			}
@@ -592,7 +592,7 @@ DO_CURSOR(cursor_history_find)
 
 	for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 	{
-		if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf))
+		if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
 		{
 			break;
 		}

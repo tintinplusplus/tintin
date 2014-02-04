@@ -384,7 +384,8 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 
 int bsearch_priority_list(struct listroot *root, char *text, char *priority, int seek)
 {
-	int bot, top, val, srt;
+	int bot, top, val;
+	double srt;
 
 	bot = 0;
 	top = root->used - 1;
@@ -392,7 +393,7 @@ int bsearch_priority_list(struct listroot *root, char *text, char *priority, int
 
 	while (bot <= top)
 	{
-		srt = atoll(priority) - atoll(root->list[val]->pr);
+		srt = atof(priority) - atof(root->list[val]->pr);
 
 		if (!srt)
 		{

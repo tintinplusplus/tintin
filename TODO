@@ -1,16 +1,20 @@
 * Stuff that needs to be done
 
+- add chat server 'log' option to show last 15 messages.
+
 - look into getting rid of node->data
 
-- look into \c[OA default binding for keypad.
-
 - garbage collection for deleted nodes.
+
+- classes aren't saved when using #write
+
+- fix 256 color color patching.
 
 -------------------------------------------------------------------------------
 
 GENERAL STUFF:
 
-- #buffer copy {line} {variable}
+- Look into scrollback blanking with screen.
 
 - Look into old school automatic packet patching.
 
@@ -27,6 +31,10 @@ GENERAL STUFF:
 - Deal with escaping { } / ; in #script variables.
 
 - Make tintin char set by session instead of global.
+
+- Add a way to append text to prompts.
+
+- Proper manual for CHAT and MAP.
 
 -------------------------------------------------------------------------------
 
@@ -88,6 +96,8 @@ ERROR: close in cleanup (9: Bad file descriptor)
 -------------------------------------------------------------------------------
 
 * Stuff that has been request but that I'm not entirely sure about
+
+- http://tintin.sourceforge.net/board/posting.php?mode=reply&t=36
 
 - Add a command to manipulate the input buffer.
 

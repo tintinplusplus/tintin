@@ -730,7 +730,7 @@ void chat_printf(char *format, ...)
 
 	for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
 	{
-		if (HAS_BIT(buddy->flags, CHAT_FLAG_FORWARD))
+		if (HAS_BIT(buddy->flags, CHAT_FLAG_FORWARD) && !HAS_BIT(buddy->flags, CHAT_FLAG_FORWARDALL))
 		{
 			chat_socket_printf(buddy, "%s", tmp);
 		}
@@ -1052,6 +1052,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 			case CHAT_SNOOP_DATA:
 				SET_BIT(buddy->flags, CHAT_FLAG_FORWARDBY);
 				DEL_BIT(buddy->flags, CHAT_FLAG_FORWARD);
+				DEL_BIT(buddy->flags, CHAT_FLAG_FORWARDALL);
 				chat_receive_snoop_data(buddy, txt);
 				break;
 
@@ -1321,8 +1322,6 @@ void parse_requested_connections(struct chat_data *buddy, char *txt)
 
 		return;
 	}
-
-
 
 	ip[0] = 0;
 	port[0] = 0;

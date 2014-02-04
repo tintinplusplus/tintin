@@ -268,7 +268,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (find(ses, ses->buffer[scroll_cnt], right))
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -307,7 +307,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (find(ses, ses->buffer[scroll_cnt], right))
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -824,7 +824,7 @@ DO_BUFFER(buffer_find)
 					continue;
 				}
 
-				if (find(ses, ses->buffer[scroll_cnt], right))
+				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
 				{
 					if (grep_cnt == grep_max)
 					{
@@ -867,7 +867,7 @@ DO_BUFFER(buffer_find)
 					continue;
 				}
 
-				if (find(ses, ses->buffer[scroll_cnt], right))
+				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
 				{
 					grep_cnt--;
 
@@ -890,6 +890,57 @@ DO_BUFFER(buffer_find)
 			ses->scroll_line = scroll_cnt;
 
 			show_buffer(ses);
+		}
+	}
+	return;
+}
+
+DO_BUFFER(buffer_get)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
+	int min, max, cur, cnt;
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, FALSE);
+	arg = get_arg_in_braces(arg, arg2, FALSE);
+	arg = get_arg_in_braces(arg, arg3, FALSE);
+
+	min = get_number(ses, arg2);
+	max = get_number(ses, arg3);
+	cnt = 0;
+
+	if (*arg1 == 0 || *arg2 == 0 || min == 0)
+	{
+		tintin_printf(ses, "#SYNTAX: #BUFFER GET <VARIABLE> <LOWER BOUND> [UPPER BOUND]");
+		return;
+	}
+
+	if (max < min)
+	{
+		max = min;
+	}
+
+	set_nest_node(ses->list[LIST_VARIABLE], arg1, "");
+
+	while (max >= min)
+	{
+		if (max == min && cnt == 0)
+		{
+			sprintf(arg2, "%s", arg1);
+		}
+		else
+		{
+			sprintf(arg2, "%s[%d]", arg1, ++cnt);
+		}
+
+		cur = (ses->scroll_row + min++) % ses->scroll_max;
+
+		if (ses->buffer[cur] == NULL)
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "");
+		}
+		else
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", ses->buffer[cur]);
 		}
 	}
 	return;

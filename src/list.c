@@ -75,7 +75,7 @@ DO_COMMAND(do_list)
 
 DO_ARRAY(array_add)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], args[BUFFER_SIZE];
 	int index;
 
 	if (!list->root)
@@ -85,11 +85,15 @@ DO_ARRAY(array_add)
 
 	index = list->root->used + 1;
 
+	substitute(ses, arg, args, SUB_VAR|SUB_FUN);
+
+	arg = args;
+
 	while (*arg)
 	{
 		sprintf(arg1, "%d", index++);
 
-		arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+		arg = get_arg_in_braces(arg, arg2, GET_ONE);
 
 		insert_node_list(list->root, arg1, arg2, "");
 	}
@@ -184,7 +188,7 @@ DO_ARRAY(array_find)
 
 	if (*arg2 == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST FIND {string} {variable}");
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} FIND {string} {variable}");
 		return ses;
 	}
 
@@ -225,7 +229,7 @@ DO_ARRAY(array_get)
 
 	if (*arg2 == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST GET {index} {variable}");
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} GET {index} {variable}");
 		return ses;
 	}
 
@@ -298,7 +302,7 @@ DO_ARRAY(array_size)
 
 	if (*arg1 == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST SIZE {index} {variable}");
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} SIZE {variable}");
 		return ses;
 	}
 
