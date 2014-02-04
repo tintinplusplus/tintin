@@ -59,7 +59,7 @@ DO_COMMAND(do_highlight)
 		if (get_highlight_codes(ses, arg2, temp) == FALSE)
 		{
 			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\n");
-			tintin_printf2(ses, "reset, bold, light, faint, dim, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
+			tintin_printf2(ses, "reset, bold, light, faint, dim, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white, azure, ebony, jade, lime, orange, silver, tan, violet.");
 		}
 		else
 		{
@@ -153,8 +153,6 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 		return TRUE;
 	}
 
-	sprintf(result, "\033[0");
-
 	while (*string)
 	{
 		if (isalpha((int) *string))
@@ -163,8 +161,10 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 			{
 				if (is_abbrev(color_table[cnt].name, string))
 				{
-					strcat(result, ";");
-					strcat(result, color_table[cnt].number);
+					substitute(ses, color_table[cnt].code, result, SUB_COL);
+
+					result += strlen(result);
+
 					break;
 				}
 			}
@@ -176,15 +176,6 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 
 			string += strlen(color_table[cnt].name);
 		}
-		else if (isdigit((int) *string))
-		{
-			strcat(result, ";");
-
-			while (isdigit((int) *string))
-			{
-				sprintf(&result[strlen(result)], "%c", *string++);
-			}
-		}
 
 		switch (*string)
 		{
@@ -194,13 +185,11 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 				break;
 
 			case 0:
-				break;
+				return TRUE;
 
 			default:
 				return FALSE;
 		}
 	}
-	strcat(result, "m");
-
 	return TRUE;
 }

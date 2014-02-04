@@ -27,7 +27,6 @@
 
 #include "tintin.h"
 
-
 DO_COMMAND(do_all)
 {
 	char left[BUFFER_SIZE];

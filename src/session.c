@@ -244,11 +244,11 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	if (desc)
 	{
-		tintin_printf2(ses, "#TRYING TO LAUNCH '%s' RUNNING '%s'.", newsession->name, newsession->host);
+		tintin_printf(ses, "#TRYING TO LAUNCH '%s' RUNNING '%s'.", newsession->name, newsession->host);
 	}
 	else
 	{
-		tintin_printf2(ses, "#TRYING TO CONNECT '%s' TO '%s' PORT '%s'.", newsession->name, newsession->host, newsession->port);
+		tintin_printf(ses, "#TRYING TO CONNECT '%s' TO '%s' PORT '%s'.", newsession->name, newsession->host, newsession->port);
 	}
 
 	gtd->ses = newsession;
@@ -304,11 +304,6 @@ void connect_session(struct session *ses)
 		tintin_printf2(ses, "");
 
 		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'", ses->name, ses->host, ses->port);
-
-		if (atoi(ses->port) == TELNET_PORT)
-		{
-			init_telnet_session(ses);
-		}
 
 		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION CONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
@@ -383,8 +378,6 @@ void cleanup_session(struct session *ses)
 	}
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
-
-	tintin_printf(gtd->ses, "");
 
 	tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
 

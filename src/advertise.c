@@ -147,10 +147,10 @@ struct advertisement_type advertisement_table[] =
 		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
 		"\n"
 	},
-
+/*
 	{
-		1291140000, /* 30 Nov 2010 */
-		1354280000, /* 30 Nov 2012 */
+		1291140000,
+		1354280000,
 		100,
 		"\n"
 		"<138>                   Primordiax - http://www.primordiax.com\n"
@@ -164,7 +164,7 @@ struct advertisement_type advertisement_table[] =
 		"<178>To connect to Primordiax enter: #session prim primordiax.com 3000\n"
 		"\n"
 	},
-
+*/
 	{
 		1291140000, /* 30 Nov 2010 */
 		1354280000, /* 30 Nov 2012 */
@@ -235,7 +235,7 @@ DO_COMMAND(do_advertise)
 
 		cnt = advertisement_table[i].value;
 
-		if (lrand48() % max < cnt)
+		if (rand() % max < cnt)
 		{
 			char *pto, *ptf;
 

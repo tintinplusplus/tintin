@@ -166,14 +166,6 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		chat_forward_session(ses, linebuf);
 	}
 
-	if (ses->logline)
-	{
-		logit(ses, linebuf, ses->logline, TRUE);
-
-		fclose(ses->logline);
-		ses->logline = NULL;
-	}
-
 	if (--ses->scroll_row < 0)
 	{
 		ses->scroll_row = ses->scroll_max -1;
@@ -536,12 +528,10 @@ int show_buffer(struct session *ses)
 
 DO_COMMAND(do_buffer)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 	int cnt;
 
 	arg = get_arg_in_braces(ses, arg, left, FALSE);
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER))
 	{
@@ -570,7 +560,7 @@ DO_COMMAND(do_buffer)
 			continue;
 		}
 
-		buffer_table[cnt].fun(ses, right);
+		buffer_table[cnt].fun(ses, arg);
 
 		return ses;
 	}
@@ -793,7 +783,7 @@ DO_BUFFER(buffer_find)
 
 	grep_cnt = grep_max = scroll_cnt = 0;
 
-	get_arg_in_braces(ses, arg, left, FALSE);
+	sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (ses->buffer == NULL)
 	{
@@ -809,8 +799,8 @@ DO_BUFFER(buffer_find)
 
 		if (page)
 		{
-			arg = get_arg_in_braces(ses, arg, left,  FALSE);
-			arg = get_arg_in_braces(ses, arg, right, TRUE);
+			arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
+			arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
 
 			if (*right == 0)
 			{
@@ -823,7 +813,7 @@ DO_BUFFER(buffer_find)
 		{
 			page = 1;
 
-			arg = get_arg_in_braces(ses, arg, right, TRUE);
+			arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
 		}
 
 		if (page > 0)
@@ -929,8 +919,8 @@ DO_BUFFER(buffer_get)
 	int min, max, cur, cnt, add;
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, FALSE);
-	arg = get_arg_in_braces(ses, arg, arg2, FALSE);
-	arg = get_arg_in_braces(ses, arg, arg3, FALSE);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
 
 	min = get_number(ses, arg2);
 	max = get_number(ses, arg3);
@@ -987,7 +977,7 @@ DO_BUFFER(buffer_write)
 	char left[BUFFER_SIZE], out[STRING_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(ses, arg, left, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{

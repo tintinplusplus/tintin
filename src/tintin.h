@@ -122,11 +122,9 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.00.7  "
+#define CLIENT_VERSION           "2.00.8  "
 
 #define ESCAPE                          27
-
-#define TELNET_PORT                     23
 
 #define TIMER_POLL_INPUT                 0
 #define TIMER_POLL_SESSIONS              1
@@ -364,6 +362,7 @@ enum operators
 #define ROOM_FLAG_PATH                (1 <<  6)
 
 #define EXIT_FLAG_HIDE                (1 <<  0)
+#define EXIT_FLAG_AVOID               (1 <<  1)
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
@@ -399,48 +398,48 @@ enum operators
 { \
 	if ((head) == NULL) \
 	{ \
-		(head)			   = (link); \
+		(head) = (link); \
 	} \
 	else \
 	{ \
-		(tail)->next		   = (link); \
+		(tail)->next = (link); \
 	} \
-	(link)->next			   = NULL; \
-	(link)->prev			   = (tail); \
+	(link)->next = NULL; \
+	(link)->prev = (tail); \
 	(tail)				    = (link); \
 }
 
 
-#define INSERT_LEFT(link, rght, head) \
+#define INSERT_LEFT(link, right, head) \
 { \
-	(link)->prev			   = (rght)->prev; \
-	(rght)->prev			   = (link); \
-	(link)->next			   = (rght); \
+	(link)->prev = (right)->prev; \
+	(right)->prev = (link); \
+	(link)->next = (right); \
 	\
 	if ((link)->prev) \
 	{ \
-		(link)->prev->next	  = (link); \
+		(link)->prev->next = (link); \
 	} \
 	else \
 	{ \
-		(head)			   = (link); \
+		(head) = (link); \
 	} \
 }
 
 
 #define INSERT_RIGHT(link, left, tail) \
 { \
-	(link)->next			   = (left)->next; \
-	(left)->next			   = (link); \
-	(link)->prev			   = (left); \
-	\
+	(link)->next = (left)->next; \
+	(left)->next = (link); \
+	(link)->prev = (left); \
+ \
 	if ((link)->next) \
 	{ \
-		(link)->next->prev	  = (link); \
+		(link)->next->prev = (link); \
 	} \
 	else \
 	{ \
-		(tail)			    = (link); \
+		(tail) = (link); \
 	} \
 }
 
@@ -692,6 +691,17 @@ struct link_data
 	char                 * str3;
 };
 
+struct grid_data
+{
+	struct grid_data     * next;
+	struct grid_data     * prev;
+	int                    vnum;
+	float                  length;
+	int                    x;
+	int                    y;
+	int                    z;
+};
+
 /*
 	Typedefs
 */
@@ -738,7 +748,6 @@ struct class_type
 struct color_type
 {
 	char                  * name;
-	char                  * number;
 	char                  * code;
 };
 
@@ -860,6 +869,8 @@ struct map_data
 	FILE                  * logfile;
 	struct link_data      * undo_head;
 	struct link_data      * undo_tail;
+	struct grid_data      * grid_head;
+	struct grid_data      * grid_tail;
 	char                  * exit_color;
 	char                  * path_color;
 	char                  * room_color;
@@ -869,7 +880,10 @@ struct map_data
 	int                     size;
 	int                     flags;
 	int                     in_room;
+	int                     at_room;
 	int                     last_room;
+	short                   search_stamp;
+	short                   display_stamp;
 	short                   nofollow;
 	char                    legend[17][100];
 };
@@ -879,7 +893,10 @@ struct room_data
 	struct exit_data        * f_exit;
 	struct exit_data        * l_exit;
 	int                       vnum;
-	int                       size;
+	float                     length;
+	float                     weight;
+	short                     search_stamp;
+	short                     display_stamp;
 	int                       flags;
 	char                    * color;
 	char                    * name;
@@ -1124,6 +1141,7 @@ extern DO_COMMAND(do_map);
 extern DO_MAP(map_at);
 extern DO_MAP(map_color);
 extern DO_MAP(map_create);
+extern DO_MAP(map_debug);
 extern DO_MAP(map_delete);
 extern DO_MAP(map_destroy);
 extern DO_MAP(map_dig);
@@ -1154,33 +1172,35 @@ extern DO_MAP(map_travel);
 extern DO_MAP(map_undo);
 extern DO_MAP(map_uninsert);
 extern DO_MAP(map_unlink);
+extern DO_MAP(map_vnum);
 extern DO_MAP(map_write);
+
 
 extern void create_map(struct session *ses, char *arg);
 extern void delete_map(struct session *ses);
-extern int  create_room(struct session *ses, char *arg);
+extern int  create_room(struct session *ses, char *format, ...);
 extern void delete_room(struct session *ses, int room, int exits);
-extern void create_exit(struct session *ses, int room, char *arg);
+extern void create_exit(struct session *ses, int room, char *format, ...);
 extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
 extern void create_legend(struct session *ses, char *arg);
-extern int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3, char *arg4, char *arg5);
+extern int match_room(struct session *ses, int room, char *arg);
 extern int  find_room(struct session *ses, char *arg);
 extern void goto_room(struct session *ses, int room);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
 extern int  get_map_exit(struct session *ses, char *arg);
 extern int  get_map_exits(struct session *ses, int room);
-extern void create_map_grid(struct session *ses, int room, int x, int y);
-extern void build_map_grid(int room, int x, int y, int z);
+extern void displaygrid_build(struct session *ses, int room, int x, int y, int z);
 extern int  follow_map(struct session *ses, char *argument);
 extern void add_undo(struct session *ses, char *format, ...);
 extern void del_undo(struct session *ses, struct link_data *link);
+extern void del_gridnode(struct session *ses, struct grid_data *node);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
-extern void search_path(int room, int size, int dir);
-extern void fill_map(struct session *ses);
+extern int searchgrid_find(struct session *ses, int from, char *arg);
+extern int searchgrid_walk(struct session *ses, int from, int dest);
 extern void shortest_path(struct session *ses, int run, char *delay, char *arg);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
 extern int find_coord(struct session *ses, char *arg);
-extern void search_coord_bf(int vnum);
+extern int spatialgrid_find(struct session *ses, int vnum, int x, int y, int z);
 extern void show_vtmap(struct session *ses);
 
 #endif
@@ -1558,7 +1578,7 @@ extern int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 extern int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_do_naws(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1588,7 +1608,6 @@ extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 extern int init_mccp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern void *zlib_alloc(void *opaque, unsigned int items, unsigned int size);
 extern void zlib_free(void *opaque, void *address);
-extern void init_telnet_session(struct session *ses);
 extern int skip_sb(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb(struct session *ses, int cplen, unsigned char *cpsrc);
 

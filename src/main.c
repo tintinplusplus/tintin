@@ -214,13 +214,13 @@ int main(int argc, char **argv)
 	}
 */
 
-	srand48(time(NULL));
+	srand(time(NULL));
 
 	if (argc > 1)
 	{
 		int c;
 
-		while ((c = getopt(argc, argv, "e: G h r: t: v")) != EOF)
+		while ((c = getopt(argc, argv, "e: G h r: s: t: v")) != EOF)
 		{
 			if (c == 'G')
 			{
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 
 		optind = 1;
 
-		while ((c = getopt(argc, argv, "e: G h r: t: v")) != EOF)
+		while ((c = getopt(argc, argv, "e: G h r: s: t: v")) != EOF)
 		{
 			switch (c)
 			{
@@ -270,6 +270,10 @@ int main(int argc, char **argv)
 
 				case 't':
 					printf("\033]0;%s\007", optarg);
+					break;
+
+				case 's':
+					srand((unsigned int) atoll(optarg));
 					break;
 
 				case 'v':
@@ -395,7 +399,7 @@ void init_tintin(int greeting)
 
 	if (greeting)
 	{
-		do_advertise(gts, "");
+//		do_advertise(gts, "");
 
 		do_help(gts, "GREETING");
 	}

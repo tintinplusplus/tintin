@@ -107,7 +107,7 @@ void search_line_history(struct session *ses, char *line)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (is_abbrev(&line[1], root->list[i]->left))
+		if (!strncmp(root->list[i]->left, &line[1], strlen(&line[1])))
 		{
 			strcpy(line, root->list[i]->left);
 

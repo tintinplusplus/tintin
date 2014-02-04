@@ -31,7 +31,6 @@
 /* what we see from the remote end */
 
 char iac_do_naws[]            = { IAC, DO,    TELOPT_NAWS            };
-char iac_will_naws[]          = { IAC, WILL,  TELOPT_NAWS            };
 
 char iac_do_sga[]             = { IAC, DO,    TELOPT_SGA             };
 char iac_will_sga[]           = { IAC, WILL,  TELOPT_SGA             };
@@ -77,8 +76,7 @@ struct iac_type iac_table [] =
 {
 	{   3,  iac_do_sga,           &send_will_sga           },
 	{   3,  iac_will_sga,         &send_do_sga             },
-	{   3,  iac_do_naws,          &send_sb_naws            },
-	{   3,  iac_will_naws,        &send_sb_naws            },
+	{   3,  iac_do_naws,          &recv_do_naws            },
 	{   3,  iac_do_echo,          &send_echo_will          },
 	{   3,  iac_will_echo,        &send_echo_off           },
 	{   3,  iac_wont_echo,        &send_echo_on            },
@@ -280,7 +278,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			{
 				if (cplen < iac_table[cnt].size && !memcmp(cpsrc, iac_table[cnt].code, cplen))
 				{
-					skip = iac_table[cnt].size;
+					skip = iac_table[cnt].size; // broken packet handling
 
 					break;
 				}
@@ -481,19 +479,29 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 								cplen -= 3;
 								continue;
 							}
-							if (cplen >= 4 && cpsrc[2] >= '5' && cpsrc[2] <= '6' && cpsrc[3] == 'n')
+							if (cplen >= 4)
 							{
-								if (cpsrc[2] == '5')
+								if (cpsrc[2] >= '5' && cpsrc[2] <= '6' && cpsrc[3] == 'n')
 								{
-									check_all_events(ses, SUB_ARG, 0, 0, "VT100 DSR");
+									if (cpsrc[2] == '5')
+									{
+										check_all_events(ses, SUB_ARG, 0, 0, "VT100 DSR");
+									}
+									if (cpsrc[2] == '6')
+									{
+										check_all_events(ses, SUB_ARG, 0, 2, "VT100 CPR", ntos(ses->cols), ntos(ses->rows));
+									}
+									cpsrc += 4;
+									cplen -= 4;
+									continue;
 								}
-								if (cpsrc[2] == '6')
+								if (cpsrc[2] == '0' && cpsrc[3] == 'c')
 								{
-									check_all_events(ses, SUB_ARG, 0, 2, "VT100 CPR", ntos(ses->cols), ntos(ses->rows));
+									check_all_events(ses, SUB_ARG, 0, 0, "VT100 DA");
+									cpsrc += 4;
+									cplen -= 4;
+									continue;
 								}
-								cpsrc += 4;
-								cplen -= 4;
-								continue;
 							}
 						}
 					}
@@ -637,31 +645,34 @@ int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 	NAWS
 */
 
-int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc)
+int recv_do_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	SET_BIT(ses->telopt_flag[TELOPT_NAWS / 32], 1 << TELOPT_NAWS % 32);
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DO NAWS"))
+	{
+		return 3;
+	}
 
-	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
+	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
 
-	telopt_debug(ses, "SENT IAC WILL NAWS");
+	if (!HAS_BIT(ses->telopt_flag[TELOPT_NAWS / 32], 1 << TELOPT_NAWS % 32))
+	{
+		SET_BIT(ses->telopt_flag[TELOPT_NAWS / 32], 1 << TELOPT_NAWS % 32);
 
-	return 3;
+		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
+
+		telopt_debug(ses, "SENT IAC WILL NAWS");
+	}
+
+	return send_sb_naws(ses, cplen, cpsrc);
 }
 
 int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	int rows;
 
-	if (!HAS_BIT(ses->telopt_flag[TELOPT_NAWS / 32], 1 << TELOPT_NAWS % 32))
-	{
-		send_will_naws(ses, cplen, cpsrc);
-	}
-
 	rows = HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? ses->bot_row - ses->top_row + 1 : ses->rows;
 
 	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, ses->cols % 256, rows / 256, rows % 256, IAC, SE);
-
-	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
 
 	telopt_debug(ses, "SENT IAC SB NAWS %d %d %d %d", ses->cols / 256, ses->cols % 256, ses->rows / 256, ses->rows % 256);
 
@@ -817,6 +828,7 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 
 				telopt_debug(ses, "MSSP VAR %-20s VAL %s", var, val);
 
+				check_all_events(ses, SUB_ARG|SUB_SEC, 1, 2, "IAC SB MSSP %s", var, var, val);
 				check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "IAC SB MSSP", var, val);
 				break;
 
@@ -1475,12 +1487,6 @@ void *zlib_alloc(void *opaque, unsigned int items, unsigned int size)
 void zlib_free(void *opaque, void *address)
 {
 	free(address);
-}
-
-void init_telnet_session(struct session *ses)
-{
-//	send_do_sga(ses, 0, NULL);
-//	send_will_naws(ses, 0, NULL);
 }
 
 

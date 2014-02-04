@@ -152,12 +152,6 @@ DO_CONFIG(config_commandcolor)
 {
 	char buf[BUFFER_SIZE];
 
-	if (!is_color_code(arg))
-	{
-		tintin_printf2(ses, "#CONFIG COMMAND COLOR: Invalid color code '%s'.", arg);
-
-		return NULL;
-	}
 	substitute(ses, arg, buf, SUB_COL);
 
 	RESTRING(ses->cmd_color, buf);

@@ -1,4 +1,55 @@
+Sep 2011       2.00.8
+
+main.c         No more advertisements.
+
+mapper.c       Back to void rooms only being allowed two exits, as handling
+               multi-exit void rooms adds too much complexity.
+
+mapper.c       Updated the fill_map routine to use breadth-first initialization
+               which should significantly improve execution times.
+
+prompt.c       Added proper UTF-8 string length checking for prompt drawing.
+
+mapper.c       Room names are no longer automatically set on creation.
+
+mapper.c       Added the #map vnum command to change the current vnum.
+
+mapper.c       #map link now requires the 'both' argument for a two-way exit
+               to be created.
+
+variable.c     Added support to #format for %f to print floating point numbers.
+
+variable.c     Fixed color spacing bug in #format's %s handling.
+
+map.c          Added terrain as a searchable option to #map list, goto, find,
+               and run.
+
+map.c          Added roomweight to the #map get and #map set options. By
+               default the weight of a room is set to 1.0 and can be anywhere
+               from 0.001 to 1000. The path finder will favor rooms with a low
+               weight.
+
+map.c          Made the layout of #map info more aesthetically pleasing and
+               added the listing of entrances.
+
+substitute.c   Fixed bug where functions could overwrite the original
+               substitution's arguments.
+
+highlight.c    Added support for xterm 256 color names, dark azure, dark ebony,
+               dark jade, dark lime, dark orange, dark tan, dark silver, dark
+               violet, light azure, light ebony, light jade, light lime, light
+               orange, light tan, light silver, light violet.
+
+variables.c    Added the %A #format option which prints the corresponding ASCII
+               value of the given character. Useful for low level string
+               handling.
+
 Apr 2011       2.00.7
+
+main.c         Added -s option to launch tt++ with a custom seed, undocumented
+               till I get to think it over.
+
+math.c         Improvements to #switch.
 
 telopt.c       Added basic low level VT100 stripping for answer back codes.
 
@@ -61,9 +112,6 @@ path.c         Renamed #path map to #path show, #path map still works, but it
 path.c         Added #path unzip option that'll load a speedwalk.
 
 line.c         #line logverbatim is now fully verbatim.
-
-vt102.c        Removed status reports for the \eZ, \e[c, and \e[x VT codes
-               due to complaints.
 
 log.c          Added a #log off option. #log append and overwrite can now be
                called while logging is already enabled.

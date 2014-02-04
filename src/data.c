@@ -467,29 +467,22 @@ int nsearch_list(struct listroot *root, char *text)
 
 void show_node(struct listroot *root, struct listnode *node, int level)
 {
-	char arg[STRING_SIZE], buf[STRING_SIZE], out[STRING_SIZE];
+	char arg[STRING_SIZE];
 
 	show_nest_node(node, arg, TRUE);
 
 	switch (list_table[root->type].args)
 	{
 		case 3:
-			sprintf(buf, "%*s#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>} <168>@ <118>{<088>%s<118>}", level * 2, "", list_table[root->type].name, node->left, arg, node->pr);
+			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m} \033[1;36m@ \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, arg, node->pr);
 			break;
 		case 2:
-			sprintf(buf, "%*s#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>}", level * 2, "", list_table[root->type].name, node->left, arg);
+			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, arg);
 			break;
 		case 1:
-			sprintf(buf, "%*s#%s <118>{<088>%s<118>}", level * 2, "", list_table[root->type].name, node->left);
-			break;
-		default:
-			sprintf(buf, "#BUG: list_table[type].args == 0");
+			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left);
 			break;
 	}
-
-	substitute(root->ses, buf, out, SUB_COL);
-
-	tintin_printf2(root->ses, "%s", out);
 }
 
 /*

@@ -103,8 +103,6 @@ double mathswitch(struct session *ses, char *left, char *right)
 
 	sprintf(shift, "%s == %s", left, right);
 
-	srand48(gtd->time);
-
 	return get_number(ses, shift);
 }
 
@@ -912,7 +910,7 @@ double tindice(char *left, char *right)
 
 	for (cnt = sum = 0 ; cnt < numdice ; cnt++)
 	{
-		sum += lrand48() % sizedice + 1;
+		sum += rand() % sizedice + 1;
 	}
 
 	return (double) sum;

@@ -668,9 +668,12 @@ void write_mud(struct session *ses, char *command, int flags)
 
 	if (ses->map && ses->map->in_room && ses->map->nofollow == 0)
 	{
-		if (follow_map(ses, command))
+		if (!HAS_BIT(ses->map->flags, MAP_FLAG_NOFOLLOW))
 		{
-			return;
+			if (follow_map(ses, command))
+			{
+				return;
+			}
 		}
 	}
 
@@ -696,8 +699,6 @@ void do_one_line(char *line, struct session *ses)
 	}
 
 	strip_vt102_codes(line, strip);
-
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED LINE", line, strip);
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{
@@ -725,6 +726,14 @@ void do_one_line(char *line, struct session *ses)
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_highlights(ses, line, strip);
+	}
+
+	if (ses->logline)
+	{
+		logit(ses, line, ses->logline, TRUE);
+
+		fclose(ses->logline);
+		ses->logline = NULL;
 	}
 
 	pop_call();

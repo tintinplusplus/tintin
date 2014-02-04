@@ -38,31 +38,48 @@
 
 int is_abbrev(char *s1, char *s2)
 {
-	if (strlen(s2) < strlen(s1))
+	if (*s1 == 0)
 	{
-		return (FALSE);
+		return FALSE;
 	}
-	return (!strncasecmp(s2, s1, strlen(s1)));
+/*	if (strlen(s2) < strlen(s1))
+	{
+		return FALSE;
+	} */
+	return !strncasecmp(s2, s1, strlen(s1));
 }
 
 
 int is_color_code(char *str)
 {
-	while (*str)
+	if (str[0] == '<')
 	{
-		if (*str++ == '<')
+		if (!isalnum((int) str[1]) || !isalnum((int) str[2]) || !isalnum((int) str[3]) || str[4] != '>')
 		{
-			if (isalnum((int) *str++) && isalnum((int) *str++) && isalnum((int) *str++))
-			{
-				if (*str++ == '>')
-				{
-					continue;
-				}
-			}
+			return FALSE;
 		}
-		return FALSE;
+		else if (str[1] >= '0' && str[1] <= '9' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
+		{
+			return TRUE;
+		}
+		else if (str[1] >= 'a' && str[1] <= 'f' && str[2] >= 'a' && str[2] <= 'f' && str[3] >= 'a' && str[3] <= 'f')
+		{
+			return TRUE;
+		}
+		else if (str[1] >= 'A' && str[1] <= 'F' && str[2] >= 'A' && str[2] <= 'F' && str[3] >= 'A' && str[3] <= 'F')
+		{
+			return TRUE;
+		}
+		else if (str[1] == 'g' && str[1] <= '9' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
+		{
+			return TRUE;
+		}
+		else if (str[1] == 'G' && str[1] <= '9' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
+		{
+			return TRUE;
+		}
 	}
-	return TRUE;
+	return FALSE;
 }
 
 /*

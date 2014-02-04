@@ -131,9 +131,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 		return;
 	}
 
-	strip_vt102_codes(prompt, temp);
-
-	len = (int) strlen(temp);
+	len = strip_vt102_strlen(ses, prompt);
 
 	if (len == 0)
 	{

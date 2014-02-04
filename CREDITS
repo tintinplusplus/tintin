@@ -10,7 +10,7 @@ Andrew Chernov                                       FreeBSD bug fixes
 Jim Goddard                                          SOCKS #ifdefs
 Greg Jarman                                          Original #if code
 Peter Kjellerstedt                 see mods/pkj.mods
-Sean Butler                        see mods/xin.mods
+Sean Butler                        see mods/xin.mods Original #chat code
 Robert Ellsworth                   see mods/rse.mods
 Sverre Norrman                     see mods/dsc.mods mods/svr.mods
 Davin Chan                         see mods/dsc.mods

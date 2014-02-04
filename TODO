@@ -1,83 +1,82 @@
 * Stuff that's going to be done.
 
-- Proper Map terrain handling.
+  - Fix double calling of draw vt map.
 
-- MSDP array support.
+  - Fix traveling through bend void rooms.
+
+  - Nothing
 
 --------------------------------------------------------------------------------
 
 
 * Stuff that might be implemented
 
-- SGA disabling
+  - SGA disabling
 
-- CHARSET TELOPT support.
+  - CHARSET TELOPT support.
 
-- BINARY TELOPT support.
+  - BINARY TELOPT support.
 
-- Split pane scrollback
+  - Split pane scrollback
 
-- Don't eat the path when using #path walk forward, allowing mixed usage of
-  forward and backward. Also add a #MAP START OF PATH event?
+  - Don't eat the path when using #path walk forward, allowing mixed usage of
+    forward and backward. Also add a #MAP START OF PATH event?
 
-- add #line gag {lines} option or #lines {lines} {gag}.
+  - add #line gag {lines} option or #lines {lines} {gag}.
 
-- Add something like #log append $dir/logs/log.txt {%D %H:%M:%S} 
+  - Add something like #log append $dir/logs/log.txt {%D %H:%M:%S} 
 
 --------------------------------------------------------------------------------
 
 
 * Known bugs that need to be fixed.
 
+  - Word wrap related scroll back problems.
 
-- Word wrap related scroll back problems.
-
-- Crash on multiple session close
+  - Crash on multiple session close
 
 
 * Bugs that might be fixed.
 
+  - There's a bug with prompt repetitions with packet patch set.
 
-- There's a bug with prompt repetitions with packet patch set.
+  - garbage collection for deleted nodes.
 
-- garbage collection for deleted nodes.
+  - Deal with escaping { } / ; in #script variables.
 
-- Deal with escaping { } / ; in #script variables.
+  - Make tintin char setting by session instead of global.
 
-- Make tintin char setting by session instead of global.
+  - #cr doesn't reset the packet patch state
 
-- http://tintin.sourceforge.net/board/posting.php?mode=reply&t=36
+    + tintin.sourceforge.net/board/viewtopic.php?t=36
 
 --------------------------------------------------------------------------------
 
 
 * Mapping related stuff
 
-- Add weight setting for rooms to alter traversal.
+  - Add better table support for data fields.
 
-- Add get support for room exits.
+  - auto adjust max vnum size of mapper.
 
-- Add full table support
+  - global flag to only show the same area with the mapper.
 
-- auto adjust max vnum size of mapper.
+  - map color setting for hidden exits.
 
-- global flag to only show the same area with the mapper.
+  - Create global exits, (aka portals) like recall, that can be used
+    with #map run.
 
-- map color setting for hidden exits.
+  - Add something to indicate a non standard exit on the ASCII mapper.
 
-- Create global exits, like recall, that can be used with #map run.
+  - Display hidden exits differently.
 
-- Add something to indicate a non standard exit on the ASCII mapper.
+  - Better #map undo support using maybe timestamp, type, info.
 
-- Display hidden exits differently.
+  - Add conditional if checks for room traversal.
 
-- Synchronise drawn map with the link map.
+  - add highlight option
 
-- Add support to set hiddenexit colors.
-
-- Better #map undo support.
-
-- Add conditional if checks for room traversal.
+  - Add #V version info
 
 --------------------------------------------------------------------------------
 
@@ -107,6 +106,7 @@
 
 * Stuff for a rainy day
 
+- nestable functions
 
 - Buffer safe strings.
 

@@ -235,4 +235,3 @@ DO_LINE(line_ignore)
 
 	return ses;
 }
-	

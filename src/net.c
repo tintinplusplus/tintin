@@ -330,6 +330,10 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 	ses->check_output = 0;
 
+	strip_vt102_codes(linebuf, line);
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED LINE", linebuf, line);
+
 	if (HAS_BIT(ses->flags, SES_FLAG_COLORPATCH))
 	{
 		sprintf(line, "%s%s", ses->color, linebuf);

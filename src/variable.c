@@ -81,7 +81,7 @@ DO_COMMAND(do_unvariable)
 {
 	char arg1[BUFFER_SIZE];
 
-	get_arg_in_braces(ses, arg, arg1, TRUE);
+	get_arg_in_braces(ses, arg, arg1, GET_ONE);
 
 	if (delete_nest_node(ses->list[LIST_VARIABLE], arg1))
 	{
@@ -381,21 +381,26 @@ int stringlength(struct session *ses, char *str)
 
 int string_str_raw_len(struct session *ses, char *str, int start, int end)
 {
-	char tmp[BUFFER_SIZE];
 	int raw_cnt, str_cnt, ret_cnt, tot_len;
 
 	raw_cnt = str_cnt = ret_cnt = 0;
 
-	substitute(ses, str, tmp, SUB_COL|SUB_ESC);
-
-	tot_len = strlen(tmp);
+	tot_len = strlen(str);
 
 	while (raw_cnt < tot_len)
 	{
-		if (skip_vt102_codes(&tmp[raw_cnt]))
+		if (skip_vt102_codes(&str[raw_cnt]))
 		{
-			ret_cnt += (str_cnt >= start) ? skip_vt102_codes(&tmp[raw_cnt]) : 0;
-			raw_cnt += skip_vt102_codes(&tmp[raw_cnt]);
+			ret_cnt += (str_cnt >= start) ? skip_vt102_codes(&str[raw_cnt]) : 0;
+			raw_cnt += skip_vt102_codes(&str[raw_cnt]);
+
+			continue;
+		}
+
+		if (is_color_code(&str[raw_cnt]))
+		{
+			ret_cnt += (str_cnt >= start) ? 5 : 0;
+			raw_cnt += 5;
 
 			continue;
 		}
@@ -405,12 +410,12 @@ int string_str_raw_len(struct session *ses, char *str, int start, int end)
 			break;
 		}
 
-		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (tmp[raw_cnt] & 192) == 192)
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (str[raw_cnt] & 192) == 192)
 		{
 			ret_cnt += (str_cnt >= start) ? 1 : 0;
 			raw_cnt++;
 
-			while (raw_cnt < tot_len && (tmp[raw_cnt] & 192) == 128)
+			while (raw_cnt < tot_len && (str[raw_cnt] & 192) == 128)
 			{
 				ret_cnt += (str_cnt >= start) ? 1 : 0;
 				raw_cnt++;
@@ -428,14 +433,11 @@ int string_str_raw_len(struct session *ses, char *str, int start, int end)
 
 int string_raw_str_len(struct session *ses, char *str, int start, int end)
 {
-	char tmp[BUFFER_SIZE];
 	int raw_cnt, ret_cnt, tot_len;
-
-	substitute(ses, str, tmp, SUB_COL|SUB_ESC);
 
 	raw_cnt = start;
 	ret_cnt = 0;
-	tot_len = strlen(tmp);
+	tot_len = strlen(str);
 
 	while (raw_cnt < tot_len)
 	{
@@ -444,18 +446,25 @@ int string_raw_str_len(struct session *ses, char *str, int start, int end)
 			break;
 		}
 
-		if (skip_vt102_codes(&tmp[raw_cnt]))
+		if (skip_vt102_codes(&str[raw_cnt]))
 		{
-			raw_cnt += skip_vt102_codes(&tmp[raw_cnt]);
+			raw_cnt += skip_vt102_codes(&str[raw_cnt]);
 
 			continue;
 		}
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (tmp[raw_cnt] & 192) == 192)
+		if (is_color_code(&str[raw_cnt]))
+		{
+			raw_cnt += 5;
+
+			continue;
+		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (str[raw_cnt] & 192) == 192)
 		{
 			raw_cnt++;
 
-			while (raw_cnt < tot_len && (tmp[raw_cnt] & 192) == 128)
+			while (raw_cnt < tot_len && (str[raw_cnt] & 192) == 128)
 			{
 				raw_cnt++;
 			}
@@ -548,7 +557,7 @@ DO_COMMAND(do_format)
 			}
 			else
 			{
-				while (!isalpha((int) *ptf) && !isdigit((int) *ptf))
+				while (!isalpha((int) *ptf))
 				{
 					*ptn++ = *ptf++;
 				}
@@ -558,45 +567,63 @@ DO_COMMAND(do_format)
 					break;
 				}
 
-				ptt = temp;
+				*ptn = 0;
 
-				while (!isalpha((int) *ptf))
+				if (*ptf == 'd' || *ptf == 'f')
 				{
-					*ptt++ = *ptf++;
+					strcpy(temp, pts);
+
+					ptn = pts + 1;
+					*ptn = 0;
 				}
-
-				if (*ptf == 0)
+				else if (pts[1])
 				{
-					break;
-				}
+					char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-				*ptt = 0;
+					ptt = arg1;
+					ptn = pts + 1;
 
-				ptt = temp;
-
-				if (*ptt == '0')
-				{
-					*ptn++ = *ptt++;
-				}
-
-				if (is_number(ptt))
-				{
-					if (newformat[1] == '.')
+					while (*ptn && *ptn != '.')
 					{
-						sprintf(ptt, "%d", string_str_raw_len(ses, arglist[i], 0, atoi(ptt)));
+						*ptt++ = *ptn++;
+					}
+
+					*ptt = 0;
+
+					if (*ptn == 0)
+					{
+						sprintf(temp, "%%%d",
+							atoi(arg1) + (int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE));
 					}
 					else
 					{
-						sprintf(ptt, "%d", atoi(ptt) + strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE));
-					}
-				}
-				
-				while (*ptt)
-				{
-					*ptn++ = *ptt++;
-				}
+						ptt = arg2;
+						ptn = ptn + 1;
 
-				*ptn = 0;
+						while (*ptn)
+						{
+							*ptt++ = *ptn++;
+						}
+
+						*ptt = 0;
+
+						sprintf(temp, "%%%d.%d",
+							atoi(arg1) + (atoi(arg1) >= 0 ?
+								(int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE) :
+								(int) (strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)) * -1),
+							string_str_raw_len(ses, arglist[i], 0, atoi(arg2)));
+					}
+
+					ptt = temp;
+					ptn = pts;
+
+					while (*ptt)
+					{
+						*ptn++ = *ptt++;
+					}
+
+					*ptn = 0;
+				}
 
 				switch (*ptf)
 				{
@@ -609,8 +636,13 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'd':
-						sprintf(temp, "%slld", pts);
+						strcat(temp, "lld");
 						sprintf(arglist[i], temp, (long long) get_number(ses, arglist[i]));
+						break;
+
+					case 'f':
+						strcat(temp, "f");
+						sprintf(arglist[i], temp, get_number(ses, arglist[i]));
 						break;
 
 					case 'g':
@@ -657,6 +689,9 @@ DO_COMMAND(do_format)
 						wrapstring(ses, arglist[i]);
 						break;
 
+					case 'A':
+						sprintf(arglist[i], "%d", (int) arglist[i][0]);
+						break;
 					case 'C':
 						sprintf(arglist[i], "%d", ses->cols);
 						break;

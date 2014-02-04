@@ -95,7 +95,7 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 				strcpy(match, gtd->vars[0]);
 
-				substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+				substitute(ses, node->right, subst, SUB_ARG);
 
 				ptm = strstr(pto, match);
 
@@ -122,7 +122,9 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 			strcat(output, pto);
 
-			strcpy(original, output);
+			substitute(ses, output, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+
+//			strcpy(original, output);
 		}
 	}
 }

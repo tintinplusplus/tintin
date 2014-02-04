@@ -173,6 +173,27 @@ char *addlooptoken(struct scriptroot *root, int lvl, int opr, int cmd, char *str
 	return str;
 }
 
+char *addswitchtoken(struct scriptroot *root, int lvl, int opr, int cmd, char *str)
+{
+	struct scriptdata *data;
+
+	char arg[BUFFER_SIZE];
+
+	data = (struct scriptdata *) calloc(1, sizeof(struct scriptdata));
+
+	str = get_arg_in_braces(root->ses, str, arg, FALSE);
+
+	data->cpy = strdup("");
+
+	addtoken(root, lvl, opr, cmd, arg);
+
+	data->str = strdup("");
+
+	root->prev->data = data;
+
+	return str;
+}
+
 void resetlooptoken(struct session *ses, struct scriptnode *token)
 {
 	char *str, min[BUFFER_SIZE], max[BUFFER_SIZE];
@@ -243,6 +264,15 @@ void handlereturntoken(struct session *ses, struct scriptnode *token)
 	substitute(ses, token->str, arg, SUB_VAR|SUB_FUN);
 
 	set_nest_node(ses->list[LIST_VARIABLE], "result", "%s", arg);
+}
+
+void handleswitchtoken(struct session *ses, struct scriptnode *token)
+{
+	char arg[BUFFER_SIZE];
+
+	mathexp(ses, token->str, arg);
+
+	RESTRING(token->data->str, arg);
 }
 
 char *get_arg_foreach(struct scriptroot *root, struct scriptnode *token)
@@ -375,6 +405,7 @@ void deltoken(struct scriptroot *root, struct scriptnode *token)
 		case TOKEN_TYPE_LOOP:
 		case TOKEN_TYPE_FOREACH:
 		case TOKEN_TYPE_PARSE:
+		case TOKEN_TYPE_SWITCH:
 			free(token->data->cpy);
 			free(token->data->str);
 			free(token->data);
@@ -574,8 +605,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						break;
 
 					case TOKEN_TYPE_SWITCH:
-						str = get_arg_in_braces(root->ses, arg, line, FALSE);
-						addtoken(root, lvl++, TOKEN_TYPE_SWITCH, cmd, line);
+						str = addswitchtoken(root, lvl++, TOKEN_TYPE_SWITCH, cmd, arg);
 
 						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
@@ -674,7 +704,7 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				continue;
 
 			case TOKEN_TYPE_CASE:
-				if (mathswitch(root->ses, shift->str, token->str))
+				if (mathswitch(root->ses, shift->data->str, token->str))
 				{
 					token = token->next;
 
@@ -892,7 +922,7 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				break;
 
 			case TOKEN_TYPE_SWITCH:
-				utime();
+				handleswitchtoken(root->ses, token);
 
 				token = parse_script(root, lvl + 1, token->next, token);
 				continue;
