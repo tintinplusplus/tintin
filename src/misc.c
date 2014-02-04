@@ -111,7 +111,7 @@ DO_COMMAND(do_echo)
 
 	do_format(ses, temp);
 
-	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN|SUB_COL);
+	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN);
 
 	arg = temp;
 
@@ -124,7 +124,7 @@ DO_COMMAND(do_echo)
 		{
 			int row = (int) get_number(ses, temp);
 
-			substitute(ses, left, temp, SUB_ESC);
+			substitute(ses, left, temp, SUB_COL|SUB_ESC);
 
 			do_one_prompt(ses, temp, row);
 
@@ -134,7 +134,7 @@ DO_COMMAND(do_echo)
 
 	lnf = !str_suffix(arg, "\\");
 
-	substitute(ses, arg, temp, SUB_ESC);
+	substitute(ses, arg, temp, SUB_COL|SUB_ESC);
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
@@ -240,7 +240,7 @@ DO_COMMAND(do_info)
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
-		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_SHOW))
+		if (HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_HIDE))
 		{
 			continue;
 		}
@@ -340,11 +340,12 @@ DO_COMMAND(do_showme)
 
 	lnf = !str_suffix(left, "\\");
 
-	substitute(ses, left, temp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+	substitute(ses, left, temp, SUB_VAR|SUB_FUN);
+	substitute(ses, temp, left, SUB_COL|SUB_ESC);
 
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
-	do_one_line(temp, ses);
+	do_one_line(left, ses);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
@@ -355,18 +356,18 @@ DO_COMMAND(do_showme)
 
 	if (*right)
 	{
-		do_one_prompt(ses, temp, (int) get_number(ses, right));
+		do_one_prompt(ses, left, (int) get_number(ses, right));
 
 		return ses;
 	}
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		sprintf(right, "\n\033[0m%s\033[0m", temp);
+		sprintf(right, "\n\033[0m%s\033[0m", left);
 	}
 	else
 	{
-		sprintf(right, "\033[0m%s\033[0m", temp);
+		sprintf(right, "\033[0m%s\033[0m", left);
 	}
 
 	add_line_buffer(ses, right, lnf);
@@ -444,6 +445,42 @@ DO_COMMAND(do_suspend)
 
 DO_COMMAND(do_test)
 {
+	long long x, time1, time2;
+	char *str, buf[100001];
+
+	tintin_printf2(ses, "testing");
+
+	buf[0] = 0;
+
+	time1 = utime();
+
+	str = buf;
+
+	for (x = 0 ; x < 100000 ; x++)
+	{
+		*str++ = '*';
+	}
+	*str = 0;
+
+	time2 = utime();
+
+	tintin_printf(ses, "time for strcat: %lld %d", time2 - time1, strlen(buf));
+
+	str = str_dup("");
+
+	time1 = utime();
+
+	for (x = 0 ; x < 100000 ; x++)
+	{
+		str_cpy_printf(&str, "%c", '*');
+	}
+
+	time2 = utime();
+
+	tintin_printf(ses, "time for str_cat: %lld %d", time2 - time1, strlen(str));
+
+	str_free(str);
+
 	return ses;
 }
 
@@ -451,6 +488,8 @@ DO_COMMAND(do_zap)
 {
 	struct session *sesptr = ses;
 	char left[BUFFER_SIZE];
+
+	push_call("do_zap(%p,%p)",ses,arg);
 
 	sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
 
@@ -470,6 +509,7 @@ DO_COMMAND(do_zap)
 		{
 			tintin_puts2(ses, "#NO SESSION WITH THAT NAME!");
 
+			pop_call();
 			return ses;
 		}
 	}
@@ -480,10 +520,12 @@ DO_COMMAND(do_zap)
 
 	if (sesptr == gts)
 	{
+		pop_call();
 		return do_end(NULL, "");
 	}
 	cleanup_session(sesptr);
 
+	pop_call();
 	return gtd->ses;
 }
 

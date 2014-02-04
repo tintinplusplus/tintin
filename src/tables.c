@@ -96,7 +96,7 @@ struct command_type command_table[] =
 	{    "switch",            do_nop,               TOKEN_TYPE_SWITCH  },
 	{    "system",            do_system,            TOKEN_TYPE_COMMAND },
 	{    "tab",               do_tab,               TOKEN_TYPE_COMMAND },
-//	{    "test",              do_test,              TOKEN_TYPE_COMMAND },
+	{    "test",              do_test,              TOKEN_TYPE_COMMAND },
 	{    "textin",            do_textin,            TOKEN_TYPE_COMMAND },
 	{    "ticker",            do_tick,              TOKEN_TYPE_COMMAND },
 	{    "unaction",          do_unaction,          TOKEN_TYPE_COMMAND },
@@ -124,25 +124,25 @@ struct command_type command_table[] =
 
 struct list_type list_table[LIST_MAX] =
 {
-	{    "ACTION",            "ACTIONS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "CLASS",             "CLASSES",            ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
-	{    "CONFIG",            "CONFIGURATIONS",     ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
-	{    "DELAY",             "DELAYS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
-	{    "EVENT",             "EVENTS",             ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "GAG",               "GAGS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
-	{    "MACRO",             "MACROS",             ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
-	{    "PATHDIR",           "PATHDIRS",           ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TABCYCLE",          "TABCYCLE",           APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
-	{    "TICKER",            "TICKERS",            ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT|LIST_FLAG_NEST }
+	{    "ACTION",            "ACTIONS",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "CLASS",             "CLASSES",            ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
+	{    "CONFIG",            "CONFIGURATIONS",     ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
+	{    "DELAY",             "DELAYS",             ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
+	{    "EVENT",             "EVENTS",             ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "GAG",               "GAGS",               ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_MESSAGE                                                                  },
+	{    "MACRO",             "MACROS",             ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_MESSAGE                                                                  },
+	{    "PATHDIR",           "PATHDIRS",           ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TABCYCLE",          "TABCYCLE",           APPEND,      1,  LIST_FLAG_MESSAGE|LIST_FLAG_HIDE                                                   },
+	{    "TICKER",            "TICKERS",            ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT|LIST_FLAG_NEST }
 };
 
 struct substitution_type substitution_table[] =
@@ -342,6 +342,27 @@ struct config_type config_table[] =
 
 struct color_type color_table[] =
 {
+
+	{    "azure",         "<abd>" },
+	{    "ebony",         "<g04>" },
+	{    "jade",          "<adb>" },
+	{    "lime",          "<bda>" },
+	{    "orange",        "<dba>" },
+	{    "pink",          "<dab>" },
+	{    "silver",        "<ccc>" },
+	{    "tan",           "<cba>" },
+	{    "violet",        "<bad>" },
+
+	{    "light azure",   "<acf>" },
+	{    "light ebony",   "<bbb>" },
+	{    "light jade",    "<afc>" },
+	{    "light lime",    "<cfa>" },
+	{    "light orange",  "<fca>" },
+	{    "light pink",    "<fac>" },
+	{    "light silver",  "<eee>" },
+	{    "light tan",     "<eda>" },
+	{    "light violet",  "<caf>" },
+
 	{    "reset",         "<088>" },
 	{    "light",         "<188>" },
 	{    "bold",          "<188>" },
@@ -361,24 +382,6 @@ struct color_type color_table[] =
 	{    "cyan",          "<868>" },
 	{    "white",         "<878>" },
 
-	{    "dark azure",    "<abd>" },
-	{    "dark ebony",    "<g04>" },
-	{    "dark jade",     "<adb>" },
-	{    "dark lime",     "<bda>" },
-	{    "dark orange",   "<dba>" },
-	{    "dark silver",   "<ccc>" },
-	{    "dark tan",      "<cba>" },
-	{    "dark violet",   "<bad>" },
-
-	{    "light azure",   "<acf>" },
-	{    "light ebony",   "<bbb>" },
-	{    "light jade",    "<afc>" },
-	{    "light lime",    "<cfa>" },
-	{    "light orange",  "<fca>" },
-	{    "light silver",  "<eee>" },
-	{    "light tan",     "<eda>" },
-	{    "light violet",  "<caf>" },
-
 	{    "b black",       "<880>" },
 	{    "b red",         "<881>" },
 	{    "b green",       "<882>" },
@@ -387,6 +390,17 @@ struct color_type color_table[] =
 	{    "b magenta",     "<885>" },
 	{    "b cyan",        "<886>" },
 	{    "b white",       "<887>" },
+
+	{    "b azure",       "<ABD>" },
+	{    "b ebony",       "<G04>" },
+	{    "b jade",        "<ADB>" },
+	{    "b lime",        "<BDA>" },
+	{    "b orange",      "<DBA>" },
+	{    "b pink",        "<DAB>" },
+	{    "b silver",      "<CCC>" },
+	{    "b tan",         "<CBA>" },
+	{    "b violet",      "<BAD>" },
+
 	{    "",              "<888>" }
 };
 
@@ -453,6 +467,7 @@ struct array_type array_table[] =
 	{     "SIZE",             array_size          },
 	{     "SORT",             array_sort          },
 	{     "SRT",              array_sort          },
+	{     "TOKENIZE",         array_tokenize      },
 	{     "",                 NULL                }
 };
 
@@ -608,6 +623,12 @@ struct cursor_type cursor_table[] =
 		cursor_right
 	},
 	{
+		"GET",
+		"Copy input line to given variable",
+		"",
+		cursor_get
+	},
+	{
 		"HISTORY NEXT",
 		"Select next command history entry",
 		"",
@@ -672,6 +693,12 @@ struct cursor_type cursor_table[] =
 		"Redraw the input line",
 		"",
 		cursor_redraw_input
+	},
+	{
+		"SET",
+		"Copy given string to input line",
+		"",
+		cursor_set
 	},
 	{
 		"SUSPEND",
@@ -819,6 +846,7 @@ struct event_type event_table[] =
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
 	{    "SESSION TIMED OUT",                      "Triggers when a session doesn't connect."},
 	{    "TIME",                                   "Triggers on the given time."             },
+	{    "VARIABLE UPDATE ",                       "Triggers on a variable update."          },
 	{    "VT100 CPR",                              "Triggers on an ESC [ 6 n call."          },
 	{    "VT100 DA",                               "Triggers on an ESC [ c call."            },
 	{    "VT100 DECID",                            "Triggers on an ESC Z call."              },

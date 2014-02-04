@@ -194,6 +194,7 @@ void write_line_mud(struct session *ses, char *line, int size)
 			return;
 		}
 		perror("write in write_line_mud");
+
 		cleanup_session(ses);
 
 		pop_call();
@@ -254,8 +255,6 @@ void readmud(struct session *ses)
 	}
 
 	SET_BIT(gtd->ses->flags, SES_FLAG_READMUD);
-
-
 
 	for (line = gtd->mud_output_buf ; line && *line ; line = next_line)
 	{
@@ -320,6 +319,8 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 {
 	char line[STRING_SIZE];
 
+	push_call("process_mud_output(%p,%p,%d)",ses,linebuf,prompt);
+
 	ses->check_output = 0;
 
 	strip_vt102_codes(linebuf, line);
@@ -358,6 +359,7 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
 
+		pop_call();
 		return;
 	}
 
@@ -373,5 +375,7 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		tintin_printf2(gtd->ses, "[%s] %s", ses->name, linebuf);
 	}
+	pop_call();
+	return;
 }
 

@@ -31,22 +31,18 @@
 DO_COMMAND(do_variable)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
-
 	struct listroot *root = ses->list[LIST_VARIABLE];
+	struct listnode *node;
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, SUB_VAR|SUB_FUN);
-
-	str = arg;
-
-	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0)
 	{
 		show_list(root, 0);
 	}
-	else if (*arg1 && *str == 0)
+	else if (*arg1 && *arg == 0)
 	{
-		struct listnode *node = search_nest_node(root, arg1);
+		node = search_nest_node(root, arg1);
 
 		if (node)
 		{
@@ -59,20 +55,27 @@ DO_COMMAND(do_variable)
 	}
 	else
 	{
-		struct listnode *node = set_nest_node(root, arg1, "%s", arg2);
+		str = str_alloc(UMAX(strlen(arg), BUFFER_SIZE));
+
+		arg = sub_arg_in_braces(ses, arg, str, GET_ALL, SUB_VAR|SUB_FUN);
+
+		node = set_nest_node(root, arg1, "%s", str);
 
 		while (*arg)
 		{
-			arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+			arg = sub_arg_in_braces(ses, arg, str, GET_ALL, SUB_VAR|SUB_FUN);
 
 			if (*arg2)
 			{
-				add_nest_node(root, arg1, "%s", arg2);
+				add_nest_node(root, arg1, "%s", str);
 			}
 		}
-		show_nest_node(node, arg2, 1);
 
-		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
+		show_nest_node(node, &str, 1);
+
+		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, str);
+
+		str_free(str);
 	}
 	return ses;
 }
@@ -192,26 +195,14 @@ void charactertonumber(struct session *ses, char *str)
 	sprintf(str, "%d", result);
 }
 
-void colorstring(char *str)
+void colorstring(struct session *ses, char *str)
 {
-	char result[BUFFER_SIZE], *pti;
-	int cnt;
+	char result[BUFFER_SIZE] = { 0 };
 
-	result[0] = 0;
+	get_highlight_codes(ses, str, result);
 
-	for (pti = str ; *pti ; pti++)
-	{
-		for (cnt = 0 ; *color_table[cnt].name ; cnt++)
-		{
-			if (is_abbrev(color_table[cnt].name, pti))
-			{
-				strcat(result, color_table[cnt].code);
-				pti += strlen(color_table[cnt].name) - 1;
+	strcpy(str, result);
 
-				break;
-			}
-		}
-	}
 	strcpy(str, result);
 }
 
@@ -280,13 +271,13 @@ void thousandgroupingstring(struct session *ses, char *str)
 
 	cnt1 = strlen(strold);
 	cnt2 = BUFFER_SIZE / 2;
-	cnt4 = strchr(strold, '.') ? 0 : 1;
+	cnt4 = strchr(strold, '.') ? 1 : 0;
 
 	result[cnt2+1] = 0;
 
 	for (cnt3 = 0 ; cnt1 >= 0 ; cnt1--, cnt2--)
 	{
-		if (cnt3++ % 3 == 0 && cnt3 != 1 && isdigit((int) strold[cnt1]))
+		if (cnt3++ % 3 == 0 && cnt3 != 1 && cnt4 == 0 && isdigit((int) strold[cnt1]))
 		{
 			result[cnt2--] = ',';
 		}
@@ -295,7 +286,7 @@ void thousandgroupingstring(struct session *ses, char *str)
 
 		if (!isdigit((int) result[cnt2]))
 		{
-			cnt4 = 1;
+			cnt4 = 0;
 			cnt3 = 0;
 			continue;
 		}
@@ -680,7 +671,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'c':
-						colorstring(arglist[i]);
+						colorstring(ses, arglist[i]);
 						break;
 
 					case 'd':
@@ -690,7 +681,7 @@ DO_COMMAND(do_format)
 
 					case 'f':
 						strcat(temp, "f");
-						sprintf(arglist[i], temp, get_number(ses, arglist[i]));
+						sprintf(arglist[i], temp, get_double(ses, arglist[i]));
 						break;
 
 					case 'g':

@@ -325,6 +325,7 @@ void init_tintin(int greeting)
 
 	gtd->ses            = gts;
 
+	gtd->str_size       = sizeof(struct str_data);
 	gtd->str_hash_size  = sizeof(struct str_hash_data);
 
 	gtd->mccp_len       = 4096;
@@ -363,6 +364,7 @@ void init_tintin(int greeting)
 
 	do_configure(gts, "{AUTO TAB}         {5000}");
 	do_configure(gts, "{BUFFER SIZE}     {20000}");
+	do_configure(gts, "{COLOR PATCH}       {OFF}");
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
 	do_configure(gts, "{COMMAND ECHO}       {ON}");
 	do_configure(gts, "{CONNECT RETRY}      {15}");

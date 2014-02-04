@@ -628,11 +628,11 @@ void close_chat(struct chat_data *buddy, int unlink)
 
 	close(buddy->fd);
 
-	STRFREE(buddy->download);
-	STRFREE(buddy->group);
-	STRFREE(buddy->ip);
-	STRFREE(buddy->name);
-	STRFREE(buddy->version);
+	free(buddy->download);
+	free(buddy->group);
+	free(buddy->ip);
+	free(buddy->name);
+	free(buddy->version);
 
 	free(buddy);
 }
@@ -1540,7 +1540,7 @@ DO_CHAT(chat_paste)
 
 			RESTRING(gtd->chat->paste_buf, temp);
 
-			cursor_clear_line("");
+			cursor_clear_line(gtd->ses, "");
 		}
 
 		arg = get_arg_in_braces(gtd->ses, gtd->chat->paste_buf, name, FALSE);
@@ -2212,7 +2212,7 @@ void file_cleanup(struct chat_data *buddy)
 	}
 	if (buddy->file_name)
 	{
-		STRFREE(buddy->file_name);
+		FREE(buddy->file_name);
 	}
 }
 

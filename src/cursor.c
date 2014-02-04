@@ -62,7 +62,7 @@ DO_COMMAND(do_cursor)
 		{
 			if (is_abbrev(left, cursor_table[cnt].name))
 			{
-				cursor_table[cnt].fun(right);
+				cursor_table[cnt].fun(ses, right);
 
 				return ses;
 			}
@@ -231,7 +231,7 @@ int inputline_str_chk(int offset, int totlen)
 		{
 			if (gtd->input_buf[offset] & 128)
 			{
-				if (offset + 1 < totlen || gtd->input_buf[offset+1] == 0)
+				if (offset + 1 >= totlen || gtd->input_buf[offset+1] == 0)
 				{
 					return FALSE;
 				}
@@ -248,7 +248,7 @@ int inputline_str_chk(int offset, int totlen)
 			{
 				case 128+64:
 				case 128+64+16:
-					if (offset + 1 < totlen || (gtd->input_buf[offset+1] & 192) != 128)
+					if (offset + 1 >= totlen || (gtd->input_buf[offset+1] & 192) != 128)
 					{
 						return FALSE;
 					}
@@ -256,7 +256,7 @@ int inputline_str_chk(int offset, int totlen)
 					break;
 
 				case 128+64+32:
-					if (offset + 2 < totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128)
+					if (offset + 2 >= totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128)
 					{
 						return FALSE;
 					}
@@ -264,7 +264,7 @@ int inputline_str_chk(int offset, int totlen)
 					break;
 
 				case 128+64+32+16:
-					if (offset + 3 < totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128 || (gtd->input_buf[offset+3] & 192) != 128)
+					if (offset + 3 >= totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128 || (gtd->input_buf[offset+3] & 192) != 128)
 					{
 						return FALSE;
 					}
@@ -287,8 +287,8 @@ DO_CURSOR(cursor_backspace)
 		return;
 	}
 
-	cursor_left("");
-	cursor_delete("");
+	cursor_left(ses, "");
+	cursor_delete(ses, "");
 
 	modified_input();
 }
@@ -296,27 +296,27 @@ DO_CURSOR(cursor_backspace)
 
 DO_CURSOR(cursor_buffer_down)
 {
-	do_buffer(gtd->ses, "DOWN");
+	do_buffer(ses, "DOWN");
 }
 
 DO_CURSOR(cursor_buffer_end)
 {
-	do_buffer(gtd->ses, "END");
+	do_buffer(ses, "END");
 }
 
 DO_CURSOR(cursor_buffer_home)
 {
-	do_buffer(gtd->ses, "HOME");
+	do_buffer(ses, "HOME");
 }
 
 DO_CURSOR(cursor_buffer_lock)
 {
-	do_buffer(gtd->ses, "LOCK");
+	do_buffer(ses, "LOCK");
 }
 
 DO_CURSOR(cursor_buffer_up)
 {
-	do_buffer(gtd->ses, "UP");
+	do_buffer(ses, "UP");
 }
 
 
@@ -324,12 +324,12 @@ DO_CURSOR(cursor_check_line)
 {
 	if (gtd->input_pos - gtd->input_hid > inputline_max_str_len() - 3)
 	{
-		return cursor_redraw_line("");
+		return cursor_redraw_line(ses, "");
 	}
 
 	if (gtd->input_hid && gtd->input_pos - gtd->input_hid < 2)
 	{
-		return cursor_redraw_line("");
+		return cursor_redraw_line(ses, "");
 	}
 }
 
@@ -337,10 +337,10 @@ DO_CURSOR(cursor_check_line_modified)
 {
 	if (gtd->input_hid + inputline_max_str_len() < inputline_raw_str_len(0, gtd->input_len))
 	{
-		return cursor_redraw_line("");
+		return cursor_redraw_line(ses, "");
 	}
 
-	return cursor_check_line("");
+	return cursor_check_line(ses, "");
 }
 
 DO_CURSOR(cursor_clear_left)
@@ -363,7 +363,7 @@ DO_CURSOR(cursor_clear_left)
 	gtd->input_cur  = 0;
 	gtd->input_pos  = 0;
 
-	cursor_check_line_modified("");
+	cursor_check_line_modified(ses, "");
 
 	modified_input();
 }
@@ -374,6 +374,8 @@ DO_CURSOR(cursor_clear_line)
 	{
 		return;
 	}
+
+	sprintf(gtd->paste_buf, "%s", gtd->input_buf);
 
 	input_printf("\033[%dG\033[%dP", gtd->input_off, inputline_cur_str_len());
 
@@ -413,11 +415,11 @@ DO_CURSOR(cursor_delete_or_exit)
 {
 	if (gtd->input_len == 0)
 	{
-		cursor_exit("");
+		cursor_exit(ses, "");
 	}
 	else
 	{
-		cursor_delete("");
+		cursor_delete(ses, "");
 	}
 }
 
@@ -433,7 +435,7 @@ DO_CURSOR(cursor_delete)
 		return;
 	}
 
-	if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5) && (gtd->input_buf[gtd->input_cur] & 128) == 128)
+	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && (gtd->input_buf[gtd->input_cur] & 128) == 128)
 	{
 		if (gtd->input_cur + 1 < gtd->input_len && gtd->input_buf[gtd->input_cur+1])
 		{
@@ -444,7 +446,7 @@ DO_CURSOR(cursor_delete)
 			input_printf("\033[1P");
 		}
 	}
-	else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[gtd->input_cur] & 192) == 192)
+	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[gtd->input_cur] & 192) == 192)
 	{
 		while (gtd->input_cur + 1 < gtd->input_len && (gtd->input_buf[gtd->input_cur+1] & 192) == 128)
 		{
@@ -460,7 +462,7 @@ DO_CURSOR(cursor_delete)
 
 	if (gtd->input_hid + inputline_max_str_len() <= inputline_raw_str_len(0, gtd->input_len))
 	{
-		cursor_redraw_line("");
+		cursor_redraw_line(ses, "");
 	}
 	else
 	{
@@ -489,7 +491,7 @@ DO_CURSOR(cursor_delete_word_left)
 
 	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
-		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		if (!HAS_BIT(ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
 		{
 			gtd->input_pos--;
 		}
@@ -505,7 +507,7 @@ DO_CURSOR(cursor_delete_word_left)
 
 	gtd->input_len -= index_cur - gtd->input_cur;
 
-	cursor_redraw_line("");
+	cursor_redraw_line(ses, "");
 
 	modified_input();
 }
@@ -542,19 +544,19 @@ DO_CURSOR(cursor_delete_word_right)
 
 	gtd->input_cur = index_cur;
 
-	cursor_redraw_line("");
+	cursor_redraw_line(ses, "");
 	
 	modified_input();
 }
 
 DO_CURSOR(cursor_echo_on)
 {
-	SET_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 }
 
 DO_CURSOR(cursor_echo_off)
 {
-	DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 }
 
 DO_CURSOR(cursor_end)
@@ -563,7 +565,7 @@ DO_CURSOR(cursor_end)
 
 	gtd->input_pos = inputline_raw_str_len(0, gtd->input_len);
 
-	cursor_redraw_line("");
+	cursor_redraw_line(ses, "");
 }
 
 DO_CURSOR(cursor_enter)
@@ -581,7 +583,7 @@ DO_CURSOR(cursor_enter)
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		struct listroot *root = gtd->ses->list[LIST_HISTORY];
+		struct listroot *root = ses->list[LIST_HISTORY];
 
 		if (root->update >= 0 && root->update < root->used)
 		{
@@ -600,19 +602,31 @@ DO_CURSOR(cursor_enter)
 
 DO_CURSOR(cursor_exit)
 {
-	if (gtd->ses == gts)
+	if (ses == gts)
 	{
 		do_end(NULL, "");
 	}
 	else
 	{
-		cleanup_session(gtd->ses);
+		cleanup_session(ses);
+	}
+}
+
+DO_CURSOR(cursor_get)
+{
+	if (*arg == 0)
+	{
+		show_message(ses, -1, "#SYNTAX: #CURSOR GET {variable}");
+	}
+	else
+	{
+		set_nest_node(ses->list[LIST_VARIABLE], arg, "%s", gtd->input_buf);
 	}
 }
 
 DO_CURSOR(cursor_history_next)
 {
-	struct listroot *root = gtd->ses->list[LIST_HISTORY];
+	struct listroot *root = ses->list[LIST_HISTORY];
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
@@ -623,7 +637,7 @@ DO_CURSOR(cursor_history_next)
 
 		for (root->update++ ; root->update < root->used ; root->update++)
 		{
-			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
+			if (*gtd->input_buf && find(ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
 			{
 				break;
 			}
@@ -656,7 +670,7 @@ DO_CURSOR(cursor_history_next)
 		}
 	}
 
-	cursor_clear_line("");
+	cursor_clear_line(ses, "");
 
 	if (root->update == root->used)
 	{
@@ -669,14 +683,14 @@ DO_CURSOR(cursor_history_next)
 
 	gtd->input_len = strlen(gtd->input_buf);
 
-	cursor_end("");
+	cursor_end(ses, "");
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 }
 
 DO_CURSOR(cursor_history_prev)
 {
-	struct listroot *root = gtd->ses->list[LIST_HISTORY];
+	struct listroot *root = ses->list[LIST_HISTORY];
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
@@ -687,7 +701,7 @@ DO_CURSOR(cursor_history_prev)
 
 		for (root->update-- ; root->update >= 0 ; root->update--)
 		{
-			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
+			if (*gtd->input_buf && find(ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
 			{
 				break;
 			}
@@ -728,7 +742,7 @@ DO_CURSOR(cursor_history_prev)
 		}
 	}
 
-	cursor_clear_line("");
+	cursor_clear_line(ses, "");
 
 	if (root->update == -1)
 	{
@@ -741,14 +755,14 @@ DO_CURSOR(cursor_history_prev)
 
 	gtd->input_len = strlen(gtd->input_buf);
 
-	cursor_end("");
+	cursor_end(ses, "");
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 }
 
 DO_CURSOR(cursor_history_search)
 {
-	struct listroot *root = gtd->ses->list[LIST_HISTORY];
+	struct listroot *root = ses->list[LIST_HISTORY];
 
 	if (root->list[0] == NULL)
 	{
@@ -759,7 +773,7 @@ DO_CURSOR(cursor_history_search)
 	{
 		strcpy(gtd->input_tmp, gtd->input_buf);
 
-		cursor_clear_line("");
+		cursor_clear_line(ses, "");
 
 		SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
@@ -787,17 +801,17 @@ DO_CURSOR(cursor_history_search)
 
 		gtd->input_off = 1;
 
-		cursor_redraw_line("");
+		cursor_redraw_line(ses, "");
 	}
 }
 
 DO_CURSOR(cursor_history_find)
 {
-	struct listroot *root = gtd->ses->list[LIST_HISTORY];
+	struct listroot *root = ses->list[LIST_HISTORY];
 
 	push_call("cursor_history_find(%s)", gtd->input_buf);
 
-	if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5))
+	if (HAS_BIT(ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5))
 	{
 		if (inputline_str_chk(0, gtd->input_len) == FALSE)
 		{
@@ -808,7 +822,7 @@ DO_CURSOR(cursor_history_find)
 
 	for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 	{
-		if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
+		if (*gtd->input_buf && find(ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
 		{
 			break;
 		}
@@ -842,7 +856,7 @@ DO_CURSOR(cursor_home)
 	{
 		gtd->input_hid = 0;
 
-		cursor_redraw_line("");
+		cursor_redraw_line(ses, "");
 	}
 }
 
@@ -874,14 +888,14 @@ DO_CURSOR(cursor_left)
 		gtd->input_cur--;
 		gtd->input_pos--;
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5) && inputline_str_chk(0, gtd->input_cur) == FALSE)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && inputline_str_chk(0, gtd->input_cur) == FALSE)
 		{
 			gtd->input_cur--;
 			gtd->input_pos--;
 
 			input_printf("\033[1D");
 		}
-		else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8))
+		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
 		{
 			while (gtd->input_cur > 0 && (gtd->input_buf[gtd->input_cur] & 192) == 128)
 			{
@@ -891,7 +905,7 @@ DO_CURSOR(cursor_left)
 
 		input_printf("\033[1D");
 
-		cursor_check_line("");
+		cursor_check_line(ses, "");
 	}
 }
 
@@ -914,7 +928,7 @@ DO_CURSOR(cursor_left_word)
 
 	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
-		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		if (!HAS_BIT(ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
 		{
 			gtd->input_pos--;
 		}
@@ -923,7 +937,7 @@ DO_CURSOR(cursor_left_word)
 
 //	input_printf("\033[%dD", index_pos - gtd->input_pos);
 
-	cursor_redraw_line("");
+	cursor_redraw_line(ses, "");
 }
 
 
@@ -939,7 +953,9 @@ DO_CURSOR(cursor_paste_buffer)
 	gtd->input_len += strlen(gtd->paste_buf);
 	gtd->input_cur += strlen(gtd->paste_buf);
 
-	cursor_redraw_line("");
+	gtd->input_pos += inputline_raw_str_len(gtd->input_cur - strlen(gtd->paste_buf), gtd->input_cur);
+
+	cursor_redraw_line(ses, "");
 
 	modified_input();
 }
@@ -947,24 +963,24 @@ DO_CURSOR(cursor_paste_buffer)
 
 DO_CURSOR(cursor_redraw_input)
 {
-	if (IS_SPLIT(gtd->ses))
+	if (IS_SPLIT(ses))
 	{
-		cursor_redraw_line("");
+		cursor_redraw_line(ses, "");
 	}
 	else
 	{
-		input_printf("\033[1G\033[0K%s%s\033[0K", gtd->ses->more_output, gtd->input_buf);
+		input_printf("\033[1G\033[0K%s%s\033[0K", ses->more_output, gtd->input_buf);
 
 		gtd->input_cur = gtd->input_len;
 
-		gtd->input_pos = gtd->input_len % gtd->ses->cols;
+		gtd->input_pos = gtd->input_len % ses->cols;
 	}
 }
 
 
 DO_CURSOR(cursor_redraw_line)
 {
-	if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5))
+	if (HAS_BIT(ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5))
 	{
 		if (inputline_str_chk(0, gtd->input_len) == FALSE)
 		{
@@ -1031,7 +1047,7 @@ DO_CURSOR(cursor_right)
 		gtd->input_cur++;
 		gtd->input_pos++;
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5))
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5))
 		{
 			if (gtd->input_cur < gtd->input_len && inputline_str_chk(0, gtd->input_cur) == FALSE)
 			{
@@ -1041,7 +1057,7 @@ DO_CURSOR(cursor_right)
 				input_printf("\033[1C");
 			}
 		}
-		else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8))
+		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
 		{
 			while (gtd->input_cur < gtd->input_len && (gtd->input_buf[gtd->input_cur] & 192) == 128)
 			{
@@ -1052,19 +1068,15 @@ DO_CURSOR(cursor_right)
 		input_printf("\033[1C");
 	}
 
-	cursor_check_line("");
+	cursor_check_line(ses, "");
 }
 
 DO_CURSOR(cursor_right_word)
 {
-	int index_cur;
-
 	if (gtd->input_cur == gtd->input_len)
 	{
 		return;
 	}
-
-	index_cur = gtd->input_cur;
 
 	while (gtd->input_cur < gtd->input_len && gtd->input_buf[gtd->input_cur] == ' ')
 	{
@@ -1074,24 +1086,43 @@ DO_CURSOR(cursor_right_word)
 
 	while (gtd->input_cur < gtd->input_len && gtd->input_buf[gtd->input_cur] != ' ')
 	{
-		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		if (!HAS_BIT(ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
 		{
 			gtd->input_pos++;
 		}
 		gtd->input_cur++;
 	}
 
-	cursor_redraw_line("");
+	cursor_redraw_line(ses, "");
+}
+
+DO_CURSOR(cursor_set)
+{
+	if (*arg == 0)
+	{
+		return;
+	}
+
+	ins_sprintf(&gtd->input_buf[gtd->input_cur], "%s", arg);
+
+	gtd->input_len += strlen(arg);
+	gtd->input_cur += strlen(arg);
+
+	gtd->input_pos += inputline_raw_str_len(gtd->input_cur - strlen(arg), gtd->input_cur);
+
+	cursor_redraw_line(ses, "");
+
+	modified_input();
 }
 
 DO_CURSOR(cursor_suspend)
 {
-	do_suspend(gtd->ses, "");
+	do_suspend(ses, "");
 }
 
 DO_CURSOR(cursor_test)
 {
-	tintin_printf2(gtd->ses, "bar_len %d off %d pos %d hid %d cur %d len %d max %d tot %d", inputline_max_str_len(), gtd->input_off, gtd->input_pos, gtd->input_hid, gtd->input_cur, gtd->input_len, inputline_max_str_len(), inputline_cur_str_len());
+	tintin_printf2(ses, "bar_len %d off %d pos %d hid %d cur %d len %d max %d tot %d", inputline_max_str_len(), gtd->input_off, gtd->input_pos, gtd->input_hid, gtd->input_cur, gtd->input_len, inputline_max_str_len(), inputline_cur_str_len());
 }
 
 /*
@@ -1103,21 +1134,24 @@ int cursor_tab_add(int input_now, int stop_after_first)
 	struct listroot *root = gtd->ses->list[LIST_TAB];
 	char tab[BUFFER_SIZE];
 
-	for (root->update = 0 ; root->update < root->used ; root->update++)
+	if (!HAS_BIT(root->flags, LIST_FLAG_IGNORE))
 	{
-		substitute(gtd->ses, root->list[root->update]->left, tab, SUB_VAR|SUB_FUN);
-
-		if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
+		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
-			if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
-			{
-				continue;
-			}
-			insert_node_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+			substitute(gtd->ses, root->list[root->update]->left, tab, SUB_VAR|SUB_FUN);
 
-			if (stop_after_first)
+			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
-				return TRUE;
+				if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
+				{
+					continue;
+				}
+				insert_node_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+
+				if (stop_after_first)
+				{
+					return TRUE;
+				}
 			}
 		}
 	}
@@ -1175,7 +1209,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 				if (tab_len > 0)
 				{
-					if (tab[tab_len] == '.' || tab[tab_len] == ',')
+					if (tab[tab_len] == '.' || tab[tab_len] == ',' || tab[tab_len] == ';')
 					{
 						tab[tab_len] = 0;
 					}
@@ -1268,11 +1302,11 @@ void cursor_show_completion(int input_now, int show_last_node)
 	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = gtd->input_len;
 
-	cursor_redraw_line("");
+	cursor_redraw_line(gtd->ses, "");
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		cursor_history_find("");
+		cursor_history_find(gtd->ses, "");
 	}
 
 	if (node == root->list[0])
@@ -1315,9 +1349,9 @@ DO_CURSOR(cursor_tab_forward)
 
 	cursor_hide_completion(input_now);
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->list[0])
+	if (!ses->list[LIST_TABCYCLE]->list[0])
 	{
-		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 	}
 	tab_found = cursor_tab_add(input_now, TRUE);
 
@@ -1326,7 +1360,7 @@ DO_CURSOR(cursor_tab_forward)
 
 DO_CURSOR(cursor_tab_backward)
 {
-	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
+	struct listroot *root = ses->list[LIST_TABCYCLE];
 	int input_now;
 
 	input_now = cursor_calc_input_now();
@@ -1340,12 +1374,12 @@ DO_CURSOR(cursor_tab_backward)
 
 	if (root->used)
 	{
-		delete_index_list(gtd->ses->list[LIST_TABCYCLE], root->used - 1);
+		delete_index_list(ses->list[LIST_TABCYCLE], root->used - 1);
 	}
 
 	if (!root->list[0])
 	{
-		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 
 		cursor_tab_add(input_now, FALSE);
 	}
@@ -1365,18 +1399,19 @@ DO_CURSOR(cursor_auto_tab_forward)
 
 	cursor_hide_completion(input_now);
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->list[0])
+	if (!ses->list[LIST_TABCYCLE]->list[0])
 	{
-		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 	}
+
 	tab_found = cursor_auto_tab_add(input_now, TRUE);
 
-	cursor_show_completion(input_now, FALSE);
+	cursor_show_completion(input_now, tab_found);
 }
 
 DO_CURSOR(cursor_auto_tab_backward)
 {
-	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
+	struct listroot *root = ses->list[LIST_TABCYCLE];
 	int input_now;
 
 	input_now = cursor_calc_input_now();
@@ -1390,12 +1425,12 @@ DO_CURSOR(cursor_auto_tab_backward)
 
 	if (root->used)
 	{
-		delete_index_list(gtd->ses->list[LIST_TABCYCLE], root->used - 1);
+		delete_index_list(ses->list[LIST_TABCYCLE], root->used - 1);
 	}
 
 	if (!root->list[0])
 	{
-		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 
 		cursor_auto_tab_add(input_now, FALSE);
 	}
@@ -1417,9 +1452,9 @@ DO_CURSOR(cursor_mixed_tab_forward)
 
 	cursor_hide_completion(input_now);
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->list[0])
+	if (!ses->list[LIST_TABCYCLE]->list[0])
 	{
-		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 	}
 	tab_found = cursor_tab_add(input_now, TRUE) || cursor_auto_tab_add(input_now, TRUE);
 
@@ -1428,7 +1463,7 @@ DO_CURSOR(cursor_mixed_tab_forward)
 
 DO_CURSOR(cursor_mixed_tab_backward)
 {
-	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
+	struct listroot *root = ses->list[LIST_TABCYCLE];
 	int input_now;
 
 	input_now = cursor_calc_input_now();
@@ -1442,12 +1477,12 @@ DO_CURSOR(cursor_mixed_tab_backward)
 
 	if (root->used)
 	{
-		delete_index_list(gtd->ses->list[LIST_TABCYCLE], root->used - 1);
+		delete_index_list(ses->list[LIST_TABCYCLE], root->used - 1);
 	}
 
 	if (!root->list[0])
 	{
-		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 
 		cursor_tab_add(input_now, FALSE);
 		cursor_auto_tab_add(input_now, FALSE);

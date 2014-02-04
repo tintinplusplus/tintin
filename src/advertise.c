@@ -37,6 +37,171 @@ struct advertisement_type
 
 struct advertisement_type advertisement_table[] =
 {
+	{
+		1388166000, /* 27 Dec 2013 */
+		1420072000, /* 31 Dec 2014 */
+		100,
+		"\n"
+		"<138>                     Lost Souls  -  http://lostsouls.org\n"
+		"\n"
+		"<078>\"Our world is fallen, boy.  Aedaris is a ruin.  My grandfather, he told me\n"
+		"<078>of days, not so long gone, when everything you see was part of a great empire.\n"
+		"<078>Peaceful, he said.  Full of wonders.  They called it eternal.  Funny, eh, boy?\n"
+		"<078>They thought it'd last forever, and it went crazy and tore itself apart.  But\n"
+		"<078>they left behind a few things for us, didn't they?  Ha!  Yes, lots for us.  Now\n"
+		"<078>give that wizard-stick here before you blow your fool horns off, and get to\n"
+		"<078>work.  Daylight's soon, and these faeries aren't going to skin themselves.\"\n"
+		"<078>Lost Souls: chaos in the wreckage of empire.  Be clever if you want to live.\n"
+		"\n"
+                "<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
+                "\n"
+		                
+	},
+
+	{
+		1388166000, /* 27 Dec 2013 */
+		1420072000, /* 31 Dec 2014 */
+		100,
+		"\n"
+		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
+		"\n"
+		"<078>Alter Aeon is a custom multiclass MUD, where each of the five character\n"
+		"<078>classes combine to make unique characters with unique skill sets.  This is\n"
+		"<078>a very large MUD - there are hundreds of areas and quests, spanning several\n"
+		"<078>continents and outer planar regions.  There are custom spells, skills,\n"
+		"<078>minions, player run shops, seafaring boats, PvP, and many other features\n"
+		"<078>for nearly every kind of player.  The game is very friendly to new players\n"
+		"<078>and has extensive support for the blind and visually impaired.\n"
+		"\n"
+		"<178>To connect to Alter Aeon enter: #session aa alteraeon.com 3000\n"
+		"\n"
+	},
+
+	{
+		1388166000, /* 27 Dec 2013 */
+		1420072000, /* 31 Dec 2014 */
+		100,
+		"\n"
+		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"
+		"\n"
+		"<078>Join us as Threshold RPG, one of the oldest RP enforced games on the\n"
+		"<078>internet. Add to thirteen years of player created history and make your own\n"
+		"<078>mark on the world today. Join a hundred other players who are vying for\n"
+		"<078>political and religious power in complex systems that reward skill, effort,\n"
+		"<078>and social interactions. Threshold RPG is a custom code-base written in\n"
+		"<078>LPC and features a completely unique and original world.\n"
+		"\n"
+		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
+		"\n"
+	},
+
+	{
+		0,
+		0,
+		0,
+		""
+	}
+};
+
+int valid_advertisement(int i)
+{
+	time_t current_time = time(NULL);
+
+	if (advertisement_table[i].start > current_time)
+	{
+		return 0;
+	}
+	if (advertisement_table[i].end < current_time)
+	{
+		return 0;
+	}
+	return advertisement_table[i].value;
+}
+
+int total_advertisements()
+{
+	int i, count = 0;
+
+	for (i = 0 ; *advertisement_table[i].desc ; i++)
+	{
+		count += valid_advertisement(i);
+	}
+	return count;
+}
+
+DO_COMMAND(do_advertise)
+{
+	int i, max, cnt;
+	char buf[BUFFER_SIZE];
+
+	max = total_advertisements();
+
+	for (i = 0 ; *advertisement_table[i].desc ; i++)
+	{
+		if (!valid_advertisement(i))
+		{
+			continue;
+		}
+
+		cnt = advertisement_table[i].value;
+
+		if (rand() % max < cnt)
+		{
+			char *pto, *ptf;
+
+			substitute(ses, advertisement_table[i].desc, buf, SUB_COL);
+
+			pto = buf;
+
+			while (*pto)
+			{
+				ptf = strchr(pto, '\n');
+
+				if (ptf == NULL)
+				{
+					break;
+				}
+				*ptf++ = 0;
+
+				tintin_puts(ses, pto);
+
+				pto = ptf;
+			}
+			break;
+		}
+		max -= cnt;
+	}
+
+//	tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
+
+	return ses;
+}
+
+/*
+
+	{
+		1354280000,  30 Nov 2012 
+		1420072000,  31 Dec 2014 
+		100,
+		"\n"
+		"<138>                New Worlds Ateraan  -  http://www.ateraan.com\n"
+		"\n"
+		"<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful\n"
+		"<078>guilds, races, politics, religion, justice, economy, and a storyline that is\n"
+		"<078>dominantly player controlled and based on a novel. The game is based on a\n"
+		"<078>Kingdom with fighters, merchants, mages, and thieves, and a fierce southern\n"
+		"<078>state that has warriors, shaman, slaves, and servants. Ships rule the seas and\n"
+		"<078>caravans travel the lands. With 100's of players and features like invasions,\n"
+		"<078>ship creation, house building, clans, theaters, leatherball fields, and massive\n"
+		"<078>events, the game is incredibly robust and diverse.\n"
+		"\n"
+                "<178>To connect to New Worlds Ateraan enter: #session nwa ateraan.com 4002\n"
+                "\n"
+		                
+	},
+
+*/
+
 /*
 	{
 		1260469590, * 10 Dec 2009 *
@@ -185,163 +350,3 @@ struct advertisement_type advertisement_table[] =
 		"\n"
 	},
 */
-	{
-		1354280000, /* 30 Nov 2012 */
-		1420072000, /* 31 Dec 2014 */
-		100,
-		"\n"
-		"<138>                     Lost Souls  -  http://lostsouls.org\n"
-		"\n"
-		"<078>\"Our world is fallen, boy.  Aedaris is a ruin.  My grandfather, he told me\n"
-		"<078>of days, not so long gone, when everything you see was part of a great empire.\n"
-		"<078>Peaceful, he said.  Full of wonders.  They called it eternal.  Funny, eh, boy?\n"
-		"<078>They thought it'd last forever, and it went crazy and tore itself apart.  But\n"
-		"<078>they left behind a few things for us, didn't they?  Ha!  Yes, lots for us.  Now\n"
-		"<078>give that wizard-stick here before you blow your fool horns off, and get to\n"
-		"<078>work.  Daylight's soon, and these faeries aren't going to skin themselves.\"\n"
-		"<078>Lost Souls: chaos in the wreckage of empire.  Be clever if you want to live.\n"
-		"\n"
-                "<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
-                "\n"
-		                
-	},
-
-	{
-		1354280000, /* 30 Nov 2012 */
-		1420072000, /* 31 Dec 2014 */
-		100,
-		"\n"
-		"<138>                New Worlds Ateraan  -  http://www.ateraan.com\n"
-		"\n"
-		"<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful\n"
-		"<078>guilds, races, politics, religion, justice, economy, and a storyline that is\n"
-		"<078>dominantly player controlled and based on a novel. The game is based on a\n"
-		"<078>Kingdom with fighters, merchants, mages, and thieves, and a fierce southern\n"
-		"<078>state that has warriors, shaman, slaves, and servants. Ships rule the seas and\n"
-		"<078>caravans travel the lands. With 100's of players and features like invasions,\n"
-		"<078>ship creation, house building, clans, theaters, leatherball fields, and massive\n"
-		"<078>events, the game is incredibly robust and diverse.\n"
-		"\n"
-                "<178>To connect to New Worlds Ateraan enter: #session nwa ateraan.com 4002\n"
-                "\n"
-		                
-	},
-
-	{
-		1354280000, /* 30 Nov 2012 */
-		1420072000, /* 31 Dec 2014 */
-		100,
-		"\n"
-		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
-		"\n"
-		"<078>Alter Aeon is a custom multiclass MUD, where each of the five character\n"
-		"<078>classes combine to make unique characters with unique skill sets.  This is\n"
-		"<078>a very large MUD - there are hundreds of areas and quests, spanning several\n"
-		"<078>continents and outer planar regions.  There are custom spells, skills,\n"
-		"<078>minions, player run shops, seafaring boats, PvP, and many other features\n"
-		"<078>for nearly every kind of player.  The game is very friendly to new players\n"
-		"<078>and has extensive support for the blind and visually impaired.\n"
-		"\n"
-		"<178>To connect to Alter Aeon enter: #session aa alteraeon.com 3000\n"
-		"\n"
-	},
-
-	{
-		1354280000, /* 30 Nov 2012 */
-		1420072000, /* 31 Dec 2014 */
-		100,
-		"\n"
-		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"
-		"\n"
-		"<078>Join us as Threshold RPG, one of the oldest RP enforced games on the\n"
-		"<078>internet. Add to thirteen years of player created history and make your own\n"
-		"<078>mark on the world today. Join a hundred other players who are vying for\n"
-		"<078>political and religious power in complex systems that reward skill, effort,\n"
-		"<078>and social interactions. Threshold RPG is a custom code-base written in\n"
-		"<078>LPC and features a completely unique and original world.\n"
-		"\n"
-		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
-		"\n"
-	},
-
-	{
-		0,
-		0,
-		0,
-		""
-	}
-};
-
-int valid_advertisement(int i)
-{
-	time_t current_time = time(NULL);
-
-	if (advertisement_table[i].start > current_time)
-	{
-		return 0;
-	}
-	if (advertisement_table[i].end < current_time)
-	{
-		return 0;
-	}
-	return advertisement_table[i].value;
-}
-
-int total_advertisements()
-{
-	int i, count = 0;
-
-	for (i = 0 ; *advertisement_table[i].desc ; i++)
-	{
-		count += valid_advertisement(i);
-	}
-	return count;
-}
-
-DO_COMMAND(do_advertise)
-{
-	int i, max, cnt;
-	char buf[BUFFER_SIZE];
-
-	max = total_advertisements();
-
-	for (i = 0 ; *advertisement_table[i].desc ; i++)
-	{
-		if (!valid_advertisement(i))
-		{
-			continue;
-		}
-
-		cnt = advertisement_table[i].value;
-
-		if (rand() % max < cnt)
-		{
-			char *pto, *ptf;
-
-			substitute(ses, advertisement_table[i].desc, buf, SUB_COL);
-
-			pto = buf;
-
-			while (*pto)
-			{
-				ptf = strchr(pto, '\n');
-
-				if (ptf == NULL)
-				{
-					break;
-				}
-				*ptf++ = 0;
-
-				tintin_puts(ses, pto);
-
-				pto = ptf;
-			}
-			break;
-		}
-		max -= cnt;
-	}
-
-//	tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
-
-	return ses;
-}

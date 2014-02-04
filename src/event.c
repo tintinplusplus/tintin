@@ -31,10 +31,7 @@
 DO_COMMAND(do_event)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
-	struct listroot *root;
 	int cnt;
-
-	root = ses->list[LIST_EVENT];
 
 	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(ses, arg, arg2, 1);
@@ -99,40 +96,42 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 
 	for (ses_ptr = ses ? ses : gts ; ses_ptr ; ses_ptr = ses_ptr->next)
 	{
-		node = search_node_list(ses_ptr->list[LIST_EVENT], buf);
-
-		if (node)
+		if (!HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_IGNORE))
 		{
-			va_start(list, fmt);
+			node = search_node_list(ses_ptr->list[LIST_EVENT], buf);
 
-			for (cnt = 0 ; cnt < args ; cnt++)
+			if (node)
 			{
-				va_arg(list, char *);
-			}
+				va_start(list, fmt);
 
-			for (cnt = 0 ; cnt < vars ; cnt++)
-			{
-				RESTRING(gtd->vars[cnt], va_arg(list, char *));
-			}
+				for (cnt = 0 ; cnt < args ; cnt++)
+				{
+					va_arg(list, char *);
+				}
 
-			substitute(ses_ptr, node->right, buf, flags);
+				for (cnt = 0 ; cnt < vars ; cnt++)
+				{
+					RESTRING(gtd->vars[cnt], va_arg(list, char *));
+				}
 
-			if (HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_DEBUG))
-			{
-				show_debug(ses_ptr, LIST_ACTION, "#DEBUG EVENT {%s}", node->left);
-			}
+				substitute(ses_ptr, node->right, buf, flags);
 
-			script_driver(ses_ptr, LIST_EVENT, buf);
+				if (HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_DEBUG))
+				{
+					show_debug(ses_ptr, LIST_ACTION, "#DEBUG EVENT {%s}", node->left);
+				}
 
-			va_end(list);
+				script_driver(ses_ptr, LIST_EVENT, buf);
 
-			if (ses)
-			{
-				pop_call();
-				return 1;
+				va_end(list);
+
+				if (ses)
+				{
+					pop_call();
+					return 1;
+				}
 			}
 		}
-
 		if (ses)
 		{
 			pop_call();

@@ -56,10 +56,7 @@ int precision;
 DO_COMMAND(do_math)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	struct listroot *root;
 	struct listnode *node;
-
-	root = ses->list[LIST_VARIABLE];
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_NST, SUB_VAR|SUB_FUN);
 
@@ -85,13 +82,25 @@ double get_number(struct session *ses, char *str)
 	double val;
 	char result[BUFFER_SIZE];
 
-	mathexp(ses, str, result);
+	mathexp(ses, str, result, 0);
 
 	val = tintoi(result);
 
 	return val;
 }
 
+double get_double(struct session *ses, char *str)
+{
+	double val;
+	char result[BUFFER_SIZE];
+
+	mathexp(ses, str, result, 1);
+
+	val = tintoi(result);
+
+	return val;
+}
+	
 void get_number_string(struct session *ses, char *str, char *result)
 {
 	sprintf(result, "%.*f", precision, get_number(ses, str));
@@ -110,13 +119,13 @@ double mathswitch(struct session *ses, char *left, char *right)
 	Flexible tokenized mathematical expression interpreter
 */
 
-void mathexp(struct session *ses, char *str, char *result)
+void mathexp(struct session *ses, char *str, char *result, int seed)
 {
 	struct link_data *node;
 
 	substitute(ses, str, result, SUB_VAR|SUB_FUN);
 
-	if (mathexp_tokenize(ses, result) == FALSE)
+	if (mathexp_tokenize(ses, result, seed) == FALSE)
 	{
 		return;
 	}
@@ -179,7 +188,7 @@ void del_math_node(struct link_data *node)
 	free(node);
 }
 
-int mathexp_tokenize(struct session *ses, char *str)
+int mathexp_tokenize(struct session *ses, char *str, int seed)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[STRING_SIZE], *pti, *pta;
 	int level, status, point;
@@ -187,7 +196,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 	level     = 0;
 	point     = -1;
 	status    = EXP_VARIABLE;
-	precision = 0;
+	precision = seed;
 
 	pta = buf3;
 	pti = str;
@@ -587,6 +596,8 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 			}
 			else
 			{
+				// Can't perform modulo on doubles
+
 				value = (long long) tintoi(node->prev->str3) % (long long) tintoi(node->next->str3);
 			}
 			break;

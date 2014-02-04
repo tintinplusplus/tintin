@@ -194,6 +194,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	if (HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL) && ses->logfile)
 	{
 		fwrite(cpsrc, 1, cplen, ses->logfile);
+
 		fflush(ses->logfile);
 	}
 
@@ -670,7 +671,24 @@ int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	rows = HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? ses->bot_row - ses->top_row + 1 : ses->rows;
 
-	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, ses->cols % 256, rows / 256, rows % 256, IAC, SE);
+	// Properly handle row and colum size of 255
+
+	if (ses->cols % 256 == IAC && ses->rows % 256 == IAC)
+	{
+		socket_printf(ses, 11, "%c%c%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, IAC, ses->cols % 256, rows / 256, IAC, rows % 256, IAC, SE);
+	}
+	else if (ses->cols % 256 == IAC)
+	{
+		socket_printf(ses, 10, "%c%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, IAC, ses->cols % 256, rows / 256, rows % 256, IAC, SE);
+	}
+	else if (ses->rows % 256 == IAC)
+	{
+		socket_printf(ses, 10, "%c%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, ses->cols % 256, rows / 256, IAC, rows % 256, IAC, SE);
+	}
+	else
+	{
+		socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, ses->cols / 256, ses->cols % 256, rows / 256, rows % 256, IAC, SE);
+	}
 
 	telopt_debug(ses, "SENT IAC SB NAWS %d %d %d %d", ses->cols / 256, ses->cols % 256, ses->rows / 256, ses->rows % 256);
 
@@ -864,7 +882,7 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 
 	while (i < cplen && nest < 99)
 	{
-		if (src[i] == IAC && i + 1 < cplen && src[i+1] == SE)
+		if (src[i] == IAC && src[i+1] == SE)
 		{
 			break;
 		}
@@ -998,7 +1016,7 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 		i++;
 	}
 
-	if (i < cplen && src[i] == IAC && nest < 99)
+	if (src[i] == IAC && nest < 99)
 	{
 		*pto = 0;
 
@@ -1007,6 +1025,163 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 			telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
 			check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP %s", var, var, val);
 			check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP", var, val);
+		}
+		i++;
+	}
+
+	var[0] = val[0] = last = 0;
+
+	i = 3;
+	pto = var;
+
+	while (i < cplen && nest < 99)
+	{
+		if (src[i] == IAC && src[i+1] == SE)
+		{
+			break;
+		}
+
+		switch (src[i])
+		{
+			case MSDP_TABLE_OPEN:
+				*pto++ = '{';
+				nest++;
+				state[nest] = 0;
+				last = MSDP_TABLE_OPEN;
+				break;
+
+			case MSDP_TABLE_CLOSE:
+				if (last == MSDP_VAL || last == MSDP_VAR)
+				{
+					*pto++ = '"';
+				}
+				if (nest)
+				{
+					nest--;
+				}
+				*pto++ = '}';
+				last = MSDP_TABLE_CLOSE;
+				break;
+
+			case MSDP_ARRAY_OPEN:
+				*pto++ = '[';
+				nest++;
+				state[nest] = 1;
+				last = MSDP_ARRAY_OPEN;
+				break;
+
+			case MSDP_ARRAY_CLOSE:
+				if (last == MSDP_VAL || last == MSDP_VAR)
+				{
+					*pto++ = '"';
+				}
+				if (nest)
+				{
+					nest--;
+				}
+				*pto++ = ']';
+				last = MSDP_ARRAY_CLOSE;
+				break;
+
+			case MSDP_VAR:
+				if (nest)
+				{
+					if (last == MSDP_VAL || last == MSDP_VAR)
+					{
+						*pto++ = '"';
+					}
+					if (last == MSDP_VAL || last == MSDP_VAR || last == MSDP_TABLE_CLOSE || last == MSDP_ARRAY_CLOSE)
+					{
+						*pto++ = ',';
+					}
+					*pto++ = '"';
+				}
+				else
+				{
+					*pto = 0;
+
+					if (last)
+					{
+						check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP2JSON %s", var, var, val);
+						check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP2JSON", var, val);
+					}
+					pto = var;
+				}
+				last = MSDP_VAR;
+				break;
+
+			case MSDP_VAL:
+				if (nest)
+				{
+					if (last == MSDP_VAR)
+					{
+						*pto++ = '"';
+						*pto++ = ':';
+					}
+					if (last == MSDP_VAL)
+					{
+						*pto++ = '"';
+						*pto++ = ',';
+					}
+
+					if (src[i+1] != MSDP_TABLE_OPEN && src[i+1] != MSDP_ARRAY_OPEN)
+					{
+						*pto++ = '"';
+					}
+				}
+				else
+				{
+					*pto = 0;
+
+					if (last != MSDP_VAR)
+					{
+						check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP2JSON %s", var, var, val);
+						check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP2JSON", var, val);
+					}
+					pto = val;
+				}
+				last = MSDP_VAL;
+				break;
+
+			case '\\':
+				*pto++ = '\\';
+				*pto++ = '\\';
+				break;
+
+			case '{':
+				*pto++ = '\\';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'B';
+				break;
+
+			case '}':
+				*pto++ = '\\';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'D';
+				break;
+
+			case COMMAND_SEPARATOR:
+				*pto++ = '\\';
+				*pto++ = COMMAND_SEPARATOR;
+				break;
+
+			default:
+				*pto++ = src[i];
+				break;
+		}
+		i++;
+	}
+
+	if (src[i] == IAC && nest < 99)
+	{
+		*pto = 0;
+
+		if (last)
+		{
+			check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP2JSON %s", var, var, val);
+			check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP2JSON", var, val);
 		}
 		i++;
 	}

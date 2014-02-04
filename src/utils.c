@@ -313,53 +313,47 @@ int str_suffix(char *str1, char *str2)
 void show_message(struct session *ses, int index, char *format, ...)
 {
 	struct listroot *root;
-	char buf[STRING_SIZE];
+	char *buffer;
 	va_list args;
 
 	push_call("show_message(%p,%p,%p)",ses,index,format);
 
 	va_start(args, format);
-
-	vsprintf(buf, format, args);
-
+	vasprintf(&buffer, format, args);
 	va_end(args);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_VERBOSELINE))
 	{
-		tintin_puts2(ses, buf);
+		tintin_puts2(ses, buffer);
 
-		pop_call();
-		return;
+		goto end;
 	}
 
 	if (index == -1)
 	{
 		if (ses->input_level == 0)
 		{
-			tintin_puts2(ses, buf);
+			tintin_puts2(ses, buffer);
 		}
-		pop_call();
-		return;
+		goto end;
 	}
 
 	root = ses->list[index];
 
 	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 	{
-		tintin_puts2(ses, buf);
+		tintin_puts2(ses, buffer);
 
-		pop_call();
-		return;
+		goto end;
 	}
 
 	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
 	{
 		if (ses->input_level == 0)
 		{
-			tintin_puts2(ses, buf);
+			tintin_puts2(ses, buffer);
 
-			pop_call();
-			return;
+			goto end;
 		}
 	}
 
@@ -367,9 +361,13 @@ void show_message(struct session *ses, int index, char *format, ...)
 	{
 		if (ses->logfile)
 		{
-			logit(ses, buf, ses->logfile, TRUE);
+			logit(ses, buffer, ses->logfile, TRUE);
 		}
 	}
+	end:
+
+	free(buffer);
+
 	pop_call();
 	return;
 }
@@ -456,26 +454,30 @@ void socket_printf(struct session *ses, size_t length, char *format, ...)
 
 void tintin_printf2(struct session *ses, char *format, ...)
 {
-	char buf[STRING_SIZE];
+	char *buffer;
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buf, format, args);
+	vasprintf(&buffer, format, args);
 	va_end(args);
 
-	tintin_puts2(ses, buf);
+	tintin_puts2(ses, buffer);
+
+	free(buffer);
 }
 
 void tintin_printf(struct session *ses, char *format, ...)
 {
-	char buf[STRING_SIZE];
+	char *buffer;
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buf, format, args);
+	vasprintf(&buffer, format, args);
 	va_end(args);
 
-	tintin_puts(ses, buf);
+	tintin_puts(ses, buffer);
+
+	free(buffer);
 }
 
 /*
@@ -533,7 +535,7 @@ void tintin_puts3(struct session *ses, char *string)
 
 void tintin_puts2(struct session *ses, char *string)
 {
-	char output[STRING_SIZE];
+	char *output;
 
 	push_call("tintin_puts2(%p,%p)",ses,string);
 
@@ -550,33 +552,33 @@ void tintin_puts2(struct session *ses, char *string)
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		sprintf(output, "\n\033[0m%s\033[0m", string);
+		output = str_dup_printf("\n\033[0m%s\033[0m", string);
 	}
 	else
 	{
-		sprintf(output, "\033[0m%s\033[0m", string);
+		output = str_dup_printf("\033[0m%s\033[0m", string);
 	}
 
 	add_line_buffer(ses, output, FALSE);
 
-	if (ses != gtd->ses)
+	if (ses == gtd->ses)
 	{
-		pop_call();
-		return;
+		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+		{
+			save_pos(ses);
+			goto_rowcol(ses, ses->bot_row, 1);
+		}
+
+		printline(ses, output, FALSE);
+
+		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+		{
+			restore_pos(ses);
+		}
 	}
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		save_pos(ses);
-		goto_rowcol(ses, ses->bot_row, 1);
-	}
+	str_free(output);
 
-	printline(ses, output, FALSE);
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		restore_pos(ses);
-	}
 	pop_call();
 	return;
 }

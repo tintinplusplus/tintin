@@ -30,7 +30,7 @@
 
 void printline(struct session *ses, char *str, int prompt)
 {
-	char wrapped_str[STRING_SIZE];
+	char *out;
 
 	push_call("printline(%p,%p,%d)",ses,str,prompt);
 
@@ -46,29 +46,34 @@ void printline(struct session *ses, char *str, int prompt)
 		return;
 	}
 
+	out = str_alloc(strlen(str) * 2);
+
 	if (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA))
 	{
-		convert_meta(str, wrapped_str);
-		strcpy(str, wrapped_str);
+		convert_meta(str, out);
+		strcpy(str, out);
 	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
 	{
-		word_wrap(ses, str, wrapped_str, TRUE);
+		word_wrap(ses, str, out, TRUE);
 	}
 	else
 	{
-		strcpy(wrapped_str, str);
+		strcpy(out, str);
 	}
 
 	if (prompt)
 	{
-		printf("%s", wrapped_str);
+		printf("%s", out);
 	}
 	else
 	{
-		printf("%s\n", wrapped_str);
+		printf("%s\n", out);
 	}
+
+	str_free(out);
+
 	pop_call();
 	return;
 }

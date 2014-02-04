@@ -19,8 +19,6 @@ DEBUG_STACK[002] = map_search_compile(0xc30c80,0xcb00d5,0x7fffe7d4c240)
 
 * Stuff that might be implemented
 
-  - http://tintin.sourceforge.net/board/viewtopic.php?t=2029
-
   - Make #map map save to variable.
 
   - Make &0 to &99 local.

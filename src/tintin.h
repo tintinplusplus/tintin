@@ -25,7 +25,7 @@
 *                                                                             *
 *                        coded by peter unold 1992                            *
 *                       modified by Bill Reiss 1993                           *
-*                    updated by Igor van den Hoven 2004                       *
+*                    recoded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include <stdio.h>
@@ -117,12 +117,12 @@
 #define HISTORY_FILE         ".tt_history"
 
 #define STRING_SIZE                  45000
-#define BUFFER_SIZE                  20000
+#define BUFFER_SIZE                  30000
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.00.9  "
+#define CLIENT_VERSION           "2.01.0  "
 
 #define ESCAPE                          27
 
@@ -327,6 +327,7 @@ enum operators
 #define SES_FLAG_BIG5                 (1 << 27)
 #define SES_FLAG_256COLOR             (1 << 28)
 #define SES_FLAG_IGNORELINE           (1 << 29)
+#define SES_FLAG_CLOSED               (1 << 30)
 
 #define TELOPT_FLAG_SGA               (1 <<  0)
 #define TELOPT_FLAG_ECHO              (1 <<  1)
@@ -344,7 +345,7 @@ enum operators
 #define LIST_FLAG_CLASS               (1 <<  4)
 #define LIST_FLAG_READ                (1 <<  5)
 #define LIST_FLAG_WRITE               (1 <<  6)
-#define LIST_FLAG_SHOW                (1 <<  7)
+#define LIST_FLAG_HIDE                (1 <<  7)
 #define LIST_FLAG_INHERIT             (1 <<  8)
 #define LIST_FLAG_NEST                (1 <<  9)
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
@@ -382,16 +383,27 @@ enum operators
 #define MAP_SEARCH_TERRAIN            5
 #define MAP_SEARCH_MAX                6
 
-#define MAP_EXIT_N                    (1 <<  0)
-#define MAP_EXIT_E                    (1 <<  1)
-#define MAP_EXIT_S                    (1 <<  2)
-#define MAP_EXIT_W                    (1 <<  3)
-#define MAP_EXIT_U                    (1 <<  4)
-#define MAP_EXIT_D                    (1 <<  5)
-#define MAP_EXIT_NE                   (1 <<  6)
-#define MAP_EXIT_NW                   (1 <<  7)
-#define MAP_EXIT_SE                   (1 <<  8)
-#define MAP_EXIT_SW                   (1 <<  9)
+#define MAP_EXIT_N                     1
+#define MAP_EXIT_E                     2
+#define MAP_EXIT_S                     4
+#define MAP_EXIT_W                     8
+#define MAP_EXIT_U                    16
+#define MAP_EXIT_D                    32
+#define MAP_EXIT_NE                   64
+#define MAP_EXIT_NW                  128
+#define MAP_EXIT_SE                  256
+#define MAP_EXIT_SW                  512
+
+#define MAP_DIR_N                     (1LL << MAP_EXIT_N)
+#define MAP_DIR_E                     (1LL << MAP_EXIT_E)
+#define MAP_DIR_S                     (1LL << MAP_EXIT_S)
+#define MAP_DIR_W                     (1LL << MAP_EXIT_W)
+#define MAP_DIR_U                     (1LL << MAP_EXIT_U)
+#define MAP_DIR_D                     (1LL << MAP_EXIT_D)
+#define MAP_DIR_NE                    (1LL << (MAP_EXIT_N|MAP_EXIT_E))
+#define MAP_DIR_NW                    (1LL << (MAP_EXIT_N|MAP_EXIT_W))
+#define MAP_DIR_SE                    (1LL << (MAP_EXIT_S|MAP_EXIT_E))
+#define MAP_DIR_SW                    (1LL << (MAP_EXIT_S|MAP_EXIT_W))
 
 #define MAP_UNDO_MOVE                 (1 <<  0)
 #define MAP_UNDO_CREATE               (1 <<  1)
@@ -493,7 +505,7 @@ enum operators
 	point = strdup((value)); \
 }
 
-#define STRFREE(point) \
+#define FREE(point) \
 { \
 	free((point)); \
 	point = NULL; \
@@ -533,7 +545,7 @@ enum operators
 #define DO_MAP(map) void map (struct session *ses, char *arg, char *arg1, char *arg2)
 #define DO_PATH(path) void path (struct session *ses, char *arg)
 #define DO_LINE(line) struct session *line (struct session *ses, char *arg)
-#define DO_CURSOR(cursor) void cursor (char *arg)
+#define DO_CURSOR(cursor) void cursor (struct session *ses, char *arg)
 #define DO_HISTORY(history) void history (struct session *ses, char *arg)
 #define DO_BUFFER(buffer) void buffer (struct session *ses, char *arg)
 
@@ -655,6 +667,7 @@ struct tintin_data
 	long long               total_io_ticks;
 	long long               total_io_exec;
 	long long               total_io_delay;
+	int                     str_size;
 	int                     str_hash_size;
 	int                     history_size;
 	int                     command_ref[26];
@@ -703,17 +716,6 @@ struct link_data
 	char                 * str3;
 };
 
-struct grid_data
-{
-	struct grid_data     * next;
-	struct grid_data     * prev;
-	int                    vnum;
-	float                  length;
-	int                    x;
-	int                    y;
-	int                    z;
-};
-
 /*
 	Typedefs
 */
@@ -724,7 +726,7 @@ typedef struct session *CLASS   (struct session *ses, char *left, char *right);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *COMMAND (struct session *ses, char *arg);
 typedef void            MAP     (struct session *ses, char *arg, char *arg1, char *arg2);
-typedef void            CURSOR  (char *arg);
+typedef void            CURSOR  (struct session *ses, char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
 typedef struct session *LINE    (struct session *ses, char *arg);
 typedef void            HISTORY (struct session *ses, char *arg);
@@ -858,6 +860,12 @@ struct term_type
 	int                    flag;
 };
 
+struct str_data
+{
+	unsigned int              max;
+	unsigned int              len;
+};
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
@@ -881,8 +889,7 @@ struct map_data
 	FILE                  * logfile;
 	struct link_data      * undo_head;
 	struct link_data      * undo_tail;
-	struct grid_data      * grid_head;
-	struct grid_data      * grid_tail;
+	struct search_data    * search;
 	char                  * exit_color;
 	char                  * here_color;
 	char                  * path_color;
@@ -895,7 +902,6 @@ struct map_data
 	int                     in_room;
 	int                     at_room;
 	int                     last_room;
-	short                   search_stamp;
 	short                   display_stamp;
 	short                   nofollow;
 	char                    legend[17][100];
@@ -906,6 +912,8 @@ struct room_data
 	struct exit_data        * f_exit;
 	struct exit_data        * l_exit;
 	int                       vnum;
+	int                       exit_size;
+	long long                 exit_dirs;
 	float                     length;
 	float                     weight;
 	short                     search_stamp;
@@ -933,6 +941,19 @@ struct exit_data
 	char                    * data;
 };
 
+struct search_data
+{
+	int                     vnum;
+	short                   stamp;
+	pcre                  * name;
+	int                     exit_size;
+	long long               exit_dirs;
+	char                  * exit_list;
+	pcre                  * desc;
+	pcre                  * area;
+	pcre                  * note;
+	pcre                  * terrain;
+};
 
 #endif
 
@@ -984,6 +1005,7 @@ extern DO_CURSOR(cursor_echo_off);
 extern DO_CURSOR(cursor_end);
 extern DO_CURSOR(cursor_enter);
 extern DO_CURSOR(cursor_exit);
+extern DO_CURSOR(cursor_get);
 extern DO_CURSOR(cursor_history_find);
 extern DO_CURSOR(cursor_history_next);
 extern DO_CURSOR(cursor_history_prev);
@@ -997,6 +1019,7 @@ extern DO_CURSOR(cursor_redraw_input);
 extern DO_CURSOR(cursor_redraw_line);
 extern DO_CURSOR(cursor_right);
 extern DO_CURSOR(cursor_right_word);
+extern DO_CURSOR(cursor_set);
 extern DO_CURSOR(cursor_suspend);
 extern DO_CURSOR(cursor_test);
 extern DO_CURSOR(cursor_tab_backward);
@@ -1037,6 +1060,7 @@ extern DO_ARRAY(array_get);
 extern DO_ARRAY(array_size);
 extern DO_ARRAY(array_set);
 extern DO_ARRAY(array_sort);
+extern DO_ARRAY(array_tokenize);
 
 #endif
 
@@ -1197,19 +1221,20 @@ extern void create_exit(struct session *ses, int room, char *format, ...);
 extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
 extern void create_legend(struct session *ses, char *arg);
 extern void search_keywords(struct session *ses, char *arg, char *out, char *var);
-extern int match_room(struct session *ses, int room, char *arg);
+extern void map_search_compile(struct session *ses, char *arg, char *var);
+extern int match_room(struct session *ses, int room, struct search_data *search);
 extern int  find_room(struct session *ses, char *arg);
 extern void goto_room(struct session *ses, int room);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
-extern int  get_map_exit(struct session *ses, char *arg);
-extern int  get_map_exits(struct session *ses, int room);
+extern int  get_exit_dir(struct session *ses, char *arg);
+extern void set_room_exits(struct session *ses, int room);
+extern int  get_room_exits(struct session *ses, int room);
 extern void displaygrid_build(struct session *ses, int room, int x, int y, int z);
 extern int  follow_map(struct session *ses, char *argument);
 extern void add_undo(struct session *ses, char *format, ...);
 extern void del_undo(struct session *ses, struct link_data *link);
-extern void del_gridnode(struct session *ses, struct grid_data *node);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
-extern int searchgrid_find(struct session *ses, int from, char *arg);
+extern int searchgrid_find(struct session *ses, int from, struct search_data *search);
 extern int searchgrid_walk(struct session *ses, int offset, int from, int dest);
 extern void shortest_path(struct session *ses, int run, char *delay, char *arg);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
@@ -1225,10 +1250,11 @@ extern void show_vtmap(struct session *ses);
 
 extern DO_COMMAND(do_math);
 extern double get_number(struct session *ses, char *str);
+extern double get_double(struct session *ses, char *str);
 extern void get_number_string(struct session *ses, char *str, char *result);
 extern double mathswitch(struct session *ses, char *left, char *right);
-extern void mathexp(struct session *ses, char *str, char *result);
-extern int mathexp_tokenize(struct session *ses, char *str);
+extern void mathexp(struct session *ses, char *str, char *result, int seed);
+extern int mathexp_tokenize(struct session *ses, char *str, int seed);
 extern void mathexp_level(struct session *ses, struct link_data *node);
 extern void mathexp_compute(struct session *ses, struct link_data *node);
 extern double tintoi(char *str);
@@ -1266,6 +1292,7 @@ extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int fla
 extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
 extern int tintin_regexp_check(struct session *ses, char *exp);
 extern int tintin_regexp(struct session *ses, pcre *pcre, char *str, char *exp, int option, int flag);
+extern pcre *regexp_compile(char *exp, int option);
 extern pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *exp, int option);
 
 #endif
@@ -1533,6 +1560,29 @@ extern void quitmsg(char *message);
 extern char *restring(char *point, char *string);
 extern char *refstring(char *point, char *fmt, ...);
 
+extern char *str_alloc(int len);
+extern char *str_mim(char *original);
+extern char *str_dup(char *original);
+extern char *str_dup_printf(char *fmt, ...);
+extern char *str_cpy(char **ptr, char *str);
+extern char *str_cpy_printf(char **ptr, char *fmt, ...);
+extern char *str_ndup(char *original, int len);
+extern char *str_ncpy(char **ptr, char *str, int len);
+extern char *str_cat(char **ptr, char *str);
+extern char *str_cat_chr(char **ptr, char chr);
+extern char *str_cat_printf(char **ptr, char *fmt, ...);
+extern void str_fix(char *str);
+extern void str_free(char *ptr);
+/*
+extern char *str_alloc(char *ptr, int len);
+extern char *str_ncpy(char *ptr, char *str, int len);
+extern char *str_cpy(char *ptr, char *str);
+extern char *str_cpy_printf(char *ptr, char *fmt, ...);
+extern char *str_cat(char *ptr, char *str);
+extern char *str_cat_printf(char *ptr, char *fmt, ...);
+extern char *str_mim(char *pto, char *pti);
+extern void str_free(char *ptr);
+*/
 #endif
 
 #ifndef __MISC_H__
@@ -1566,12 +1616,12 @@ extern int search_nest_index(struct listroot *root, char *variable);
 extern struct listroot *update_nest_root(struct listroot *root, char *arg);
 extern void update_nest_node(struct listroot *root, char *arg);
 extern int delete_nest_node(struct listroot *root, char *variable);
-extern int get_nest_size(struct listroot *root, char *variable, char *result);
-extern struct listnode *get_nest_node(struct listroot *root, char *variable, char *result, int def);
-extern int get_nest_index(struct listroot *root, char *variable, char *result, int def);
+extern int get_nest_size(struct listroot *root, char *variable, char **result);
+extern struct listnode *get_nest_node(struct listroot *root, char *variable, char **result, int def);
+extern int get_nest_index(struct listroot *root, char *variable, char **result, int def);
+extern void show_nest_node(struct listnode *node, char **result, int initialize);
 extern struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, ...);
 extern struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, ...);
-extern void show_nest_node(struct listnode *node, char *result, int initialize);
 extern void copy_nest_node(struct listroot *dst_root, struct listnode *dst, struct listnode *src);
 
 #endif
@@ -1693,7 +1743,7 @@ extern void show_session(struct session *ses, struct session *ptr);
 extern struct session *newactive_session(void);
 extern struct session *activate_session(struct session *ses);
 extern struct session *new_session(struct session *ses, char *name, char *address, int desc);
-extern void connect_session(struct session *ses);
+extern struct session *connect_session(struct session *ses);
 extern void cleanup_session(struct session *ses);
 extern void dispose_session(struct session *ses);
 

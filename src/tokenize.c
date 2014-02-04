@@ -270,7 +270,7 @@ void handleswitchtoken(struct session *ses, struct scriptnode *token)
 {
 	char arg[BUFFER_SIZE];
 
-	mathexp(ses, token->str, arg);
+	mathexp(ses, token->str, arg, 0);
 
 	RESTRING(token->data->str, arg);
 }
@@ -458,7 +458,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 		return;
 	}
 
-	line = (char *) calloc(1, BUFFER_SIZE);
+	line = (char *) calloc(1, UMAX(BUFFER_SIZE, strlen(str)));
 
 	while (*str)
 	{
@@ -624,7 +624,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						break;
 
 					default:
-						str = get_arg_with_spaces(root->ses, arg, line, 1);
+						str = get_arg_with_spaces(root->ses, arg, line, TRUE);
 						addtoken(root, lvl, TOKEN_TYPE_COMMAND, cmd, line);
 						break;
 				}
@@ -727,7 +727,11 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				continue;
 
 			case TOKEN_TYPE_COMMAND:
+				push_call("do_%s(%p,%p)", command_table[token->cmd].name, root->ses, token->str);
+
 				root->ses = (*command_table[token->cmd].command) (root->ses, token->str);
+
+				pop_call();
 				break;
 
 			case TOKEN_TYPE_CONTINUE:
@@ -1052,6 +1056,8 @@ struct session *script_driver(struct session *ses, int list, char *str)
 	struct session *cur_ses;
 	int dlevel, ilevel;
 
+	push_call("script_driver(%p,%d,%p)",ses,list,str);
+
 	root = (struct scriptroot *) calloc(1, sizeof(struct scriptroot));
 
 	root->ses = cur_ses = ses;
@@ -1076,6 +1082,7 @@ struct session *script_driver(struct session *ses, int list, char *str)
 
 	free(root);
 
+	pop_call();
 	return ses;
 }
 

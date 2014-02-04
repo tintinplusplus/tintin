@@ -421,3 +421,50 @@ DO_ARRAY(array_sort)
 	}
 	return ses;
 }
+
+DO_ARRAY(array_tokenize)
+{
+	char buf[BUFFER_SIZE], tmp[BUFFER_SIZE];
+	int index = 1, i;
+
+	sub_arg_in_braces(ses, arg, buf, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (list->root)
+	{
+		free_list(list->root);
+	}
+
+	list->root = init_list(ses, LIST_VARIABLE, LIST_SIZE);
+
+	i = 0;
+
+	while (buf[i] != 0)
+	{
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && buf[i] & 128 && buf[i+1] != 0)
+		{
+			i += sprintf(tmp, "%c%c", buf[i], buf[i+1]);
+		}
+		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (buf[i] & 192) == 192 && buf[i+1] != 0)
+		{
+			if ((buf[i] & 240) == 240 && buf[i+2] != 0 && buf[i+3] != 0)
+			{
+				i += sprintf(tmp, "%c%c%c%c", buf[i], buf[i+1], buf[i+2], buf[i+3]);
+			}
+			else if ((buf[i] & 224) == 224 && buf[i+2] != 0)
+			{
+				i += sprintf(tmp, "%c%c%c", buf[i], buf[i+1], buf[i+2]);
+			}
+			else
+			{
+				i += sprintf(tmp, "%c%c", buf[i], buf[i+1]);
+			}
+		}
+		else
+		{
+			i += sprintf(tmp, "%c", buf[i]);
+		}
+
+		set_nest_node(list->root, ntos(index++), "%s", tmp);
+	}
+	return ses;
+}

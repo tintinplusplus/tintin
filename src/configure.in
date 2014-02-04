@@ -21,7 +21,9 @@
 
 AM_INIT_AUTOMAKE
 
-AC_INIT(tintin.h)
+AC_INIT
+AC_CONFIG_SRCDIR([tintin.h])
+
 AC_CONFIG_HEADER(config.h)
 
 AC_MSG_RESULT([Configuring TinTin++])
@@ -65,7 +67,12 @@ AC_PROG_MAKE_SET
 # Checks for header files.
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h ctype.h fcntl.h net/errno.h netdb.h netinet/in.h param.h pthread.h socks.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/ptem.h sys/socket.h sys/termio.h sys/time.h time.h unistd.h zlib.h util.h pty.h])
+
+AC_CHECK_HEADERS([arpa/inet.h ctype.h fcntl.h net/errno.h netdb.h netinet/in.h param.h pthread.h socks.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/ptem.h sys/socket.h sys/termio.h sys/time.h time.h unistd.h util.h pty.h]) 
+AC_CHECK_HEADERS([zlib.h],,
+	[AC_MSG_ERROR([zlib header file not found, is the development part present])])
+AC_CHECK_HEADERS([pcre.h],,
+	[AC_MSG_ERROR([pcre header file not found, is the development part present])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -89,12 +96,14 @@ AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select s
 
 # Checks libraries
 
-AC_CHECK_LIB(z, inflate)
+AC_CHECK_LIB(z, inflate,,
+	[AC_MSG_ERROR([zlib runtime library not working, is it AND the corresponding development (header) file installed])])
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(nsl, gethostbyname)
 AC_CHECK_LIB(socket, rresvport)
 AC_CHECK_LIB(util, forkpty)
-AC_CHECK_LIB(pcre, pcre_compile)
+AC_CHECK_LIB(pcre, pcre_compile,,
+	[AC_MSG_ERROR([pcre runtime library not working, is it AND the corresponding development (header) file installed])])
 AC_CHECK_PROGS(MAKE, gmake make)
 
 AC_CHECK_FILES([/dev/ptmx])
@@ -102,7 +111,8 @@ AC_CHECK_FILES([/dev/ptmx])
 AC_FUNC_GETMNTENT
 AC_HEADER_DIRENT 
 
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
 
 echo
 echo "Configure has finished.  To compile, type: make"

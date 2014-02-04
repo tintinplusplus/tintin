@@ -164,13 +164,13 @@ struct session *activate_session(struct session *ses)
 /* open a new session */
 /**********************/
 
-struct session *new_session(struct session *ses, char *name, char *address, int desc)
+struct session *new_session(struct session *ses, char *name, char *arg, int desc)
 {
 	int cnt = 0;
-	char host[BUFFER_SIZE], port[BUFFER_SIZE];
+	char host[BUFFER_SIZE], port[BUFFER_SIZE], file[BUFFER_SIZE];
 	struct session *newsession;
 
-	push_call("new_session(%p,%p,%p,%d)",ses,name,address,desc);
+	push_call("new_session(%p,%p,%p,%d)",ses,name,arg,desc);
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_TERMINATE))
 	{
@@ -178,8 +178,9 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		return ses;
 	}
 
-	address = get_arg_in_braces(ses, address, host, FALSE);
-	address = get_arg_in_braces(ses, address, port, FALSE);
+	arg = sub_arg_in_braces(ses, arg, host, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, port, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, file, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (desc == 0)
 	{
@@ -257,7 +258,7 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	if (desc == 0)
 	{
-		connect_session(newsession);
+		newsession = connect_session(newsession);
 	}
 	else
 	{
@@ -271,13 +272,23 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		gtd->ses->socket = desc;
 	}
 
+	if (newsession)
+	{
+		if (*file)
+		{
+			do_read(newsession, file);
+		}
+	}
+
 	pop_call();
 	return gtd->ses;
 }
 
-void connect_session(struct session *ses)
+struct session *connect_session(struct session *ses)
 {
 	int sock;
+
+	push_call("connection_session(%p)",ses);
 
 	ses->connect_retry = utime() + gts->connect_retry;
 
@@ -289,7 +300,8 @@ void connect_session(struct session *ses)
 	{
 		cleanup_session(ses);
 
-		return;
+		pop_call();
+		return NULL;
 	}
 
 	if (sock)
@@ -307,7 +319,8 @@ void connect_session(struct session *ses)
 
 		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION CONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
-		return;
+		pop_call();
+		return ses;
 	}
 
 	if (ses->connect_retry > utime())
@@ -322,6 +335,8 @@ void connect_session(struct session *ses)
 
 	cleanup_session(ses);
 
+	pop_call();
+	return NULL;
 }
 
 /*****************************************************************************/
@@ -331,6 +346,15 @@ void connect_session(struct session *ses)
 void cleanup_session(struct session *ses)
 {
 	push_call("cleanup_session(%p)",ses);
+
+	if (HAS_BIT(ses->flags, SES_FLAG_CLOSED))
+	{
+		tintin_printf2(NULL, "\n#SESSION '%s' IS ALREADY CLOSED.", ses->name);
+		dump_stack();
+
+		pop_call();
+		return;
+	}
 
 	if (ses == gtd->update)
 	{
@@ -354,6 +378,8 @@ void cleanup_session(struct session *ses)
 		}
 
 	}
+
+	SET_BIT(ses->flags, SES_FLAG_CLOSED);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 	{

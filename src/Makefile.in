@@ -37,7 +37,7 @@ LDFLAGS = @LDFLAGS@
 
 INCS = @MYINCLUDE@
 
-LIBS = @MYLIB@ @LIBS@
+LIBS = @LIBS@
 
 # If you prefer to be able to enter ISO latin-1 characters instead
 # of being able to use the meta key for special emacs-like commands

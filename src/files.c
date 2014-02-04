@@ -311,19 +311,20 @@ DO_COMMAND(do_read)
 
 		if (strlen(bufi) >= BUFFER_SIZE)
 		{
-			gtd->quiet--;
+/*			gtd->quiet--;
 
 			bufi[20] = 0;
-
-			tintin_printf(ses, "#ERROR: #READ {%s} - BUFFER OVERFLOW AT COMMAND: %s.", filename, bufi);
-
+*/
+//			tintin_printf(ses, "#ERROR: #READ {%s} - BUFFER OVERFLOW AT COMMAND: %.20s.", filename, bufi);
+			tintin_printf(ses, "#ERROR: #READ {%s} - BUFFER OVERFLOW AT COMMAND:", filename);
+/*
 			fclose(fp);
 
 			free(bufi);
 			free(bufo);
 
 			return ses;
-		}
+*/		}
 
 		if (bufi[0])
 		{
@@ -411,7 +412,7 @@ DO_COMMAND(do_write)
 
 void write_node(struct session *ses, int list, struct listnode *node, FILE *file)
 {
-	char result[STRING_SIZE], buffer[BUFFER_SIZE];
+	char *result, *str;
 
 	int llen = UMAX(20, strlen(node->left));
 	int rlen = UMAX(25, strlen(node->right));
@@ -423,39 +424,46 @@ void write_node(struct session *ses, int list, struct listnode *node, FILE *file
 		case LIST_EVENT:
 		case LIST_FUNCTION:
 		case LIST_MACRO:
-			sprintf(result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right));
+			asprintf(&result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right));
 			break;
 
 		case LIST_ACTION:
 		case LIST_ALIAS:
-			sprintf(result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right), node->pr);
+			asprintf(&result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right), node->pr);
 			break;
 
 		case LIST_VARIABLE:
-			show_nest_node(node, buffer, 1);
-			sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", buffer);
+			str = str_dup("");
+
+			show_nest_node(node, &str, 1);
+
+			asprintf(&result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", str);
+
+			str_free(str);
+
 			break;
 
 		default:
-
 			switch (list_table[list].args)
 			{
 				case 0:
-					result[0] = 0;
+					result = strdup("");
 					break;
 				case 1:
-					sprintf(result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
+					asprintf(&result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
 					break;
 				case 2:
-					sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
+					asprintf(&result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
 					break;
 				case 3:
-					sprintf(result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
+					asprintf(&result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
 					break;
 			}
 			break;
 	}
 	fputs(result, file);
+
+	free(result);
 
 	pop_call();
 	return;

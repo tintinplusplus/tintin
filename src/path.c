@@ -553,6 +553,14 @@ DO_COMMAND(do_pathdir)
 				strcpy(arg3, "0");
 			}
 		}
+		else
+		{
+			if (atoi(arg3) < 0 || atoi(arg3) >= 64)
+			{
+				show_message(ses, LIST_PATHDIR, "#PATHDIR: THE THIRD ARGUMENT MUST BE A NUMBER BETWEEN 0 and 63.");
+				return ses;
+			}
+		}
 		update_node_list(ses->list[LIST_PATHDIR], arg1, arg2, arg3);
 
 		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}.", arg1, arg2, arg3);

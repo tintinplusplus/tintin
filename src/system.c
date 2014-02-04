@@ -37,7 +37,7 @@
 
 DO_COMMAND(do_run)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], file[BUFFER_SIZE];
 	int desc, pid;
 	struct winsize size;
 
@@ -45,6 +45,7 @@ DO_COMMAND(do_run)
 
 	arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, file,  GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -72,10 +73,9 @@ DO_COMMAND(do_run)
 			break;
 
 		default:
-			sprintf(temp, "{%s} {%d}", right, pid);
+			sprintf(temp, "{%s} {%d} {%s}", right, pid, file);
 
 			ses = new_session(ses, left, temp, desc);
-
 
 			break;
 	}

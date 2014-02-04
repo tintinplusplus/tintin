@@ -32,11 +32,8 @@
 DO_COMMAND(do_configure)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	struct listroot *root;
 	struct listnode *node;
 	int index;
-
-	root = ses->list[LIST_CONFIG];
 
 	arg = get_arg_in_braces(ses, arg, left,  FALSE);
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);

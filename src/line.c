@@ -72,11 +72,11 @@ DO_LINE(line_gag)
 
 DO_LINE(line_log)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	FILE *logfile;
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_ESC|SUB_COL|SUB_VAR|SUB_FUN|SUB_LNF);
+	arg = sub_arg_in_braces(ses, arg, temp, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if ((logfile = fopen(left, "a")))
 	{
@@ -90,14 +90,20 @@ DO_LINE(line_log)
 			}
 		}
 
-		if (*right)
+		if (*temp)
 		{
+			substitute(ses, temp, right, SUB_ESC|SUB_COL|SUB_LNF);
+
 			logit(ses, right, logfile, FALSE);
 
 			fclose(logfile);
 		}
 		else
 		{
+			if (ses->logline)
+			{
+				fclose(ses->logline);
+			}
 			ses->logline = logfile;
 		}
 	}

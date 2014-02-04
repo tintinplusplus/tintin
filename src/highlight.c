@@ -59,7 +59,7 @@ DO_COMMAND(do_highlight)
 		if (get_highlight_codes(ses, arg2, temp) == FALSE)
 		{
 			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\n");
-			tintin_printf2(ses, "reset, bold, light, faint, dim, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white, azure, ebony, jade, lime, orange, silver, tan, violet.");
+			tintin_printf2(ses, "reset, bold, light, faint, dim, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white, azure, ebony, jade, lime, orange, pink, silver, tan, violet.");
 		}
 		else
 		{
@@ -145,6 +145,8 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 int get_highlight_codes(struct session *ses, char *string, char *result)
 {
 	int cnt;
+
+	*result = 0;
 
 	if (*string == '<')
 	{

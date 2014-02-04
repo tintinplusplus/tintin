@@ -110,21 +110,24 @@ void read_line()
 		match = 0;
 		root  = gtd->ses->list[LIST_MACRO];
 
-		for (root->update = 0 ; root->update < root->used ; root->update++)
+		if (!HAS_BIT(root->flags, LIST_FLAG_IGNORE))
 		{
-			node = root->list[root->update];
-
-			if (!strcmp(gtd->macro_buf, node->pr))
+			for (root->update = 0 ; root->update < root->used ; root->update++)
 			{
-				script_driver(gtd->ses, LIST_MACRO, node->right);
+				node = root->list[root->update];
 
-				gtd->macro_buf[0] = 0;
+				if (!strcmp(gtd->macro_buf, node->pr))
+				{
+					script_driver(gtd->ses, LIST_MACRO, node->right);
 
-				return;
-			}
-			else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
-			{
-				match = 1;
+					gtd->macro_buf[0] = 0;
+
+					return;
+				}
+				else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
+				{
+					match = 1;
+				}
 			}
 		}
 
@@ -132,7 +135,7 @@ void read_line()
 		{
 			if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
 			{
-				cursor_table[cnt].fun("");
+				cursor_table[cnt].fun(gtd->ses, "");
 				gtd->macro_buf[0] = 0;
 
 				return;
@@ -161,7 +164,7 @@ void read_line()
 		switch (gtd->macro_buf[cnt])
 		{
 			case 10:
-				cursor_enter("");
+				cursor_enter(gtd->ses, "");
 				break;
 
 			default:
@@ -169,7 +172,7 @@ void read_line()
 				{
 					if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->macro_buf[cnt] & 192) != 128)
 					{
-						cursor_delete("");
+						cursor_delete(gtd->ses, "");
 					}
 				}
 
@@ -203,7 +206,7 @@ void read_line()
 				gtd->input_tmp[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;
 
-				cursor_check_line_modified("");
+				cursor_check_line_modified(gtd->ses, "");
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 
@@ -211,7 +214,7 @@ void read_line()
 
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 				{
-					cursor_history_find("");
+					cursor_history_find(gtd->ses, "");
 				}
 				break;
 		}
@@ -251,20 +254,23 @@ void read_key(void)
 
 		root  = gtd->ses->list[LIST_MACRO];
 
-		for (root->update = 0 ; root->update < root->used ; root->update++)
+		if (!HAS_BIT(root->flags, LIST_FLAG_IGNORE))
 		{
-			node = root->list[root->update];
-
-			if (!strcmp(gtd->macro_buf, node->pr))
+			for (root->update = 0 ; root->update < root->used ; root->update++)
 			{
-				script_driver(gtd->ses, LIST_MACRO, node->right);
+				node = root->list[root->update];
 
-				gtd->macro_buf[0] = 0;
-				return;
-			}
-			else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
-			{
-				match = 1;
+				if (!strcmp(gtd->macro_buf, node->pr))
+				{
+					script_driver(gtd->ses, LIST_MACRO, node->right);
+
+					gtd->macro_buf[0] = 0;
+					return;
+				}
+				else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
+				{
+					match = 1;
+				}
 			}
 		}
 
@@ -562,7 +568,7 @@ void modified_input(void)
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		cursor_history_find("");
+		cursor_history_find(gtd->ses, "");
 	}
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE))

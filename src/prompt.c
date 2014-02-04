@@ -75,6 +75,11 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 	struct listroot *root = ses->list[LIST_PROMPT];
 	struct listnode *node;
 
+	if (!HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	{
+		return;
+	}
+
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
 		if (check_one_regexp(ses, root->list[root->update], line, original, 0))

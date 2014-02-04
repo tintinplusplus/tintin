@@ -183,7 +183,7 @@ pcre *regexp_compile(char *exp, int option)
 int substitute(struct session *ses, char *string, char *result, int flags)
 {
 	struct listnode *node;
-	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt;
+	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt, *str;
 	char *pte, old[6] = { 0 };
 	int i, cnt, escape = FALSE, flags_neol = flags;
 
@@ -288,11 +288,15 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					substitute(ses, temp, buf, flags_neol);
 
-					get_nest_node(ses->list[LIST_VARIABLE], buf, temp, def);
+					str = str_dup("");
 
-					substitute(ses, temp, pto, flags_neol - SUB_VAR);
+					get_nest_node(ses->list[LIST_VARIABLE], buf, &str, def);
+
+					substitute(ses, str, pto, flags_neol - SUB_VAR);
 
 					pto += strlen(pto);
+
+					str_free(str);
 				}
 				else
 				{
@@ -650,11 +654,15 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					substitute(ses, temp, buf, flags_neol);
 
-					get_nest_index(ses->list[LIST_VARIABLE], buf, temp, def);
+					str = str_dup("");
 
-					substitute(ses, temp, pto, flags_neol - SUB_VAR);
+					get_nest_index(ses->list[LIST_VARIABLE], buf, &str, def);
+
+					substitute(ses, str, pto, flags_neol - SUB_VAR);
 
 					pto += strlen(pto);
+
+					str_free(str);
 				}
 				else
 				{
@@ -1081,7 +1089,10 @@ pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *ex
 	if (*pti == '~')
 	{
 		pti++;
-		SET_BIT(node->flags, NODE_FLAG_META);
+		if (node)
+		{
+			SET_BIT(node->flags, NODE_FLAG_META);
+		}
 	}
 
 	while (*pti == '^')

@@ -467,22 +467,23 @@ int nsearch_list(struct listroot *root, char *text)
 
 void show_node(struct listroot *root, struct listnode *node, int level)
 {
-	char arg[STRING_SIZE];
+	char *str = str_dup("");
 
-	show_nest_node(node, arg, TRUE);
+	show_nest_node(node, &str, TRUE);
 
 	switch (list_table[root->type].args)
 	{
 		case 3:
-			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m} \033[1;36m@ \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, arg, node->pr);
+			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m} \033[1;36m@ \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, str, node->pr);
 			break;
 		case 2:
-			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, arg);
+			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, str);
 			break;
 		case 1:
 			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left);
 			break;
 	}
+	str_free(str);
 }
 
 /*
@@ -632,7 +633,10 @@ DO_COMMAND(do_message)
 
 		for (index = 0 ; index < LIST_MAX ; index++)
 		{
-			tintin_printf2(ses, "  %-20s %3s", list_table[index].name_multi, HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+			if (!HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				tintin_printf2(ses, "  %-20s %3s", list_table[index].name_multi, HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+			}
 		}
 
 		tintin_header(ses, "");
@@ -641,10 +645,16 @@ DO_COMMAND(do_message)
 	{
 		for (index = found = 0 ; index < LIST_MAX ; index++)
 		{
+			if (HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				continue;
+			}
+
 			if (!is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
 			{
 				continue;
 			}
+
 			if (*right == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE);
@@ -689,7 +699,10 @@ DO_COMMAND(do_ignore)
 
 		for (index = 0 ; index < LIST_MAX ; index++)
 		{
-			tintin_printf2(ses, "  %-20s %3s", list_table[index].name_multi, HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+			if (!HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				tintin_printf2(ses, "  %-20s %3s", list_table[index].name_multi, HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+			}
 		}
 
 		tintin_header(ses, "");
@@ -698,10 +711,16 @@ DO_COMMAND(do_ignore)
 	{
 		for (index = found = 0 ; index < LIST_MAX ; index++)
 		{
+			if (HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				continue;
+			}
+
 			if (!is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
 			{
 				continue;
 			}
+
 			if (*right == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE);
@@ -746,7 +765,10 @@ DO_COMMAND(do_debug)
 
 		for (index = 0 ; index < LIST_MAX ; index++)
 		{
-			tintin_printf2(ses, "  %-20s %3s", list_table[index].name_multi, HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+			if (!HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				tintin_printf2(ses, "  %-20s %3s", list_table[index].name_multi, HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+			}
 		}
 
 		tintin_header(ses, "");
@@ -755,10 +777,16 @@ DO_COMMAND(do_debug)
 	{
 		for (index = found = 0 ; index < LIST_MAX ; index++)
 		{
+			if (HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				continue;
+			}
+
 			if (!is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
 			{
 				continue;
 			}
+
 			if (*right == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG);

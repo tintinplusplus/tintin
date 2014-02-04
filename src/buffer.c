@@ -88,7 +88,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 
 	push_call("add_line_buffer(%p,%s,%d)",ses,line,more_output);
 
-	if (ses->buffer == NULL || HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP))
+	if (ses->buffer == NULL || HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP) || strlen(line) > BUFFER_SIZE)
 	{
 		pop_call();
 		return;
@@ -111,7 +111,6 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 			return;
 		}
 	}
-
 
 	strcat(ses->more_output, line);
 

@@ -383,11 +383,13 @@ char *get_arg_in_braces(struct session *ses, char *string, char *result, int fla
 
 char *sub_arg_in_braces(struct session *ses, char *string, char *result, int flag, int sub)
 {
-	char buffer[BUFFER_SIZE];
+	char *buffer = str_alloc(UMAX(strlen(string), BUFFER_SIZE));
 
 	string = get_arg_in_braces(ses, string, buffer, flag);
 
 	substitute(ses, buffer, result, sub);
+
+	str_free(buffer);
 
 	return string;
 }
@@ -517,7 +519,7 @@ char *get_arg_to_brackets(struct session *ses, char *string, char *result)
 
 	pti = space_out(string);
 	pto = result;
-	ptii = NULL;
+	ptii = ptoo = NULL;
 
 	while (*pti)
 	{
@@ -536,6 +538,15 @@ char *get_arg_to_brackets(struct session *ses, char *string, char *result)
 			{
 				ptii = pti;
 				ptoo = pto;
+			}
+		}
+		if (*pti == '.')
+		{
+			if (nest1 == 0 && nest2 == 0)
+			{
+				*pto = 0;
+
+				return pti;
 			}
 		}
 		else if (*pti == ']')
@@ -578,6 +589,21 @@ char *get_arg_at_brackets(struct session *ses, char *string, char *result)
 
 	pti = string;
 	pto = result;
+
+	if (*pti == '.')
+	{
+		while (*pti && *pti != '[')
+		{
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
+			{
+				*pto++ = *pti++;
+				*pto++ = *pti++;
+				continue;
+			}
+
+			*pto++ = *pti++;
+		}
+	}
 
 	if (*pti != '[')
 	{
@@ -633,6 +659,25 @@ char *get_arg_in_brackets(struct session *ses, char *string, char *result)
 
 	pti = string;
 	pto = result;
+
+	if (*pti == '.')
+	{
+		pti++;
+
+		while (*pti && *pti != '.' && *pti != '[')
+		{
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
+			{
+				*pto++ = *pti++;
+				*pto++ = *pti++;
+				continue;
+			}
+			*pto++ = *pti++;
+		}
+		*pto = 0;
+
+		return pti;
+	}
 
 	if (*pti != '[')
 	{
@@ -728,7 +773,7 @@ void do_one_line(char *line, struct session *ses)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_IGNORELINE))
 	{
-		pop_call(); 
+		pop_call();
 		return;
 	}
 
@@ -741,10 +786,7 @@ void do_one_line(char *line, struct session *ses)
 
 	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
 	{
-		if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
-		{
-			check_all_prompts(ses, line, strip);
-		}
+		check_all_prompts(ses, line, strip);
 	}
 
 	if (!HAS_BIT(ses->list[LIST_GAG]->flags, LIST_FLAG_IGNORE))
@@ -769,7 +811,6 @@ void do_one_line(char *line, struct session *ses)
 		fclose(ses->logline);
 		ses->logline = NULL;
 	}
-
 	pop_call();
 	return;
 }

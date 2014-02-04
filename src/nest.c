@@ -175,14 +175,14 @@ int delete_nest_node(struct listroot *root, char *variable)
 
 // Return the number of indices of a node.
 
-int get_nest_size(struct listroot *root, char *variable, char *result)
+int get_nest_size(struct listroot *root, char *variable, char **result)
 {
 	char name[BUFFER_SIZE], *arg;
 	int index, count;
 
 	arg = get_arg_to_brackets(root->ses, variable, name);
 
-	*result = 0;
+	str_cpy(result, "");
 
 	if (!strcmp(arg, "[]"))
 	{
@@ -190,7 +190,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 		{
 			for (index = 0 ; index < root->used ; index++)
 			{
-				cat_sprintf(result, "{%s}", root->list[index]->left);
+				str_cat_printf(result, "{%s}", root->list[index]->left);
 			}
 			return root->used + 1;
 		}
@@ -203,8 +203,6 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 			}
 		}
 	}
-
-
 
 	while (root && *name)
 	{
@@ -220,7 +218,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 					{
 						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
 						{
-							show_nest_node(root->list[index], result, 0); // behaves like strcat
+							show_nest_node(root->list[index], result, FALSE); // behaves like strcat
 							count++;
 						}
 					}
@@ -241,7 +239,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 			{
 				for (index = 0 ; index < root->used ; index++)
 				{
-					cat_sprintf(result, "{%s}", root->list[index]->left);
+					str_cat_printf(result, "{%s}", root->list[index]->left);
 				}
 				return root->used + 1;
 			}
@@ -253,7 +251,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 }
 
 
-struct listnode *get_nest_node(struct listroot *root, char *variable, char *result, int def)
+struct listnode *get_nest_node(struct listroot *root, char *variable, char **result, int def)
 {
 	struct listnode *node;
 	int size;
@@ -278,16 +276,16 @@ struct listnode *get_nest_node(struct listroot *root, char *variable, char *resu
 
 	if (node || def)
 	{
-		strcpy(result, "");
+		str_cpy(result, "");
 	}
 	else
 	{
-		sprintf(result, "$%s", variable);
+		str_cpy_printf(result, "$%s", variable);
 	}
 	return NULL;
 }
 
-int get_nest_index(struct listroot *root, char *variable, char *result, int def)
+int get_nest_index(struct listroot *root, char *variable, char **result, int def)
 {
 	struct listnode *node;
 	int index, size;
@@ -296,7 +294,7 @@ int get_nest_index(struct listroot *root, char *variable, char *result, int def)
 
 	if (size)
 	{
-		sprintf(result, "%d", size - 1);
+		str_cpy_printf(result, "%d", size - 1);
 
 		return -1;
 	}
@@ -305,7 +303,7 @@ int get_nest_index(struct listroot *root, char *variable, char *result, int def)
 
 	if (index >= 0)
 	{
-		sprintf(result, "%d", index + 1);
+		str_cpy_printf(result, "%d", index + 1);
 
 		return index;
 	}
@@ -314,27 +312,72 @@ int get_nest_index(struct listroot *root, char *variable, char *result, int def)
 
 	if (node || def)
 	{
-		strcpy(result, "0");
+		str_cpy(result, "0");
 	}
 	else
 	{
-		sprintf(result, "&%s", variable);
+		str_cpy_printf(result, "&%s", variable);
 	}
 	return -1;
 }
 
+// cats to result when initialize is 0
+
+void show_nest_node(struct listnode *node, char **result, int initialize)
+{
+	if (initialize)
+	{
+		str_cpy(result, "");
+	}
+
+	if (node->root == NULL)
+	{
+		if (initialize)
+		{
+			str_cat(result, node->right);
+		}
+		else
+		{
+			str_cat_printf(result, "{%s}", node->right);
+		}
+	}
+	else
+	{
+		struct listroot *root = node->root;
+		int i;
+
+		if (!initialize)
+		{
+			str_cat(result, "{");
+		}
+
+		for (i = 0 ; i < root->used ; i++)
+		{
+			str_cat_printf(result, "{%s}", root->list[i]->left);
+
+			show_nest_node(root->list[i], result, FALSE);
+		}
+
+		if (!initialize)
+		{
+			str_cat(result, "}");
+		}
+	}
+}
 
 struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, ...)
 {
 	struct listnode *node;
-	char arg2[BUFFER_SIZE], name[BUFFER_SIZE], *arg;
+	char *arg, *arg2, name[BUFFER_SIZE];
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(arg2, format, args);
+	vasprintf(&arg2, format, args);
 	va_end(args);
 
 	arg = get_arg_to_brackets(root->ses, arg1, name);
+
+	check_all_events(root->ses, SUB_ARG, 1, 2, "VARIABLE UPDATE %s", name, name, arg2);
 
 	while (*arg)
 	{
@@ -359,19 +402,22 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	{
 		update_nest_node(update_nest_root(root, name), arg2);
 
-		return search_node_list(root, name);
+		node = search_node_list(root, name);
 	}
 	else
 	{
-		return update_node_list(root, name, arg2, "");
+		node = update_node_list(root, name, arg2, "");
 	}
+	free(arg2);
+
+	return node;
 }
 
 // Like set, but don't erase old data.
 
 struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, ...)
 {
-	struct listnode *node;
+//	struct listnode *node;
 	char arg2[BUFFER_SIZE], name[BUFFER_SIZE], *arg;
 	va_list args;
 
@@ -391,9 +437,10 @@ struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, 
 		}
 	}
 
-	node = search_node_list(root, name);
 /*
 	Adding here, so don't clear the variable.
+
+	node = search_node_list(root, name);
 
 	if (node && node->root)
 	{
@@ -414,48 +461,6 @@ struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, 
 	}
 }
 
-// cats to result when initialize is 0
-
-void show_nest_node(struct listnode *node, char *result, int initialize)
-{
-	if (initialize)
-	{
-		*result = 0;
-	}
-
-	if (node->root == NULL)
-	{
-		if (initialize)
-		{
-			strcat(result, node->right);
-		}
-		else
-		{
-			cat_sprintf(result, "{%s}", node->right);
-		}
-	}
-	else
-	{
-		struct listroot *root = node->root;
-		int i;
-
-		if (!initialize)
-		{
-			strcat(result, "{");
-		}
-
-		for (i = 0 ; i < root->used ; i++)
-		{
-			cat_sprintf(result, "{%s}", root->list[i]->left);
-
-			show_nest_node(root->list[i], result, FALSE);
-		}
-		if (!initialize)
-		{
-			strcat(result, "}");
-		}
-	}
-}
 
 void copy_nest_node(struct listroot *dst_root, struct listnode *dst, struct listnode *src)
 {

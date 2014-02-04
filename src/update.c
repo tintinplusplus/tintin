@@ -188,6 +188,8 @@ void poll_sessions(void)
 	struct session *ses;
 	int rv;
 
+	push_call("poll_sessions(void)");
+
 	open_timer(TIMER_POLL_SESSIONS);
 
 	if (gts->next)
@@ -247,6 +249,9 @@ void poll_sessions(void)
 		}
 	}
 	close_timer(TIMER_POLL_SESSIONS);
+
+	pop_call();
+	return;
 }
 
 void poll_chat(void)
@@ -317,9 +322,12 @@ void tick_update(void)
 			{
 				node->data += (long long) (get_number(ses, node->pr) * 1000000LL);
 
-				show_debug(ses, LIST_TICKER, "#DEBUG TICKER {%s}", node->right);
+				if (!HAS_BIT(root->flags, LIST_FLAG_IGNORE))
+				{
+					show_debug(ses, LIST_TICKER, "#DEBUG TICKER {%s}", node->right);
 
-				script_driver(ses, LIST_TICKER, node->right);
+					script_driver(ses, LIST_TICKER, node->right);
+				}
 			}
 		}
 	}

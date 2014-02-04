@@ -1,5 +1,9 @@
 Mar 2013       2.01.0
 
+variable.c     Added better support for large variables.
+
+memory.c       Added utility functions for infinite string support.
+
 session.c      #session takes a filename as an additional argument, if the
                session succesfully connects the file will be read.
 
@@ -7,7 +11,7 @@ variable.c     Fixed #echo {%f} {5 / 3} handling.
 
 cursor.c       Added #cursor get and #cursor set options.
 
-parse.c        Added support for nesting using the . argument.
+parse.c        Added support for nesting variables using the . argument.
 
 mapper.c       Added map_search_compile option, increasing search speed.
 
