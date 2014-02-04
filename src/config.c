@@ -342,14 +342,14 @@ DO_CONFIG(config_packetpatch)
 		return NULL;
 	}
 
-	if (atoi(arg) < 0 || atoi(arg) > 10000)
+	if (atof(arg) < 0 || atoi(arg) > 10)
 	{
-		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0 and 10000");
+		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0.00 and 10.00");
 
 		return NULL;
 	}
 
-	gts->check_output = atoi(arg) * 1000;
+	gts->check_output = (long long) (get_number(ses, arg) * 1000000LL);
 
 	sprintf(str, "%d", index);
 
@@ -509,6 +509,31 @@ DO_CONFIG(config_colorpatch)
 	else if (!strcasecmp(arg, "OFF"))
 	{
 		DEL_BIT(ses->flags, SES_FLAG_COLORPATCH);
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	sprintf(str, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+
+	return ses;
+}
+
+DO_CONFIG(config_regexp)
+{
+	char str[BUFFER_SIZE];
+
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_REGEXP);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_REGEXP);
 	}
 	else
 	{

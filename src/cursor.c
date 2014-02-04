@@ -142,6 +142,11 @@ DO_CURSOR(cursor_clear_left)
 		gtd->input_cur  = 0;
 		gtd->input_pos  = 0;
 	}
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
 }
 
 DO_CURSOR(cursor_clear_line)
@@ -153,7 +158,7 @@ DO_CURSOR(cursor_clear_line)
 
 	if (gtd->input_pos)
 	{
-		input_printf("\033[%dD\033[%dP", gtd->input_pos, gtd->input_len);
+		input_printf("\033[%dG\033[%dP", gtd->input_off, gtd->input_len);
 	}
 	else
 	{
@@ -164,6 +169,11 @@ DO_CURSOR(cursor_clear_line)
 	gtd->input_cur = 0;
 	gtd->input_pos = 0;
 	gtd->input_buf[0] = 0;
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
 }
 
 DO_CURSOR(cursor_clear_right)
@@ -180,6 +190,11 @@ DO_CURSOR(cursor_clear_right)
 	gtd->input_buf[gtd->input_cur] = 0;
 
 	gtd->input_len = gtd->input_cur;
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
 }
 
 DO_CURSOR(cursor_convert_meta)
@@ -206,9 +221,14 @@ DO_CURSOR(cursor_delete)
 	input_printf("\033[1P");
 
 	cursor_fix_line("");
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
 }
 
-DO_CURSOR(cursor_delete_word)
+DO_CURSOR(cursor_delete_word_left)
 {
 	int index_cur;
 
@@ -240,6 +260,55 @@ DO_CURSOR(cursor_delete_word)
 	gtd->input_len -= index_cur - gtd->input_cur;
 
 	cursor_check_line("");
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
+}
+
+
+DO_CURSOR(cursor_delete_word_right)
+{
+	int index_cur, index_pos;
+
+	if (gtd->input_cur == gtd->input_len)
+	{
+		return;
+	}
+
+	index_cur = gtd->input_cur;
+	index_pos = gtd->input_pos;
+
+	while (gtd->input_cur != gtd->input_len && gtd->input_buf[gtd->input_cur] == ' ')
+	{
+		gtd->input_cur++;
+		gtd->input_pos++;
+	}
+
+	while (gtd->input_cur != gtd->input_len && gtd->input_buf[gtd->input_cur] != ' ')
+	{
+		gtd->input_cur++;
+		gtd->input_pos++;
+	}
+
+	sprintf(gtd->paste_buf, "%.*s", gtd->input_cur - index_cur, &gtd->input_buf[gtd->input_cur]);
+
+	memmove(&gtd->input_buf[index_cur], &gtd->input_buf[gtd->input_cur], gtd->input_len - gtd->input_cur + 1);
+
+	input_printf("\033[%dP", gtd->input_cur - index_cur);
+
+	gtd->input_len -= gtd->input_cur - index_cur;
+
+	gtd->input_pos = index_pos;
+	gtd->input_cur = index_cur;
+
+	cursor_fix_line("");
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
 }
 
 DO_CURSOR(cursor_echo)
@@ -325,7 +394,7 @@ DO_CURSOR(cursor_history_next)
 
 		if (node)
 		{
-			input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 11);
 
 			gtd->input_his = node;
 		}
@@ -370,14 +439,14 @@ DO_CURSOR(cursor_history_prev)
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		if (gtd->input_his == NULL)
+		if (gtd->input_his == NULL || *gtd->input_buf == 0)
 		{
 			return;
 		}
 
 		for (node = gtd->input_his->prev ; node ; node = node->prev)
 		{
-			if (*gtd->input_buf && strstr(node->left, gtd->input_buf))
+			if (strstr(node->left, gtd->input_buf))
 			{
 				break;
 			}
@@ -385,7 +454,7 @@ DO_CURSOR(cursor_history_prev)
 
 		if (node)
 		{
-			input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 11);
 
 			gtd->input_his = node;
 		}
@@ -445,11 +514,13 @@ DO_CURSOR(cursor_history_search)
 
 	if (!HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
-
 		strcpy(gtd->input_tmp, gtd->input_buf);
 
 		cursor_clear_line("");
+
+		SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+
+		gtd->input_off = 11;
 
 		input_printf("(search) [ ] \033[3D");
 	}
@@ -469,13 +540,15 @@ DO_CURSOR(cursor_history_search)
 
 			DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
+			gtd->input_off = 1;
+
 			cursor_redraw_line("");
 		}
 		else
 		{
 			strcpy(gtd->input_buf, gtd->input_tmp);
 
-			input_printf("\033[%dD\033[0K", 10 + gtd->input_pos);
+			input_printf("\033[1G\033[0K");
 
 			gtd->input_len = strlen(gtd->input_buf);
 			gtd->input_cur = gtd->input_len;
@@ -484,6 +557,8 @@ DO_CURSOR(cursor_history_search)
 			gtd->input_his = NULL;
 
 			DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+
+			gtd->input_off = 1;
 
 			cursor_redraw_line("");
 		}
@@ -506,28 +581,29 @@ DO_CURSOR(cursor_history_find)
 			break;
 		}
 	}
+
 	gtd->input_his = node;
 
 	if (node)
 	{
 		if (gtd->input_len == gtd->input_cur)
 		{
-			input_printf("\0337\033[0K]   %.*s\0338", gtd->ses->cols - 16 - gtd->input_len, node->left);
+			input_printf("\033[0K]   %.*s\033[%dG", gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 11);
 		}
 		else
 		{
-			input_printf("\0337\033[%dC\033[0K]\033[3C%.*s\0338", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, node->left);
+			input_printf("\033[%dC\033[0K]\033[3C%.*s\033%dG", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 1);
 		}
 	}
 	else
 	{
 		if (gtd->input_len == gtd->input_cur)
 		{
-			input_printf("\0337\033[0K]\0338");
+			input_printf("\033[0K]\033[%dG", gtd->input_pos + 11);
 		}
 		else
 		{
-			input_printf("\0337\033[%dC\033[0K]\0338", gtd->input_len - gtd->input_cur);
+			input_printf("\033[%dC\033[0K]\033[%dG", gtd->input_len - gtd->input_cur, gtd->input_pos + 11);
 		}
 	}
 	pop_call();
@@ -648,14 +724,7 @@ DO_CURSOR(cursor_redraw_input)
 
 DO_CURSOR(cursor_redraw_line)
 {
-	if (gtd->input_pos)
-	{
-		input_printf("\033[%dD\033[0K\0337", gtd->input_pos);
-	}
-	else
-	{
-		input_printf("\033[0K\0337");
-	}
+	input_printf("\033[%dG\033[%dX", gtd->input_off, gtd->input_len);
 
 	if (gtd->input_pos != gtd->input_cur)
 	{
@@ -683,32 +752,28 @@ DO_CURSOR(cursor_redraw_line)
 			}
 		}
 	}
-	if (gtd->input_cur != gtd->input_pos)
+
+	if (gtd->input_pos != gtd->input_cur)
 	{
-		input_printf("<%.*s\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur - gtd->input_pos + 1]);
+		input_printf("<%.*s\033[%dG", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur - gtd->input_pos + 1], gtd->input_pos+gtd->input_off);
 	}
 	else
 	{
-		input_printf("%.*s\0338", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos]);
+		input_printf("%.*s\033[%dG", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos], gtd->input_pos+gtd->input_off);
 	}
 
 	cursor_fix_line("");
-
-	if (gtd->input_pos)
-	{
-		input_printf("\033[%dC", gtd->input_pos);
-	}
 }
 
 DO_CURSOR(cursor_fix_line)
 {
 	if (gtd->input_len - gtd->input_cur + gtd->input_pos > gtd->ses->cols)
 	{
-		input_printf("\0337\033[%dG%.1s>\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
+		input_printf("\033[%dG%.1s>\033[%dG", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2], gtd->input_pos+gtd->input_off);
 	}
 	else if (gtd->input_len - gtd->input_cur + gtd->input_pos == gtd->ses->cols)
 	{
-		input_printf("\0337\033[%dG%.2s\0338",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
+		input_printf("\033[%dG%.2s\033%dG",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2], gtd->input_pos+gtd->input_off);
 	}
 }
 
@@ -747,7 +812,7 @@ DO_CURSOR(cursor_right_word)
 		gtd->input_pos++;
 	}
 
-	input_printf("\033[%dC", index_cur - gtd->input_cur);
+	input_printf("\033[%dC", gtd->input_cur - index_cur);
 
 	cursor_check_line("");
 }

@@ -52,7 +52,7 @@ struct session *parse_input(struct session *ses, char *input)
 {
 	char line[BUFFER_SIZE];
 
-	if (push_call("[%s] parse_input(%p,%s)",ses->name,ses,input))
+	if (push_call("[%s] parse_input(%p,%s,%d)",ses->name,ses,input))
 	{
 		pop_call();
 		return ses;
@@ -68,7 +68,7 @@ struct session *parse_input(struct session *ses, char *input)
 		return ses;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char)
+	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 	{
 		write_mud(ses, input, SUB_EOL);
 
@@ -83,6 +83,8 @@ struct session *parse_input(struct session *ses, char *input)
 		pop_call();
 		return ses;
 	}
+
+	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
 	while (*input)
 	{

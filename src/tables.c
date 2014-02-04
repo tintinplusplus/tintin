@@ -143,100 +143,80 @@ struct list_type list_table[LIST_MAX] =
 struct config_type config_table[] =
 {
 	{
-		"SPEEDWALK",
-		"Your input is scanned for speedwalk directions",
-		"Your input is not scanned for speedwalk directions",
-		config_speedwalk
-	},
-
-	{
-		"VERBATIM",
-		"Your input is send directly to the mud",
-		"Your input is parsed by tintin++",
-		config_verbatim
-	},
-
-	{
-		"REPEAT ENTER",
-		"You send the last command on an enter",
-		"You send a carriage return on an enter",
-		config_repeatenter
-	},
-
-	{
-		"ECHO COMMAND",
-		"Your commands are echoed in split mode.",
-		"Your commands are not echoed in split mode.",
-		config_echocommand
-	},
-
-	{
-		"VERBOSE",
-		"Messages while reading a script file are echoed",
-		"Messages while reading a script file are gagged",
-		config_verbose
-	},
-
-	{
-		"WORDWRAP",
-		"Mud output is word wrapped",
-		"Mud output is line wrapped",
-		config_wordwrap
-	},
-
-	{
-		"LOG",
-		"",
-		"The data format of your log files",
-		config_log
-	},
-	{
 		"BUFFER SIZE",
 		"",
-		"The size of your scroll back buffer",
+		"The size of the scroll back buffer",
 		config_buffersize
 	},
 
 	{
-		"SCROLL LOCK",
-		"You do not see mud output while scrolling",
-		"You see mud output while scrolling",
-		config_scrolllock
-	},
-
-	{
-		"HISTORY SIZE",
-		"",
-		"The size of your command history",
-		config_historysize
+		"COLOR PATCH",
+		"Tintin will properly color the start of each line",
+		"Tintin will leave color handling to the server",
+		config_colorpatch
 	},
 
 	{
 		"CONNECT RETRY",
 		"",
-		"Seconds tintin will try to connect before giving up",
+		"Seconds Tintin will try to connect before giving up",
 		config_connectretry
+	},
+
+	{
+		"CONVERT META",
+		"Tintin converts meta prefixed characters",
+		"Tintin doesn't convert meta prefixed characters",
+		config_convertmeta
+	},
+
+	{
+		"DEBUG TELNET",
+		"You see telnet negotiations",
+		"You do not see telnet negotatiations",
+		config_debugtelnet
+	},
+
+	{
+		"ECHO COMMAND",
+		"Your commands are echoed in split mode",
+		"Your commands are not echoed in split mode",
+		config_echocommand
+	},
+
+	{
+		"HISTORY SIZE",
+		"",
+		"The size of the command history",
+		config_historysize
+	},
+
+	{
+		"LOG",
+		"",
+		"The data format of the log files",
+		config_log
+	},
+
+	{
+		"LOG LEVEL",
+		"Tintin only logs low level mud data",
+		"Tintin only logs high level mud data",
+		config_loglevel
 	},
 
 	{
 		"PACKET PATCH",
 		"",
-		"Milli seconds tintin will try to patch broken packets",
+		"Seconds Tintin will try to patch broken packets",
 		config_packetpatch
 	},
 
 	{
-		"TINTIN CHAR",
-		"",
-		"The character used for tintin commands",
-		config_tintinchar
-	},
-
-	{
-		"VERBATIM CHAR",
-		"",
-		"The character used for unparsed text",
-		config_verbatimchar
+		"REGEXP",
+		"Tintin will use regular expressions for text matching",
+		"Tintin will use the * and ? wildcards for text matching",
+		config_regexp
 	},
 
 	{
@@ -247,31 +227,59 @@ struct config_type config_table[] =
 	},
 
 	{
-		"DEBUG TELNET",
-		"You see telnet negotiations.",
-		"You do not see telnet negotatiations.",
-		config_debugtelnet
+		"REPEAT ENTER",
+		"You send the last command on an enter",
+		"You send a carriage return on an enter",
+		config_repeatenter
 	},
 
 	{
-		"CONVERT META",
-		"Tintin converts meta prefixed characters.",
-		"Tintin doesn't convert meta prefixed characters.",
-		config_convertmeta
+		"SCROLL LOCK",
+		"You do not see mud output while scrolling",
+		"You see mud output while scrolling",
+		config_scrolllock
 	},
 
 	{
-		"LOG LEVEL",
-		"Tintin only logs low level mud data.",
-		"Tintin only logs high level mud data.",
-		config_loglevel
+		"SPEEDWALK",
+		"Your input is scanned for speedwalk directions",
+		"Your input is not scanned for speedwalk directions",
+		config_speedwalk
 	},
 
 	{
-		"COLOR PATCH",
-		"Tintin will properly color the start of each line.",
-		"Tintin will leave color handling to the server.",
-		config_colorpatch
+		"TINTIN CHAR",
+		"",
+		"The character used for Tintin commands",
+		config_tintinchar
+	},
+
+	{
+		"VERBATIM",
+		"Your keyboard input is send directly to the mud",
+		"Your keyboard input is parsed by Tintin",
+		config_verbatim
+	},
+
+	{
+		"VERBATIM CHAR",
+		"",
+		"The character used for unparsed text",
+		config_verbatimchar
+	},
+
+	{
+		"VERBOSE",
+		"Messages while reading in a script file are echoed",
+		"Messages while reading in a script file are gagged",
+		config_verbose
+	},
+
+	{
+		"WORDWRAP",
+		"Mud output is word wrapped",
+		"Mud output is line wrapped",
+		config_wordwrap
 	},
 
 	{
@@ -338,10 +346,10 @@ struct chat_type chat_table[] =
 	{     "GROUP",           chat_group,          0, 1, "Assign a group to a buddy"                      },
 	{     "IGNORE",          chat_ignore,         1, 0, "Ignore all messages from a buddy"               },
 	{     "INITIALIZE",      chat_initialize,     1, 0, "Initialize chat with an optional port number"   },
-	{     "INFO",            chat_info,           0, 0, "Display your chat settings"                     },
-	{     "IP",              chat_ip,             1, 0, "Change your IP address, unset by default"       },
+	{     "INFO",            chat_info,           0, 0, "Display the chat settings"                      },
+	{     "IP",              chat_ip,             1, 0, "Change the IP address, unset by default"        },
 	{     "MESSAGE",         chat_message,        0, 1, "Send a private message to a buddy"              },
-	{     "NAME",            chat_name,           1, 0, "Change your chat name"                          },
+	{     "NAME",            chat_name,           1, 0, "Change the chat name"                           },
 	{     "PASTE",           chat_paste,          0, 1, "Paste a block of text to a buddy"               },
 	{     "PEEK",            chat_peek,           1, 0, "Show a buddy's public connections"              },
 	{     "PING",            chat_ping,           1, 0, "Display a buddy's response time"                },
@@ -614,13 +622,19 @@ struct cursor_type cursor_table[] =
 		"DELETE WORD",
 		"Delete next word backward",
 		"",
-		cursor_delete_word
+		cursor_delete_word_left
 	},
 	{
 		"",
 		"",
 		"",
-		cursor_delete_word
+		cursor_delete_word_left
+	},
+	{
+		"",
+		"",
+		"d",
+		cursor_delete_word_right
 	},
 	{
 		"PASTE BUFFER",
@@ -684,6 +698,7 @@ struct event_type event_table[] =
 {
 	{    "MAP ENTER ROOM",               "Triggers when entering a map room."    },
 	{    "PROGRAM TERMINATION",          "Triggers when main session exists."    },
+	{    "RECEIVED INPUT",               "Triggers when new input is received."  },
 	{    "RECEIVED LINE",                "Triggers when a new line is received." },
 	{    "SESSION CONNECTED",            "Triggers when a new session connects." },
 	{    "SESSION DISCONNECTED",         "Triggers when a session disconnects."  },
@@ -701,6 +716,7 @@ struct path_type path_table[] =
 	{    "RUN",                        path_run               },
 	{    "SAVE",                       path_save              },
 	{    "WALK",                       path_walk              },
+	{    "ZIP",                        path_zip               },
 	{    "",                           NULL                   }
 };
 

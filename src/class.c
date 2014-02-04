@@ -54,7 +54,7 @@ DO_COMMAND(do_class)
 	}
 	else if (*right == 0)
 	{
-		if (search_node_with_wild(root, left))
+		if (search_node_with_wild(ses, left, LIST_CLASS))
 		{
 			tintin_header(ses, " %s ", left);
 
@@ -130,7 +130,7 @@ DO_CLASS(class_open)
 {
 	struct listnode *node;
 
-	node = search_node_with_wild(ses->list[LIST_CLASS], left);
+	node = search_node_with_wild(ses, left, LIST_CLASS);
 
 	RESTRING(ses->class, left);
 
@@ -144,7 +144,7 @@ DO_CLASS(class_close)
 {
 	struct listnode *node;
 
-	node = search_node_with_wild(ses->list[LIST_CLASS], left);
+	node = search_node_with_wild(ses, left, LIST_CLASS);
 
 	if (!strcmp(ses->class, left))
 	{
@@ -220,7 +220,7 @@ DO_CLASS(class_kill)
 	struct listnode *node, *node_next, *class;
 	int cnt;
 
-	class = search_node_with_wild(ses->list[LIST_CLASS], left);
+	class = search_node_with_wild(ses, left, LIST_CLASS);
 
 	if (!strcmp(ses->class, left))
 	{

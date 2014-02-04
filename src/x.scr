@@ -27,7 +27,7 @@
 #if {$bla != 2}     {oops 3}
 #if {$bla == 2}     {#nop} {oops 4}
 
-#action {^Problem with [C|c]heck 5^} {#gagline}
+#action {^Problem with [C|c]heck 5^} {#line gag}
 oops 5
 
 #forall {bli bla blo} {#if {"$forall" != "bl?"} {oops 6}}

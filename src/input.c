@@ -72,11 +72,13 @@ void process_input(void)
 		buffer_e("");
 	}
 
-	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
+	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
 
 	pre_parse_input(gtd->ses, gtd->input_buf, SUB_NONE);
 
-	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
+	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
+
+	check_all_events(gtd->ses, "RECEIVED INPUT");
 
 	if (IS_SPLIT(gtd->ses))
 	{
@@ -121,10 +123,6 @@ void read_line(void)
 
 				gtd->macro_buf[0] = 0;
 
-				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-				{
-					cursor_history_find("");
-				}
 				return;
 			}
 			else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
@@ -140,10 +138,6 @@ void read_line(void)
 				cursor_table[cnt].fun("");
 				gtd->macro_buf[0] = 0;
 
-				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-				{
-					cursor_history_find("");
-				}
 				return;
 			}
 			else if (!strncmp(gtd->macro_buf, cursor_table[cnt].code, strlen(gtd->macro_buf)))

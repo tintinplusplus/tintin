@@ -36,11 +36,29 @@
 * Simple regexp that skips vt102 codes and supports the * and ? wildcards     *
 ******************************************************************************/
 
-int regexp(char *exp, char *str, unsigned char cs)
+int match(struct session *ses, char *str, char *exp)
+{
+	char buf[BUFFER_SIZE];
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_REGEXP))
+	{
+		substitute(ses, exp, buf, SUB_VAR|SUB_FUN);
+
+		return glob(str, buf);
+	}
+	else
+	{
+		substitute(ses, exp, buf, SUB_VAR|SUB_FUN|SUB_ESC);
+
+		return regexp(str, buf);
+	}
+}
+
+int glob(char *str, char *exp)
 {
 	short cnt;
 
-	for ( ; *exp != 0 ; exp++, str++)
+	while (*exp)
 	{
 		while ((cnt = skip_vt102_codes(str)) != 0)
 		{
@@ -65,12 +83,14 @@ int regexp(char *exp, char *str, unsigned char cs)
 				{
 					return FALSE;
 				}
+				exp++;
+				str++;
 				break;
 
 			case '*':
 				for (cnt = strlen(str) ; cnt >= 0 ; cnt--)
 				{
-					if (regexp(exp + 1, &str[cnt], cs))
+					if (glob(&str[cnt], exp + 1))
 					{
 						return TRUE;
 					}
@@ -78,26 +98,12 @@ int regexp(char *exp, char *str, unsigned char cs)
 				return FALSE;
 
 			case '\\':
-				if (*++exp != *str)
-				{
-					return FALSE;
-				}
-				break;
+				exp++;
 
 			default:
-				if (cs)
+				if (*exp++ != *str++)
 				{
-					if (*exp != *str)
-					{
-						return FALSE;
-					}
-				}
-				else
-				{
-					if (tolower(*exp) != tolower(*str))
-					{
-						return FALSE;
-					}
+					return FALSE;
 				}
 				break;
 		}
@@ -121,9 +127,9 @@ DO_COMMAND(do_regexp)
 	else
 	{
 		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
-		substitute(ses, right, right, SUB_VAR|SUB_FUN);
+		substitute(ses, right, right, SUB_VAR|SUB_FUN|SUB_ESC);
 
-		if (regex(right, left))
+		if (regexp_cmds(left, right))
 		{
 			ses = pre_parse_input(ses, true, SUB_CMD);
 		}
@@ -134,8 +140,8 @@ DO_COMMAND(do_regexp)
 	}
 	return ses;
 }
-		
-int regex(char *exp, char *str)
+
+int regexp_cmds(char *str, char *exp)
 {
 	regex_t regex;
 	regmatch_t match[100];
@@ -167,6 +173,65 @@ int regex(char *exp, char *str)
 	regfree(&regex);
 
 	return TRUE;
+}
+
+int action_regexp(char *str, char *exp)
+{
+	regex_t regex;
+	regmatch_t match[100];
+	int i;
+
+	if (regcomp(&regex, exp, REG_EXTENDED))
+	{
+		return FALSE;
+	}
+
+	if (regexec(&regex, str, 100, match, 0))
+	{
+		regfree(&regex);
+
+		return FALSE;
+	}
+
+	for (i = 0 ; i < 100 ; i++)
+	{
+		if (match[i].rm_so == -1)
+		{
+			RESTRING(gtd->vars[i], "");
+		}
+		else
+		{
+			gtd->vars[i] = refstring(gtd->vars[i], "%.*s", match[i].rm_eo - match[i].rm_so, &str[match[i].rm_so]);
+		}
+	}
+
+	regfree(&regex);
+
+	return TRUE;
+}
+
+int regexp(char *str, char *exp)
+{
+	regex_t regex;
+	regmatch_t match[1];
+
+	if (regcomp(&regex, exp, REG_NOSUB))
+	{
+		return FALSE;
+	}
+
+	if (regexec(&regex, str, 0, match, REG_EXTENDED))
+	{
+		regfree(&regex);
+
+		return FALSE;
+	}
+	else
+	{
+		regfree(&regex);
+
+		return TRUE;
+	}
 }
 
 /******************************************************************************
@@ -617,12 +682,6 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 								pti++;
 							}
 							break;
-						case '[':
-							*pto++ = '{';
-							break;
-						case ']':
-							*pto++ = '}';
-							break;
 						case '\0':
 							DEL_BIT(flags, SUB_EOL);
 							continue;
@@ -647,7 +706,7 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 
 /******************************************************************************
-* Calls action_regexp checking if the string matches, and automatically fills *
+* Calls action_glob checking if the string matches, and automatically fills *
 * in the text represented by the wildcards on success. Per default the entire *
 * string is compared unless it starts or ends with the ^ character.           *
 ******************************************************************************/
@@ -655,46 +714,51 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 int check_one_action(char *line, char *original, char *action, struct session *ses)
 {
 	char result[BUFFER_SIZE];
-	char *ptr, *ptl;
+	char *exp, *str;
 
 	substitute(ses, action, result, SUB_VAR|SUB_FUN|SUB_ESC);
 
-	ptr = result;
+	exp = result;
 
-	if (*ptr == '~')
+	if (*exp == '~')
 	{
-		ptr++;
-		ptl = original;
+		exp++;
+		str = original;
 	}
 	else
 	{
-		ptl = line;
+		str = line;
 	}
 
-	if (*ptr == '^')
+	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
 	{
-		ptr++;
-		return action_regexp(ptr, ptl, 255);
+		return action_regexp(str, exp);
 	}
 
-	if (ptr[0] == '%' && isdigit(ptr[1]))
+	if (*exp == '^')
 	{
-		return action_regexp(ptr, ptl, 255);
+		exp++;
+		return action_glob(str, exp, 255);
 	}
 
-	while (*ptl)
+	if (exp[0] == '%' && isdigit(exp[1]))
 	{
-		if ((*ptr == '[' || *ptr == *ptl) && action_regexp(ptr, ptl, 255))
+		return action_glob(str, exp, 255);
+	}
+
+	while (*str)
+	{
+		if ((*exp == '[' || *exp == *str) && action_glob(str, exp, 255))
 		{
 			return TRUE;
 		}
-		ptl++;
+		str++;
 	}
 	return FALSE;
 }
 
 
-int action_regexp(char *exp, char *str, unsigned char arg)
+int action_glob(char *str, char *exp, unsigned char arg)
 {
 	short cnt, cnt2;
 
@@ -732,7 +796,7 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 
 					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (action_regexp(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt], arg))
+						if (action_glob(&str[cnt], exp + (isdigit(exp[2]) ? 3 : 2), arg))
 						{
 							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
 
@@ -749,9 +813,9 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 					return (exp[1] == str[0]);
 				}
 				break;
-
+				
 			case '[':
-				if (*str != '[' && regexp("[*|*]*", exp, TRUE))
+				if (*str != '[' && glob(exp, "[*|*]*"))
 				{
 					cnt  = 1;
 					cnt2 = 0;

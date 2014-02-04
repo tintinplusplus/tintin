@@ -72,7 +72,7 @@ DO_COMMAND(do_unalias)
 	return ses;
 }
 
-int alias_regexp(char *exp, char *str)
+int alias_glob(char *exp, char *str)
 {
 	short cnt, arg;
 
@@ -107,7 +107,7 @@ int alias_regexp(char *exp, char *str)
 
 					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (alias_regexp(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt]))
+						if (alias_glob(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt]))
 						{
 							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
 
@@ -152,37 +152,58 @@ int check_all_aliases(struct session *ses, char *input)
 
 	arg = get_arg_stop_spaces(input, left);
 
-	RESTRING(gtd->vars[0], arg);
-
-	for (i = 1 ; i < 100 ; i++)
+	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
 	{
-		arg = get_arg_in_braces(arg, right, FALSE);
-
-		RESTRING(gtd->vars[i], right);
-	}
-
-	for (node = root->update = root->f_node ; node ; node = root->update)
-	{
-		root->update = node->next;
-
-		if (alias_regexp(node->left, input))
+		for (node = root->update = root->f_node ; node ; node = root->update)
 		{
-			substitute(ses, node->right, right, SUB_ARG);
+			root->update = node->next;
 
-			if (!strcmp(node->right, right) && *gtd->vars[0])
+			if (action_regexp(input, node->left))
 			{
-				sprintf(input, "%s %s", right, gtd->vars[0]);
+				substitute(ses, node->right, input, SUB_ARG);
+
+				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", left, input);
+
+				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
+
+				return TRUE;
 			}
-			else
+		}
+	}
+	else
+	{
+		RESTRING(gtd->vars[0], arg);
+
+		for (i = 1 ; i < 100 && *arg ; i++)
+		{
+			arg = get_arg_in_braces(arg, right, FALSE);
+
+			RESTRING(gtd->vars[i], right);
+		}
+
+		for (node = root->update = root->f_node ; node ; node = root->update)
+		{
+			root->update = node->next;
+
+			if (alias_glob(node->left, input))
 			{
-				sprintf(input, "%s", right);
+				substitute(ses, node->right, right, SUB_ARG);
+
+				if (!strcmp(node->right, right) && *gtd->vars[0])
+				{
+					sprintf(input, "%s %s", right, gtd->vars[0]);
+				}
+				else
+				{
+					sprintf(input, "%s", right);
+				}
+
+				show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", left, input);
+
+				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
+
+				return TRUE;
 			}
-
-			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s: %s", left, input);
-
-			DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
-
-			return TRUE;
 		}
 	}
 	return FALSE;

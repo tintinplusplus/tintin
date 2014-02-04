@@ -69,7 +69,7 @@ int is_number(char *str)
 
 	for (i = 1 ; str[i] != 0 ; i++)
 	{
-		if (!isdigit(str[i]))
+		if (!isdigit(str[i]) && str[i] != '.')
 		{
 			return FALSE;
 		}
@@ -186,7 +186,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	
 	if (index == -1)
 	{
-		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE))
 		{
 			tintin_puts2(ses, buf);
 		}
@@ -206,7 +206,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
 	{
-		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE))
 		{
 			tintin_puts2(ses, buf);
 

@@ -38,7 +38,7 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|RUN|WALK|DEL|INS|MAP} {argument}.");
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|MAP|RUN|SAVE|WALK} {argument}.");
 	}
 	else
 	{
@@ -377,6 +377,91 @@ DO_PATH(path_walk)
 		}
 		ses->flags = flags;
 	}
+}
+
+DO_PATH(path_zip)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	struct listroot *root;
+	struct listnode *node;
+	int cnt;
+
+	cnt   =  1;
+	root  =  ses->list[LIST_PATH];
+	*left =  0;
+	*right = 0;
+
+	for (node = root->f_node ; node ; node = node->next)
+	{
+		if (searchnode_list(ses->list[LIST_PATHDIR], node->left) == NULL)
+		{
+			if (node->prev && searchnode_list(ses->list[LIST_PATHDIR], node->prev->left) != NULL)
+			{
+				cat_sprintf(left, ";");
+			}
+			cat_sprintf(left, "%s", node->left);
+
+			if (node->next)
+			{
+				cat_sprintf(left, ";");
+			}
+			continue;
+		}
+
+		if (node->next && !strcmp(node->left, node->next->left))
+		{
+			cnt++;
+		}
+		else if (cnt > 1)
+		{
+			cat_sprintf(left, "%d%s", cnt, node->left);
+
+			cnt = 1;
+		}
+		else
+		{
+			cat_sprintf(left, "%s", node->left);
+		}
+	}
+
+	for (node = root->l_node ; node ; node = node->prev)
+	{
+		if (searchnode_list(ses->list[LIST_PATHDIR], node->right) == NULL)
+		{
+			if (node->next && searchnode_list(ses->list[LIST_PATHDIR], node->next->right) != NULL)
+			{
+				cat_sprintf(right, ";");
+			}
+			cat_sprintf(right, "%s", node->right);
+
+			if (node->prev)
+			{
+				cat_sprintf(right, ";");
+			}
+			continue;
+		}
+
+		if (node->prev && !strcmp(node->right, node->prev->right))
+		{
+			cnt++;
+		}
+		else if (cnt > 1)
+		{
+			cat_sprintf(right, "%d%s", cnt, node->right);
+
+			cnt = 1;
+		}
+		else
+		{
+			cat_sprintf(right, "%s", node->right);
+		}
+	}
+
+	kill_list(ses, LIST_PATH);
+
+	addnode_list(ses->list[LIST_PATH], left, right, "0");
+
+	show_message(ses, LIST_PATH, "#OK. THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", left, right);
 }
 
 

@@ -63,11 +63,11 @@ DO_COMMAND(do_list)
 		}
 		else
 		{
-			if ((node = search_node_with_wild(root, left)) == NULL)
+			if ((node = search_node_with_wild(ses, left, LIST_VARIABLE)) == NULL)
 			{
 				updatenode_list(ses, left, "", "0", LIST_VARIABLE);
 
-				node = search_node_with_wild(root, left);
+				node = search_node_with_wild(ses, left, LIST_VARIABLE);
 			}
 			arg = get_arg_in_braces(arg, left,  array_table[cnt].lval);
 			arg = get_arg_in_braces(arg, right, array_table[cnt].rval);
@@ -246,7 +246,7 @@ DO_ARRAY(array_fnd)
 	{
 		arg = get_arg_in_braces(arg, temp, FALSE);
 
-		if (regexp(left, temp, TRUE))
+		if (match(ses, temp, left))
 		{
 			result = cnt;
 			break;

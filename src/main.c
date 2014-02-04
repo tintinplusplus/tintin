@@ -50,7 +50,9 @@ void winch_handler(int signal)
 {
 	struct session *ses;
 
-	for (ses = gts ; ses ; ses = ses->next)
+	init_screen_size(gts);
+
+	for (ses = gts->next ; ses ; ses = ses->next)
 	{
 		init_screen_size(ses);
 
@@ -275,6 +277,8 @@ void init_tintin(void)
 
 	gtd->mud_output_max = 64;
 	gtd->mud_output_buf = calloc(1, gtd->mud_output_max);
+
+	gtd->input_off      = 1;
 
 	for (cnt = 0 ; cnt < 99 ; cnt++)
 	{

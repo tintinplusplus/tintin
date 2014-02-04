@@ -97,6 +97,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map color    <color code>             (set the room's color for map)");
 		tintin_printf2(ses, "#map create                            (creates the initial map)");
 		tintin_printf2(ses, "#map destroy                           (destroys the map)");
+		tintin_printf2(ses, "#map delete   <direction>              (delete the room at given dir)");
 		tintin_printf2(ses, "#map dig      <direction>              (creates a new room)");
 		tintin_printf2(ses, "#map exit     <direction> <command>    (sets the exit command)");
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
@@ -104,6 +105,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map insert   <direction>              (insert a new room)");
 		tintin_printf2(ses, "#map find     <room name>              (saves path to #path)");
 		tintin_printf2(ses, "#map flag     <map flag>               (set map wide flags)");
+		tintin_printf2(ses, "#map get      <option>     <variable>  (get various values)");
 		tintin_printf2(ses, "#map goto     <room name>              (moves you to given room)");
 		tintin_printf2(ses, "#map leave                             (leave the map, return with goto)");
 		tintin_printf2(ses, "#map legenda  <symbols>                (sets the map legenda)");
@@ -515,7 +517,7 @@ DO_MAP(map_legenda)
 
 	if (*left == 0)
 	{
-		tintin_printf2(ses, "#MAP: Current legenda: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+		tintin_printf2(ses, "#MAP: Current legenda: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
 			ses->map->legenda[0],  ses->map->legenda[1],  ses->map->legenda[2],
 			ses->map->legenda[3],  ses->map->legenda[4],  ses->map->legenda[5],
 			ses->map->legenda[6],  ses->map->legenda[7],  ses->map->legenda[8],
@@ -569,18 +571,24 @@ DO_MAP(map_list)
 {
 	int room;
 	struct exit_data *exit;
+	char str[BUFFER_SIZE];
 
 	CHECK_MAP();
+
+	sprintf(str, "*%s*", left);
 
 	for (room = 0 ; room < MAX_ROOM ; room++)
 	{
 		if (ses->map->room_list[room])
 		{
-			tintin_printf2(ses, "[%5d] %s", ses->map->room_list[room]->vnum, ses->map->room_list[room]->name);
-
-			for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+			if (*left == 0 || match(ses, ses->map->room_list[room]->name, str))
 			{
-				tintin_printf2(ses, "        [%5d] %s", exit->vnum, exit->cmd);
+				tintin_printf2(ses, "[%5d] %s", ses->map->room_list[room]->vnum, ses->map->room_list[room]->name);
+
+				for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+				{
+					tintin_printf2(ses, "        [%5d] %s", exit->vnum, exit->cmd);
+				}
 			}
 		}
 	}
@@ -902,7 +910,7 @@ DO_MAP(map_write)
 	sprintf(temp, "F %d\n\n", ses->map->flags);
 	fputs(temp, file);
 
-	sprintf(temp, "L %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n\n",
+	sprintf(temp, "L %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n\n",
 		ses->map->legenda[0],  ses->map->legenda[1],  ses->map->legenda[2],
 		ses->map->legenda[3],  ses->map->legenda[4],  ses->map->legenda[5],
 		ses->map->legenda[6],  ses->map->legenda[7],  ses->map->legenda[8],
@@ -938,7 +946,7 @@ DO_MAP(map_write)
 
 	fclose(file);
 
-	show_message(ses, -1, "#MAP: Map file written to {%s}.", left);
+	show_message(ses, LIST_MAP, "#MAP: Map file written to {%s}.", left);
 }
 
 void create_map(struct session *ses)
@@ -956,7 +964,7 @@ void create_map(struct session *ses)
 
 	for (index = 0 ; index < 17 ; index++)
 	{
-		ses->map->legenda[index] = map_palet0[index];
+		sprintf(ses->map->legenda[index], "%c", map_palet0[index]);
 	}
 }
 
@@ -985,9 +993,15 @@ void create_legenda(struct session *ses, char *arg)
 	{
 		arg = get_arg_in_braces(arg, buf, FALSE);
 
-		if (*buf)
+		substitute(ses, buf, buf, SUB_ESC);
+
+		if (is_number(buf))
 		{
-			ses->map->legenda[cnt] = atoi(buf);
+			sprintf(ses->map->legenda[cnt], "%c", atoi(buf));
+		}
+		else
+		{
+			sprintf(ses->map->legenda[cnt], "%s", buf);
 		}
 	}
 }
@@ -1122,7 +1136,6 @@ int get_map_exits(struct session *ses, int room)
 
 void follow_map(struct session *ses, char *argument)
 {
-	struct listnode *node;
 	struct exit_data *exit;
 	int room;
 
@@ -1130,7 +1143,9 @@ void follow_map(struct session *ses, char *argument)
 
 	if (exit)
 	{
-		insert_undo(ses, "%d %d %d", exit->vnum, ses->map->in_room, 0);
+		room = ses->map->in_room;
+
+		insert_undo(ses, "%d %d %d", exit->vnum, room, 0);
 
 		goto_room(ses, exit->vnum);
 
@@ -1142,18 +1157,13 @@ void follow_map(struct session *ses, char *argument)
 		}
 		else if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
 		{
-			node = searchnode_list(ses->list[LIST_PATHDIR], argument);
-
-			if (node)
+			for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
 			{
-				for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
+				if (exit->vnum != room)
 				{
-					if (get_map_exit(ses, node->right) != get_map_exit(ses, exit->name))
-					{
-						follow_map(ses, exit->name);
+					follow_map(ses, exit->name);
 	
-						return;
-					}
+					return;
 				}
 			}
 		}
@@ -1318,17 +1328,23 @@ void show_map(struct session *ses, char *argument)
 
 	push_call("show_map(%p,%p)",ses,argument);
 
-	size = atoi(argument);
+	size = atoi(argument) * 2 + 1;
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
 		map_grid_y = (get_scroll_size(ses) / 3) - 1;
 		map_grid_x = (ses->cols / 6) - 1;
+
 	}
 	else
 	{
 		map_grid_y = get_scroll_size(ses) - 1;
 		map_grid_x = ses->cols - 1;
+	}
+
+	if (size > 1 && map_grid_y > size)
+	{
+		map_grid_y = size;
 	}
 
 	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
@@ -1562,11 +1578,11 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 	{
 		if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
 		{
-			sprintf(buf, "<118>\033[12m%c\033[10m", ses->map->legenda[16]);
+			sprintf(buf, "<118>\033[12m%s\033[10m", ses->map->legenda[16]);
 		}
 		else
 		{
-			sprintf(buf, "<118>%c", ses->map->legenda[16]);
+			sprintf(buf, "<118>%s", ses->map->legenda[16]);
 		}
 		pop_call();
 		return buf;
@@ -1584,11 +1600,11 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
 	{
-		sprintf(buf, "%s\033[12m%c\033[10m", room->color, ses->map->legenda[exits]);
+		sprintf(buf, "%s\033[12m%s\033[10m", room->color, ses->map->legenda[exits]);
 	}
 	else
 	{
-		sprintf(buf, "%s%c", room->color, ses->map->legenda[exits]);
+		sprintf(buf, "%s%s", room->color, ses->map->legenda[exits]);
 	}
 	pop_call();
 	return buf;
@@ -1612,7 +1628,7 @@ int find_room(struct session *ses, char *arg)
 
 	for (room = 0 ; room < MAX_ROOM ; room++)
 	{
-		if (ses->map->room_list[room] && regexp(ses->map->room_list[room]->name, arg, FALSE))
+		if (ses->map->room_list[room] && match(ses, ses->map->room_list[room]->name, arg))
 		{
 			return room;
 		}

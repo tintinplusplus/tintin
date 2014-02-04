@@ -340,6 +340,7 @@ struct help_type help_table[] =
 		"<178>Example<078>: #format {test} {%+9s} {string}  pad string with up to 9 spaces\n"
 		"         #format {test} {%-9s} {string}  post pad string with up to 9 spaces\n"
 		"         #format {test} {%.8s} {string}  copy at most 8 characters\n"
+		"         #format {test} {%a}   {number}  print corresponding ascii character\n"
 		"         #format {test} {%c}   {string}  turn string into a color code\n"
 		"         #format {test} {%d}     {time}  print the current military day\n"
 		"         #format {test} {%h}   {string}  turn text into a header line\n"
@@ -642,6 +643,8 @@ struct help_type help_table[] =
 		"\n"
 		"         #map goto <room name>: Takes you to the given room name.\n"
 		"\n"
+		"         #map get <option> <variable>: Store a map value into a variable.\n"
+		"\n"
 		"         #map info: Gives information about the map and room you are in.\n"
 		"\n"
 		"         #map insert: Insert a room in the given direction. Useful for\n"
@@ -651,18 +654,19 @@ struct help_type help_table[] =
 		"\n"
 		"         #map legenda <symbols>: The legend exists of 17 decimal numbers which\n"
 		"                  represent character symbols used for drawing a map. Binary\n"
-		"                  order is used with the n e s w representing bit 1 to 4. Number\n"
-		"                  2 to 16 stand for: n e ne s ns es nes w nw ew new sw nsw esw\n"
-		"                  nesw. Number 1 stands for a no exit room, and number 17 for\n"
-		"                  the room the player is currently in. The legenda is set by\n"
-		"                  default, but can be adjusted to take advantage of fonts with\n"
-		"                  line drawing characters. To check your font for drawing\n"
-		"                  characters use: '#loop {32 255} {#echo {%-3s  %a} {&0 &0}}'.\n"
+		"                  order is used with the n e s w representing bit 1 to 4. The\n"
+		"                  first number stands for a no exit room. Number 2 to 16 stand\n"
+		"                  for n e ne s ns es nes w nw ew new sw nsw esw nesw. The 17th\n"
+		"                  number stands for the room the player is current in.\n"
+		"                  The legenda is set by default, but can be adjusted to take\n"
+		"                  advantage of fonts with line drawing characters. To check your\n"
+		"                  font for drawing characters use:\n"
+		"                  #loop {32 255} {#echo {%-3s  %a} {&0 &0}}\n"
 		"\n"
 		"         #map link <direction> <room name>: Links two rooms. If a valid\n"
 		"                  direction is given the link is two way.\n"
 		"\n"
-		"         #map list: Lists all room names and exits.\n"
+		"         #map list [search string]: Lists all room names and exits.\n"
 		"\n"
 		"         #map map <radius>: shows a map of surrounding rooms.\n"
 		"\n"
@@ -686,21 +690,25 @@ struct help_type help_table[] =
 		"         #map roomflag leave: When entering a room with this flag, you will\n"
 		"                  automatically leave the map. Useful when set at the entrance\n"
 		"                  of an unmappable maze.\n"
-		"         #map roomflag void: When set the room becomes a spacing room that can be\n"
-		"                  used to connect otherwise overlapping areas. A void room should\n"
-		"                  only have two exits. When entering a void room you are automatically\n"
+		"         #map roomflag void: When set the room becomes a spacing room that can\n"
+		"                  be used to connect otherwise overlapping areas. A void room\n"
+		"                  should only have two exits. When entering a void room you are\n"
 		"                  moved to the connecting room until you enter a non void room.\n"
 		"\n"
-		"         #map travel <direction> <delay>: Follows the direction until a dead end or an\n"
-		"                  intersection is found. Use braces around the direction if you use\n"
-		"                  the delay, which will add the given delay between movements.\n"
+		"         #map set <option> <value>: Set a map value for your current room.\n"
 		"\n"
-		"         #map undo: Will undo your last move. If this created a room or a link they\n"
-		"                  will be deleted, otherwise you'll simply move back a room.\n"
-		"                  Useful if you walked into a non existant direction.\n"
+		"         #map travel <direction> <delay>: Follows the direction until a dead end\n"
+		"                  or an intersection is found. Use braces around the direction\n"
+		"                  if you use the delay, which will add the given delay between\n"
+		"                  movements\n"
 		"\n"
-		"         #map unlink <direction> [both]: Will remove the exit, this isn't two way so\n"
-		"                  you can have the map properly display no exit rooms and mazes.\n"
+		"         #map undo: Will undo your last move. If this created a room or a link\n"
+		"                  they will be deleted, otherwise you'll simply move back a\n"
+		"                  room. Useful if you walked into a non existant direction.\n"
+		"\n"
+		"         #map unlink <direction> [both]: Will remove the exit, this isn't two\n"
+		"                  way so you can have the map properly display no exit rooms and\n"
+		"                  mazes.\n"
 		"                  If you use the both argument the exit is removed two-ways.\n"
 		"\n"
 		"         #map walk <room name> <delay>: Calculates the shortest path to the\n"
@@ -1187,7 +1195,7 @@ DO_COMMAND(do_help)
 
 		for (cnt = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1 || regexp(left, help_table[cnt].name, FALSE))
+			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1 || match(ses, help_table[cnt].name, left))
 			{
 				substitute(ses, help_table[cnt].text, buf, SUB_COL);
 
@@ -1223,7 +1231,7 @@ DO_COMMAND(do_help)
 		}
 		if (found == FALSE)
 		{
-			tintin_printf2(ses, "No help found for '%s'", arg);
+			tintin_printf2(ses, "No help found for '%s'", left);
 		}
 	}
 	return ses;

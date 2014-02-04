@@ -44,6 +44,10 @@ void restore_pos(struct session *ses)
 	ses->cur_col = ses->sav_col;
 }
 
+void restore_cursor(struct session *ses)
+{
+	printf("\033[%d;%dH", ses->cols, gtd->input_pos+1);
+}
 
 void goto_rowcol(struct session *ses, int row, int col)
 {

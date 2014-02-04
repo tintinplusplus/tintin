@@ -198,7 +198,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 
 DO_COMMAND(do_grep)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], str[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int scroll_cnt, grep_cnt, grep_min, grep_max, grep_add;
 
 	grep_cnt = grep_add = scroll_cnt = grep_min = 0;
@@ -237,8 +237,6 @@ DO_COMMAND(do_grep)
 
 		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
-		sprintf(str, "*%s*", right);
-
 		tintin_header(ses, " GREP %s ", right);
 
 		scroll_cnt = ses->scroll_row;
@@ -264,7 +262,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (regexp(str, ses->buffer[scroll_cnt], TRUE))
+			if (match(ses, ses->buffer[scroll_cnt], right))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -303,7 +301,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (regexp(str, ses->buffer[scroll_cnt], TRUE))
+			if (match(ses, ses->buffer[scroll_cnt], right))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -746,7 +744,7 @@ DO_CURSOR(buffer_l)
 
 void buffer_f(char *arg)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], str[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int scroll_cnt, grep_cnt, grep_max;
 
 	grep_cnt = grep_max = scroll_cnt = 0;
@@ -781,8 +779,6 @@ void buffer_f(char *arg)
 			arg = get_arg_in_braces(arg, right, TRUE);
 		}
 
-		sprintf(str, "*%s*", right);
-
 		if (grep_max >= 0)
 		{
 			scroll_cnt = gtd->ses->scroll_row;
@@ -808,7 +804,7 @@ void buffer_f(char *arg)
 					continue;
 				}
 
-				if (regexp(str, gtd->ses->buffer[scroll_cnt], TRUE))
+				if (match(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
 				{
 					if (grep_cnt == grep_max)
 					{
@@ -851,7 +847,7 @@ void buffer_f(char *arg)
 					continue;
 				}
 
-				if (regexp(str, gtd->ses->buffer[scroll_cnt], TRUE))
+				if (match(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
 				{
 					grep_cnt--;
 

@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.2"
+#define VERSION_NUM               "1.98.3"
 
 #define ESCAPE                          27
 
@@ -174,6 +174,13 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define LIST_TICKER                     18
 #define LIST_VARIABLE                   19
 #define LIST_MAX                        20
+
+/*
+	generic define for show_message
+*/
+
+#define LIST_MESSAGE                    -1
+
 
 /*
 	Various flags
@@ -249,6 +256,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define TINTIN_FLAG_PROCESSINPUT      (1 <<  3)
 #define TINTIN_FLAG_USERCOMMAND       (1 <<  4)
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  5)
+#define TINTIN_FLAG_SHOWMESSAGE       (1 <<  6)
 
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
@@ -261,6 +269,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
+#define SES_FLAG_REGEXP               (1 << 14)
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
@@ -339,97 +348,97 @@ typedef void            LINE    (struct session *ses, char *arg);
 	Some macros to deal with double linked lists
 */
 
-#define LINK(link, head, tail)                                   \
-{                                                                \
-     if ((head) == NULL)                                         \
-     {                                                           \
-          (head)                  = (link);                      \
-     }                                                           \
-     else                                                        \
-     {                                                           \
-          (tail)->next             = (link);                     \
-     }                                                           \
-     (link)->next                  = NULL;                       \
-     (link)->prev                  = (tail);                     \
-     (tail)                        = (link);                     \
+#define LINK(link, head, tail) \
+{ \
+	if ((head) == NULL) \
+	{ \
+		(head)			   = (link); \
+	} \
+	else \
+	{ \
+		(tail)->next		   = (link); \
+	} \
+	(link)->next			   = NULL; \
+	(link)->prev			   = (tail); \
+	(tail)				    = (link); \
 }
 
 
-#define INSERT_LEFT(link, rght, head)                            \
-{                                                                \
-     (link)->prev                  = (rght)->prev;               \
-     (rght)->prev                  = (link);                     \
-     (link)->next                  = (rght);                     \
-                                                                 \
-     if ((link)->prev)                                           \
-     {                                                           \
-          (link)->prev->next       = (link);                     \
-     }                                                           \
-     else                                                        \
-     {                                                           \
-          (head)                  = (link);                      \
-     }                                                           \
+#define INSERT_LEFT(link, rght, head) \
+{ \
+	(link)->prev			   = (rght)->prev; \
+	(rght)->prev			   = (link); \
+	(link)->next			   = (rght); \
+	\
+	if ((link)->prev) \
+	{ \
+		(link)->prev->next	  = (link); \
+	} \
+	else \
+	{ \
+		(head)			   = (link); \
+	} \
 }
 
 
-#define INSERT_RIGHT(link, left, tail)                           \
-{                                                                \
-     (link)->next                  = (left)->next;               \
-     (left)->next                  = (link);                     \
-     (link)->prev                  = (left);                     \
-                                                                 \
-     if ((link)->next)                                           \
-     {                                                           \
-          (link)->next->prev       = (link);                     \
-     }                                                           \
-     else                                                        \
-     {                                                           \
-          (tail)                   = (link);                     \
-     }                                                           \
+#define INSERT_RIGHT(link, left, tail) \
+{ \
+	(link)->next			   = (left)->next; \
+	(left)->next			   = (link); \
+	(link)->prev			   = (left); \
+	\
+	if ((link)->next) \
+	{ \
+		(link)->next->prev	  = (link); \
+	} \
+	else \
+	{ \
+		(tail)			    = (link); \
+	} \
 }
 
-#define UNLINK(link, head, tail)                                 \
-{                                                                \
-     if (((link)->prev == NULL && (link) != head)                \
-     ||  ((link)->next == NULL && (link) != tail))               \
-     {                                                           \
-          tintin_printf2(NULL, "#UNLINK ERROR in file %s on line %d", __FILE__, __LINE__); \
-          dump_stack();                                          \
-     }                                                           \
-     if ((link)->prev == NULL)                                   \
-     {                                                           \
-          (head)                  = (link)->next;                \
-     }                                                           \
-     else                                                        \
-     {                                                           \
-          (link)->prev->next       = (link)->next;               \
-     }                                                           \
-     if ((link)->next == NULL)                                   \
-     {                                                           \
-          (tail)                   = (link)->prev;               \
-     }                                                           \
-     else                                                        \
-     {                                                           \
-          (link)->next->prev       = (link)->prev;               \
-     }                                                           \
-     (link)->next = NULL;                                        \
-     (link)->prev = NULL;                                        \
+#define UNLINK(link, head, tail) \
+{ \
+	if (((link)->prev == NULL && (link) != head) \
+	||  ((link)->next == NULL && (link) != tail)) \
+	{ \
+		tintin_printf2(NULL, "#UNLINK ERROR in file %s on line %d", __FILE__, __LINE__); \
+		dump_stack(); \
+	} \
+	if ((link)->prev == NULL) \
+	{ \
+		(head)			   = (link)->next; \
+	} \
+	else \
+	{ \
+		(link)->prev->next	  = (link)->next; \
+	} \
+	if ((link)->next == NULL) \
+	{ \
+		(tail)			    = (link)->prev; \
+	} \
+	else \
+	{ \
+		(link)->next->prev	  = (link)->prev; \
+	} \
+	(link)->next = NULL; \
+	(link)->prev = NULL; \
 }
 
 /*
 	string allocation
 */
 
-#define RESTRING(point, value)   \
-{                                \
-	free(point);                \
-	point = strdup((value));    \
+#define RESTRING(point, value) \
+{ \
+	free(point); \
+	point = strdup((value)); \
 }
 
-#define STRFREE(point)           \
-{                                \
-	free((point));              \
-	point = NULL;               \
+#define STRFREE(point) \
+{ \
+	free((point)); \
+	point = NULL; \
 }
 
 #define URANGE(a, b, c)           ((b) < (a) ? (a) : (b) > (c) ? (c) : (b))
@@ -545,13 +554,14 @@ struct tintin_data
 	int                     mud_output_len;
 	unsigned char         * mccp_buf;
 	int                     mccp_buf_max;
-	char                    input_buf[STRING_SIZE];
-	char                    input_tmp[STRING_SIZE];
-	char                    macro_buf[STRING_SIZE];
-	char                    paste_buf[STRING_SIZE];
+	char                    input_buf[BUFFER_SIZE];
+	char                    input_tmp[BUFFER_SIZE];
+	char                    macro_buf[BUFFER_SIZE];
+	char                    paste_buf[BUFFER_SIZE];
 	int                     input_len;
 	int                     input_cur;
 	int                     input_pos;
+	int                     input_off;
 	struct listnode       * input_his;
 	long long               time;
 	long long               timer[TIMER_CPU][5];
@@ -686,18 +696,18 @@ struct path_type
 	char                  * name;
 	PATH                  * fun; 	
 };
-  
+
 struct line_type
 {
 	char                  * name;
 	LINE                  * fun;
 };
-  
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
 	struct str_hash_data    * prev;
-	unsigned short            count;
+	unsigned int              count;
 	unsigned short            flags;
 	unsigned short            lines;
 	unsigned short            hash;
@@ -714,7 +724,7 @@ struct map_data
 	struct room_data      * room_list[MAX_ROOM];
 	int                     flags;
 	int                     in_room;
-	unsigned char           legenda[17];
+	char                    legenda[17][100];
 };
 
 struct room_data
@@ -764,7 +774,8 @@ extern DO_CURSOR(cursor_clear_line);
 extern DO_CURSOR(cursor_clear_right);
 extern DO_CURSOR(cursor_convert_meta);
 extern DO_CURSOR(cursor_delete);
-extern DO_CURSOR(cursor_delete_word);
+extern DO_CURSOR(cursor_delete_word_left);
+extern DO_CURSOR(cursor_delete_word_right);
 extern DO_CURSOR(cursor_echo);
 extern DO_CURSOR(cursor_end);
 extern DO_CURSOR(cursor_enter);
@@ -896,7 +907,7 @@ extern struct chat_data *find_group(char *arg);
 extern char *fix_file_name(char *name);
 
 #endif
- 
+
 #ifndef __TERMINAL_H__
 #define __TERMINAL_H__
 
@@ -1020,13 +1031,16 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 #ifndef __TINEXP_H__
 #define __TINEXP_H__
 
-extern int regexp(char *exp, char *str, unsigned char cs);
-extern int regex(char *exp, char *str);
+extern int match(struct session *ses, char *str, char *exp);
+extern int glob(char *str, char *exp);
 DO_COMMAND(do_regexp);
+extern int regexp_cmds(char *str, char *exp);
+extern int regexp(char *str, char *exp);
+extern int action_regexp(char *str, char *exp);
+
 extern void substitute(struct session *ses, char *string, char *result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
-extern int action_regexp(char *exp, char *str, unsigned char arg);
-
+extern int action_glob(char *str, char *exp, unsigned char arg);
 
 #endif
 
@@ -1035,6 +1049,7 @@ extern int action_regexp(char *exp, char *str, unsigned char arg);
 #define __CONFIG_H__
 
 extern DO_COMMAND(do_configure);
+
 extern DO_CONFIG(config_speedwalk);
 extern DO_CONFIG(config_verbatim);
 extern DO_CONFIG(config_repeatenter);
@@ -1054,6 +1069,7 @@ extern DO_CONFIG(config_debugtelnet);
 extern DO_CONFIG(config_convertmeta);
 extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
+extern DO_CONFIG(config_regexp);
 
 #endif
 
@@ -1064,7 +1080,9 @@ extern DO_CONFIG(config_colorpatch);
 extern DO_COMMAND(do_macro);
 extern DO_COMMAND(do_unmacro);
 extern void macro_update(void);
+
 #endif
+
 
 #ifndef __STRHASH_H__
 #define __STRHASH_H__
@@ -1220,7 +1238,7 @@ extern struct listnode *searchnode_list_begin(struct listroot *listhead, char *c
 extern void shownode_list(struct session *ses, struct listnode *node, int index);
 extern void show_list(struct session *ses, struct listroot *listhead, int index);
 extern int show_node_with_wild(struct session *ses, char *cptr, int index);
-extern struct listnode *search_node_with_wild(struct listroot *listhead, char *cptr);
+extern struct listnode *search_node_with_wild(struct session *ses, char *cptr, int index);
 extern void delete_node_with_wild(struct session *ses, int index, char *string);
 
 extern void addnode_list(struct listroot *listhead, char *ltext, char *rtext, char *prtext);
@@ -1378,6 +1396,7 @@ extern DO_PATH(path_new);
 extern DO_PATH(path_run);
 extern DO_PATH(path_save);
 extern DO_PATH(path_walk);
+extern DO_PATH(path_zip);
 
 extern DO_COMMAND(do_pathdir);
 extern DO_COMMAND(do_unpathdir);
@@ -1542,6 +1561,7 @@ extern DO_COMMAND(do_replacestring);
 
 extern void save_pos(struct session *ses);
 extern void restore_pos(struct session *ses);
+extern void restore_cursor(struct session *ses);
 extern void goto_rowcol(struct session *ses, int row, int col);
 extern void erase_screen(struct session *ses);
 extern void erase_toeol(void);

@@ -328,11 +328,11 @@ DO_COMMAND(do_read)
 						break;
 
 					case 1:
-						tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
+						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
 						break;
 
 					default:
-						tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
+						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
 						break;
 				}
 			}
@@ -379,7 +379,7 @@ DO_COMMAND(do_write)
 
 	fclose(file);
 
-	show_message(ses, -1, "#OK. COMMAND FILE WRITTEN.", filename);
+	show_message(ses, LIST_MESSAGE, "#OK. COMMAND FILE WRITTEN.", filename);
 
 	return ses;
 }

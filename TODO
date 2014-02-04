@@ -4,7 +4,7 @@
 
 GENERAL STUFF:
 
-- events for input and prompt lines
+- events for prompt lines
 
 - add line substitute option, to substitute variables and functions.
 
@@ -12,12 +12,18 @@ GENERAL STUFF:
 
 - tab completion based on scroll back history
 
-- global regexp switch with #config
-
+- look into mccp routine which sometimes doesn't work properly.
 
 -------------------------------------------------------------------------------
 
+READLINE:
+
+Use \e[ X to erase an amount of characters to deal with ctrl-r and redraw line functionality.
+
+-------------------------------------------------------------------------------
 MAPPING STUFF:
+
+- look into #map walk working correctly.
 
 - look into adding a crawler to find rooms, so the avoid flag can be used to only search rooms within an area.
 
@@ -31,8 +37,7 @@ MAPPING STUFF:
 
 - a method to find the most nearby generic room.
 
-- a method to find a generic room more precisely by giving exits and other
-  identifying information.
+- a method to find a generic room more precisely by giving exits and other identifying information.
 
 - check #map undo integrity.
 
@@ -58,8 +63,6 @@ MAPPING STUFF:
 
 - allow actions to use ! to repeat commands, possibly use #history 1, not as
   easy at it seems.
-
-- Add color bleeding for #split. Bloats the code though.
 
 - upgrade the #write command to format. Format should be up to the user though.
 

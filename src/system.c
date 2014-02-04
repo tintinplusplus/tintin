@@ -107,7 +107,7 @@ DO_COMMAND(do_scan)
 
 	DEL_BIT(ses->flags, SES_FLAG_SCAN);
 
-	show_message(ses, -1, "#OK. FILE READ.", filename);
+	show_message(ses, LIST_MESSAGE, "#OK. FILE READ.", filename);
 
 	fclose(fp);
 
@@ -123,7 +123,7 @@ DO_COMMAND(do_script)
 
 	if (*left == 0)
 	{
-		show_message(ses, -1, "#SCRIPT: ONE ARGUMENT REQUIRED.");
+		show_message(ses, LIST_MESSAGE, "#SCRIPT: ONE ARGUMENT REQUIRED.");
 	}
 	else
 	{
@@ -158,7 +158,7 @@ DO_COMMAND(do_system)
 		return ses;
 	}
 
-	show_message(ses, -1, "#OK: EXECUTING '%s'", left);
+	show_message(ses, LIST_MESSAGE, "#OK: EXECUTING '%s'", left);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
@@ -205,7 +205,7 @@ DO_COMMAND(do_textin)
 	}
 	fclose(fp);
 
-	show_message(ses, -1, "#OK. FILE READ.");
+	show_message(ses, LIST_MESSAGE, "#OK. FILE READ.");
 
 	return ses;
 }

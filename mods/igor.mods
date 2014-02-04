@@ -954,7 +954,11 @@ line.c         Added the line command to group #gagline and #logline.
 
 tables.c       Added the 'program termination' and 'received line' events.
 
+
+
 May 2008       1.98.2
+
+
 
 tables.c       Home and End now use cursor home and end.
 
@@ -967,3 +971,41 @@ cursor.c       Pressing ctrl-r (history search) while searching will place
 
 cursor.c       Added left_word and right_word for alt b and f behavior.
 
+
+
+June 2008      1.98.3
+
+mapper.c       It's now possible to use strings in the map legenda, mainly for
+               terminals supporting UTF-8.
+
+mapper.c       Void rooms now work with unusual exits as well.
+
+mapper.c       Added some unlisted map commands to the #map and #help listing.
+
+input.c        Verbatim mode now only works on manual input, actions and macros
+               will have their commands processed normally.
+
+mapper.c       #map map now accepts a given radius.
+
+config.c       #config packet patch now takes a floating point seconds argument
+               instead of milli seconds. The valid input range is between 0.00
+               and 10.00 seconds.
+
+config.c       Added the #config regexp on/off option.
+
+input.c        Added the RECEIVED INPUT event.
+
+tinexp.c       Added the match function to work with #config regexp.
+
+cursor.c       Added support for deleting words forwards using alt-d
+
+path.c         Added #path zip option to format a created path into
+               speedwalk notation.
+
+tinexp.c       \[ and \] no longer escape to { and }, instead \x can
+               be used, the values are shown in #help escape.
+
+tinexp.c       All regexp's should substitute escape codes.
+
+tintin19.txt   Rewrote the large manual file to contain a brief up to date
+               manual instead. #help remains the primary help source.

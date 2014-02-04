@@ -334,7 +334,7 @@ int show_node_with_wild(struct session *ses, char *cptr, int index)
 
 	for (node = ses->list[index]->f_node ; node ; node = node->next)
 	{
-		if (regexp(cptr, node->left, TRUE))
+		if (glob(node->left, cptr))
 		{
 			shownode_list(ses, node, index);
 			flag = TRUE;
@@ -343,13 +343,13 @@ int show_node_with_wild(struct session *ses, char *cptr, int index)
 	return flag;
 }
 
-struct listnode *search_node_with_wild(struct listroot *listhead, char *cptr)
+struct listnode *search_node_with_wild(struct session *ses, char *cptr, int index)
 {
 	struct listnode *node;
 
-	for (node = listhead->f_node ; node ; node = node->next)
+	for (node = ses->list[index]->f_node ; node ; node = node->next)
 	{
-		if (regexp(cptr, node->left, TRUE) || !strcmp(cptr, node->left))
+		if (glob(node->left, cptr) || !strcmp(node->left, cptr))
 		{
 			return node;
 		}
@@ -365,7 +365,7 @@ void delete_node_with_wild(struct session *ses, int index, char *string)
 
 	get_arg_in_braces(string, left, TRUE);
 
-	while ((node = search_node_with_wild(ses->list[index], left)))
+	while ((node = search_node_with_wild(ses, left, index)))
 	{
 		show_message(ses, index, "#OK. {%s} IS NO LONGER %s %s.", node->left, (*list_table[index].name == 'A' || *list_table[index].name == 'E') ? "AN" : "A", list_table[index].name);
 

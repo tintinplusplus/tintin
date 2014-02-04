@@ -629,10 +629,10 @@ void mathexp_compute(struct listnode *node)
 			}
 			break;
 		case '=':
-			value = (tineval(node->next->pr, node->prev->pr) != 0);
+			value = (tineval(node->prev->pr, node->next->pr) != 0);
 			break;
 		case '!':
-			value = (tineval(node->next->pr, node->prev->pr) == 0);
+			value = (tineval(node->prev->pr, node->next->pr) == 0);
 			break;
 		default:
 			tintin_printf2(NULL, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->pr[0], node->pr[1]);
@@ -700,7 +700,7 @@ double tineval(char *left, char *right)
 	switch (left[0])
 	{
 		case '"':
-			return regexp(left, right, TRUE);
+			return match(mathses, left, right);
 
 		default:
 			return tintoi(left) == tintoi(right);
