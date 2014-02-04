@@ -116,6 +116,8 @@ void macro_update(void)
 
 					rl_redisplay();
 
+					echo_command(gtd->ses, "", TRUE);
+
 					parse_input(command, gtd->ses);
 
 					break;

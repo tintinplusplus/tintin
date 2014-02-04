@@ -208,7 +208,7 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SES_FLAG_DEBUGTELNET          (1 << 19)
 #define SES_FLAG_USERCOMMAND          (1 << 20)
 #define SES_FLAG_SCROLLLOCK           (1 << 21)
-#define SES_FLAG_MORE_OUTPUT          (1 << 22) /* unused */
+#define SES_FLAG_SCAN                 (1 << 22)
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_GAGPROMPT            (1 << 25)
@@ -227,7 +227,7 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define CMD_FLAG_SUB                  (1 <<  0)
 
 
-#define MAX_COMMAND                   81
+#define MAX_COMMAND                   82
 
 #define MAX_STR_HASH                  5000
 
@@ -386,7 +386,7 @@ struct session
 	int                     bgc;
 	int                     vtc;
 	int                     socket;
-	int                     flags;
+	long long               flags;
 	char                  * host;
 	char                  * port;
 	long long               connect_retry;
@@ -699,6 +699,7 @@ extern DO_COMMAND(do_writemap);
 extern DO_COMMAND(do_session);
 extern void prepare_for_write(int mode, struct listnode *node, char *result);
 DO_COMMAND(do_textin);
+DO_COMMAND(do_scan);
 
 #endif 
 
@@ -886,6 +887,7 @@ extern void readmud(struct session *ses);
 extern void bait(void);
 extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
 extern char *readkeyboard(void);
+extern void echo_command(struct session *ses, char *line, int force);
 extern int  show_message(struct session *ses, int index);
 extern void tintin_header(struct session *ses, const char *format, ...);
 extern void socket_printf(struct session *ses, size_t length, const char *format, ...);

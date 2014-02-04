@@ -33,14 +33,6 @@ void init_buffer(struct session *ses, int size)
 {
 	int cnt;
 
-	if (ses == gts)
-	{
-		ses->scroll_max = size;
-		ses->scroll_row = size - 1;
-
-		return;
-	}
-
 	if (ses->scroll_max == size)
 	{
 		return;
@@ -85,11 +77,6 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 	char linebuf[BUFFER_SIZE], linelog[BUFFER_SIZE];
 	char *pti, *pto;
 	int lines;
-
-	if (ses == gts)
-	{
-		return;
-	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP))
 	{

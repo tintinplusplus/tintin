@@ -199,7 +199,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.94.8                           <068>#\n"
+		"<068>    #<078>                           Version 1.94.9                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -635,6 +635,14 @@ const struct help_type help_table[81] =
 		"again.\n"
 	},
 	{
+		"SCAN",
+		"\n"
+		"Command: #scan {filename}\n"
+		"\n"
+		"Reads in a filename and sends it to the screen as if it was send by a mud. This\n"
+		"is useful to convert ansi color files to html and viewing log files.\n"
+	},
+	{
 		"SESSION",
 		"\n"
 		"Command: #session {name} {host} {port}\n"
@@ -994,9 +1002,9 @@ const struct help_type help_table[81] =
 	},
 	{
 		"WALK",
-		"Command: #walk\n"
-		"         Walks one step of a loaded path.\n"
-		"Example: #mark;w;w;w;#savepath backward test;#loadpath test;#3 #walk\n"
+		"Command: #walk {forward|backward}\n"
+		"         Walks one step of a current path, forward if no argument is given.\n"
+		"Example: #mark;w;w;w;mark;#savepath backward test;#loadpath test;#3 #walk\n"
 		"         Will make you start mapping, map 3 rooms, save the path backwards,\n"
 		"         And make you walk back the last 3 steps. Everytime you #walk, the\n"
 		"         first element of the loaded path is deleted and executed. You get\n"

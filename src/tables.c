@@ -79,6 +79,7 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"read",              do_read,              CMD_FLAG_SUB     },
 	{	"readmap",           do_readmap,           CMD_FLAG_SUB     },
 	{	"savepath",          do_savepath,          CMD_FLAG_SUB     },
+	{	"scan",              do_scan,              CMD_FLAG_SUB     },
 	{	"session",           do_session,           CMD_FLAG_SUB     },
 	{	"showme",            do_showme,            CMD_FLAG_NONE    },
 	{	"snoop",             do_snoop,             CMD_FLAG_SUB     },

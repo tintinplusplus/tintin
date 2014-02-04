@@ -271,8 +271,8 @@ void init_tintin(void)
 	do_configure(gts, "{ECHO COMMAND}      {OFF}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
-	do_configure(gts, "{LOG}              {HTML}");
-	do_configure(gts, "{BUFFER SIZE}     {10000}");
+	do_configure(gts, "{LOG}               {RAW}");
+	do_configure(gts, "{BUFFER SIZE}      {5000}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{CONNECT RETRY}      {60}");

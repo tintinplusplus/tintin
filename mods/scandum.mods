@@ -698,3 +698,14 @@ table.c        Added flags for commands, so far only automatically substituting
 
 rl.c           Fixed packet patch, and added a default patcher for split mode.
                Fixed the displaying of #alias, #action, etc.
+
+
+files.c        Added #scan {filename} which will read in a file and send it to
+               the screen as if it was send by a mud. This allows one to view
+               raw color logs, turn on logging and save the file in a different
+               format, as well as adding gags and other text filters to make
+               things more readable. I set the default logging mode to raw
+               since ansi log files can now be converted to html ones.
+
+llist.c        updatenode_list was acting odd, fiddled with it till it stopped
+               crashing. Not sure what the problem was.

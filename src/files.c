@@ -438,6 +438,40 @@ DO_COMMAND(do_textin)
 	return ses;
 }
 
+
+DO_COMMAND(do_scan)
+{
+	FILE *fp;
+	char buffer[BUFFER_SIZE];
+
+	get_arg_in_braces(arg, buffer, 1);
+
+	if ((fp = fopen(buffer, "r")) == NULL)
+	{
+		tintin_printf2(ses, "#SCAN, FILE '%s' NOT FOUND.", buffer);
+		return ses;
+	}
+
+	SET_BIT(ses->flags, SES_FLAG_SCAN);
+
+	while (BUFFER_SIZE >= gtd->mud_output_max)
+	{
+		gtd->mud_output_max *= 2;
+		gtd->mud_output_buf  = realloc(gtd->mud_output_buf, gtd->mud_output_max);
+	}
+
+	while (fgets(gtd->mud_output_buf, BUFFER_SIZE, fp))
+	{
+		readmud(ses);
+	}
+
+	DEL_BIT(ses->flags, SES_FLAG_SCAN);
+
+	fclose(fp);
+
+	return ses;
+}
+
 DO_COMMAND(do_readmap)
 {
 	FILE *myfile;

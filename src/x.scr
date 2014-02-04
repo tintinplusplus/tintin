@@ -1,12 +1,9 @@
-#class bla open
-#CONFIG           {VERBOSE}               {ON}
 #CONFIG           {SPEEDWALK}             {ON}
 #CONFIG           {VERBATIM}              {OFF}
 #CONFIG           {REPEAT ENTER}          {OFF}
 #CONFIG           {ECHO COMMAND}          {OFF}
 #CONFIG           {WORDWRAP}              {ON}
-#CONFIG           {LOG}                   {HTML}
-#class bla close
+#CONFIG           {LOG}                   {PLAIN}
 #CONFIG           {BUFFER SIZE}           {20000}
 #CONFIG           {SCROLL LOCK}           {ON}
 #CONFIG           {HISTORY SIZE}          {2000}
@@ -15,4 +12,33 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
-#macro {\e[11~}{#showme bla\n}
+#CONFIG           {VERBOSE}               {ON}
+#alias {oops} {#showme <118>Problem with check %1}
+
+#class bla open
+#var bla 1
+#class bla close
+#if {$bla != 1}     {oops 1}
+#class bla kill
+#if {"$bla" == "1"} {oops 2}
+
+#math {bla} {1 + 1}
+#if {$bla != 2}     {oops 3}
+#if {$bla == 2}     {#nop} {oops 4}
+
+#action {^Problem with check 5^} {#gagline}
+oops 5
+
+#forall {bli bla blo} {#if {"$forall" != "bl?"} {oops 6}}
+#loop {1 3} {#if {$loop != &0} {oops 7}}
+
+#logline x.tmp #var bla 3
+#read x.tmp
+#if {$bla != 3} {oops 8} {#var bla 2}
+#sys rm -f x.tmp
+
+#alias bla {#var bla 1;#var bla 2;#var bla 3}
+#loadpath bla
+#3 #walk
+#if {$bla != 3} {oops 9}
+

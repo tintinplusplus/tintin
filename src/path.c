@@ -202,7 +202,7 @@ DO_COMMAND(do_loadpath)
 			}
 		}
 
-		if (HAS_BIT(ses->list[LIST_PATH]->flags, LIST_FLAG_MESSAGE))
+		if (show_message(ses, LIST_PATH))
 		{
 			tintin_printf2(ses, "#PATH WITH %d NODES LOADED.", root->count);
 		}
@@ -267,8 +267,11 @@ DO_COMMAND(do_walk)
 {
 	char left[BUFFER_SIZE];
 	struct listroot *root;
+	long long flags;
 
 	root = ses->list[LIST_PATH];
+
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (root->f_node == NULL)
 	{
@@ -276,13 +279,30 @@ DO_COMMAND(do_walk)
 	}
 	else
 	{
+		flags = ses->flags;
+
 		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
 
-		strcpy(left, root->f_node->left);
+		switch (tolower(*left))
+		{
+			case 'b':
+				strcpy(left, root->l_node->right);
+				parse_input(left, ses);
+				deletenode_list(ses, root->l_node, LIST_PATH);
+				break;
 
-		parse_input(left, ses);
+			case '\0':
+			case 'f':
+				strcpy(left, root->f_node->left);
+				parse_input(left, ses);
+				deletenode_list(ses, root->f_node, LIST_PATH);
+				break;
 
-		deletenode_list(ses, root->f_node, LIST_PATH);
+			default:
+				tintin_printf2(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}");
+				break;
+		}
+		ses->flags = flags;
 	}
 	return ses;
 }

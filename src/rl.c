@@ -91,7 +91,7 @@ void printline(struct session *ses, const char *str, int prompt)
 void bait(void)
 {
 	fd_set readfds, excfds;
-	struct session *ses, *ses_next;
+	struct session *ses;
 	struct timeval to;
 	int rv;
 
@@ -128,9 +128,9 @@ void bait(void)
 				
 			}
 
-			for (ses = gts->next ; ses ; ses = ses_next)
+			for (ses = gts->next ; ses ; ses = gtd->update)
 			{
-				ses_next = ses->next;
+				gtd->update = ses->next;
 
 				if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 				{
@@ -187,34 +187,14 @@ void commandloop(void)
 		}
 
 
-		sprintf(buffer, "\033[0m%s", line);
+		sprintf(buffer, "%s", line);
 
 		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
 		{
-			memset(&buffer[4], '*', strlen(line));
+			memset(buffer, '*', strlen(line));
 		}
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
-		{
-			if (HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND) || gtd->ses->list[LIST_PROMPT]->f_node == NULL)
-			{
-				SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-
-				if (gtd->ses->more_output[0] && gtd->ses->list[LIST_PROMPT]->f_node == NULL)
-				{
-					gtd->ses->check_output = 0;
-
-					tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
-				}
-				else
-				{
-					tintin_puts2(buffer, gtd->ses);
-				}
-				DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-			}
-		}
-
-		add_line_buffer(gtd->ses, buffer, -1);
+		echo_command(gtd->ses, buffer, 0);
 
 		SET_BIT(gts->flags, SES_FLAG_USERCOMMAND);
 
@@ -246,21 +226,23 @@ void readmud(struct session *ses)
 
 	push_call("readmud(%p)", ses);
 
-	read_buffer_mud(ses);
-
-	switch (gtd->mud_output_len)
+	if (!HAS_BIT(ses->flags, SES_FLAG_SCAN))
 	{
-		case -1:
-			cleanup_session(ses);
+		read_buffer_mud(ses);
 
-			pop_call();
-			return;
+		switch (gtd->mud_output_len)
+		{
+			case -1:
+				cleanup_session(ses);
 
-		case  0:
-			pop_call();
-			return;
+				pop_call();
+				return;
+
+			case  0:
+				pop_call();
+				return;
+		}
 	}
-
 	gtd->mud_output_len = 0;
 
 
@@ -356,24 +338,6 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		return;
 	}
-/*
-	if (!HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
-	{
-		if (ses == gtd->ses || HAS_BIT(ses->flags, SES_FLAG_SNOOP))
-		{
-			if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
-			{
-				if (gtd->ses->more_output[0])
-				{
-					if (linebuf[0])
-					{
-						printf("\n");
-					}
-				}
-			}
-		}
-	}
-*/
 	add_line_buffer(ses, linebuf, prompt);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
@@ -441,6 +405,63 @@ char * readkeyboard(void)
 	return NULL;
 }
 
+void echo_command(struct session *ses, char *line, int newline)
+{
+	char buffer[BUFFER_SIZE];
+
+	sprintf(buffer, "\033[0m%s", line);
+
+	if (newline)
+	{
+		if (gtd->ses->more_output[0] == 0)
+		{
+			return;
+		}
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT) && gtd->ses->list[LIST_PROMPT]->f_node)
+		{
+			return;
+		}
+		gtd->ses->check_output = 0;
+
+		SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+		{
+			tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
+		}
+		else
+		{
+			tintin_printf2(gtd->ses, "%s", buffer);
+		}
+
+		DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+
+		add_line_buffer(gtd->ses, buffer, FALSE);
+
+		return;
+	}
+
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+	{
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND) || gtd->ses->list[LIST_PROMPT]->f_node == NULL)
+		{
+			SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+
+			if (gtd->ses->more_output[0] && gtd->ses->list[LIST_PROMPT]->f_node == NULL)
+			{
+				gtd->ses->check_output = 0;
+
+				tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
+			}
+			else
+			{
+				tintin_printf2(gtd->ses, "%s", buffer);
+			}
+			DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+		}
+	}
+	add_line_buffer(gtd->ses, buffer, -1);
+}
 
 int show_message(struct session *ses, int index)
 {

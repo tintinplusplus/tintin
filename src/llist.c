@@ -118,9 +118,12 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 {
 	struct listnode *node, *newnode;
 
+	push_call("insertnode_list(%p,%p,%p)",ses,ltext,rtext);
+
 	if ((newnode = calloc(1, sizeof(struct listnode))) == NULL)
 	{
-		fprintf(stderr, "couldn't calloc listhead");
+		fprintf(stderr, "couldn't calloc listhead\n");
+		dump_stack();
 		exit(1);
 	}
 
@@ -142,9 +145,10 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 		case PRIORITY:
 			for (node = ses->list[index]->f_node ; node ; node = node->next)
 			{
-				if (atoi(prtext) < atoi(node->pr))
+				if (atof(prtext) < atof(node->pr))
 				{
 					INSERT_LEFT(newnode, node, ses->list[index]->f_node, next, prev);
+					pop_call();
 					return;
 				}
 			}
@@ -157,6 +161,7 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 				if (strcmp(ltext, node->left) < 0)
 				{
 					INSERT_LEFT(newnode, node, ses->list[index]->f_node, next, prev);
+					pop_call();
 					return;
 				}
 			}
@@ -171,12 +176,16 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 			tintin_printf2(NULL, "insertnode_list: bad list_table mode: %d", list_table[index].mode);
 			break;
 	}
+	pop_call();
+	return;
 }
 
 
 void updatenode_list(struct session *ses, const char *ltext, const char *rtext, const char *prtext, int index)
 {
 	struct listnode *node;
+
+	push_call("updatenode_list(%p,%p,%p,%p,%p)",ses,ltext,rtext,prtext,index);
 
 	for (node = ses->list[index]->f_node ; node ; node = node->next)
 	{
@@ -191,11 +200,13 @@ void updatenode_list(struct session *ses, const char *ltext, const char *rtext, 
 			switch (list_table[index].mode)
 			{
 				case PRIORITY:
-					if (strcmp(node->pr, prtext) == 0)
+					if (atof(node->pr) == atof(prtext))
 					{
+						pop_call();
 						return;
 					}
 					deletenode_list(ses, node, index);
+					insertnode_list(ses, ltext, rtext, prtext, index);
 					break;
 
 				case APPEND:
@@ -206,7 +217,7 @@ void updatenode_list(struct session *ses, const char *ltext, const char *rtext, 
 					}
 					UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
 					LINK(node, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
-					return;
+					break;
 
 				case ALPHA:
 					if (strcmp(node->pr, prtext) != 0)
@@ -214,11 +225,19 @@ void updatenode_list(struct session *ses, const char *ltext, const char *rtext, 
 						free(node->pr);
 						node->pr = strdup(prtext);
 					}
-					return;
+					break;
+
+				default:
+					tintin_printf2(ses, "updatenode_list: bad mode");
+					break;
 			}
+			pop_call();
+			return;
 		}
 	}
 	insertnode_list(ses, ltext, rtext, prtext, index);
+	pop_call();
+	return;
 }
 
 void deletenode_list(struct session *ses, struct listnode *node, int index)

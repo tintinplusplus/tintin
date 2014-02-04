@@ -304,6 +304,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 			case '~':
 				if (HAS_BIT(flags, SUB_ANC) && pti == string)
 				{
+					string++;
 					pti++;
 				}
 				else

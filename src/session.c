@@ -277,14 +277,6 @@ void cleanup_session(struct session *ses)
 
 	UNLINK(ses, gts->next, gts->prev, next, prev);
 
-	tintin_printf(ses, "\n\r#SESSION '%s' DIED.", ses->name);
-
-	if (ses == gtd->ses)
-	{
-		gtd->ses = newactive_session();
-	}
-	do_killall(ses, NULL);
-
 	if (ses->socket)
 	{
 		if (close(ses->socket) == -1)
@@ -292,6 +284,15 @@ void cleanup_session(struct session *ses)
 			syserr("close in cleanup");
 		}
 	}
+
+	tintin_printf(ses, "\n\r#SESSION '%s' DIED.", ses->name);
+
+	if (ses == gtd->ses)
+	{
+		gtd->ses = newactive_session();
+	}
+
+	do_killall(ses, NULL);
 
 	if (ses->logfile)
 	{
@@ -302,6 +303,7 @@ void cleanup_session(struct session *ses)
 	{
 		fclose(ses->logline);
 	}
+
 
 	free(ses->name);
 	free(ses->host);
