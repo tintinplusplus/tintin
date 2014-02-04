@@ -93,11 +93,10 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 					break;
 
 				default:
-					if (*pti < 27)
+					if (*pti < 32)
 					{
 						*pto++ = '\\';
-						*pto++ = 'C';
-						*pto++ = '-';
+						*pto++ = 'c';
 						*pto++ = 'a' + *pti - 1;
 					}
 					else

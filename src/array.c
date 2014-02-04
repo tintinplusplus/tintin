@@ -43,7 +43,8 @@ DO_COMMAND(do_list)
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, FALSE);
 
-	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+	substitute(ses,  arg, temp, SUB_VAR|SUB_FUN);
 
 	arg = temp;
 

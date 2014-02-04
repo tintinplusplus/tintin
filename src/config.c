@@ -163,7 +163,9 @@ DO_CONFIG(config_commandcolor)
 
 		return NULL;
 	}
-	substitute(ses, arg, ses->command_color, SUB_COL);
+	substitute(ses, arg, str, SUB_COL);
+
+	RESTRING(ses->cmd_color, str);
 
 	sprintf(str, "%d", index);
 

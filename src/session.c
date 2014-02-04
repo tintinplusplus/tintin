@@ -209,12 +209,18 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	newsession->name          = strdup(name);
 	newsession->host          = strdup(host);
+	newsession->ip            = strdup("");
 	newsession->port          = strdup(port);
 
 	newsession->class         = strdup(gts->class);
 	newsession->flags         = gts->flags;
 	newsession->telopts       = gts->telopts;
 	newsession->auto_tab      = gts->auto_tab;
+
+	newsession->cmd_color     = strdup(gts->cmd_color);
+
+	newsession->read_max      = gts->read_max;
+	newsession->read_buf      = calloc(1, gts->read_max);
 
 	gtd->ses                  = newsession;
 
@@ -265,7 +271,7 @@ void connect_session(struct session *ses)
 
 	reconnect:
 
-	sock = connect_mud(ses->host, ses->port, ses);
+	sock = connect_mud(ses, ses->host, ses->port);
 
 	if (sock == -1)
 	{
@@ -290,7 +296,7 @@ void connect_session(struct session *ses)
 			init_telnet_session(ses);
 		}
 
-		check_all_events(ses, "SESSION CONNECTED");
+		check_all_events(ses, 0, 4, "SESSION CONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
 		return;
 	}
@@ -345,7 +351,7 @@ void cleanup_session(struct session *ses)
 		}
 	}
 
-	check_all_events(ses, "SESSION DISCONNECTED");
+	check_all_events(ses, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
 	tintin_printf(gtd->ses, "");
 
@@ -354,13 +360,6 @@ void cleanup_session(struct session *ses)
 	if (ses == gtd->ses)
 	{
 		gtd->ses = newactive_session();
-	}
-
-	do_killall(ses, NULL);
-
-	if (ses->map)
-	{
-		delete_map(ses);
 	}
 
 	if (ses->logfile)
@@ -373,15 +372,33 @@ void cleanup_session(struct session *ses)
 		fclose(ses->logline);
 	}
 
+	LINK(ses, gtd->dispose_next, gtd->dispose_prev);
+
 	pop_call();
-	push_call("cleanup_session(%p) (free)", ses);
+	return;
+}
+
+void dispose_session(struct session *ses)
+{
+	push_call("dispose_session(%p)", ses);
+
+	UNLINK(ses, gtd->dispose_next, gtd->dispose_prev);
+
+	do_killall(ses, NULL);
+
+	if (ses->map)
+	{
+		delete_map(ses);
+	}
 
 	init_buffer(ses, 0);
 
 	free(ses->name);
 	free(ses->host);
+	free(ses->ip);
 	free(ses->port);
 	free(ses->class);
+	free(ses->read_buf);
 
 	free(ses);
 

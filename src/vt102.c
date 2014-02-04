@@ -232,7 +232,7 @@ int skip_vt102_codes_non_graph(char *str)
 		case   5:   /* ENQ */
 		case   7:   /* BEL */
 		case   8:   /* BS  */
-		case   9:   /* HT  */
+	/*	case   9: *//* HT  */
 	/*	case  10: *//* LF  */
 		case  11:   /* VT  */
 		case  12:   /* FF  */

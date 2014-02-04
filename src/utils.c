@@ -184,6 +184,16 @@ char *capitalize(char *str)
 	return outbuf;
 }
 
+char *ntos(long long number)
+{
+	static char outbuf[100][NUMBER_SIZE];
+	static int cnt;
+
+	sprintf(outbuf[cnt], "%lld", number);
+
+	return outbuf[cnt++];
+}
+
 char *indent(int cnt)
 {
 	static char outbuf[BUFFER_SIZE];
@@ -256,7 +266,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	
 	if (index == -1)
 	{
-		if (HAS_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE))
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 		{
 			tintin_puts2(ses, buf);
 		}
@@ -276,7 +286,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
 	{
-		if (HAS_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE))
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 		{
 			tintin_puts2(ses, buf);
 

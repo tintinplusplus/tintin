@@ -29,6 +29,8 @@
 
 void process_input(void)
 {
+	int flags;
+
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)
 	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
@@ -72,13 +74,15 @@ void process_input(void)
 		buffer_end(gtd->ses, "");
 	}
 
-	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
+	flags = TINTIN_FLAG_USERCOMMAND | (HAS_BIT(gtd->ses->flags, SES_FLAG_VERBATIM) ? TINTIN_FLAG_VERBATIM : 0);
 
-	script_driver(gtd->ses, -1, gtd->input_buf);
+	SET_BIT(gtd->flags, flags);
 
-	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
+	gtd->ses = script_driver(gtd->ses, -1, gtd->input_buf);
 
-	check_all_events(gtd->ses, "RECEIVED INPUT");
+	DEL_BIT(gtd->flags, flags);
+
+	check_all_events(gtd->ses, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 
 	if (IS_SPLIT(gtd->ses))
 	{
@@ -443,7 +447,7 @@ void echo_command(struct session *ses, char *line, int newline)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		sprintf(buffer, "%s%s", ses->command_color, line);
+		sprintf(buffer, "%s%s\033[0m", ses->cmd_color, line);
 	}
 	else
 	{

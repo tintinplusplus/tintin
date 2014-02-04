@@ -381,7 +381,7 @@ DO_PATH(path_walk)
 		}
 		if (root->f_node == NULL)
 		{
-			check_all_events(ses, "END OF PATH");
+			check_all_events(ses, 0, 0, "END OF PATH");
 		}
 		ses->flags = flags;
 	}

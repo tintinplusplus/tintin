@@ -257,9 +257,11 @@ void init_tintin(void)
 	gts->class          = strdup("");
 	gts->host           = strdup("");
 	gts->port           = strdup("");
+	gts->cmd_color      = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
 	gts->flags          = SES_FLAG_MCCP;
 	gts->socket         = 1;
+	gts->read_max       = 4096;
 
 	gtd                 = calloc(1, sizeof(struct tintin_data));
 
@@ -343,7 +345,7 @@ void init_tintin(void)
 	do_showme(gts, "<068>      #<078>                 Original TINTIN code by Peter Unold               <068>#");
 	do_showme(gts, "<068>      #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,     <068>#");
 	do_showme(gts, "<068>      #<078>                 Jeremy C. Jack, Igor van den Hoven                <068>#");
-	do_showme(gts, "<068>      #<078>                             1992, 2008                            <068>#");
+	do_showme(gts, "<068>      #<078>                             1992, 2009                            <068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
 	do_showme(gts, "<068>      #<078>                               "VERSION_NUM"                              <068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
@@ -366,7 +368,8 @@ void quitmsg(char *message)
 		close(gtd->chat->fd);
 	}
 
-	check_all_events(gts, "PROGRAM TERMINATION");
+	check_all_events(gts, 0, 0, "PROGRAM TERMINATION");
+
 /*
 	if (gtd->history_size)
 	{

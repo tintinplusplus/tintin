@@ -71,6 +71,21 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 			newnode->pr    = strdup(node->pr);
 			newnode->class = strdup(node->class);
 
+			switch (index)
+			{
+				case LIST_ALIAS:
+					newnode->pcre = tintin_regexp_compile(newnode, newnode->left, PCRE_ANCHORED);
+					break;
+
+				case LIST_ACTION:
+				case LIST_GAG:
+				case LIST_HIGHLIGHT:
+				case LIST_PROMPT:
+				case LIST_SUBSTITUTE:
+					newnode->pcre = tintin_regexp_compile(newnode, newnode->left, 0);
+					break;
+			}
+
 			ses->list[index]->count++;
 
 			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);

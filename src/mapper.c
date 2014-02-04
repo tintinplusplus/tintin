@@ -2070,7 +2070,7 @@ void goto_room(struct session *ses, int room)
 {
 	ses->map->in_room = room;
 
-	check_all_events(ses, "MAP ENTER ROOM");
+	check_all_events(ses, 0, 1, "MAP ENTER ROOM", ntos(room));
 }
 
 struct exit_data *find_exit(struct session *ses, int room, char *arg)

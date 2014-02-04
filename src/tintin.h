@@ -124,7 +124,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.99.2"
+#define VERSION_NUM               "1.99.3"
 
 #define ESCAPE                          27
 
@@ -265,10 +265,9 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define SUB_COL                       (1 <<  3)
 #define SUB_ESC                       (1 <<  4)
 #define SUB_CMD                       (1 <<  5)
-#define SUB_ANC                       (1 <<  6)
-#define SUB_SEC                       (1 <<  7)
-#define SUB_EOL                       (1 <<  8)
-#define SUB_LNF                       (1 <<  9)
+#define SUB_SEC                       (1 <<  6)
+#define SUB_EOL                       (1 <<  7)
+#define SUB_LNF                       (1 <<  8)
 
 
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
@@ -277,7 +276,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define TINTIN_FLAG_PROCESSINPUT      (1 <<  3)
 #define TINTIN_FLAG_USERCOMMAND       (1 <<  4)
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  5)
-#define TINTIN_FLAG_SHOWMESSAGE       (1 <<  6)
+#define TINTIN_FLAG_VERBATIM          (1 <<  6)
 
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
@@ -459,9 +458,13 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define UMAX(a, b)                ((a) > (b) ? (a) : (b))
 #define UMIN(a, b)                ((a) < (b) ? (a) : (b))
 
+#define up(u)                     (u < 99 ? u++ : u)
+
 #define IS_SPLIT(ses)             ((ses)->rows != (ses)->bot_row || (ses)->top_row != 1)
 
 #define SCROLL(ses)               (((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
+
+#define VERBATIM                  (HAS_BIT(gtd->flags, TINTIN_FLAG_VERBATIM) && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 
 #define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *left, char *right)
 #define DO_CHAT(chat) void chat (char *left, char *right)
@@ -552,14 +555,16 @@ struct session
 	int                     telopt_flag[8];
 	int                     flags;
 	char                  * host;
+	char                  * ip;
 	char                  * port;
-	unsigned char           telopt_buf[NUMBER_SIZE];
-	int                     telopt_len;
+	char                  * cmd_color;
+	unsigned char         * read_buf;
+	int                     read_len;
+	int                     read_max;
 	long long               connect_retry;
 	int                     connect_error;
 	char                    more_output[BUFFER_SIZE];
 	char                    color[100];
-	char                    command_color[100];
 	long long               check_output;
 	int                     auto_tab;
 };
@@ -568,6 +573,8 @@ struct tintin_data
 {
 	struct session        * ses;
 	struct session        * update;
+	struct session        * dispose_next;
+	struct session        * dispose_prev;
 	struct chat_data      * chat;
 	struct termios          old_terminal;
 	struct termios          new_terminal;
@@ -1091,12 +1098,10 @@ extern int regexp(char *str, char *exp);
 extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int flag);
 extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
 extern int tintin_regexp(pcre *pcre, char *str, char *exp, int option);
+
+extern int substitute(struct session *ses, char *string, char *result, int flags);
+
 extern pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option);
-
-
-extern void substitute(struct session *ses, char *string, char *result, int flags);
-extern int check_one_action(char *line, char *original, char *action, struct session *ses);
-extern int action_glob(struct session *ses, char *str, char *exp, unsigned char arg);
 
 #endif
 
@@ -1189,7 +1194,7 @@ extern void dump_full_stack(void);
 
 extern DO_COMMAND(do_event);
 extern DO_COMMAND(do_unevent);
-extern void check_all_events(struct session *ses, char *line);
+extern void check_all_events(struct session *ses, int args, int vars, char *fmt, ...);
 
 #endif
 
@@ -1388,8 +1393,8 @@ extern DO_COMMAND(do_gagline);
 #ifndef __NET_H__
 #define __NET_H__
 
-extern int connect_mud(char *host, char *port, struct session *ses);
-extern void write_line_mud(char *line, struct session *ses);
+extern int connect_mud(struct session *ses, char *host, char *port);
+extern void write_line_mud(struct session *ses, char *line, int size);
 extern int read_buffer_mud(struct session *ses);
 extern void readmud(struct session *ses);
 extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
@@ -1398,7 +1403,7 @@ extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
 #ifndef __TELOPT_H__
 #define __TELOPT_H__
 
-extern void translate_telopts(struct session *ses, unsigned char *src, int cplen);
+extern int translate_telopts(struct session *ses, unsigned char *src, int cplen);
 
 extern int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1436,6 +1441,7 @@ extern void *zlib_alloc(void *opaque, unsigned int items, unsigned int size);
 extern void zlib_free(void *opaque, void *address);
 extern void init_telnet_session(struct session *ses);
 extern int skip_sb(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_sb(struct session *ses, int cplen, unsigned char *cpsrc);
 
 #endif
 
@@ -1500,6 +1506,7 @@ extern struct session *activate_session(struct session *ses);
 extern struct session *new_session(struct session *ses, char *name, char *address, int desc);
 extern void connect_session(struct session *ses);
 extern void cleanup_session(struct session *ses);
+extern void dispose_session(struct session *ses);
 
 #endif
 
@@ -1599,6 +1606,7 @@ extern int hex_number(char *str);
 extern int oct_number(char *str);
 extern long long utime(void);
 extern char *capitalize(char *str);
+extern char *ntos(long long number);
 extern char *indent(int cnt);
 extern void cat_sprintf(char *dest, char *fmt, ...);
 extern void ins_sprintf(char *dest, char *fmt, ...);
@@ -1637,7 +1645,7 @@ extern DO_COMMAND(do_tolower);
 extern DO_COMMAND(do_toupper);
 extern DO_COMMAND(do_postpad);
 extern DO_COMMAND(do_prepad);
-extern DO_COMMAND(do_replacestring);
+extern DO_COMMAND(do_replace);
 
 #endif
 

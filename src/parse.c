@@ -41,14 +41,6 @@ struct session *parse_input(struct session *ses, char *input)
 		return ses;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
-	{
-		write_mud(ses, input, SUB_EOL);
-
-		pop_call();
-		return ses;
-	}
-
 	if (*input == gtd->verbatim_char)
 	{
 		write_mud(ses, input+1, SUB_EOL);
@@ -280,7 +272,7 @@ char *get_arg_all(char *string, char *result)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !VERBATIM)
 		{
 			break;
 		}
@@ -401,7 +393,7 @@ char *get_arg_with_spaces(char *string, char *result)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !VERBATIM)
 		{
 			break;
 		}
@@ -451,7 +443,7 @@ char *get_arg_stop_spaces(char *string, char *result)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !VERBATIM)
 		{
 			break;
 		}
@@ -495,6 +487,7 @@ char *space_out(char *string)
 void write_mud(struct session *ses, char *command, int flags)
 {
 	char output[BUFFER_SIZE];
+	int size;
 
 	if (ses->map && ses->map->in_room)
 	{
@@ -506,9 +499,9 @@ void write_mud(struct session *ses, char *command, int flags)
 		check_insert_path(command, ses);
 	}
 
-	substitute(ses, command, output, flags);
+	size = substitute(ses, command, output, flags);
 
-	write_line_mud(output, ses);
+	write_line_mud(ses, output, size);
 }
 
 
@@ -525,7 +518,7 @@ void do_one_line(char *line, struct session *ses)
 
 	strip_vt102_codes(line, strip);
 
-	check_all_events(ses, "RECEIVED LINE");
+	check_all_events(ses, 0, 2, "RECEIVED LINE", line, strip);
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{

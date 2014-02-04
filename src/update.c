@@ -439,5 +439,10 @@ void memory_update(void)
 {
 	open_timer(TIMER_UPDATE_MEMORY);
 
+	while (gtd->dispose_next)
+	{
+		dispose_session(gtd->dispose_next);
+	}
+
 	close_timer(TIMER_UPDATE_MEMORY);
 }

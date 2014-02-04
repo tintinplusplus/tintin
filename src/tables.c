@@ -76,7 +76,7 @@ struct command_type command_table[] =
 	{    "prompt",            do_prompt,            TOKEN_OPR_CMD    },
 	{    "read",              do_read,              TOKEN_OPR_CMD    },
 	{    "regexp",            do_regexp,            TOKEN_OPR_CMD    },
-	{    "replacestring",     do_replacestring,     TOKEN_OPR_CMD    },
+	{    "replacestring",     do_replace,           TOKEN_OPR_CMD    },
 	{    "return",            do_return,            TOKEN_OPR_RETURN },
 	{    "run",               do_run,               TOKEN_OPR_CMD    },
 	{    "scan",              do_scan,              TOKEN_OPR_CMD    },
@@ -278,7 +278,7 @@ struct config_type config_table[] =
 
 	{
 		"VERBATIM",
-		"Your keyboard input is send directly to the mud",
+		"Your keyboard input isn't modified by Tintin",
 		"Your keyboard input is parsed by Tintin",
 		config_verbatim
 	},
@@ -732,6 +732,7 @@ struct timer_type timer_table[] =
 struct event_type event_table[] =
 {
 	{    "END OF PATH",                            "Triggers when walking the last room."  },
+	{    "IAC ",                                   "Triggers on telopt negotiation."       },
 	{    "MAP ENTER ROOM",                         "Triggers when entering a map room."    },
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."    },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."  },

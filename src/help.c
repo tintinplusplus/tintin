@@ -344,6 +344,17 @@ struct help_type help_table[] =
 		"         a brief description. Use #event * to see the current list of available\n"
 		"         events you can use.\n"
 		"\n"
+		"         END OF PATH\n"
+		"         IAC <VAR> <VAR>\n"
+		"         IAC SB MSSP          %0 variable %1 value\n"
+		"         IAC SB <VAR>         %0 raw text %1 raw data\n"
+		"         MAP ENTER ROOM       %0 vnum\n"
+		"         PROGRAM TERMINATION\n"
+		"         RECEIVED INPUT       %0 raw text\n"
+		"         RECEIVED LINE        %0 raw text %1 plain text\n"
+		"         SESSION CONNECTED    %0 name %1 host %2 ip %3 port\n"
+		"         SESSION DISCONNECTED %0 name %1 host %2 ip %3 port\n"
+		"\n"
 		"<178>Example<078>: #event {session connected} {#read mychar.tin}\n"
 		"\n"
 		"<178>Comment<078>: You can remove an event with the #unevent command.\n"
@@ -461,11 +472,13 @@ struct help_type help_table[] =
 		"         b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white\n"
 		"\n"
 		"         The %1-99 variables can be used as 'wildcards' that will match with any\n"
-		"         text. They are useful for highlighting a complete line.\n"
+		"         text. They are useful for highlighting a complete line. The %0 variable\n"
+		"         should never be used in highlights.\n"
+		"\n"
 		"         You may start the string to highlight with a ^ to only highlight text\n"
 		"         if it begins the line.\n"
 		"\n"
-		"         Besides color names also <abc> color codes can be used.\n"
+		"         Besides color names also <<888>abc> color codes can be used.\n"
 		"\n"
 		"<178>Example<078>: #high {Valgar} {reverse}\n"
 		"         Prints every occurrence of 'Valgar' in reverse video.\n"
@@ -584,7 +597,10 @@ struct help_type help_table[] =
 		"LOG",
 		"<178>Command<078>: #log <178>{<078>append<178>|<078>overwrite<178>}<078> <178>{<078>filename<178>}<078>\n"
 		"\n"
-		"         Logs session to a file, you can set the data type with config command.\n"
+		"         Logs session to a file, you can set the data type to either plain,\n"
+		"         raw, or html with the config command.\n"
+		"\n"
+		"         When logging in html format use \\c< and \\c> to log a literal < or >.\n"
 	},
 
 	{
@@ -931,8 +947,8 @@ struct help_type help_table[] =
 		"<178>Example<078>: #regexp {bli bla blo} {bli (.*) blo} {#showme &1}\n"
 	},
 	{
-		"REPLACESTRING",
-		"<178>Command<078>: #replacestring <178>{<078>variable<178>}<078> <178>{<078>oldtext<178>}<078> <178>{<078>newtext<178>}<078>\n"
+		"REPLACE",
+		"<178>Command<078>: #replace <178>{<078>variable<178>}<078> <178>{<078>oldtext<178>}<078> <178>{<078>newtext<178>}<078>\n"
 		"\n"
 		"         Searches the variable text replacing each occurance of 'oldtext' with\n"
 		"         'newtext'.\n"

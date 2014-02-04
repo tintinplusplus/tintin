@@ -39,14 +39,14 @@ DO_COMMAND(do_variable)
 	arg = get_arg_in_braces(arg, left, FALSE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, right, TRUE);
+	get_arg_in_braces(arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
 		show_list(ses, root, LIST_VARIABLE);
 	}
-	else if (*left && *right == 0)
+	else if (*left && *arg == 0)
 	{
 		if (show_node_with_wild(ses, left, LIST_VARIABLE) == FALSE)
 		{
@@ -133,7 +133,7 @@ void internal_variable(struct session *ses, char *format, ...)
 
 
 
-DO_COMMAND(do_replacestring)
+DO_COMMAND(do_replace)
 {
 	char var[BUFFER_SIZE], old[BUFFER_SIZE], new[BUFFER_SIZE], buf[STRING_SIZE], *pti, *ptr, *pto;
 	struct listroot *root;
@@ -143,21 +143,21 @@ DO_COMMAND(do_replacestring)
 
 	arg = get_arg_in_braces(arg, var, FALSE);
 	arg = get_arg_in_braces(arg, old, FALSE);
-	substitute(ses, old, old, SUB_VAR|SUB_FUN);
+	substitute(ses, old, old, SUB_VAR|SUB_FUN|SUB_ESC);
 	arg = get_arg_in_braces(arg, new, TRUE);
 	substitute(ses, new, new, SUB_VAR|SUB_FUN);
 
 	if (*var == 0 || *old == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#Syntax: #replacestring <var> <oldtext> <newtext>", ses);
+		show_message(ses, LIST_VARIABLE, "#Syntax: #replace <var> <oldtext> <newtext>", ses);
 	}
 	else	if ((node = searchnode_list(root, var)) == NULL)
 	{
-		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: VARIABLE {%s} NOT FOUND.", var);
+		show_message(ses, LIST_VARIABLE, "#REPLACE: VARIABLE {%s} NOT FOUND.", var);
 	}
 	else if ((ptr = strstr(node->right, old)) == NULL)
 	{
-		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: {%s} NOT FOUND IN {%s}.", old, node->right);
+		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", old, node->right);
 	}
 	else
 	{

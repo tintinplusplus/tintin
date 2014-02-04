@@ -60,16 +60,16 @@ DO_COMMAND(do_event)
 	{
 		for (cnt = 0 ; *event_table[cnt].name != 0 ; cnt++)
 		{
-			if (is_abbrev(left, event_table[cnt].name))
+			if (!strncmp(event_table[cnt].name, left, strlen(event_table[cnt].name)))
 			{
-				show_message(ses, LIST_EVENT, "#EVENT {%s} HAS BEEN SET TO {%s}.", event_table[cnt].name, right);
+				show_message(ses, LIST_EVENT, "#EVENT {%s} HAS BEEN SET TO {%s}.", left, right);
 
-				updatenode_list(ses, event_table[cnt].name, right, "", LIST_EVENT);
+				updatenode_list(ses, left, right, "", LIST_EVENT);
 
 				return ses;
 			}
 		}
-		tintin_printf(ses, "#EVENT {%s} IS NOT A VALID OPTION.", capitalize(left));
+		tintin_printf(ses, "#EVENT {%s} IS NOT AN EXISTING EVENT.", capitalize(left));
 	}
 	return ses;
 }
@@ -81,15 +81,36 @@ DO_COMMAND(do_unevent)
 	return ses;
 }
 
-void check_all_events(struct session *ses, char *line)
+void check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 {
+	char buf[BUFFER_SIZE];
 	struct listnode *node;
+	va_list list;
+	int cnt;
+
+	va_start(list, fmt);
+
+	vsprintf(buf, fmt, list);
 
 	for (node = ses->list[LIST_EVENT]->f_node ; node ; node = node->next)
 	{
-		if (!strcmp(node->left, line))
+		if (!strcmp(node->left, buf))
 		{
-			script_driver(ses, LIST_EVENT, node->right);
+			for (cnt = 0 ; cnt < args ; cnt++)
+			{
+				va_arg(list, char *);
+			}
+
+			for (cnt = 0 ; cnt < vars ; cnt++)
+			{
+				RESTRING(gtd->vars[cnt], va_arg(list, char *));
+			}
+
+			substitute(ses, node->right, buf, SUB_ARG|SUB_SEC);
+
+			script_driver(ses, LIST_EVENT, buf);
 		}
 	}
+
+	va_end(list);
 }

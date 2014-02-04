@@ -102,7 +102,7 @@ void telopt_debug(struct session *ses, char *format, ...)
 }
 
 
-void translate_telopts(struct session *ses, unsigned char *src, int cplen)
+int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 {
 	int skip, cnt;
 	unsigned char *cpdst;
@@ -110,7 +110,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	if (cplen == 0)
 	{
-		return;
+		return 0;
 	}
 
 	if (ses->mccp)
@@ -168,35 +168,38 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 		cpsrc = src;
 	}
 
+	if (ses->read_len + cplen >= ses->read_max)
+	{
+		ses->read_max = ses->read_len + cplen + 1000;
+		ses->read_buf = realloc(ses->read_buf, ses->read_max);
+	}
+
+	memcpy(ses->read_buf + ses->read_len, cpsrc, cplen);
+
+	cpsrc = ses->read_buf;
+
+
+	if (gtd->mud_output_len + cplen >= gtd->mud_output_max)
+	{
+		gtd->mud_output_max = gtd->mud_output_len + cplen + 1000;
+		gtd->mud_output_buf = realloc(gtd->mud_output_buf, gtd->mud_output_max);
+	}
+
+	cpdst = (unsigned char *) gtd->mud_output_buf + gtd->mud_output_len;
+
+
 	if (HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL) && ses->logfile)
 	{
 		fwrite(cpsrc, 1, cplen, ses->logfile);
 		fflush(ses->logfile);
 	}
 
-	if (ses->telopt_len)
-	{
-		memmove(&src[ses->telopt_len], cpsrc, cplen);
-		memmove(src, ses->telopt_buf, ses->telopt_len);
-
-		cplen += ses->telopt_len;
-		ses->telopt_len = 0;
-
-		cpsrc = src;
-	}
-
-	while (gtd->mud_output_len + cplen >= gtd->mud_output_max)
-	{
-		gtd->mud_output_max *= 2;
-		gtd->mud_output_buf  = realloc(gtd->mud_output_buf, gtd->mud_output_max);
-	}
-
-	cpdst = (unsigned char *) gtd->mud_output_buf + gtd->mud_output_len;
-
 	while (cplen > 0)
 	{
 		if (*cpsrc == IAC)
 		{
+			skip = 2;
+
 			if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
 			{
 				switch(cpsrc[1])
@@ -209,18 +212,10 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case AYT:   
 					case EC:    
 					case EL:
-						tintin_printf2(ses, "RCVD %s", TELCMD(cpsrc[1]));
-						break;
-
 					case IAC:
-						tintin_printf2(ses, "RCVD IAC IAC");
-						break;
-
 					case GA:
 					case EOR:
-						sprintf((char *) cpdst, "RCVD %s", TELCMD(cpsrc[1])); 
-						gtd->mud_output_len += strlen((char *) cpdst);
-						cpdst += strlen((char *) cpdst);
+						tintin_printf2(ses, "RCVD IAC %s", TELCMD(cpsrc[1]));
 						break;
 
 					case DO:
@@ -257,17 +252,13 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				}
 			}
 
-			for (skip = cnt = 0 ; iac_table[cnt].code != NULL ; cnt++)
+			for (cnt = 0 ; iac_table[cnt].code ; cnt++)
 			{
 				if (cplen < iac_table[cnt].size && !memcmp(cpsrc, iac_table[cnt].code, cplen))
 				{
-					ses->telopt_len = cplen;
+					skip = iac_table[cnt].size;
 
-					memcpy(ses->telopt_buf, cpsrc, ses->telopt_len);
-
-					gtd->mud_output_buf[gtd->mud_output_len] = 0;
-
-					return;
+					break;
 				}
 
 				if (cplen >= iac_table[cnt].size && !memcmp(cpsrc, iac_table[cnt].code, iac_table[cnt].size))
@@ -276,15 +267,13 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 					if (iac_table[cnt].func == init_mccp)
 					{
-						translate_telopts(ses, cpsrc + skip, cplen - skip);
-
-						return;
+						return translate_telopts(ses, cpsrc + skip, cplen - skip);
 					}
 					break;
 				}
 			}
 
-			if (skip == 0)
+			if (iac_table[cnt].code == NULL && cplen > 1)
 			{
 				switch (cpsrc[1])
 				{
@@ -303,44 +292,62 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					     break;
 
 					case WILL:
-						if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
+						if (cplen > 2)
 						{
-							if (telopt_table[cpsrc[2]].want)
+							if (cpsrc[2] >= 50)
 							{
-								skip = send_do_telopt(ses, cplen, cpsrc);
+								check_all_events(ses, 1, 0, "IAC WILL %s", telopt_table[cpsrc[2]].name);
 							}
-							else
+							else if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
 							{
-								skip = send_dont_telopt(ses, cplen, cpsrc);
+								if (telopt_table[cpsrc[2]].want)
+								{
+									skip = send_do_telopt(ses, cplen, cpsrc);
+								}
+								else
+								{
+									skip = send_dont_telopt(ses, cplen, cpsrc);
+								}
+								SET_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
 							}
-							SET_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
 						}
 						skip = 3;
 						break;
 
 					case DO:
-						if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
+						if (cplen > 2)
 						{
-							if (telopt_table[cpsrc[2]].want)
+							if (cpsrc[2] >= 50)
 							{
-								skip = send_will_telopt(ses, cplen, cpsrc);
+								check_all_events(ses, 1, 0, "IAC DO %s", telopt_table[cpsrc[2]].name);
 							}
-							else
+							else if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
 							{
-								skip = send_wont_telopt(ses, cplen, cpsrc);
+								if (telopt_table[cpsrc[2]].want)
+								{
+									skip = send_will_telopt(ses, cplen, cpsrc);
+								}
+								else
+								{
+									skip = send_wont_telopt(ses, cplen, cpsrc);
+								}
+								SET_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
 							}
-							SET_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
 						}
 						skip = 3;
 						break;
 
 					case WONT:
 					case DONT:
+						if (cplen > 2 && cpsrc[2] >= 50)
+						{
+							check_all_events(ses, 2, 0, "IAC %s %s", TELCMD(cpsrc[1]), telopt_table[cpsrc[2]].name);
+						}
 						skip = 3;
 						break;
 
 					case SB:
-						skip = skip_sb(ses, cplen, cpsrc);
+						skip = recv_sb(ses, cplen, cpsrc);
 						break;
 
 					case IAC:
@@ -355,8 +362,19 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						break;
 				}
 			}
-			cplen -= skip;
-			cpsrc += skip;
+			if (skip <= cplen)
+			{
+				cplen -= skip;
+				cpsrc += skip;
+			}
+			else
+			{
+				memcpy(ses->read_buf, cpsrc, cplen);
+
+				gtd->mud_output_buf[gtd->mud_output_len] = 0;
+
+				return cplen;
+			}
 		}
 #ifdef BIG5
 		else if (*cpsrc & 0x80)
@@ -434,7 +452,10 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			cplen--;
 		}
 	}
+
 	gtd->mud_output_buf[gtd->mud_output_len] = 0;
+
+	return 0;
 }
 
 /*
@@ -667,6 +688,8 @@ int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc)
 {
+	check_all_events(ses, 0, 0, "IAC WILL MSSP");
+
 	if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
 	{
 		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MSSP);
@@ -684,9 +707,14 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 
 	var[0] = val[0] = i = 0;
 
+	if (skip_sb(ses, cplen, src) > cplen)
+	{
+		return cplen + 1;
+	}
+
 	if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
 	{
-		tintin_header(ses, " MSSP %d", cplen);
+		tintin_header(ses, " MSSP (%d Bytes) ", cplen);
 	}
 
 	while (i < cplen && src[i] != SE)
@@ -713,6 +741,8 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 					*pto++ = src[i++];
 				}
 				*pto = 0;
+
+				check_all_events(ses, 0, 2, "IAC SB MSSP", var, val);
 
 				telopt_debug(ses, "%-20s %s", var, val);
 				break;
@@ -843,13 +873,50 @@ int skip_sb(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	int i;
 
-	for (i = 0 ; i < cplen ; i++)
+	for (i = 1 ; i < cplen ; i++)
 	{
-		if (cpsrc[i] == SE)
+		if (cpsrc[i] == SE && cpsrc[i-1] == IAC)
 		{
-			break;
+			return i + 1;
 		}
 	}
 
-	return UMIN(i + 1, cplen);
+	return cplen + 1;
+}
+
+int recv_sb(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	char *pt1, *pt2, var1[BUFFER_SIZE], var2[BUFFER_SIZE];
+	int i;
+
+	if (skip_sb(ses, cplen, cpsrc) > cplen)
+	{
+		return cplen + 1;
+	}
+
+	pt1 = var1;
+	pt2 = var2;
+
+	for (i = 3 ; i < cplen ; i++)
+	{
+		if (cpsrc[i] == IAC && i + 1 < cplen && cpsrc[i+1] == SE)
+		{
+			break;
+		}
+		else
+		{
+			*pt1++ = cpsrc[i];
+
+			sprintf(pt2, "%03d ", cpsrc[i]);
+
+			pt2 += 4;
+		}
+	}
+
+	*pt1 = 0;
+	*pt2 = 0;
+
+	check_all_events(ses, 1, 2, "IAC SB %s", telopt_table[cpsrc[2]].name, var1, var2);
+
+	return i + 2;
 }

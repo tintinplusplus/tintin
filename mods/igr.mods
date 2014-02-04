@@ -1,3 +1,39 @@
+March 2009     1.99.3
+
+llist.c        Now properly inheriting triggers from the startup session.
+
+net.c          Now fetching IP address when connecting to a server.
+
+variable.c     Now possible to use escape codes in #replace
+
+vt100.c        Tabs are no longer stripped in the scrollback buffer.
+
+help.c         Updated event helpfile with event arguments.
+
+telopt.c       Added generic telnet subnegotiation event.
+
+telopt.c       Added better broken packet support for telnet negotiations.
+
+variable.c     now possible to use #var bla {} to set an empty variable.
+
+event.c        Extended the event handler to easily accept additional arguments.
+
+tinexp.c       Now possible to send NUL bytes with #send using \x00 or \c@.
+               This is as far as the support for non strings goes though.
+
+tinexp.c       Can use #regex on an empty string now.
+
+input.c        Resetting command color at end of command.
+
+tinexp.c       %%w, %%*, etc, should escape properly now.
+
+parse.c        Fixed VERBATIM behavior, aliases can now be used in verbatim
+               mode.
+
+alias.c        Now possible to #ignore aliases.
+
+highlight.c    Fixed highlights, %0 should never be used in the trigger.
+
 March 2009     1.99.2
 --------------------------------------------------------------------------------
 tinexp.c       Added pre-compiler for triggers, making them execute much faster.

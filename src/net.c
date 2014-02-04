@@ -43,11 +43,12 @@
 
 #ifdef HAVE_GETADDRINFO
 
-int connect_mud(char *host, char *port, struct session *ses)
+int connect_mud(struct session *ses, char *host, char *port)
 {
 	int sock, error;
 	struct addrinfo *address;
 	static struct addrinfo hints;
+	char ip[100];
 
 	if (!is_number(port))
 	{
@@ -96,6 +97,11 @@ int connect_mud(char *host, char *port, struct session *ses)
 	{
 		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
 	}
+
+	getnameinfo(address->ai_addr, address->ai_addrlen, ip, 100, NULL, 0, NI_NUMERICHOST);
+
+	RESTRING(ses->ip, ip);
+
 	freeaddrinfo(address);
 
 	return sock;
@@ -103,7 +109,7 @@ int connect_mud(char *host, char *port, struct session *ses)
 
 #else
 
-int connect_mud(char *host, char *port, struct session *ses)
+int connect_mud(struct session *ses, char *host, char *port)
 {
 	int sock, d;
 	struct sockaddr_in sockaddr;
@@ -155,12 +161,14 @@ int connect_mud(char *host, char *port, struct session *ses)
 		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
 	}
 
+	RESTRING(ses->ip, inet_ntoa(sockaddr.sin_addr));
+
 	return sock;
 }
 
 #endif
 
-void write_line_mud(char *line, struct session *ses)
+void write_line_mud(struct session *ses, char *line, int size)
 {
 	push_call("write_line_mud(%p,%p)",line,ses);
 
@@ -180,7 +188,7 @@ void write_line_mud(char *line, struct session *ses)
 		return;
 	}
 
-	if (write(ses->socket, line, strlen(line)) == -1)
+	if (write(ses->socket, line, size) == -1)
 	{
 		syserr("write in write_line_mud");
 	}
@@ -191,12 +199,12 @@ void write_line_mud(char *line, struct session *ses)
 
 int read_buffer_mud(struct session *ses)
 {
-	char buf[STRING_SIZE];
+	char buffer[BUFFER_SIZE];
 	int size;
 
 	push_call("read_buffer_mud(%p)",ses);
 
-	size = read(ses->socket, buf, STRING_SIZE - 1);
+	size = read(ses->socket, buffer, BUFFER_SIZE - 1);
 
 	if (size <= 0)
 	{
@@ -204,9 +212,7 @@ int read_buffer_mud(struct session *ses)
 		return FALSE;
 	}
 
-	buf[size] = 0;
-
-	translate_telopts(ses, (unsigned char *) buf, size);
+	ses->read_len = translate_telopts(ses, buffer, size);
 
 	pop_call();
 	return TRUE;

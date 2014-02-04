@@ -4,6 +4,8 @@
 
 GENERAL STUFF:
 
+- Add a ARG_LEN / ARG_MAX setting.
+
 - See if it's possible to add better #path run support.
 
 - Events for prompt lines.

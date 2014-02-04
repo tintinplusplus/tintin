@@ -73,75 +73,6 @@ DO_COMMAND(do_unalias)
 	return ses;
 }
 
-int alias_glob(char *str, char *exp)
-{
-	short cnt, arg;
-
-	while (*exp)
-	{
-#ifdef BIG5
-		if (*exp & 0x80 && *str & 0x80)
-		{
-			exp++;
-			str++;
-			if (*exp++ != *str++)
-			{
-				return FALSE;
-			}
-			continue;
-		}
-#endif
-
-		switch (exp[0])
-		{
-			case '%':
-				if (isdigit(exp[1]))
-				{
-					arg = isdigit(exp[2]) ? (exp[1] - '0') * 10 + exp[2] - '0' : exp[1] - '0';
-
-					if (exp[isdigit(exp[2]) ? 3 : 2] == 0)
-					{
-						RESTRING(gtd->vars[arg], str);
-
-						return TRUE;
-					}
-
-					for (cnt = 0 ; str[cnt] ; cnt++)
-					{
-						if (alias_glob(&str[cnt], exp + (isdigit(exp[2]) ? 3 : 2)))
-						{
-							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
-
-							return TRUE;
-						}
-					}
-					return FALSE;
-				}
-				break;
-
-			case '$':
-				if (exp[1] == 0)
-				{
-					return (exp[1] == str[0]);
-				}
-				break;
-		}
-
-		if (*exp != *str)
-		{
-			return FALSE;
-		}
-		exp++;
-		str++;
-	}
-
-	if (*str == ' ' || *str == 0)
-	{
-		return TRUE;
-	}
-	return FALSE;
-}
-
 int check_all_aliases(struct session *ses, char *input)
 {
 	struct listnode *node;
@@ -150,6 +81,11 @@ int check_all_aliases(struct session *ses, char *input)
 	int i;
 
 	root = ses->list[LIST_ALIAS];
+
+	if (HAS_BIT(root->flags, LIST_FLAG_IGNORE))
+	{
+		return FALSE;
+	}
 
 	substitute(ses, input, line, SUB_VAR|SUB_FUN);
 
@@ -193,7 +129,7 @@ int check_all_aliases(struct session *ses, char *input)
 
 			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
 
-			DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
+			DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
 			return TRUE;
 		}

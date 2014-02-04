@@ -69,7 +69,7 @@ DO_COMMAND(do_log)
 	{
 		fclose(ses->logfile);
 		ses->logfile = NULL;
-		tintin_printf2(ses, "#OK: LOGGING TURNED OFF.");
+		show_message(ses, -1, "#OK: LOGGING TURNED OFF.");
 	}
 	else if (*left == 0 || *right == 0 || (!is_abbrev(left, "APPEND") && !is_abbrev(left, "OVERWRITE")))
 	{
@@ -87,7 +87,7 @@ DO_COMMAND(do_log)
 				{
 					write_html_header(ses->logfile);
 				}
-				tintin_printf2(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
+				show_message(ses, -1, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 			}
 			else
 			{
@@ -102,7 +102,7 @@ DO_COMMAND(do_log)
 				{
 					write_html_header(ses->logfile);
 				}
-				tintin_printf2(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
+				show_message(ses, -1, "#OK: LOGGING OUTPUT TO '%s'", right);
 			}
 			else
 			{
@@ -203,6 +203,7 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 
 		switch (*pti)
 		{
+
 			case 27:
 				pti += 2;
 
@@ -323,6 +324,21 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 				ses->vtc = vtc;
 				ses->fgc = fgc;
 				ses->bgc = bgc;
+				break;
+
+			case  6:
+				*pto++ = '&';
+				pti++;
+				break;
+
+			case 28:
+				*pto++ = '<';
+				pti++;
+				break;
+
+			case 30:
+				*pto++ = '>';
+				pti++;
 				break;
 
 			case '>':

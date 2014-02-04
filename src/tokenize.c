@@ -107,7 +107,7 @@ int find_command(char *command)
 }
 
 
-void tokenize_script(struct scripttoken *root, int lvl, char *str)
+void tokenize_script(struct session *ses, struct scripttoken *root, int lvl, char *str)
 {
 	char *arg, *line;
 	int cmd;
@@ -149,14 +149,14 @@ void tokenize_script(struct scripttoken *root, int lvl, char *str)
 						addtoken(root, lvl++, TOKEN_OPR_IF, cmd, line);
 
 						str = get_arg_in_braces(str, line, TRUE);
-						tokenize_script(root, lvl--, line);
+						tokenize_script(ses, root, lvl--, line);
 
 						if (*str && *str != COMMAND_SEPARATOR)
 						{
 							str = get_arg_in_braces(str, line, TRUE);
 							addtoken(root, lvl++, TOKEN_OPR_ELSE, -1, "else");
 
-							tokenize_script(root, lvl--, line);
+							tokenize_script(ses, root, lvl--, line);
 						}
 						addtoken(root, lvl, TOKEN_OPR_ENDIF, -1, "endif");
 						break;
@@ -340,7 +340,7 @@ struct session *script_driver(struct session *ses, int list, char *str)
 
 	root = calloc(1, sizeof(struct scripttoken));
 
-	tokenize_script(root, 0, str);
+	tokenize_script(ses, root, 0, str);
 
 	level = list != -1 ? HAS_BIT(ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
 
@@ -367,9 +367,7 @@ char *script_writer(struct session *ses, char *str)
 
 	root = calloc(1, sizeof(struct scripttoken));
 
-	tokenize_script(root, 1, str);
-
-	free(root);
+	tokenize_script(ses, root, 1, str);
 
 	return write_script(ses, root);
 }

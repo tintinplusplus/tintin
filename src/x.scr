@@ -1,3 +1,37 @@
-#map read x.map
-#map goto 140
-#delay 0 #map map
+#CONFIG           {AUTO TAB}              {5000}
+#CONFIG           {BUFFER SIZE}           {20000}
+#CONFIG           {CONNECT RETRY}         {15}
+#CONFIG           {COMMAND COLOR}         {<078>}
+#CONFIG           {COMMAND ECHO}          {ON}
+#CONFIG           {HISTORY SIZE}          {2500}
+#CONFIG           {LOG}                   {RAW}
+#CONFIG           {PACKET PATCH}          {0}
+#CONFIG           {REPEAT ENTER}          {OFF}
+#CONFIG           {REPEAT CHAR}           {!}
+#CONFIG           {SCROLL LOCK}           {ON}
+#CONFIG           {SPEEDWALK}             {OFF}
+#CONFIG           {TINTIN CHAR}           {#}
+#CONFIG           {VERBATIM}              {OFF}
+#CONFIG           {VERBATIM CHAR}         {\}
+#CONFIG           {VERBOSE}               {OFF}
+#CONFIG           {WORDWRAP}              {ON}
+#EVENT {IAC SB 102}
+{
+	#showme <118>(%1)
+}
+
+#EVENT {IAC WILL 102}
+{
+	#send \xFF\xFD\x66\
+}
+
+#PATHDIR          {n}                     {s}                          {1}
+#PATHDIR          {e}                     {w}                          {2}
+#PATHDIR          {ne}                    {sw}                         {3}
+#PATHDIR          {s}                     {n}                          {4}
+#PATHDIR          {se}                    {nw}                         {6}
+#PATHDIR          {w}                     {e}                          {8}
+#PATHDIR          {nw}                    {se}                         {9}
+#PATHDIR          {sw}                    {ne}                         {12}
+#PATHDIR          {u}                     {d}                          {16}
+#PATHDIR          {d}                     {u}                          {32}
