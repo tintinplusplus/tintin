@@ -17,20 +17,16 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: substitute.c - functions related to the substitute command  */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
+
 
 #include "tintin.h"
-
-/*
-	the #substitute command
-*/
 
 DO_COMMAND(do_gag)
 {

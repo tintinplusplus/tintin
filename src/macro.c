@@ -19,11 +19,10 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 ******************************************************************************/
 
-
 /******************************************************************************
-*   file: macro.c - funtions related to key binding                           *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2006                       *
 ******************************************************************************/
 
 
@@ -31,7 +30,7 @@
 
 DO_COMMAND(do_macro)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_MACRO];
@@ -52,11 +51,9 @@ DO_COMMAND(do_macro)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, "0", LIST_MACRO);
+		unconvert_meta(left, pr);
 
-		sprintf(temp, "[[%s]]", right);
-
-		rl_macro_bind(left, temp, gtd->keymap);
+		updatenode_list(ses, left, right, pr, LIST_MACRO);
 
 		show_message(ses, LIST_MACRO, "#OK. {%s} MACROS {%s}.", left, right);
 	}
@@ -90,38 +87,3 @@ DO_COMMAND(do_unmacro)
 	return ses;
 }
 
-
-void macro_update(void)
-{
-	char *buf = rl_line_buffer, command[BUFFER_SIZE];
-	static int p;
-	int i, a, z;
-
-	for (i = 0 ; buf[i] ; i++)
-	{
-		if (buf[i] == '[' && buf[i+1] == '[')
-		{
-			for (a = z = i+2 ; buf[z] ; z++)
-			{
-				if (buf[z] == ']' && buf[z+1] == ']')
-				{
-					strcpy(command, rl_copy_text(a, z));
-
-					rl_point = p < a - 2 ? p : a - 2;
-
-					rl_delete_text(a-2, z+2);
-
-					rl_redisplay();
-
-					echo_command(gtd->ses, "", TRUE);
-
-					parse_input(command, gtd->ses);
-
-					break;
-				}
-			}
-		}
-	}
-
-	p = rl_point;
-}

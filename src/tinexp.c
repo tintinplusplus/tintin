@@ -20,10 +20,10 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: regexp.c - funtions related to tintin's regexp                      *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                        coded by peter unold 1992                            *
-*                   recoded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+*                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -194,50 +194,89 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 				break;
 
 			case '<':
-				if (HAS_BIT(flags, SUB_COL) && isdigit(pti[1]) && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
+				if (HAS_BIT(flags, SUB_COL))
 				{
-					if (pti[1] != '8' || pti[2] != '8' || pti[3] != '8')
+					if (isdigit(pti[1]) && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
 					{
-						*pto++ = '\033';
-						*pto++ = '[';
+						if (pti[1] != '8' || pti[2] != '8' || pti[3] != '8')
+						{
+							*pto++ = ESCAPE;
+							*pto++ = '[';
 
-						switch (pti[1])
-						{
-							case '2':
-								*pto++ = '2';
-								*pto++ = '2';
-								*pto++ = ';';
-								break;
-							case '8':
-								break;
-							default:
-								*pto++ = pti[1];
-								*pto++ = ';';
+							switch (pti[1])
+							{
+								case '2':
+									*pto++ = '2';
+									*pto++ = '2';
+									*pto++ = ';';
+									break;
+								case '8':
+									break;
+								default:
+									*pto++ = pti[1];
+									*pto++ = ';';
+							}
+							switch (pti[2])
+							{
+								case '8':
+									break;
+								default:
+									*pto++ = '3';
+									*pto++ = pti[2];
+									*pto++ = ';';
+									break;
+							}
+							switch (pti[3])
+							{
+								case '8':
+									break;
+								default:
+									*pto++ = '4';
+									*pto++ = pti[3];
+									*pto++ = ';';
+									break;
+							}
+							pto--;
+							*pto++ = 'm';
 						}
-						switch (pti[2])
-						{
-							case '8':
-								break;
-							default:
-								*pto++ = '3';
-								*pto++ = pti[2];
-								*pto++ = ';';
-								break;
-						}
-						switch (pti[3])
-						{
-							case '8':
-								break;
-							default:
-								*pto++ = '4';
-								*pto++ = pti[3];
-								*pto++ = ';';
-								break;
-						}
-						pto--;
-						*pto++ = 'm';
+						pti += 5;
 					}
-					pti += 5;
+					else if (pti[1] >= 'a' && pti[1] <= 'f' && pti[2] >= 'a' && pti[2] <= 'f' && pti[3] >= 'a' && pti[3] <= 'f' && pti[4] == '>')
+					{
+						*pto++ = ESCAPE;
+						*pto++ = '[';
+						*pto++ = '3';
+						*pto++ = '8';
+						*pto++ = ';';
+						*pto++ = '5';
+						*pto++ = ';';
+						cnt = 16 + (pti[1] - 'a') * 36 + (pti[2] - 'a') * 6 + (pti[3] - 'a');
+						*pto++ = '0' + cnt / 100;
+						*pto++ = '0' + cnt % 100 / 10;
+						*pto++ = '0' + cnt % 10;
+						*pto++ = 'm';
+						pti += 5;
+					}
+					else if (pti[1] >= 'A' && pti[1] <= 'F' && pti[2] >= 'A' && pti[2] <= 'F' && pti[3] >= 'A' && pti[3] <= 'F' && pti[4] == '>')
+					{
+						*pto++ = ESCAPE;
+						*pto++ = '[';
+						*pto++ = '4';
+						*pto++ = '8';
+						*pto++ = ';';
+						*pto++ = '5';
+						*pto++ = ';';
+						cnt = 16 + (pti[1] - 'A') + (pti[2] - 'A') * 6 + (pti[3] - 'A') * 36;
+						*pto++ = '0' + cnt / 100;
+						*pto++ = '0' + cnt % 100 / 10;
+						*pto++ = '0' + cnt % 10;
+						*pto++ = 'm';
+						pti += 5;
+					}
+					else
+					{
+						*pto++ = *pti++;
+					}
 				}
 				else
 				{

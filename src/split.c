@@ -19,12 +19,11 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: split.c - functions related to the split screen command     */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                          coded by Bill Reiss 1993                           *
+******************************************************************************/
 
 #include "tintin.h"
 
@@ -55,8 +54,15 @@ DO_COMMAND(do_split)
 DO_COMMAND(do_unsplit)
 {
 	clean_screen(ses);
-	DEL_BIT(ses->flags, SES_FLAG_SPLIT);
 
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	{
+		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
+		{
+			send_sb_naws(ses, 0, NULL);
+		}
+		DEL_BIT(ses->flags, SES_FLAG_SPLIT);
+	}
 	return ses;
 }
 
@@ -92,7 +98,10 @@ void init_split(struct session *ses, int top, int bot)
 
 	goto_rowcol(ses, ses->rows, 1);
 
-	fflush(stdout);
+	if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
+	{
+		send_sb_naws(ses, 0, NULL);
+	}
 }
 
 
@@ -108,7 +117,6 @@ void clean_screen(struct session *ses)
 	{
 		goto_rowcol(ses, ses->rows, 1);
 	}
-	fflush(stdout);
 }
 
 
@@ -135,8 +143,4 @@ void dirty_screen(struct session *ses)
 	{
 		goto_rowcol(ses, ses->rows, 1);
 	}
-
-	check_character_mode(ses);
-
-	fflush(stdout);
 }

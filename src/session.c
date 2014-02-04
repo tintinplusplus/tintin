@@ -17,14 +17,13 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: session.c.c - funtions related to sessions                  */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
 
 #include "tintin.h"
 
@@ -200,21 +199,19 @@ struct session *new_session(const char *name, const char *address, struct sessio
 	newsession->telopts       = gts->telopts;
 	newsession->host          = strdup(host);
 	newsession->port          = strdup(port);
-	newsession->map_size      = gts->map_size;
-	newsession->scroll_line   = -1;
 
 	gtd->ses                  = newsession;
 
 	LINK(newsession, gts->next, gts->prev);
 
-	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
 		newsession->list[cnt] = copy_list(newsession, gts->list[cnt], cnt);
 	}
 
 	init_screen_size(newsession);
 
-	if (HAS_BIT(gts->flags, SES_FLAG_SPLIT))
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
 		init_split(newsession, gts->top_row, gts->bot_row);
 	}
@@ -326,14 +323,14 @@ void cleanup_session(struct session *ses)
 		}
 	}
 
-	tintin_printf(ses, "");
-
-	tintin_printf(ses, "#SESSION '%s' DIED.", ses->name);
-
 	if (ses == gtd->ses)
 	{
 		gtd->ses = newactive_session();
 	}
+
+	tintin_printf(ses, "");
+
+	tintin_printf(ses, "#SESSION '%s' DIED.", ses->name);
 
 	do_killall(ses, NULL);
 

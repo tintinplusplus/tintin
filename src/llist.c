@@ -19,20 +19,16 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: llist.c - linked-list datastructure                         */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
 
 #include "tintin.h"
 
-/*
-	init list - return: ptr to listhead
-*/
 
-struct listroot *init_list()
+struct listroot *init_list(int index)
 {
 	struct listroot *listhead;
 
@@ -41,14 +37,11 @@ struct listroot *init_list()
 		fprintf(stderr, "couldn't alloc listhead\n");
 		exit(1);
 	}
-	listhead->flags = LIST_FLAG_DEFAULT;
+	listhead->flags = list_table[index].flags;
 
 	return listhead;
 }
 
-/*
-	kill list - run throught list and free nodes
-*/
 
 void kill_list(struct session *ses, int index)
 {
@@ -61,28 +54,27 @@ void kill_list(struct session *ses, int index)
 }
 
 
-/*
-	make a copy of a list and return its pointer
-*/
-
 struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int index)
 {
 	struct listnode *node, *newnode;
 
-	ses->list[index] = init_list();
+	ses->list[index] = init_list(index);
 
-	for (node = sourcelist->f_node ; node ; node = node->next)
+	if (HAS_BIT(sourcelist->flags, LIST_FLAG_INHERIT))
 	{
-		newnode = calloc(1, sizeof(struct listnode));
+		for (node = sourcelist->f_node ; node ; node = node->next)
+		{
+			newnode = calloc(1, sizeof(struct listnode));
 
-		newnode->left  = strdup(node->left);
-		newnode->right = strdup(node->right);
-		newnode->pr    = strdup(node->pr);
-		newnode->class = strdup(node->class);
+			newnode->left  = strdup(node->left);
+			newnode->right = strdup(node->right);
+			newnode->pr    = strdup(node->pr);
+			newnode->class = strdup(node->class);
 
-		ses->list[index]->count++;
+			ses->list[index]->count++;
 
-		LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
+			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
+		}
 	}
 	ses->list[index]->flags = sourcelist->flags;
 
@@ -104,7 +96,7 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 	newnode->left  = strdup(ltext);
 	newnode->right = strdup(rtext);
 	newnode->pr    = strdup(prtext);
-	newnode->class = strdup(ses->class);
+	newnode->class = HAS_BIT(ses->list[index]->flags, LIST_FLAG_CLASS) ? strdup(ses->class) : strdup("");
 
 	ses->list[index]->count++;
 
@@ -412,7 +404,7 @@ DO_COMMAND(do_killall)
 
 	if (arg == NULL || *arg == 0) 
 	{
-		for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
+		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 		{
 			kill_list(ses, cnt);
 
@@ -430,7 +422,7 @@ DO_COMMAND(do_killall)
 
 	arg = get_arg_in_braces(arg, left,  0);
 
-	for (cnt = fnd = 0 ; cnt < LIST_ALL ; cnt++)
+	for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
 	{
 		if (!is_abbrev(left, list_table[cnt].name_multi) && strcasecmp(left, "ALL"))
 		{

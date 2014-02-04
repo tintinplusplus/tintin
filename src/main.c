@@ -19,14 +19,11 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: main.c - main module - signal setup/shutdown etc            */
-/*                             TINTIN++                              */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
-
-/* note: a bunch of changes were made here to add readline support -- daw */
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
 
 #include "tintin.h"
 
@@ -56,7 +53,7 @@ RETSIGTYPE pipe_handler(int no_care)
 	when the screen size changes, take note of it
 */
 
-RETSIGTYPE winchhandler(int no_care)
+RETSIGTYPE winch_handler(int no_care)
 {
 	struct session *ses;
 
@@ -78,12 +75,49 @@ RETSIGTYPE winchhandler(int no_care)
 		we haveta reinitialize the signals for sysv machines
 	*/
 
-	if (signal(SIGWINCH, winchhandler) == BADSIG)
+	if (signal(SIGWINCH, winch_handler) == BADSIG)
 	{
 		syserr("signal SIGWINCH");
 	}
 }
 
+
+RETSIGTYPE abort_handler(int signal)
+{
+	if (gtd->ses->connect_retry > utime())
+	{
+		gtd->ses->connect_retry = 0;
+	}
+	else if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA) && !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+	{
+		socket_printf(gtd->ses, 1, "%c", 3);
+	}
+	else if (gtd->ses == gts)
+	{
+		quitmsg(NULL);
+	}
+	else
+	{
+		do_zap(gtd->ses, "");
+	}
+}
+
+RETSIGTYPE suspend_handler(int signal)
+{
+	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
+
+	fflush(stdout);
+
+	tcsetattr(0, TCSANOW, &gtd->terminal);
+
+	kill(0, SIGSTOP);
+
+	dirty_screen(gtd->ses);
+
+	init_terminal();
+
+	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
+}
 
 void trap_handler(int signal)
 {
@@ -112,8 +146,6 @@ void trap_handler(int signal)
 
 int main(int argc, char **argv)
 {
-	char filestring[256];
-
 	#ifdef SOCKS
 		SOCKSinit(argv[0]);
 	#endif
@@ -121,7 +153,6 @@ int main(int argc, char **argv)
 	push_call("main(%p,%p)",argc,argv);
 
 	init_tintin();
-
 
 	if (signal(SIGTERM, trap_handler) == BADSIG)
 	{
@@ -138,14 +169,19 @@ int main(int argc, char **argv)
 		syserr("signal SIGHUP");
 	}
 
-	if (signal(SIGABRT, myquitsig) == BADSIG)
+	if (signal(SIGABRT, abort_handler) == BADSIG)
 	{
 		syserr("signal SIGTERM");
 	}
 
-	if (signal(SIGINT, myquitsig) == BADSIG)
+	if (signal(SIGINT, abort_handler) == BADSIG)
 	{
 		syserr("signal SIGINT");
+	}
+
+	if (signal(SIGTSTP, suspend_handler) == BADSIG)
+	{
+		syserr("signal SIGSTOP");
 	}
 
 	if (signal(SIGPIPE, pipe_handler) == BADSIG)
@@ -153,19 +189,20 @@ int main(int argc, char **argv)
 		syserr("signal SIGPIPE");
 	}
 
-	if (signal(SIGWINCH, winchhandler) == BADSIG)
+	if (signal(SIGWINCH, winch_handler) == BADSIG)
 	{
 		syserr("signal SIGWINCH");
 	}
 
 	if (getenv("HOME") != NULL)
 	{
-		sprintf(filestring, "%s/%s", getenv("HOME"), HISTORY_FILE);
+		char filename[256];
 
-		read_history(filestring);
+		sprintf(filename, "%s/%s", getenv("HOME"), HISTORY_FILE);
 
-		add_history("");
+		read_history(gts, filename);
 	}
+
 	srand48(time(NULL));
 
 	if (argc > 1)
@@ -176,7 +213,7 @@ int main(int argc, char **argv)
 
 			do_read(gtd->ses, argv[2]);
 		}
-		else if (!strcmp(argv[1], "-e"))
+		else if (!strcmp(argv[1], "-e") && argv[2])
 		{
 			gtd->ses = parse_input(argv[2], gtd->ses);
 		}
@@ -189,7 +226,7 @@ int main(int argc, char **argv)
 			gtd->ses = do_read(gtd->ses, argv[1]);
 		}
 	}
-	commandloop();
+	mainloop();
 
 	pop_call();
 	return 0;
@@ -202,9 +239,9 @@ void init_tintin(void)
 
 	gts                 = calloc(1, sizeof(struct session));
 
-	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
-		gts->list[cnt] = init_list();
+		gts->list[cnt] = init_list(cnt);
 	}
 
 	gts->name           = strdup("gts");
@@ -212,8 +249,6 @@ void init_tintin(void)
 	gts->host           = strdup("");
 	gts->port           = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
-	gts->map_size       = 6;
-	gts->scroll_line    = -1;
 
 	gtd                 = calloc(1, sizeof(struct tintin_data));
 
@@ -238,8 +273,6 @@ void init_tintin(void)
 		}
 	}
 
-	initrl();
-
 	init_screen_size(gts);
 
 	/*
@@ -247,8 +280,6 @@ void init_tintin(void)
 	*/
 
 	printf("\033=\033[?1h");
-
-	SET_BIT(gts->flags, SES_FLAG_VERBOSE);
 
 	do_configure(gts, "{SPEEDWALK}         {OFF}");
 	do_configure(gts, "{VERBATIM}          {OFF}");
@@ -263,10 +294,8 @@ void init_tintin(void)
 	do_configure(gts, "{CONNECT RETRY}      {60}");
 	do_configure(gts, "{PACKET PATCH}        {0}");
 	do_configure(gts, "{TINTIN CHAR}         {#}");
-	do_configure(gts, "{VERBATIM CHAR}    {\\\\}");
+	do_configure(gts, "{VERBATIM CHAR}      {\\}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
-
-	DEL_BIT(gts->flags, SES_FLAG_VERBOSE);
 
 	insertnode_list(gts, "n", "s", "0", LIST_PATHDIR);
 	insertnode_list(gts, "e", "w", "0", LIST_PATHDIR);
@@ -275,5 +304,47 @@ void init_tintin(void)
 	insertnode_list(gts, "u", "d", "0", LIST_PATHDIR);
 	insertnode_list(gts, "d", "u", "0", LIST_PATHDIR);
 
+	init_terminal();
+
 	do_help(gtd->ses, "CREDITS");
+}
+
+
+void quitmsg(const char *message)
+{
+	struct session *ses;
+
+	while ((ses = gts->next) != NULL)
+	{
+		cleanup_session(ses);
+	}
+
+	if (gtd->chat)
+	{
+		close(gtd->chat->fd);
+	}
+
+	if (gtd->history_size)
+	{
+		char filename[BUFFER_SIZE];
+
+		sprintf(filename, "%s/%s", getenv("HOME"), HISTORY_FILE);
+
+		write_history(gts, filename);
+	}
+
+	tcsetattr(0, TCSANOW, &gtd->terminal);
+
+	clean_screen(gts);
+
+	if (message)
+	{
+		printf("\n%s\n", message);
+	}
+
+	printf("\nGoodbye from TinTin++\n\n");
+
+	fflush(NULL);
+
+	exit(0);
 }

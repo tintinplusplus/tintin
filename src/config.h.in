@@ -1,24 +1,24 @@
-/*
-TinTin++
-Copyright (C) 2001 Davin Chan, Robert Ellsworth, etc. (See CREDITS file)
+/******************************************************************************
+*   TinTin++                                                                  *
+*   Copyright (C) 2004 (See CREDITS file)                                     *
+*                                                                             *
+*   This program is protected under the GNU GPL (See COPYING)                 *
+*                                                                             *
+*   This program is free software; you can redistribute it and/or modify      *
+*   it under the terms of the GNU General Public License as published by      *
+*   the Free Software Foundation; either version 2 of the License, or         *
+*   (at your option) any later version.                                       *
+*                                                                             *
+*   This program is distributed in the hope that it will be useful,           *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+*   GNU General Public License for more details.                              *
+*                                                                             *
+*   You should have received a copy of the GNU General Public License         *
+*   along with this program; if not, write to the Free Software               *
+*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+******************************************************************************/
 
-This program is protected under the GNU GPL (See COPYING)
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-*/
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
 /* Define if on AIX 3.
@@ -74,9 +74,6 @@ This program is protected under the GNU GPL (See COPYING)
 /* Define if you have the <param.h> header file.  */
 #undef HAVE_PARAM_H
 
-/* Define if you have the <readline/readline.h> header file.  */
-#undef HAVE_READLINE_READLINE_H
-
 /* Define if you have the <stdlib.h> header file.  */
 #undef HAVE_STDLIB_H
 
@@ -115,9 +112,6 @@ This program is protected under the GNU GPL (See COPYING)
 
 /* Define if you have the nsl library (-lnsl).  */
 #undef HAVE_LIBNSL
-
-/* Define if you have the readline library (-lreadline).  */
-#undef HAVE_LIBREADLINE
 
 /* Define if you have the socket library (-lsocket).  */
 #undef HAVE_LIBSOCKET

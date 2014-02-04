@@ -19,12 +19,11 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: variables.c - functions related the the variables           */
-/*                             TINTIN ++                             */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                          coded by Bill Reiss 1993                           *
+******************************************************************************/
 
 
 #include "tintin.h"
@@ -250,7 +249,7 @@ void reversestring(char *str)
 
 void mathstring(struct session *ses, char *str)
 {
-	strcpy(str, get_number_string(ses, str));
+	get_number_string(ses, str, str);
 }
 
 void thousandgroupingstring(char *str)

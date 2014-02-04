@@ -17,18 +17,46 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: text.c - functions for text manipulation                    */
-/*                             TINTIN + +                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*                    New code by Joann Ellsworth                    */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
+******************************************************************************/
 
 #include "tintin.h"
 
+
+
+void printline(struct session *ses, const char *str, int prompt)
+{
+	char wrapped_str[BUFFER_SIZE];
+
+	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
+ 	{
+		return;
+	}
+
+	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
+	{
+		return;
+	}
+
+	word_wrap(ses, str, wrapped_str, TRUE);
+
+/*	strcpy(wrapped_str, str); */
+
+	if (prompt)
+	{
+		printf("%s", wrapped_str);
+	}
+	else
+	{
+		printf("%s\r\n", wrapped_str);
+	}
+
+}
 
 /*
 	Word wrapper, only wraps scrolling region, returns nr of lines - Scandum
@@ -117,3 +145,4 @@ int word_wrap(struct session *ses, const char *textin, char *textout, int scroll
 
 	return (cnt + 1);
 }
+

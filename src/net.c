@@ -19,12 +19,12 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: net.c - do all the net stuff                                */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
+
 
 #include "tintin.h"
 
@@ -36,12 +36,6 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-
-/**************************************************/
-/* try connect to the mud specified by the args   */
-/* return fd on success / 0 on failure            */
-/**************************************************/
-
 
 int connect_mud(const char *host, const char *port, struct session *ses)
 {
@@ -66,7 +60,7 @@ int connect_mud(const char *host, const char *port, struct session *ses)
 
 	if (is_number(port))
 	{
-		sockaddr.sin_port = htons(atoi(port));      /* inteprete port part */
+		sockaddr.sin_port = htons(atoi(port));
 	}
 	else
 	{
@@ -98,9 +92,6 @@ int connect_mud(const char *host, const char *port, struct session *ses)
 	return sock;
 }
 
-/************************************************************/
-/* write line to the mud ses is connected to - add \n first */
-/************************************************************/
 
 void write_line_mud(const char *line, struct session *ses)
 {
@@ -123,10 +114,6 @@ void write_line_mud(const char *line, struct session *ses)
 	return;
 }
 
-
-/*******************************************************************/
-/* read at most BUFFER_SIZE chars from mud - parse protocol stuff  */
-/*******************************************************************/
 
 void read_buffer_mud(struct session *ses)
 {
@@ -155,3 +142,141 @@ void read_buffer_mud(struct session *ses)
 
 	return;
 }
+
+
+void readmud(struct session *ses)
+{
+	char *line, *next_line;
+	char linebuf[BUFFER_SIZE];
+
+	push_call("readmud(%p)", ses);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_SCAN))
+	{
+		read_buffer_mud(ses);
+
+		switch (gtd->mud_output_len)
+		{
+			case -1:
+				cleanup_session(ses);
+
+				pop_call();
+				return;
+
+			case  0:
+				pop_call();
+				return;
+		}
+	}
+	gtd->mud_output_len = 0;
+
+	/* separate into lines and print away */
+
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+	{
+		save_pos(gtd->ses);
+		goto_rowcol(gtd->ses, gtd->ses->bot_row, 1);
+	}
+
+	SET_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+
+	for (line = gtd->mud_output_buf ; line && *line ; line = next_line)
+	{
+		next_line = strchr(line, '\n');
+
+		if (next_line)
+		{
+			*next_line = 0;
+			next_line++;
+		}
+		else if (*line == 0)
+		{
+			break;
+		}
+
+
+		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
+		{
+			if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+			{
+				if (gts->check_output)
+				{
+					strcat(ses->more_output, line);
+					ses->check_output = utime() + gts->check_output;
+					break;
+				}
+			}
+		}
+
+
+		if (*line && ses->more_output[0])
+		{
+			if (ses->check_output || HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+			{
+				sprintf(linebuf, "%s%s", ses->more_output, line);
+
+				ses->more_output[0] = 0;
+			}
+			else
+			{
+				strcpy(linebuf, line);
+			}
+		}
+		else
+		{
+			strcpy(linebuf, line);
+		}
+
+		process_mud_output(ses, linebuf, next_line == NULL);
+	}
+	DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
+
+	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+	{
+		restore_pos(gtd->ses);
+	}
+
+	pop_call();
+	return;
+}
+
+
+void process_mud_output(struct session *ses, char *linebuf, int prompt)
+{
+	ses->check_output = 0;
+
+	do_one_line(linebuf, ses);   /* changes linebuf */
+
+	/*
+		Take care of gags, vt102 support still goes
+	*/
+
+	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
+	{
+		strip_non_vt102_codes(linebuf, ses->more_output);
+
+		printf("%s", ses->more_output);
+
+		ses->more_output[0] = 0;
+
+		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
+		return;
+	}
+
+	add_line_buffer(ses, linebuf, prompt);
+
+	if (ses == gtd->ses)
+	{
+		printline(ses, linebuf, prompt);
+	}
+	else if (HAS_BIT(ses->flags, SES_FLAG_SNOOP))
+	{
+		strip_vt102_codes_non_graph(linebuf, linebuf);
+
+		tintin_printf2(gtd->ses, "[%s] %s", ses->name, linebuf);
+	}
+}
+

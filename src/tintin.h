@@ -17,26 +17,26 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: tintin.h - the include file for tintin++                    */
-/*                             TINTIN ++                             */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                    modified by Bill Reiss 1993                    */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                                                                             *
+*              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
+*                                                                             *
+*                        coded by peter unold 1992                            *
+*                       modified by Bill Reiss 1993                           *
+*                   modified by Igor van den Hoven 2004                       *
+******************************************************************************/
 
 #include <stdio.h>
 #include <zlib.h>
 #include <signal.h>
-#include <readline/readline.h>
-#include <readline/history.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <termios.h>
 
 /******************************************************************************
-*   Autoconf patching by David Hedbor, neotron@lysator.liu.se                 *
+*   Autoconf patching by David Hedbor                                         *
 *******************************************************************************/
 
 #include "config.h"
@@ -89,6 +89,7 @@ typedef struct session *CLASS   (struct session *ses, char *left, char *right);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *COMMAND (struct session *ses, const char *arg);
 typedef void            MAP     (struct session *ses, const char *arg);
+typedef void            CURSOR  (void);
 
 /*
 	A bunch of constants
@@ -109,30 +110,36 @@ typedef void            MAP     (struct session *ses, const char *arg);
 
 #define HISTORY_FILE              ".tt_history"
 
-#define DEFAULT_CAT_STR           "cat "
-#define DEFAULT_COMPRESS_EXT      ".Z"
-#define DEFAULT_UNCOMPRESS_STR    "uncompress -c "
-#define DEFAULT_GZIP_EXT          ".gz"
-#define DEFAULT_GUNZIP_STR        "gunzip -c "
-#define DEFAULT_BZIP_EXT          ".bz2"
-#define DEFAULT_BUNZIP_STR        "bunzip2 -c "
-
 #define BUFFER_SIZE               10000
 #define NUMBER_SIZE                 100
 
-/*
-	NOTE: get rid of the DEVELOPMENT warning in main() when you update this!
-*/
-
-#define VERSION_NUM "v1.94.0 (BETA)"
-
-/*
-	vt102 codes worth defining
-*/
+#define VERSION_NUM "1.96.5"
 
 #define ESCAPE                         27
 
 #define TELNET_PORT                    23
+
+#define TIMER_POLL_INPUT                0
+#define TIMER_POLL_SESSIONS             1
+#define TIMER_POLL_CHAT                 2
+#define TIMER_UPDATE_TICKS              3
+#define TIMER_UPDATE_DELAYS             4
+#define TIMER_UPDATE_PACKETS            5
+#define TIMER_UPDATE_CHAT               6
+#define TIMER_UPDATE_TERMINAL           7
+#define TIMER_STALL_PROGRAM             8
+#define TIMER_CPU                       9
+
+#define PULSE_PER_SECOND              20
+
+#define PULSE_POLL_INPUT                1
+#define PULSE_POLL_SESSIONS             1
+#define PULSE_POLL_CHAT                 2
+#define PULSE_UPDATE_TICKS              1
+#define PULSE_UPDATE_DELAYS             1
+#define PULSE_UPDATE_PACKETS            2
+#define PULSE_UPDATE_CHAT               2
+#define PULSE_UPDATE_TERMINAL           1
 
 /*
 	Index for lists used by tintin
@@ -144,21 +151,18 @@ typedef void            MAP     (struct session *ses, const char *arg);
 #define LIST_SUBSTITUTE                3
 #define LIST_VARIABLE                  4
 #define LIST_HIGHLIGHT                 5
-#define LIST_ANTISUBSTITUTE            6
-#define LIST_FUNCTION                  7
-#define LIST_PATH                      8
-#define LIST_PATHDIR                   9
-#define LIST_TICKER                   10
-#define LIST_MACRO                    11
-#define LIST_PROMPT                   12
-#define LIST_TAB                      13
-#define LIST_CLASS                    14
-#define LIST_MAX                      15
-
-#define LIST_MATH                     LIST_MAX + 0
-#define LIST_DELAY                    LIST_MAX + 1
-#define LIST_HISTORY                  LIST_MAX + 2
-#define LIST_ALL                      LIST_MAX + 3
+#define LIST_FUNCTION                  6
+#define LIST_PATHDIR                   7
+#define LIST_TICKER                    8
+#define LIST_MACRO                     9
+#define LIST_PROMPT                   10
+#define LIST_TAB                      11
+#define LIST_PATH                     12
+#define LIST_CLASS                    13
+#define LIST_HISTORY                  14
+#define LIST_DELAY                    15
+#define LIST_MATH                     16
+#define LIST_MAX                      17
 
 #define CLASS_MAX                      5
 
@@ -224,35 +228,35 @@ typedef void            MAP     (struct session *ses, const char *arg);
 #define SUB_EOL                       (1 <<  8)
 #define SUB_FMT                       (1 <<  9)
 
-#define SES_FLAG_NAWS                 (1 <<  0)
+
+#define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
+#define TINTIN_FLAG_CONVERTMETACHAR   (1 <<  1)
+#define TINTIN_FLAG_HISTORYSEARCH     (1 <<  2)
+#define TINTIN_FLAG_QUIET             (1 <<  3)
+#define TINTIN_FLAG_USERCOMMAND       (1 <<  4)
+
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
-
 #define SES_FLAG_MAPPING              (1 <<  4)
 #define SES_FLAG_SPLIT                (1 <<  5)
 #define SES_FLAG_SPEEDWALK            (1 <<  6)
-#define SES_FLAG_RESETBUFFER          (1 <<  7)
 #define SES_FLAG_READMUD              (1 <<  8)
 #define SES_FLAG_WORDWRAP             (1 <<  9)
 #define SES_FLAG_VERBATIM             (1 << 10)
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
-#define SES_FLAG_QUIET                (1 << 14)
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
 #define SES_FLAG_GAG                  (1 << 18)
 #define SES_FLAG_UPDATEVTMAP          (1 << 19)
-#define SES_FLAG_USERCOMMAND          (1 << 20)
 #define SES_FLAG_SCROLLLOCK           (1 << 21)
 #define SES_FLAG_SCAN                 (1 << 22)
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
-#define SES_FLAG_PREPPED              (1 << 25)
+#define SES_FLAG_BREAK                (1 << 28) /* wasn't the greatest idea */
 
-
-#define SES_FLAG_BREAK                (1 << 28)
 
 #define TELOPT_FLAG_INIT_SGA          (1 <<  0)
 #define TELOPT_FLAG_SGA               (1 <<  1)
@@ -266,10 +270,17 @@ typedef void            MAP     (struct session *ses, const char *arg);
 #define TELOPT_FLAG_INIT_TTYPE        (1 <<  9)
 #define TELOPT_FLAG_INIT_NAWS         (1 << 10)
 
+
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
 #define LIST_FLAG_DEBUG               (1 <<  2)
 #define LIST_FLAG_LOG                 (1 <<  3)
+#define LIST_FLAG_CLASS               (1 <<  4)
+#define LIST_FLAG_READ                (1 <<  5)
+#define LIST_FLAG_WRITE               (1 <<  6)
+#define LIST_FLAG_SHOW                (1 <<  7)
+#define LIST_FLAG_INHERIT             (1 <<  8)
+
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
 #define NODE_FLAG_MAX                 (1 <<  0)
@@ -277,16 +288,31 @@ typedef void            MAP     (struct session *ses, const char *arg);
 #define ROOM_FLAG_AVOID               (1 <<  0)
 #define ROOM_FLAG_HIDE                (1 <<  1)
 #define ROOM_FLAG_LEAVE               (1 <<  2)
+#define ROOM_FLAG_VOID                (1 <<  3)
+
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
+#define MAP_FLAG_VTGRAPHICS           (1 <<  2)
+#define MAP_FLAG_ASCIIGRAPHICS        (1 <<  3)
+
+#define MAP_EXIT_N                    (1 <<  0)
+#define MAP_EXIT_E                    (1 <<  1)
+#define MAP_EXIT_S                    (1 <<  2)
+#define MAP_EXIT_W                    (1 <<  3)
+#define MAP_EXIT_NE                   (1 <<  4)
+#define MAP_EXIT_NW                   (1 <<  5)
+#define MAP_EXIT_SE                   (1 <<  6)
+#define MAP_EXIT_SW                   (1 <<  7)
+#define MAP_EXIT_U                    (1 <<  8)
+#define MAP_EXIT_D                    (1 <<  9)
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
 #define CMD_FLAG_NONE                 (0 <<  0)
 #define CMD_FLAG_SUB                  (1 <<  0)
 
-#define MAX_STR_HASH                  5000
+#define MAX_STR_HASH                  10000
 
 #define MAX_ROOM                      15000
 
@@ -457,7 +483,7 @@ struct session
 	char                  * class;
 	FILE                  * logfile;
 	FILE                  * logline;
-	struct listroot       * list[LIST_ALL];
+	struct listroot       * list[LIST_MAX];
 	struct listroot       * history;
 	int                     rows;
 	int                     cols;
@@ -467,7 +493,6 @@ struct session
 	int                     sav_row;
 	int                     cur_col;
 	int                     sav_col;
-	int                     map_size;
 	int                     scroll_max;
 	int                     scroll_row;
 	int                     scroll_line;
@@ -477,11 +502,12 @@ struct session
 	int                     vtc;
 	int                     socket;
 	int                     telopts;
-	long long               flags;
+	int                     flags;
 	char                  * host;
 	char                  * port;
 	long long               connect_retry;
 	int                     connect_error;
+	int                     more_outlen;
 	char                    more_output[BUFFER_SIZE];
 	long long               check_output;
 };
@@ -491,16 +517,28 @@ struct tintin_data
 	struct session        * ses;
 	struct session        * update;
 	struct chat_data      * chat;
-	Keymap                  keymap;
+	struct termios          terminal;
 	char                  * mud_output_buf;
 	int                     mud_output_max;
 	int                     mud_output_len;
 	unsigned char         * mccp_buf;
 	int                     mccp_buf_max;
+	char                    input_buf[BUFFER_SIZE];
+	char                    input_tmp[BUFFER_SIZE];
+	char                    macro_buf[BUFFER_SIZE];
+	int                     input_len;
+	int                     input_cur;
+	int                     input_pos;
+	struct listnode       * input_his;
 	long long               time;
+	long long               timer[TIMER_CPU][5];
+	long long               total_io_ticks;
+	long long               total_io_exec;
+	long long               total_io_delay;
 	int                     str_hash_size;
 	int                     history_size;
 	int                     command_ref[26];
+	int                     flags;
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
@@ -547,7 +585,8 @@ struct array_type
 struct chat_type
 {
 	char                  * name;
-	CHAT                  * chat;
+	CHAT                  * fun;
+	char                  * desc;
 };
 
 struct class_type
@@ -584,12 +623,26 @@ struct list_type
 	char                  * name_multi;
 	int                     mode;
 	int                     args;
+	int                     flags;
 };
 
 struct map_type
 {
 	char                  * name;
 	MAP                   * map;
+};
+
+struct cursor_type
+{
+	char                  *name;
+	char                  *desc;
+	char                  *code;
+	CURSOR                *fun;
+};
+
+struct timer_type
+{
+	char                  *name;
 };
 
 struct str_hash_data
@@ -642,20 +695,50 @@ struct exit_data
 
 
 /*
-	Some stuff we use globally
-*/
-
-extern int readline_echoing_p;
-
-/*
 	Function declarations
 */
+
+#ifndef __CURSOR_H__
+#define __CURSOR_H__
+
+DO_COMMAND(do_cursor);
+
+extern void cursor_backspace(void);
+extern void cursor_check_line(void);
+extern void cursor_clear_left(void);
+extern void cursor_clear_line(void);
+extern void cursor_clear_right(void);
+extern void cursor_convert_meta(void);
+extern void cursor_delete(void);
+extern void cursor_delete_word(void);
+extern void cursor_end(void);
+extern void cursor_exit(void);
+extern void cursor_fix_line(void);
+extern void cursor_history_find(void);
+extern void cursor_history_next(void);
+extern void cursor_history_prev(void);
+extern void cursor_history_search(void);
+extern void cursor_home(void);
+extern void cursor_left(void);
+extern void cursor_redraw_input(void);
+extern void cursor_redraw_line(void);
+extern void cursor_right(void);
+
+extern void cursor_suspend(void);
+extern void cursor_tab(void);
+
+
+
+#endif
 
 #ifndef __INPUT_H__
 #define __INPUT_H__
 
-extern void commandloop(void);
-extern char *readkeyboard(void);
+extern void process_input(void);
+extern void read_line(char *line);
+extern void read_key(char *line);
+extern void convert_meta(char *input, char *output);
+extern void unconvert_meta(char *input, char *output);
 extern void echo_command(struct session *ses, char *line, int newline);
 
 #endif
@@ -749,16 +832,16 @@ extern struct chat_data *find_buddy(const char *arg);
 extern struct chat_data *find_group(const char *arg);
 extern char *fix_file_name(char *name);
 
-
-
 #endif
  
-#ifndef __ECHO_H__
-#define __ECHO_H__
+#ifndef __TERMINAL_H__
+#define __TERMINAL_H__
 
+extern void init_terminal(void);
 extern void echo_on(struct session *ses);
 extern void echo_off(struct session *ses);
-extern void check_character_mode(struct session *ses);
+extern void init_screen_size(struct session *ses);
+extern int get_scroll_size(struct session *ses);
 
 #endif
 
@@ -816,9 +899,9 @@ extern int  find_room(struct session *ses, char *arg);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
 extern int  get_map_exit(char *arg);
 extern void create_map_grid(struct session *ses, short room, short x, short y);
-extern void build_map_grid(short room, short x, short y);
+extern void build_map_grid(short room, short x, short y, short z);
 extern void follow_map(struct session *ses, char *argument);
-extern char *draw_room(struct session *ses, struct room_data *room);
+extern char *draw_room(struct session *ses, struct room_data *room, int line);
 
 extern void search_path(short room, short size);
 extern void shortest_path(struct session *ses, int walk, char *arg);
@@ -836,7 +919,7 @@ extern void show_vtmap(struct session *ses);
 extern DO_COMMAND(do_math);
 extern DO_COMMAND(do_if);
 extern double get_number(struct session *ses, const char *str);
-extern char *get_number_string(struct session *ses, const char *str);
+extern void get_number_string(struct session *ses, const char *str, char *result);
 extern double mathexp(struct session *ses, const char *str);
 extern int mathexp_tokenize(struct session *ses, const char *str);
 extern void mathexp_level(struct listnode *node);
@@ -1015,7 +1098,7 @@ extern DO_COMMAND(do_highlight);
 extern int is_high_arg(const char *s);
 extern DO_COMMAND(do_unhighlight);
 extern void check_all_highlights(char *original, char *line, struct session *ses);
-extern int get_highlight_codes(const char *htype, char *result);
+extern int get_highlight_codes(struct session *ses, const char *htype, char *result);
 
 #endif
 
@@ -1023,7 +1106,7 @@ extern int get_highlight_codes(const char *htype, char *result);
 #ifndef __LLIST_H__
 #define __LLIST_H__
 
-extern struct listroot *init_list(void);
+extern struct listroot *init_list(int index);
 extern void kill_list(struct session *ses, int index);
 extern DO_COMMAND(do_killall);
 extern struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int index);
@@ -1062,10 +1145,16 @@ extern void vt102_to_html(struct session *ses, const char *txt, char *out);
 extern struct session *gts;
 extern struct tintin_data *gtd;
 
+
+extern void winch_handler(int signal);
+extern void abort_handler(int signal);
+extern void pipe_handler(int signal);
+extern void suspend_handler(int signal);
 extern void trap_handler(int signal);
-extern void winchhandler(int no_care);
+
 extern int main(int argc, char **argv);
 extern void init_tintin(void);
+extern void quitmsg(const char *message);
 
 #endif
 
@@ -1102,6 +1191,8 @@ extern DO_COMMAND(do_gagline);
 extern int connect_mud(const char *host, const char *port, struct session *ses);
 extern void write_line_mud(const char *line, struct session *ses);
 extern void read_buffer_mud(struct session *ses);
+extern void readmud(struct session *ses);
+extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
 
 #endif
 #ifndef __TELOPT_H__
@@ -1174,40 +1265,37 @@ extern void check_insert_path(const char *command, struct session *ses);
 
 #endif
 
-#ifndef __RL_H__
-#define __RL_H__
+#ifndef __UPDATE_H__
+#define __UPDATE_H__
 
-
-extern void printline(struct session *ses, const char *str, int isaprompt);
-extern void initrl(void);
 extern void mainloop(void);
-extern void readmud(struct session *ses);
-extern void bait(void);
-extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
-extern void show_message(struct session *ses, int index, const char *format, ...);
-extern void tintin_header(struct session *ses, const char *format, ...);
-extern void socket_printf(struct session *ses, size_t length, const char *format, ...);
-extern void tintin_printf2(struct session *ses, const char *format, ...);
-extern void tintin_printf(struct session *ses, const char *format, ...);
-extern void tintin_puts2(const char *cptr, struct session *ses);
-extern void tintin_puts(const char *cptr, struct session *ses);
-extern void quitmsg(const char *m);
-extern void myquitsig(int no_care);
+extern void poll_input(void);
+extern void poll_sessions(void);
+extern void poll_chat(void);
+extern void tick_update(void);
+extern void delay_update(void);
+extern void packet_update(void);
+extern void chat_update(void);
+extern void terminal_update(void);
 
 #endif
 
 
-#ifndef __RLHIST_H__
-#define __RLHIST_H__
+#ifndef __HISTORY_H__
+#define __HISTORY_H__
 
-extern char *rlhist_expand(char *line);
+DO_COMMAND(do_history);
 
+extern void add_line_history(struct session *ses, char *line);
+extern void search_line_history(struct session *ses, char *line);
+
+extern int write_history(struct session *ses, char *filename);
+extern int read_history(struct session *ses, char *filename);
 #endif
 
 #ifndef __RLTAB_H__
 #define __RLTAB_H__
 
-extern char *tab_complete(const char *str, int state);
 extern DO_COMMAND(do_tab);
 extern DO_COMMAND(do_untab);
 
@@ -1236,13 +1324,7 @@ extern int interpret_vt102_codes(struct session *ses, const char *str, int real)
 
 #endif
 
-#ifndef __SCRSIZE_H__
-#define __SCRSIZE_H__
 
-extern void init_screen_size(struct session *ses);
-extern int get_scroll_size(struct session *ses);
-
-#endif
 
 #ifndef __SESSION_H__
 #define __SESSION_H__
@@ -1279,14 +1361,17 @@ extern const struct class_type class_table[];
 extern const struct color_type color_table[];
 extern const struct command_type command_table[];
 extern const struct config_type config_table[];
-extern const struct list_type list_table[LIST_ALL];
+extern const struct list_type list_table[LIST_MAX];
 extern const struct map_type map_table[];
+extern const struct cursor_type cursor_table[];
+extern const struct timer_type timer_table[];
+
 #endif
 
 #ifndef __TEXT_H__
 #define __TEXT_H__
 
-
+extern void printline(struct session *ses, const char *str, int isaprompt);
 int word_wrap(struct session *ses, const char *textin, char *textout, int scroll);
 
 #endif
@@ -1297,7 +1382,7 @@ int word_wrap(struct session *ses, const char *textin, char *textout, int scroll
 extern DO_COMMAND(do_tick);
 extern DO_COMMAND(do_untick);
 extern DO_COMMAND(do_delay);
-extern void tick_update(void);
+
 
 #endif
 
@@ -1311,7 +1396,21 @@ extern int hex_number(const char *str);
 extern long long utime(void);
 extern char *capitalize(const char *str);
 extern void cat_sprintf(char *dest, const char *fmt, ...);
+extern void ins_sprintf(char *dest, const char *fmt, ...);
 extern void syserr(const char *msg);
+extern void show_message(struct session *ses, int index, const char *format, ...);
+extern void tintin_header(struct session *ses, const char *format, ...);
+extern void socket_printf(struct session *ses, size_t length, const char *format, ...);
+
+extern void tintin_printf2(struct session *ses, const char *format, ...);
+extern void tintin_printf(struct session *ses, const char *format, ...);
+extern void tintin_puts2(const char *cptr, struct session *ses);
+extern void tintin_puts(const char *cptr, struct session *ses);
+
+extern void show_cpu(struct session *ses);
+extern long long display_timer(struct session *ses, int timer);
+extern void open_timer(int timer);
+extern void close_timer(int timer);
 
 #endif
 

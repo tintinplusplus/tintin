@@ -1038,7 +1038,7 @@ array.c        array_fnd function allows searching for words in lists.
 path.c         can now save loaded paths backward.
 
 
-December 2006  - 1.96.4
+November 2006  - 1.96.4
 
 class.c        classes are now properly inherited from the main session.
 
@@ -1049,4 +1049,108 @@ parse.c        fixed parsing issues introduced in 1.96.3.
 mapper.c       debugged and updated alpha mapping code to beta.
 
 tables.c       added a mapping related sub-command table.
+
+December 2006  - 1.96.5
+
+buffer.c       fixed up color handling of commands.
+
+*.c            Put on my dirty boots and annihilated all lib readline related
+               stuff. Readline sucks donkey balls. You can quote me on that.
+
+terminal.c     Merger of echo.c and scrsize.c
+
+terminal.c     Added init_terminal to force character mode for input handling.
+
+terminal.c     Added custom screensize handling.
+
+rl.c           Now forwarding data on stdin to input.c
+
+input.c        Added basic command parsing options.
+
+history.c      Added tintin-esque command history support.
+
+cursor.c       Deals with cursor handling for input.c
+
+tables.c       Added a command table for cursor.c
+
+cursor.c       Added support for some readline-esque input handling.
+
+tab.c          Added my own (improved) tab handling.
+
+tab.c          Moved tab handling to cursor.c
+
+vt102.c        Made some improvements to the VT102 support.
+
+cursor.c       Added history browsing with up, down, ctrl-p and ctrl-n. Made
+               some minor improvements over the readline version.
+
+utils.c        Added ins_sprintf function that properly inserts a string
+               within another strong. Has formatting capabilities.
+
+input.c        Added process_input as the main input function.
+
+input.c        Added read_line function for default command parsing.
+
+input.c        Added read_key function for character mode.
+
+main.c         Moved suspend and exit functions to main.c
+
+main.c         Fixed #suspend handling.
+
+split.c        Now adjusting NAWS when changing split screen.
+
+cursor.c       Added do_cursor for using cursor features in macros.
+
+history.c      Added do_history for history manipulation.
+
+rl.c           Moved to update.c
+
+*.c            Tintin is now officially lib readline free. Good riddance.
+               The binaries are 40% smaller.
+
+tinexp.c       Added 256 xterm color support using <aaa> to <fff> with rgb
+               values. Background colors are set with <AAA> to <FFF>
+
+tintin.h       Added gtd->flags for global flags instead of using cludgy
+               flags on gts->flags.
+
+cursor.c       Added cursor_redraw_line routine which adds readline input
+               scrolling behavior. Tintin will probably work quite poorly on
+               non VT100 terminals now.
+
+tables.c       Added list flags to work around the fact that I use lists for
+               stuff they weren't originally intended for. Updated list parsers
+               throughout the source code.
+
+main.c         Added a signal handler for SIG_TSTP to handle ctrl-z smoothly.
+
+input.c        Escaped unmatched sequences are now automagically meta converted.
+
+cursor.c       history prev and next can now be used in combination with the
+               history search function.
+
+mapper.c       Improved map drawing by using virtual coordinates. 
+
+mapper.c       Added a flag to enable vt graphics mode. A hopefully universal legenda
+               is: 250 223 222 200 220 186 201 204 221 188 205 202 187 185 203 206 246
+
+mapper.c       Added a flag to draw 6x3 ascii graphics which allows displaying rooms
+               going ne, nw, se, sw, u, and d.
+
+misc.c         Can no longer use commas in #loop. When using 1 argument with
+               #loop it's assumed 
+
+misc.c         Can now use math in delays, as in #delay 1d5 smile.
+
+mapper.c       Added the void roomflag which can be used to turn rooms into
+               links. This is mainly useful to fit overlapping areas on the
+               same map without using the hide flag.
+
+December 2006  1.96.6
+
+cursor.c       Fixed behavior of ctrl-e for osx.
+
+log.c          Fixed newly introduced crashbug with #logline
+
+highlight.c    Now parses <###> color codes to allow for 256 colors.
 

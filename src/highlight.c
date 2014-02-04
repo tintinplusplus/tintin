@@ -17,13 +17,14 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
+
 
 /******************************************************************************
-*   file: highlight.c - funtions related to the highlight command             *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                         coded by Bill Reiss 1993                            *
-*                   recoded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                          coded by Bill Reiss 1993                           *
+*                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
 
@@ -31,9 +32,8 @@
 
 
 /*
-	#substitute is now able to do full color substitutions, but I'll leave
-	this for old times sake. Notice it now follows the standard tintin syntax
-	because #read is not as flexible as it used to be - Scandum
+	Now follows the standard tintin syntax because #read is not as flexible
+	as it used to be - Scandum
 */
 
 DO_COMMAND(do_highlight)
@@ -65,7 +65,7 @@ DO_COMMAND(do_highlight)
 	}
 	else
 	{
-		if (get_highlight_codes(right, temp) == FALSE)
+		if (get_highlight_codes(ses, right, temp) == FALSE)
 		{
 			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\r\n");
 			tintin_printf2(ses, "reset, bold, faint, underscore, blink, reverse, dim, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
@@ -131,7 +131,7 @@ void check_all_highlights(char *original, char *line, struct session *ses)
 			*pt2 = 0;
 			pt3 = pt2 + strlen(buf1);
 
-			get_highlight_codes(node->right, buf2);
+			get_highlight_codes(ses, node->right, buf2);
 
 			strip_non_vt102_codes(pt1, temp);
 			strip_vt102_codes_non_graph(temp, buf3);
@@ -143,9 +143,16 @@ void check_all_highlights(char *original, char *line, struct session *ses)
 	}
 }
 
-int get_highlight_codes(const char *string, char *result)
+int get_highlight_codes(struct session *ses, const char *string, char *result)
 {
 	int cnt;
+
+	if (*string == '<')
+	{
+		substitute(ses, string, result, SUB_COL);
+
+		return TRUE;
+	}
 
 	sprintf(result, "\033[0");
 

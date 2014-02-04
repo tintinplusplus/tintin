@@ -21,7 +21,7 @@
 
 /******************************************************************************
 *   file: buffer.c - funtions related to the scroll back buffer               *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
+*              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
 *                     coded by Igor van den Hoven 2004                        *
 ******************************************************************************/
 
@@ -71,8 +71,9 @@ void init_buffer(struct session *ses, int size)
 	{
 		ses->buffer = calloc(size, sizeof(char *));
 
-		ses->scroll_max = size;
-		ses->scroll_row = size - 1;
+		ses->scroll_max  = size;
+		ses->scroll_row  = size - 1;
+		ses->scroll_line = - 1;
 	}
 	pop_call();
 	return;
@@ -100,14 +101,19 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 
 	strcat(ses->more_output, line);
 
-	if (more_output == TRUE && strlen(ses->more_output) < BUFFER_SIZE / 2)
+	if (more_output == TRUE)
 	{
-		return;
+		ses->more_outlen = strlen(ses->more_output);
+
+		if (ses->more_outlen < BUFFER_SIZE / 2)
+		{
+			return;
+		}
 	}
 
-	if (HAS_BIT(gts->flags, SES_FLAG_RESETBUFFER))
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER))
 	{
-		DEL_BIT(gts->flags, SES_FLAG_RESETBUFFER);
+		DEL_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
 
 		reset_hash_table();
 	}
@@ -506,8 +512,6 @@ int show_buffer(struct session *ses)
 		restore_pos(ses);
 		DEL_BIT(ses->flags, SES_FLAG_READMUD);
 	}
-	fflush(stdout);
-
 	return TRUE;
 }
 

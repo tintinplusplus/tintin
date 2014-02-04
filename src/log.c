@@ -19,6 +19,12 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
+******************************************************************************/
+
 #include "tintin.h"
 
 
@@ -47,6 +53,8 @@ void logit(struct session *ses, const char *txt, FILE *file)
 
 DO_COMMAND(do_log)
 {
+	FILE *logfile;
+
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
@@ -66,13 +74,16 @@ DO_COMMAND(do_log)
 	{
 		if (is_abbrev(left, "APPEND"))
 		{
-			if ((ses->logfile = fopen(right, "a")))
+			if ((logfile = fopen(right, "a")))
 			{
-				if (ftell(ses->logfile) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+				ses->logfile = logfile;
+
+				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, fseek(ses->logfile, 0, SEEK_END));
+
+				if (fseek(ses->logfile, 0, SEEK_END) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
 					write_html_header(ses->logfile);
 				}
-				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 			}
 			else
 			{
@@ -81,9 +92,11 @@ DO_COMMAND(do_log)
 		}
 		else
 		{
-			if ((ses->logfile = fopen(right, "w")))
+			if ((logfile = fopen(right, "w")))
 			{
 				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
+
+				ses->logfile = logfile;
 
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
@@ -116,7 +129,7 @@ DO_COMMAND(do_logline)
 
 	if ((ses->logline = fopen(left, "a")))
 	{
-		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		if (fseek(ses->logline, 0, SEEK_END) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 		{
 			write_html_header(ses->logline);
 		}
@@ -147,7 +160,7 @@ DO_COMMAND(do_writebuffer)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #WRITEBUFFER <FILENAME>]");
+		tintin_printf(ses, "#SYNTAX: #BUFFER WRITE <FILENAME>]");
 	}
 	else
 	{
@@ -199,7 +212,7 @@ DO_COMMAND(do_writebuffer)
 		}
 		else
 		{
-			tintin_printf(ses, "#ERROR: #WRITEBUFFER {%s} - FAILED TO OPEN FILE.", left);
+			tintin_printf(ses, "#ERROR: #BUFFER WRITE {%s} - FAILED TO OPEN FILE.", left);
 		}
 	}
 	return ses;

@@ -20,16 +20,12 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: vt102.c - funtions related to terminal emulation                    *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                   recoded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include "tintin.h"
-
-/*
-	don't forget to do a 'fflush(stdout);' after each of these commands!
-*/
 
 void save_pos(struct session *ses)
 {
@@ -439,38 +435,42 @@ int interpret_vt102_codes(struct session *ses, const char *str, int real)
 				{
 					socket_printf(ses, 5, "%c%c%c%c%c", ESCAPE, '[', '?', '6', 'c');
 				}
+				ses->cur_row = 1;
+				ses->cur_col = 1;
+				ses->sav_row = ses->cur_row;
+				ses->sav_col = ses->cur_col;
 				return FALSE;					
 
 			case 'A':
-				ses->cur_row -= atoi(data);
+				ses->cur_row -= UMAX(1, atoi(data));
 				break;
 
 			case 'B':
 			case 'e':
-				ses->cur_row += atoi(data);
+				ses->cur_row += UMAX(1, atoi(data));
 				break;
 
 			case 'C':
 			case 'a':
-				ses->cur_col += atoi(data);
+				ses->cur_col += UMAX(1, atoi(data));
 				break;
 
 			case 'D':
-				ses->cur_col -= atoi(data);
+				ses->cur_col -= UMAX(1, atoi(data));
 				break;
 
 			case 'E':
-				ses->cur_row -= atoi(data);
+				ses->cur_row -= UMAX(1, atoi(data));
 				ses->cur_col = 1;
 				break;
 
 			case 'F':
-				ses->cur_row -= atoi(data);
+				ses->cur_row -= UMAX(1, atoi(data));
 				ses->cur_col = 1;
 				break;
 
 			case 'G':
-				ses->cur_col = atoi(data);
+				ses->cur_col = UMAX(1, atoi(data));
 				break;
 
 			case 'H':
@@ -502,6 +502,8 @@ int interpret_vt102_codes(struct session *ses, const char *str, int real)
 						ses->bot_row = ses->rows;
 					}
 				}
+				ses->cur_row = 1;
+				ses->cur_col = 1;
 				break;
 
 			case 's':
@@ -531,6 +533,7 @@ int interpret_vt102_codes(struct session *ses, const char *str, int real)
 
 			ses->bot_row = URANGE(1, ses->bot_row, ses->rows);
 
+			
 			return TRUE;
 		}
 	}

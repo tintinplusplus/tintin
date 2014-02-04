@@ -21,7 +21,7 @@
 
 /******************************************************************************
 *   file: config.c - funtions related tintin++ configuration                  *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
+*              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
 *                     coded by Igor van den Hoven 2004                        *
 ******************************************************************************/
 
@@ -376,7 +376,7 @@ DO_CONFIG(config_historysize)
 
 	gtd->history_size = atoi(arg);
 
-	stifle_history(gtd->history_size);
+/*	stifle_history(gtd->history_size); */
 
 	sprintf(buf, "%d", index);
 
@@ -470,8 +470,6 @@ DO_CONFIG(config_convertmeta)
 	sprintf(buf, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), buf, LIST_CONFIG);
-
-	check_character_mode(ses);
 
 	return ses;
 }

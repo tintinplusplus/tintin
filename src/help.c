@@ -20,10 +20,9 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: help.c - funtions related to the internal help file                 *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                  original help files by various persons                     *
-*                   recoded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -43,6 +42,7 @@ const struct help_type help_table[] =
 {
 	{
 		"ALIAS",
+		"\n"
 		"Command: #alias {word} {commands}\n"
 		"\n"
 		"         Defines a word that actually means a different word. Useful for long\n"
@@ -63,6 +63,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"ACTION",
+		"\n"
 		"Command: #action {search string} {commands} {priority}\n"
 		"\n"
 		"         Have tintin search for a certain string of text from the mud, if the\n"
@@ -87,6 +88,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"ALL",
+		"\n"
 		"Command: #all {string}\n"
 		"\n"
 		"Send a command to all active sessions.\n"
@@ -95,6 +97,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"BELL",
+		"\n"
 		"Command: #bell\n"
 		"\n"
 		"         Sends a beep to your terminal.\n"
@@ -104,6 +107,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"BUFFER",
+		"\n"
 		"Command: #buffer {home|up|down|end|find|write filename|info}\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
@@ -111,6 +115,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"CHAT",
+		"\n"
 		"Command: #chat {option} {argument}\n"
 		"\n"
 		"         #chat {init}       {port}             Initilizes a chat port.\n"
@@ -147,6 +152,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"CLASS",
+		"\n"
 		"Command: #class {name} {open|close|read filename|write filename|kill}\n"
 		"\n"
 		"         The {open} option will open a class, closing a previously opened\n"
@@ -161,7 +167,8 @@ const struct help_type help_table[] =
 	},
 	{
 		"COLORS",
-		"Format:  <abc>  with a, b, c being parameters\n"
+		"\n"
+		"Format:  <<888>abc>  with a, b, c being parameters\n"
 		"\n"
 		"         Parameter 'a': VT102 code\n"
 		"\n"
@@ -182,11 +189,15 @@ const struct help_type help_table[] =
 		"         3 - Yellow               8 - Skip\n"
 		"         4 - Blue                 9 - Default\n"
 		"\n"
+		"For xterm 256 color support use <<888>aaa> to <<888>fff> for rgb foreground colors and\n"
+		"<<888>AAA> to <<888>FFF> for rgb background colors.\n"
+		"\n"
 		"Example: #showme <<888>115>t<<888>828>e<<888>838>s<<888>848>t<<888>088> <<888>468>!<<888>568>!<<888>088>\n"
 		"         This will show: <115>t<828>e<838>s<848>t<088> <468>!<568>!<088>\n"
 	},
 	{
 		"CONFIG",
+		"\n"
 		"Commands: #config {option} {argument}\n"
 		"\n"
 		"          This allows you to configure various settings, the settings can be\n"
@@ -226,13 +237,21 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                             1992, 2006                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.96.4                           <068>#\n"
+		"<068>    #<078>                               "VERSION_NUM"                               <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<068>####################################################################<068>#<088>\n\n"
 	},
 	{
+		"CURSOR",
+		"\n"
+		"Command: #cursor {option}\n"
+		"\n"
+		"         Typing #cursor without an option will show all available cursor\n"
+		"         options. The cursor command's primarly goal is adding customizable\n"
+		"         input editing with macros.\n"
+	},
+	{
 		"DELAY",
-
 		"\n"
 		"Command: #delay {seconds} {command}\n"
 		"\n"
@@ -243,7 +262,6 @@ const struct help_type help_table[] =
 
 	{
 		"ECHO",
-		
 		"\n"
 		"Command: #echo {format} {argument1 argument2 etc}\n"
 		"\n"
@@ -316,11 +334,11 @@ const struct help_type help_table[] =
 	{
 		"HISTORY",
 		"\n"
-		"Command: #history {add} {line}\n"
-		"         #history {repeat} {number}\n"
+		"Command: #history {delete} \n"
+		"         #history {insert} {command}\n"
 		"\n"
-		"         Either adds a command to the command history or repeats a command in\n"
-		"         the history list, 0 being the last command.\n"
+		"         Either deletes the last command or inserts a new last command.\n"
+		"         Without an argument your entire command history is shown.\n"
 	},
 	{
 		"IF",
@@ -343,6 +361,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"IGNORE",
+		"\n"
 		"Command: #ignore {listname} {on|off}\n"
 		"\n"
 		"         Toggles a list on or off. With no arguments it shows your current\n"
@@ -353,6 +372,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"DEBUG",
+		"\n"
 		"Command: #debug {listname} {on|off|log}\n"
 		"\n"
 		"         Toggles a list on or off. With no argument it shows your current\n"
@@ -368,6 +388,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"ESCAPE",
+		"\n"
 		"You may use the escape character \\ for various special characters.\n"
 		"\n"
 		"\\a   will beep the terminal.\n"
@@ -384,6 +405,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"FORALL",
+		"\n"
 		"Command: #forall {list} {command}\n"
 		"         How this works is best shown with an example\n"
 		"Example: #forall {a b c d} {say &0}\n"
@@ -392,6 +414,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"FORMAT",
+		"\n"
 		"Command: #format {variable} {format} {argument1 argument2 etc}\n"
 		"         Allows you to store a string into a variable in the exact same way\n"
 		"         C's sprintf works with a few enhancements and limitations such as\n"
@@ -446,12 +469,23 @@ const struct help_type help_table[] =
 	},
 	{
 		"GREP",
+		"\n"
 		"Command: #grep [page] {search string}\n"
 		"         This command allows you to search for matching lines in your scroll\n"
 		"         back buffer. The amount of matches shown equals your screen size. If\n"
 		"         you want to search back further use a page number. You can use\n"
 		"         wildcards for better search results. Default * *'s are placed around\n"
 		"         the search string to make things a little easier.\n"
+	},
+	{
+		"HISTORY",
+		"\n"
+		"Command: #history {insert|delete}\n"
+		"\n"
+		"         Insert will insert the given command as the last issued command.\n"
+		"         Delete will delete the last issued command from the history list.\n"
+		"\n"
+		"         Without an argument the entire command history list will be shown\n"
 	},
 	{
 		"INFO",
@@ -472,6 +506,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"LIST",
+		"\n"
 		"Command: #list {variable} {del|ins|get|set|len} {argument}\n"
 		"\n"
 		"#list {list} {del} {index}             Delete an item from the list\n"
@@ -492,6 +527,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"LOADPATH",
+		"\n"
 		"Command: #loadpath {alias name}\n"
 		"\n"
 		"Load a saved path alias back into the path, useful for the #walk command.\n"
@@ -516,34 +552,50 @@ const struct help_type help_table[] =
 		"LOOP",
 		"\n"
 		"Command: #loop {start finish} {commands}\n"
+		"Command: #loop {$variable} {commands}\n"
 		"\n"
 		"Like a for statement, loop will loop from start to finish incrementing or\n"
 		"decrementing by 1 each time through.  The value of the loop variable is\n"
 		"placed in &0, which you can use in the commands.\n"
 		"\n"
+		"If used with only a start the loop will behave like a while loop. As long\n"
+		"as the variable is non zero the loop will run.\n"
+		"\n"
 		"examples:\n"
+		"\n"
 		"#loop {1 3} {get all &0.corpse}\n"
 		"equivalent to the following:\n"
 		"  get all 1.corpse;get all 2.corpse;get all 3.corpse\n"
+		"\n"
 		"#loop {3,1} {drop &0.key}\n"
 		"equivalent to\n"
 		"  drop 3.key;drop 2.key;drop 1.key\n"
 	},
 	{
 		"MACRO",
+		"\n"
 		"Command: #macro {key sequence} {commands}\n"
-		"         This allows you to make tintin respond to a function key.\n"
+		"\n"
+		"         Macros allows you to make tintin respond to function keys.\n"
 		"\n"
 		"         The key sequence send to the terminal when pressing a function key\n"
 		"         differs for every OS and terminal. To find out what sequence is send\n"
 		"         you can enable the CONVERT META config option.\n"
 		"\n"
-		"Example: Type: #config convert on, type #macro {, press the F1 key and the\n"
-		"         key sequence will be filled in. Finish the macro and type: #config\n"
-		"         convert off, when pressing F1 the entered command should be executed.\n"
+		"         Another option is pressing ctrl-v, which will enable CONVERT META for\n"
+		"         the next key pressed.\n"
+		"\n"
+		"Example: #macro {(press ctrl-v)(press F1)} {shout TinTin++ is the greatest!\n"
+		"\n"
+		"         The next time you press F1 the entered command should be executed.\n"
+		"\n"
+		"Keypad:  Not all terminals properly initialize the keypad key sequences.\n"
+		"         If this is the case you can still use the keypad, but instead of the\n"
+		"         arrow keys use ctrl b, f, p, and n.\n"
 	},
 	{
 		"MAP",
+		"\n"
 		"Command: #map\n"
 		"\n"
 		"The map command is the backbone of the auto mapping feature. In order to use\n"
@@ -677,7 +729,7 @@ const struct help_type help_table[] =
 		"Let's say you have a variable which stores xp needed for your next\n"
 		"level.  The above will modify that variable after every kill, showing\n"
 		"the amount still needed.\n"
-		"#act {%0 tells %1} {#if {\"%0\" == \"Scandum\" && $afk} {reply $afk Sir} {reply $afk dude}}\n"
+		"#act {%0 tells %1} {#if {\"\%0\" == \"Scandum\" && $afk} {reply $afk Sir} {reply $afk dude}}\n"
 	},
 	{
 		"MESSAGE",
@@ -693,9 +745,9 @@ const struct help_type help_table[] =
 		"\n"
 		"Command: #nop [string]\n"
 		"\n"
-		"Short for 'no operation', and is ignored by the client.  It is useful for commenting\n"
-		"in your coms file, any text after the nop and before a semicolon or\n"
-		"end of line is ignored. You shouldn't put braces { } in it though, unless\n"
+		"Short for 'no operation', and is ignored by the client.  It is useful for\n"
+		"commenting in your coms file, any text after the nop and before a semicolon\n"
+		"or end of line is ignored. You shouldn't put braces { } in it though, unless\n"
 		"you close them properly.\n"
 		"\n"
 		"example:\n"
@@ -746,6 +798,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"READ",
+		"\n"
 		"Command: #read {filename}\n"
 		"\n"
 		"         Reads a coms file into memory.  The coms file is merged in with the\n"
@@ -760,6 +813,7 @@ const struct help_type help_table[] =
 
 	{
 		"REPLACESTRING",
+		"\n"
 		"Command: #replacestring {variable} {oldtext} {newtext}\n"
 		"\n"
 		"Searches the variable text replacing each occurance of 'oldtext' with 'newtext'\n"
@@ -873,6 +927,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"SUBSTITUTE",
+		"\n"
 		"Command: #substitute {text} {new text}\n"
 		"\n"
 		"Allows you to replace original text from the mud with different text, or\n"
@@ -941,6 +996,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"UNACTION",
+		"\n"
 		"Command: #unaction {string}\n"
 		"\n"
 		"Remove action(s) from the action list which match {string}.  The\n"
@@ -1017,9 +1073,10 @@ const struct help_type help_table[] =
 	},
 	{
 		"UNMACRO",
+		"\n"
 		"Command: #unmacro {key combination}\n"
-		"         This command removes a macro from the list, but doesn't undo the\n"
-		"         actual macro because readline doesn't allow it.\n"
+		"\n"
+		"         This command removes a macro from the list.\n"
 	},
 	{
 		"UNPATH",
@@ -1122,6 +1179,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"WALK",
+		"\n"
 		"Command: #walk {forward|backward}\n"
 		"         Walks one step of a current path, forward if no argument is given.\n"
 		"Example: #mark;w;w;w;mark;#savepath backward test;#loadpath test;#3 #walk\n"
@@ -1161,8 +1219,8 @@ const struct help_type help_table[] =
 		"Command: #write {filename}\n"
 		"               #write filename\n"
 		"\n"
-		"Writes all current actions, aliases, subs, antisubs, highlights, and\n"
-		"variables to a coms file, specified by filename.\n"
+		"Writes all current actions, aliases, subs, highlights, and variables\n"
+		"to a command file, specified by filename.\n"
 	},
 	{
 		"ZAP",
@@ -1181,7 +1239,7 @@ const struct help_type help_table[] =
 
 DO_COMMAND(do_help)
 {
-	char buf[BUFFER_SIZE] = { 0 }, add[BUFFER_SIZE];
+	char buf[BUFFER_SIZE] = { 0 }, add[BUFFER_SIZE], *ptf, *pto;
 	int cnt;
 
 	if (*arg == 0)
@@ -1213,7 +1271,19 @@ DO_COMMAND(do_help)
 				{
 					tintin_header(ses, " %s ", help_table[cnt].name);
 				}
-				tintin_printf2(ses, "%s", buf);
+
+				for (pto = buf ; *pto ; pto = ptf)
+				{
+					ptf = strchr(pto, '\n');
+
+					if (ptf == NULL)
+					{
+						break;
+					}
+					*ptf++ = 0;
+
+					tintin_printf2(ses, "%s", pto);
+				}
 
 				if (ses != gts)
 				{

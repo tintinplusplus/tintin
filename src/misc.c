@@ -19,12 +19,11 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: misc.c - misc commands                                      */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
 
 #include "tintin.h"
 
@@ -121,7 +120,7 @@ DO_COMMAND(do_end)
 {
 	if (*arg)
 	{
-		tintin_puts("#ERROR: USE #END WITHOUT AN ARGUMENT TO END.", ses);
+		quitmsg(arg);
 	}
 	else
 	{
@@ -177,11 +176,22 @@ DO_COMMAND(do_info)
 {
 	int cnt;
 
+	if (*arg == 'c')
+	{
+		show_cpu(ses);
+
+		return ses;
+	}
+
 	tintin_header(ses, " INFORMATION ");
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
-		tintin_printf2(ses, "%-20s %3d  IGNORE %3s  MESSAGE %3s  DEBUG  %3s",
+		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_SHOW))
+		{
+			continue;
+		}
+		tintin_printf2(ses, "%-20s %5d  IGNORE %3s  MESSAGE %3s  DEBUG  %3s",
 			list_table[cnt].name_multi,
 			ses->list[cnt]->count,
 			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF",
@@ -196,21 +206,29 @@ DO_COMMAND(do_info)
 
 DO_COMMAND(do_loop)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], command[BUFFER_SIZE];
 
-	int bound1, bound2, counter, step;
+	long long bound1, bound2, counter, step;
 
-	arg = get_arg_in_braces(arg, temp, 0);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, temp, FALSE);
+	arg = get_arg_in_braces(arg, command, TRUE);
 
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(temp, left, FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
-	if (sscanf(left, "%d%c%d", &bound1, &temp[0], &bound2) != 3)
+
+	if (*command == 0 || (*left == 0 && *right == 0))
 	{
-		tintin_printf(ses, "#ERROR: #LOOP - NEED 2 ARGUMENTS, FOUND: %s", left);
+		show_message(ses, LIST_MATH, "#LOOP: INVALID ARGUMENTS.");
+
+		return ses;
 	}
-	else
+
+	if (*left && *right)
 	{
+		bound1 = (long long) get_number(ses, left);
+		bound2 = (long long) get_number(ses, right);
+
 		if (bound1 <= bound2)
 		{
 			step = 1;
@@ -224,12 +242,21 @@ DO_COMMAND(do_loop)
 
 		for (counter = bound1 ; counter != bound2 ; counter += step)
 		{
-			sprintf(gtd->cmds[0], "%d", counter);
+			sprintf(gtd->cmds[0], "%lld", counter);
 
-			sprintf(temp, "loop %d", counter);
+			sprintf(temp, "loop %lld", counter);
 			do_internal_variable(ses, temp);
 
-			substitute(ses, right, temp, SUB_CMD);
+			substitute(ses, command, temp, SUB_CMD);
+			ses = parse_input(temp, ses);
+		}
+	}
+	else
+	{
+		while ((long long) get_number(ses, left))
+		{
+			strcpy(temp, command);
+
 			ses = parse_input(temp, ses);
 		}
 	}
@@ -346,11 +373,6 @@ DO_COMMAND(do_showme)
 		return ses;
 	}
 
-	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && HAS_BIT(gts->flags, SES_FLAG_QUIET))
-	{
-		return ses;
-	}
-
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
 		save_pos(ses);
@@ -413,15 +435,7 @@ DO_COMMAND(do_snoop)
 
 DO_COMMAND(do_suspend)
 {
-	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
-
-	fflush(stdout);
-
-	kill(0, SIGSTOP);
-
-	dirty_screen(gtd->ses);
-
-	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
+	suspend_handler(0);
 
 	return ses;
 }
@@ -460,6 +474,8 @@ DO_COMMAND(do_system)
 
 DO_COMMAND(do_zap)
 {
+	tintin_puts("", ses);
+
 	tintin_puts("#ZZZZZZZAAAAAAAAPPPP!!!!!!!!! LET'S GET OUTTA HERE!!!!!!!!", ses);
 
 	if (ses == gts)

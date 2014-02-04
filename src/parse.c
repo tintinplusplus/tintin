@@ -19,14 +19,11 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: parse.c - some utility-functions                            */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
-
-/* note: a bunch of changes were made here for readline support -- daw */
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+******************************************************************************/
 
 #include "tintin.h"
 
@@ -111,7 +108,7 @@ struct session *parse_input(const char *input, struct session *ses)
 
 			if (check_all_aliases(command, arg, ses))
 			{
-				DEL_BIT(gts->flags, SES_FLAG_USERCOMMAND);
+				DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND); /* get rid of spam for aliasses */
 
 				ses = parse_input(command, ses);
 			}

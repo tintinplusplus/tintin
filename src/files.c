@@ -17,16 +17,17 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: files.c - funtions for logfile and reading/writing files    */
-/*                             TINTIN + +                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*                    New code by Bill Reiss 1993                    */
-/*                    New code by Joann Ellsworth                    */
-/*********************************************************************/
+
+/******************************************************************************
+*               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
+*                                                                             *
+*                        coded by Peter Unold 1992                            *
+*                       New code by Bill Reiss 1993                           *
+*                    New code by Joann Ellsworth 1994                         *
+*                   New code by Igor van den Hoven 1994                       *
+******************************************************************************/
 
 #include "tintin.h"
 #include <sys/stat.h>
@@ -66,7 +67,10 @@ DO_COMMAND(do_read)
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
-		counter[cnt] = ses->list[cnt]->count;
+		if (HAS_BIT(list_table[cnt].flags, LIST_FLAG_READ))
+		{
+			counter[cnt] = ses->list[cnt]->count;
+		}
 	}
 
 	stat(filename, &filedata);
@@ -247,7 +251,7 @@ DO_COMMAND(do_read)
 
 	sprintf(temp, "{TINTIN CHAR} {%c}", bufo[0]);
 
-	SET_BIT(gts->flags, SES_FLAG_QUIET);
+	SET_BIT(gtd->flags, TINTIN_FLAG_QUIET);
 
 	do_configure(ses, temp);
 
@@ -266,7 +270,7 @@ DO_COMMAND(do_read)
 
 		if (strlen(bufi) >= BUFFER_SIZE)
 		{
-			DEL_BIT(gts->flags, SES_FLAG_QUIET);
+			DEL_BIT(gtd->flags, TINTIN_FLAG_QUIET);
 
 			bufi[20] = 0;
 
@@ -288,24 +292,27 @@ DO_COMMAND(do_read)
 		pti++;
 	}
 
-	DEL_BIT(gts->flags, SES_FLAG_QUIET);
+	DEL_BIT(gtd->flags, TINTIN_FLAG_QUIET);
 
-	if (!HAS_BIT(gts->flags, SES_FLAG_VERBOSE))
+	if (!HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
 	{
 		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 		{
-			switch (ses->list[cnt]->count - counter[cnt])
+			if (HAS_BIT(list_table[cnt].flags, LIST_FLAG_READ))
 			{
-				case 0:
-					break;
+				switch (ses->list[cnt]->count - counter[cnt])
+				{
+					case 0:
+						break;
 
-				case 1:
-					tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
-					break;
+					case 1:
+						tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
+						break;
 
-				default:
-					tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
-					break;
+					default:
+						tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
+						break;
+				}
 			}
 		}
 	}
@@ -335,6 +342,11 @@ DO_COMMAND(do_write)
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
+		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_WRITE))
+		{
+			continue;
+		}
+
 		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
 		{
 			prepare_for_write(cnt, node, temp);

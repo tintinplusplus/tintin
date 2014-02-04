@@ -20,9 +20,9 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: tables.c - various reference tables to make life easier             *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 
@@ -41,6 +41,7 @@ const struct command_type command_table[] =
 	{	"commands",          do_commands,          CMD_FLAG_NONE    },
 	{	"config",            do_configure,         CMD_FLAG_SUB     },
 	{	"cr",                do_cr,                CMD_FLAG_NONE    },
+	{    "cursor",            do_cursor,            CMD_FLAG_SUB     },
 	{	"debug",             do_debug,             CMD_FLAG_SUB     },
 	{	"delay",             do_delay,             CMD_FLAG_NONE    },
 	{	"echo",              do_echo,              CMD_FLAG_SUB     },
@@ -53,6 +54,7 @@ const struct command_type command_table[] =
 	{	"grep",              do_grep,              CMD_FLAG_SUB     },
 	{	"help",              do_help,              CMD_FLAG_NONE    },
 	{	"highlight",         do_highlight,         CMD_FLAG_NONE    },
+	{    "history",           do_history,           CMD_FLAG_SUB     },
 	{	"if",                do_if,                CMD_FLAG_NONE    },
 	{	"ignore",            do_ignore,            CMD_FLAG_SUB     },
 	{	"info",              do_info,              CMD_FLAG_NONE    },
@@ -109,125 +111,25 @@ const struct command_type command_table[] =
 };
 
 
-const struct list_type list_table[LIST_ALL] =
+const struct list_type list_table[LIST_MAX] =
 {
-	{
-		"CONFIG",
-		"CONFIGURATIONS",
-		PRIORITY,
-		2
-	},
-
-	{
-		"ALIAS",
-		"ALIASES",
-		PRIORITY,
-		3
-
-	},
-	{
-		"ACTION",
-		"ACTIONS",
-		PRIORITY,
-		3
-	},
-	{
-		"SUBSTITUTE",
-		"SUBSTITUTIONS",
-		PRIORITY,
-		2
-	},
-	{
-		"VARIABLE",
-		"VARIABLES",
-		ALPHA,
-		2
-	},
-	{
-		"HIGHLIGHT",
-		"HIGHLIGHTS",
-		PRIORITY,
-		3
-	},
-	{
-		"ANTISUBSTITUTE",
-		"ANTISUBSTITUTIONS",
-		ALPHA,
-		1
-	},
-	{
-		"FUNCTION",
-		"FUNCTIONS",
-		ALPHA,
-		2
-	},
-	{
-		"PATH",
-		"PATHS",
-		APPEND,
-		0
-	},
-	{
-		"PATHDIR",
-		"PATHDIRS",
-		ALPHA,
-		2
-	},
-	{
-		"TICKER",
-		"TICKERS",
-		PRIORITY,
-		3
-	},
-
-	{
-		"MACRO",
-		"MACROS",
-		ALPHA,
-		2
-	},
-
-	{
-		"PROMPT",
-		"PROMPTS",
-		PRIORITY,
-		3
-	},
-
-	{
-		"TAB",
-		"TABS",
-		ALPHA,
-		1
-	},
-
-	{
-		"CLASS",
-		"CLASSES",
-		APPEND,
-		2
-	},
-
-	{
-		"MATH",
-		"MATHEMATICS",
-		APPEND,
-		3
-	},
-
-	{
-		"DELAY",
-		"DELAYS",
-		PRIORITY,
-		3
-	},
-
-	{
-		"HISTORY",
-		"HISTORIES",
-		APPEND,
-		1
-	}
+	{    "CONFIG",            "CONFIGURATIONS",     PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
+	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "ACTION",            "ACTIONS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PATHDIR",           "PATHDIRS",           ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TICKER",            "TICKERS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "MACRO",             "MACROS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "CLASS",             "CLASSES",            APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
+	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "DELAY",             "DELAYS",             PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
+	{    "MATH",              "MATHEMATICS",        APPEND,      3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  }
 };
 
 
@@ -397,66 +299,47 @@ const struct color_type color_table[] =
 
 const struct class_type class_table[CLASS_MAX] =
 {
-	{
-		"OPEN",
-		class_open
-	},
-
-	{
-		"CLOSE",
-		class_close
-	},
-
-	{
-		"READ",
-		class_read
-	},
-
-	{
-		"WRITE",
-		class_write
-	},
-
-	{
-		"KILL",
-		class_kill
-	}
+	{    "OPEN",                       class_open             },
+	{	"CLOSE",                      class_close            },
+	{    "READ",                       class_read             },
+	{    "WRITE",                      class_write            },
+	{    "KILL",                       class_kill             }
 };
 
 const struct chat_type chat_table[] =
 {
-	{     "ACCEPT",                    chat_accept            },
-	{     "CALL",                      chat_call              },
-	{     "CANCELFILE",                chat_cancelfile        },
-	{     "COLOR",                     chat_color             },
-	{     "DECLINE",                   chat_decline           },
-	{     "DND",                       chat_dnd               },
-	{     "DOWNLOADDIR",               chat_downloaddir       },
-	{     "EMOTE",                     chat_emote             },
-	{     "FORWARD",                   chat_forward           },
-	{     "FORWARDALL",                chat_forwardall        },
-	{     "FILESTAT",                  chat_filestat          },
-	{     "GROUP",                     chat_group             },
-	{     "IGNORE",                    chat_ignore            },
-	{     "INITIALIZE",                chat_initialize        },
-	{     "INFO",                      chat_info              },
-	{     "IP",                        chat_ip                },
-	{     "MESSAGE",                   chat_message           },
-	{     "NAME",                      chat_name              },
-	{     "PASTE",                     chat_paste             },
-	{     "PEEK",                      chat_peek              },
-	{     "PING",                      chat_ping              },
-	{     "PRIVATE",                   chat_private           },
-	{     "PUBLIC",                    chat_public            },
-	{     "REPLY",                     chat_reply             },
-	{     "REQUEST",                   chat_request           },
-	{     "SEND",                      chat_send              },
-	{     "SENDFILE",                  chat_sendfile          },
-	{     "SERVE",                     chat_serve             },
-	{     "UNINITIALIZE",              chat_uninitialize      },
-	{     "WHO",                       chat_who               },
-	{     "ZAP",                       chat_zap               },
-	{     "",                          NULL                   }
+	{     "ACCEPT",          chat_accept,         "Accept a file transfer"		               },
+	{     "CALL",            chat_call,           "Call a buddy"                                   },
+	{     "CANCELFILE",      chat_cancelfile,     "Cancel a file transfer"                         },
+	{     "COLOR",           chat_color,          "Set the default chat color"                     },
+	{     "DECLINE",         chat_decline,        "Decline a file transfer"                        },
+	{     "DND",             chat_dnd,            "Decline new connections"                        },
+	{     "DOWNLOADDIR",     chat_downloaddir,    "Set the download directory"                     },
+	{     "EMOTE",           chat_emote,          "Send an emoted chat message"                    },
+	{     "FORWARD",         chat_forward,        "Forward all chat messages to a buddy"           },
+	{     "FORWARDALL",      chat_forwardall,     "Forward all chat/mud messages to a buddy"       },
+	{     "FILESTAT",        chat_filestat,       "Show file transfer data"                        },
+	{     "GROUP",           chat_group,          "Assign a group to a buddy"                      },
+	{     "IGNORE",          chat_ignore,         "Ignore all messages from a buddy"               },
+	{     "INITIALIZE",      chat_initialize,     "Initialize chat with an optional port number"   },
+	{     "INFO",            chat_info,           "Display your chat settings"                     },
+	{     "IP",              chat_ip,             "Change your IP address, unset by default"       },
+	{     "MESSAGE",         chat_message,        "Send a private message to a buddy"              },
+	{     "NAME",            chat_name,           "Change your chat name"                          },
+	{     "PASTE",           chat_paste,          "Paste a block of text to a buddy"               },
+	{     "PEEK",            chat_peek,           "Show a buddy's public connections"              },
+	{     "PING",            chat_ping,           "Display a buddy's response time"                },
+	{     "PRIVATE",         chat_private,        "Do not share a buddy's IP address"              },
+	{     "PUBLIC",          chat_public,         "Share a buddy's IP address"                     },
+	{     "REPLY",           chat_reply,          "Reply to last private message"                  },
+	{     "REQUEST",         chat_request,        "Request a buddy's public connections"           },
+	{     "SEND",            chat_send,           "Send a raw data message to a buddy"             },
+	{     "SENDFILE",        chat_sendfile,       "Send a file to a buddy"                         },
+	{     "SERVE",           chat_serve,          "Forward all public chat messages to a buddy"    },
+	{     "UNINITIALIZE",    chat_uninitialize,   "Uninitializes the chat server"                  },
+	{     "WHO",             chat_who,            "Show all connections"                           },
+	{     "ZAP",             chat_zap,            "Close the connection to a buddy"                },
+	{     "",                NULL,                ""                                               }
 };
 
 
@@ -497,4 +380,232 @@ const struct map_type map_table[] =
 	{     "WALK",                      map_walk               },
 	{     "WRITE",                     map_write              },
 	{     "",                          NULL                   }
+};
+
+const struct cursor_type cursor_table[] =
+{
+	{
+		"",
+		"",
+		"[5~",
+		buffer_u
+	},
+	{
+
+		"",
+		"",
+		"[6~",
+		buffer_d
+	},
+	{
+		"",
+		"",
+		"[7~",
+		buffer_h
+	},
+	{
+		"",
+		"",
+		"[1~",
+		buffer_h
+	},
+	{
+		"",
+		"",
+		"OH",
+		buffer_h
+	},
+	{
+		"",
+		"",
+		"[8~",
+		buffer_e
+	},
+	{
+		"",
+		"",
+		"[4~",
+		buffer_e
+	},
+	{
+		"",
+		"",
+		"OF",
+		buffer_e
+	},
+	{
+		"",
+		"",
+		"[H",
+		buffer_h
+	},
+	{
+		"",
+		"",
+		"[F",
+		buffer_e
+	},
+	{
+		"",
+		"",
+		"",
+		buffer_l
+	},
+	{
+		"HOME",
+		"Move the cursor to start of input",
+		"",
+		cursor_home
+	},
+	{
+		"BACKWARD",
+		"Move cursor backward",
+		"",
+		cursor_left
+	},
+	{
+		"",
+		"",
+		"OD",
+		cursor_left
+	},
+	{
+		"EXIT",
+		"Exit current session",
+		"",
+		cursor_exit
+	},
+	{
+		"DELETE",
+		"Delete character at cursor",
+		"",
+		cursor_delete
+	},
+	{
+		"",
+		"",
+		"[3~",
+		cursor_delete
+	},
+	{
+		"END",
+		"Move cursor to end of input",
+		"",
+		cursor_end
+	},
+	{
+		"FORWARD",
+		"Move cursor forward",
+		"",
+		cursor_right
+	},
+	{
+		"",
+		"",
+		"OC",
+		cursor_right
+	},
+	{
+		"BACKSPACE",
+		"Delete backward character",
+		"",
+		cursor_backspace
+	},
+	{
+		"",
+		"",
+		"",
+		cursor_backspace
+	},
+	{
+		"TAB",
+		"Tab completion on last word",
+		"\t",
+		cursor_tab
+	},
+	{
+		"CLEAR RIGHT",
+		"Delete from cursor to end of input",
+		"",
+		cursor_clear_right
+	},
+	{
+		"REDRAW INPUT",
+		"Redraw the input line",
+		"",
+		cursor_redraw_input
+	},
+	{
+		"HISTORY NEXT",
+		"Select next command history entry",
+		"",
+		cursor_history_next
+	},
+	{
+		"",
+		"",
+		"OB",
+		cursor_history_next
+	},
+	{
+		"HISTORY PREV",
+		"Select previous command history entry",
+		"",
+		cursor_history_prev
+	},
+	{
+		"",
+		"",
+		"OA",
+		cursor_history_prev
+	},
+	{
+		"HISTORY SEARCH",
+		"Search command history",
+		"",
+		cursor_history_search
+	},
+	{
+		"CLEAR LEFT",
+		"Delete from cursor to start of input",
+		"",
+		cursor_clear_left
+	},
+	{
+		"CONVERT META",
+		"Meta convert the next character",
+		"",
+		cursor_convert_meta
+	},
+	{
+		"DELETE WORD",
+		"Delete next word backward",
+		"",
+		cursor_delete_word
+	},
+	{
+		"SUSPEND",
+		"Suspend program, return with fg",
+		"",
+		cursor_suspend
+	},
+	{
+		"",
+		"",
+		"",
+		NULL
+	}
+};
+
+const struct timer_type timer_table[] =
+{
+	{    "Poll Stdin"                  },
+	{    "Poll Sessions"               },
+	{    "Poll Chat Server"            },
+	{    "Update Tickers"              },
+	{    "Update Delays"               },
+	{    "Update Packet Patcher"       },
+	{    "Update Chat Server"          },
+	{    "Update Terminal"             },
+	{    "Stall Program"               }
 };

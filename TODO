@@ -1,5 +1,35 @@
 * Stuff that needs to be done
 
+--------------------------------------------------------------------------------
+
+MAPPING STUFF:
+
+- a method to double check correct movement.
+
+- a method to highlight a route on the map
+
+- a travel/explore option.
+
+- a method to mark a room on the map for corpse retreival etc.
+
+- a method to add filler rooms for mazy muds
+
+-------------------------------------------------------------------------------
+
+GENERAL STUFF:
+
+Add insert toggle
+
+Look into prompt handling in #split with #showme and macros.
+
+-------------------------------------------------------------------------------
+
+* This is a list of new features/improvements that are planned.
+
+- event system to deal with various situations
+
+- Buffer safe strings
+
 -------------------------------------------------------------------------------
 
 * Stuff that has been request but that I'm not entirely sure about
@@ -7,27 +37,20 @@
 - allow actions to use ! to repeat commands, possibly use #history 1, not as
   easy at it seems.
 
-- fix up macro usage in character mode. This might not be desirable.
+- fix up macro usage in character mode.
 
 - Add color bleeding for #split. Bloats the code though.
 
 - upgrade the #write command to format. Format should be up to the user.
 
-- place #grep output in the buffer. This is not be desirable however.
+- place #grep output in the buffer. This is not desirable however.
+
+- add a command to manipulate the input buffer.
 
 -------------------------------------------------------------------------------
 
-* This is a list of new features/improvements that are planned.
 
-- auto mapper (half finished)
-
-- custom readline support (some progress has been made)
-
-- event system to deal with various situations
-
--------------------------------------------------------------------------------
-
-* This is a list of new features/improvements the author version has no
+* This is a list of new features/improvements the author of this version has no
   interest in.
 
 - X window support: console is just fine.
@@ -49,4 +72,22 @@
   the #system command, write the scripts output to a file, and use #read to
   execute it. 
 
---------------------------------------------------------------------------------
+---
+
+chat.c: In function 'chat_new':
+chat.c:213: warning: pointer targets in passing argument 3 of 'getsockname'
+differ in signedness
+chat.c:215: warning: pointer targets in passing argument 3 of 'accept'
+differ in signedness
+chat.c: In function 'get_chat_commands':
+chat.c:691: warning: pointer targets in assignment differ in signedness
+chat.c:692: warning: pointer targets in assignment differ in signedness
+chat.c:728: warning: pointer targets in assignment differ in signedness
+
+telopt.c: In function 'translate_telopts':
+telopt.c:232: warning: pointer targets in passing argument 1 of 'sprintf'
+differ in signedness
+telopt.c:233: warning: pointer targets in passing argument 1 of 'strlen'
+differ in signedness
+telopt.c:234: warning: pointer targets in passing argument 1 of 'strlen'
+differ in signedness

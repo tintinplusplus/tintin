@@ -32,14 +32,6 @@ LDFLAGS = @LDFLAGS@
 
 INCS = @MYINCLUDE@
 
-# Use the second line below if you do not have the readline library installed
-# You also need to configure and make the readline library before you
-# make the tintin++ program.
-#LIBS = @LIBS@
-#
-#Since readline and history are required, I'll hard code it in here.
-#Guess we'll add zlib as well - Scandum
-
 LIBS = @MYLIB@ @LIBS@
 
 # If you prefer to be able to enter ISO latin-1 characters instead
@@ -65,12 +57,12 @@ FFLAGS= $(F1) $(F6)
 
 
 OFILES = action.o alias.o files.o help.o highlight.o strhash.o \
-         llist.o log.o main.o misc.o net.o parse.o path.o rl.o \
-         rlhist.o tab.o vt102.o scrsize.o session.o function.o \
+         llist.o log.o main.o misc.o net.o parse.o path.o update.o \
+         history.o tab.o vt102.o terminal.o session.o function.o \
          text.o substitute.o tick.o math.o variables.o debug.o \
          tinexp.o mapper.o tables.o buffer.o prompt.o telopt.o \
-         class.o  split.o  echo.o  utils.o   macro.o  config.o \
-         chat.o array.o input.o
+         class.o  split.o utils.o   macro.o  config.o \
+         chat.o array.o input.o cursor.o
 
 
 default: all

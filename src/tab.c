@@ -20,9 +20,9 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: buffer.c - funtions related to the scroll back buffer               *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2006                       *
 ******************************************************************************/
 
 
@@ -77,35 +77,4 @@ DO_COMMAND(do_untab)
 		show_message(ses, LIST_TAB, "#TAB: NO MATCH(ES) FOUND FOR {%s}.", left);
 	}
 	return ses;
-}
-
-
-/*
-	This function is called infinitely from completion_matches(), untill
-	NULL is returned. *str is the partial word, int state is 0 the first
-	time the function is called.
-
-	Currently it returns the first match from the sorted tab list.
-*/
-
-char *tab_complete(const char *str, int state)
-{
-	char buffer[BUFFER_SIZE];
-	struct listnode *node;
-
-	if (state)
-	{
-		return NULL;
-	}
-
-	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
-	{
-		substitute(gtd->ses, node->left, buffer, SUB_VAR|SUB_FUN);
-
-		if (is_abbrev(str, buffer))
-		{
-			return strdup(buffer);
-		}
-	}
-	return NULL;
 }

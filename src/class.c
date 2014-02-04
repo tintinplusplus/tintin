@@ -21,7 +21,7 @@
 
 /******************************************************************************
 *   file: class.c - funtions related to the scroll back buffer                *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
+*              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
 *                     coded by Igor van den Hoven 2004                        *
 ******************************************************************************/
 
@@ -142,6 +142,11 @@ int count_class(struct session *ses, struct listnode *class)
 
 	for (cnt = list = 0 ; list < LIST_MAX ; list++)
 	{
+		if (!HAS_BIT(ses->list[list]->flags, LIST_FLAG_CLASS))
+		{
+			continue;
+		}
+
 		for (node = ses->list[list]->f_node ; node ; node = node->next)
 		{
 			if (!strcmp(node->class, class->left))
@@ -215,6 +220,11 @@ DO_CLASS(class_write)
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
+		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_CLASS))
+		{
+			continue;
+		}
+
 		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
 		{
 			if (!strcmp(node->class, left))
@@ -249,7 +259,7 @@ DO_CLASS(class_kill)
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
-		if (cnt == LIST_CLASS)
+		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_CLASS))
 		{
 			continue;
 		}

@@ -20,10 +20,10 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: math.c - funtions related to mathematical expressions               *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                         coded by Bill Reiss 1993                            *
-*                   recoded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                          coded by Bill Reiss 1993                           *
+*                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -109,20 +109,17 @@ double get_number(struct session *ses, const char *str)
 	char number[BUFFER_SIZE];
 
 	substitute(ses, str, number, SUB_VAR|SUB_FUN);
-	
+
 	return mathexp(ses, number);
 }
 
-char *get_number_string(struct session *ses, const char *str)
+void get_number_string(struct session *ses, const char *str, char *result)
 {
 	char number[BUFFER_SIZE];
-	static char result[BUFFER_SIZE];
 
-	substitute(ses, str, number, SUB_VAR|SUB_FUN);	
+	substitute(ses, str, number, SUB_VAR|SUB_FUN);
 
 	sprintf(result, "%.*f", precision, mathexp(ses, number));
-
-	return result;
 }
 
 /******************************************************************************

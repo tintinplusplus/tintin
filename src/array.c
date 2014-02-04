@@ -21,7 +21,9 @@
 
 /******************************************************************************
 *   file: class.c - funtions related to the scroll back buffer                *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
+*                                                                             *
+*               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
+*                                                                             *
 *                     coded by Igor van den Hoven 2004                        *
 ******************************************************************************/
 
@@ -89,13 +91,13 @@ int get_list_length(struct listnode *node)
 	return cnt;
 }
 
-int get_list_index(struct listnode *node, char *arg)
+int get_list_index(struct session *ses, struct listnode *node, char *arg)
 {
 	int index, size;
 
-	push_call("get_list_index(%p,%p)",node,arg);
+	push_call("get_list_index(%p,%p,%p)",ses,node,arg);
 
-	index = atoi(arg);
+	index = (int) get_number(ses, arg);
 	size  = get_list_length(node);
 
 	if (size == 0 && (index == -1 || index == 1))
@@ -126,7 +128,7 @@ DO_ARRAY(array_del)
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
-	index = get_list_index(list, left);
+	index = get_list_index(ses, list, left);
 
 	if (index <= 0)
 	{
@@ -201,7 +203,7 @@ DO_ARRAY(array_get)
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, FALSE);
 
-	index = get_list_index(list, left);
+	index = get_list_index(ses, list, left);
 
 	if (index <= 0)
 	{
@@ -234,7 +236,7 @@ DO_ARRAY(array_ins)
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
-	index = get_list_index(list, left);
+	index = get_list_index(ses, list, left);
 
 	if (index == -1)
 	{
@@ -302,7 +304,7 @@ DO_ARRAY(array_set)
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
-	index = get_list_index(list, left);
+	index = get_list_index(ses, list, left);
 
 	if (index <= 0)
 	{

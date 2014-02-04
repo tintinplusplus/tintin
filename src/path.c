@@ -19,24 +19,15 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 *******************************************************************************/
 
-/*********************************************************************/
-/* file: path.c - stuff for the path feature                         */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                    coded by peter unold 1992                      */
-/*                  recoded by Jeremy C. Jack 1994                   */
-/*                  recoded by Igor van den Hoven 2004               */
-/*********************************************************************/
-/* the path is implemented as a fix-sized queue. It gets a bit messy */
-/* here and there, but it should work....                            */
-/*********************************************************************/
-
+/******************************************************************************
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+*                     recoded by Igor van den Hoven 2004                      *
+******************************************************************************/
 
 #include "tintin.h"
 
-/*
-	the #mark command
-*/
 
 DO_COMMAND(do_mark)
 {

@@ -17,16 +17,13 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: utils.c - some utility-functions                            */
-/*                             TINTIN III                            */
-/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
-/*                     coded by peter unold 1992                     */
-/*********************************************************************/
-
-/* note: changed a little bit for readline support -- daw */
+/******************************************************************************
+*               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
+*                                                                             *
+*                       coded by Peter Unold 1992                             *
+******************************************************************************/
 
 #include "tintin.h"
 
@@ -152,6 +149,214 @@ void cat_sprintf(char *dest, const char *fmt, ...)
 	strcat(dest, buf);
 }
 
+void ins_sprintf(char *dest, const char *fmt, ...)
+{
+	char buf[BUFFER_SIZE], tmp[BUFFER_SIZE];
+
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(buf, fmt, args);
+	va_end(args);
+
+	strcpy(tmp, dest);
+
+	*dest = 0;
+
+	strcat(dest, buf);
+	strcat(dest, tmp);
+}
+
+void show_message(struct session *ses, int index, const char *format, ...)
+{
+	struct listroot *root;
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	push_call("show_message(%p,%p,%p)",ses,index,format);
+
+	va_start(args, format);
+
+	vsprintf(buf, format, args);
+
+	va_end(args);
+	
+	if (index == -1)
+	{
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+		{
+			tintin_puts2(buf, ses);
+		}
+		pop_call();
+		return;
+	}
+
+	root = ses->list[index];
+
+	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
+	{
+		tintin_puts2(buf, ses);
+
+		pop_call();
+		return;
+	}
+
+	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
+	{
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+		{
+			tintin_puts2(buf, ses);
+
+			pop_call();
+			return;
+		}
+	}
+
+	if (HAS_BIT(root->flags, LIST_FLAG_LOG))
+	{
+		if (ses->logfile)
+		{
+			logit(ses, buf, ses->logfile);
+		}
+	}
+	pop_call();
+	return;
+}
+
+void tintin_header(struct session *ses, const char *format, ...)
+{
+	char arg[BUFFER_SIZE], buf[BUFFER_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsprintf(arg, format, args);
+	va_end(args);
+
+	if (strlen(arg) > gtd->ses->cols - 2)
+	{
+		arg[gtd->ses->cols - 2] = 0;
+	}
+
+	memset(buf, '#', gtd->ses->cols);
+
+	memcpy(&buf[(gtd->ses->cols - strlen(arg)) / 2], arg, strlen(arg));
+
+	buf[gtd->ses->cols] = 0;
+
+	tintin_puts2(buf, ses);
+}
+
+
+void socket_printf(struct session *ses, size_t length, const char *format, ...)
+{
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+
+	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+	{
+		write(ses->socket, buf, length);
+	}
+}
+
+void tintin_printf2(struct session *ses, const char *format, ...)
+{
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+
+	tintin_puts2(buf, ses);
+}
+
+void tintin_printf(struct session *ses, const char *format, ...)
+{
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+
+	tintin_puts(buf, ses);
+}
+
+/*
+	output to screen should go through this function
+	the output is NOT checked for actions or anything
+*/
+
+void tintin_puts2(const char *cptr, struct session *ses)
+{
+	char output[BUFFER_SIZE];
+
+	if (ses == NULL)
+	{
+		ses = gtd->ses;
+	}
+
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && HAS_BIT(gtd->flags, TINTIN_FLAG_QUIET))
+	{
+		return;
+	}
+
+	sprintf(output, "\033[0m%s\033[0m", cptr);
+
+	add_line_buffer(ses, output, FALSE);
+
+	if (ses != gtd->ses)
+	{
+		return;
+	}
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		save_pos(ses);
+		goto_rowcol(ses, ses->bot_row, 1);
+	}
+
+	printline(ses, output, FALSE);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		restore_pos(ses);
+	}
+}
+
+/*
+	output to screen should go through this function
+	the output IS treated as though it came from the mud
+*/
+
+void tintin_puts(const char *cptr, struct session *ses)
+{
+	char buf[BUFFER_SIZE];
+
+	if (ses == NULL)
+	{
+		ses = gtd->ses;
+	}
+
+	sprintf(buf, "%s", cptr);
+
+	do_one_line(buf, ses);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_GAG))
+	{
+		tintin_puts2(buf, ses);
+	}
+	else
+	{
+		DEL_BIT(ses->flags, SES_FLAG_GAG);
+	}
+}
+
+
 /*************************************************/
 /* print system call error message and terminate */
 /*************************************************/
@@ -171,6 +376,91 @@ void syserr(const char *msg)
 	quitmsg(s);
 }
 
+void show_cpu(struct session *ses)
+{
+	long long total_cpu;
+	int timer;
+
+	tintin_printf2(ses, "Section                           Time (usec)    Freq (msec)  %%Prog         %%CPU");
+
+	tintin_printf2(ses, "");
+
+	for (total_cpu = timer = 0 ; timer < TIMER_CPU ; timer++)
+	{
+		total_cpu += display_timer(ses, timer);
+	}
+
+	tintin_printf2(ses, "");
+
+	tintin_printf2(ses, "Unknown CPU Usage:              %6.2f percent", (gtd->total_io_exec - total_cpu) * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
+	tintin_printf2(ses, "Average CPU Usage:              %6.2f percent", (gtd->total_io_exec)             * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
+}
+
+
+long long display_timer(struct session *ses, int timer)
+{
+	long long total_usage, indicated_usage;
+
+	total_usage = gtd->total_io_exec + gtd->total_io_delay;
+
+	if (total_usage == 0)
+	{
+		return 0;
+	}
+
+	if (gtd->timer[timer][1] == 0 || gtd->timer[timer][4] == 0)
+	{
+		return 0;
+	}
+
+	indicated_usage = gtd->timer[timer][0] / gtd->timer[timer][1] * gtd->timer[timer][4];
+
+	tintin_printf2(ses, "%-30s%8lld       %8lld      %8.2f     %8.2f",
+		timer_table[timer].name,
+		gtd->timer[timer][0] / gtd->timer[timer][1],
+		gtd->timer[timer][3] / gtd->timer[timer][4] / 1000,
+		100.0 * (double) indicated_usage / (double) gtd->total_io_exec,
+		100.0 * (double) indicated_usage / (double) total_usage);
+
+	return indicated_usage;
+}
+
+
+void open_timer(int timer)
+{
+	struct timeval last_time;
+	long long current_time;
+
+	gettimeofday(&last_time, NULL);
+
+	current_time = (long long) last_time.tv_usec + 1000000LL * (long long) last_time.tv_sec;
+
+	if (gtd->timer[timer][2] == 0)
+	{
+		gtd->timer[timer][2] = current_time ;
+	}
+	else
+	{
+		gtd->timer[timer][3] += current_time - gtd->timer[timer][2];
+		gtd->timer[timer][2]  = current_time;
+		gtd->timer[timer][4] ++;
+	}
+}
+
+
+void close_timer(int timer)
+{
+	struct timeval last_time;
+	long long current_time;
+
+	gettimeofday(&last_time, NULL);
+
+	current_time = (long long) last_time.tv_usec + 1000000LL * (long long) last_time.tv_sec;
+
+	gtd->timer[timer][0] += (current_time - gtd->timer[timer][2]);
+	gtd->timer[timer][1] ++;
+}
+		
 /*
 	Whoops, strcasecmp wasn't found.
 */

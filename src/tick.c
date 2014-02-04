@@ -20,11 +20,12 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: tick.c - funtions related to the tick command                       *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                        coded by peter unold 1992                            *
-*                   recoded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                         coded by Peter Unold 1992                           *
+*                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
+
 
 #include "tintin.h"
 
@@ -41,7 +42,7 @@ DO_COMMAND(do_tick)
 	arg = get_arg_in_braces(arg, right, TRUE);
 
 	arg = get_arg_in_braces(arg, temp,  TRUE);
-	substitute(ses, temp, pr, SUB_VAR|SUB_FUN);
+	get_number_string(ses, temp, pr);
 
 	if (!*pr)
 	{
@@ -105,7 +106,7 @@ DO_COMMAND(do_delay)
 	root = ses->list[LIST_DELAY];
 
 	arg = get_arg_in_braces(arg, temp,  FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	get_number_string(ses, temp, left);
 
 	arg = get_arg_in_braces(arg, right, TRUE);
 
@@ -128,137 +129,3 @@ DO_COMMAND(do_delay)
 	return ses;
 }
 
-
-void tick_update(void)
-{
-	char result[BUFFER_SIZE];
-	struct session *ses;
-	struct listnode *node;
-	struct listroot *root;
-	struct chat_data *buddy, *buddy_next;
-
-	push_call("tick_update(void)");
-
-	for (ses = gts->next ; ses ; ses = gtd->update)
-	{
-		gtd->update = ses->next;
-
-		root = ses->list[LIST_TICKER];
-
-		for (node = root->f_node ; node ; node = root->update)
-		{
-			root->update = node->next;
-
-			if (node->data == 0)
-			{
-				node->data = gtd->time + atof(node->pr) * 1000000L;
-			}
-
-			if (node->data <= gtd->time)
-			{
-				node->data += atof(node->pr) * 1000000LL;
-
-				strcpy(result, node->right);
-
-				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
-				{
-					show_message(ses, LIST_TICKER, "#TICKER DEBUG: %s", result);
-				}
-				parse_input(result, ses);
-			}
-		}
-	}
-
-	for (ses = gts ; ses ; ses = gtd->update)
-	{
-		gtd->update = ses->next;
-
-		root = ses->list[LIST_DELAY];	
-
-		for (node = root->f_node ; node ; node = root->update)
-		{
-			root->update = node->next;
-
-			if (node->data == 0)
-			{
-				node->data = gtd->time + get_number(ses, node->pr) * 1000000L;
-			}
-
-			if (node->data <= gtd->time)
-			{
-				strcpy(result, node->right);
-
-				deletenode_list(ses, node, LIST_DELAY);
-
-				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
-				{
-					tintin_printf2(ses, "#DELAY DEBUG: %s", result);
-				}
-				parse_input(result, ses);
-			}
-		}
-	}
-
-	for (ses = gts->next ; ses ; ses = gtd->update)
-	{
-		gtd->update = ses->next;
-
-		if (ses->check_output && gtd->time > ses->check_output)
-		{
-			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
-			{
-				save_pos(ses);
-				goto_rowcol(ses, ses->bot_row, 1);
-			}
-
-			SET_BIT(ses->flags, SES_FLAG_READMUD);
-
-			strcpy(result, ses->more_output);
-
-			ses->more_output[0] = 0;
-
-			process_mud_output(ses, result, TRUE);
-
-			DEL_BIT(ses->flags, SES_FLAG_READMUD);
-
-			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
-			{
-				restore_pos(ses);
-			}
-		}
-	}
-
-	if (gtd->chat)
-	{
-		for (buddy = gtd->chat->next ; buddy ; buddy = buddy_next)
-		{
-			buddy_next = buddy->next;
-
-			if (buddy->timeout && buddy->timeout < time(NULL))
-			{
-				chat_socket_printf(buddy, "<CHAT> Connection timed out.");
-
-				close_chat(buddy, TRUE);
-			}
-		}
-
-		if (gtd->chat->paste_time && gtd->chat->paste_time < utime())
-		{
-			chat_paste(NULL);
-		}
-	}
-
-	for (ses = gts ; ses ; ses = ses->next)
-	{
-		if (HAS_BIT(ses->flags, SES_FLAG_UPDATEVTMAP))
-		{
-			DEL_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
-
-			show_vtmap(ses);
-		}
-	}
-	fflush(stdout);
-
-	pop_call();
-	return;
-}

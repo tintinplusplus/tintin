@@ -20,9 +20,9 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: strhash.c - funtions related to the hashing of strings              *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by Igor van den Hoven 2004                        *
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -30,6 +30,10 @@
 struct str_hash_index_data str_hash_index[MAX_STR_HASH];
 
 unsigned short str_hash_len;
+
+/*
+	Performs as well as Jenkin's one-at-a-time hash.- Scandum
+*/
 
 unsigned short generate_hash_key(char *str)
 {
@@ -45,7 +49,7 @@ unsigned short generate_hash_key(char *str)
 	return h % MAX_STR_HASH;
 }
 
-
+ 
 char *str_hash(char *str, int lines)
 {
 	unsigned short hash;
@@ -127,12 +131,17 @@ void reset_hash_table(void)
 DO_COMMAND(do_hash)
 {
 	struct str_hash_data *hash_ptr;
-	int hash, cnt_hash, max_hash, cnt_str, cnt_count, cnt_size, cnt_unhashed_size;
+	int hash, cnt_hash, max_hash, cnt_used, cnt_str, cnt_count, cnt_size, cnt_unhashed_size;
 
-	hash = cnt_hash = max_hash = cnt_str = cnt_count = cnt_size = cnt_unhashed_size = 0;
+	hash = cnt_hash = max_hash = cnt_used = cnt_str = cnt_count = cnt_size = cnt_unhashed_size = 0;
 
 	for (hash = 0 ; hash < MAX_STR_HASH ; hash++)
 	{
+		if (str_hash_index[hash].f_node)
+		{
+			cnt_used++;
+		}
+
 		for (cnt_hash = 0, hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
 		{
 			if (hash != generate_hash_key((char *) hash_ptr + gtd->str_hash_size))
@@ -153,9 +162,10 @@ DO_COMMAND(do_hash)
 	tintin_printf2(NULL, "Strings Allocated: %8d", cnt_str);
 	tintin_printf2(NULL, "Total Links:       %8d", cnt_count);
 	tintin_printf2(NULL, "Max Hash:          %8d", max_hash);
+	tintin_printf2(NULL, "Used Hash:         %8d", cnt_used);
+	tintin_printf2(NULL, "Average Hash:      %8d", cnt_str / cnt_used);
 	tintin_printf2(NULL, "Total Memory:      %8d", cnt_size);
 	tintin_printf2(NULL, "Saved Memory:      %8d", cnt_unhashed_size - cnt_size);
 
 	return ses;
 }
-

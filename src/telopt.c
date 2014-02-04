@@ -20,11 +20,10 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: telopt.c - funtions related to telnet negotations                   *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by peter unold 1992                               *
-*                     new code by Igor van den Hoven 2004                     *
-*******************************************************************************/
+*                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
+*                                                                             *
+*                      coded by Igor van den Hoven 2004                       *
+******************************************************************************/
 
 #include "tintin.h"
 #include "telnet.h"
@@ -432,8 +431,6 @@ int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 
 		telopt_debug(ses, "SENT IAC WILL SGA");
 	}
-	check_character_mode(ses);
-
 	return 3;
 }
 
@@ -447,8 +444,6 @@ int send_wont_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 
 		telopt_debug(ses, "SENT IAC WONT SGA");
 	}
-	check_character_mode(ses);
-
 	return 3;
 }
 
@@ -481,8 +476,6 @@ int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 		telopt_debug(ses, "SENT IAC DO SGA");
 	}
 	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
-
-	check_character_mode(ses);
 
 	return 3;
 }
@@ -658,7 +651,7 @@ int send_echo_on(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, DONT, TELOPT_ECHO);
 
-	echo_on(ses);
+	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
 	telopt_debug(ses, "SENT IAC DONT ECHO");
 
@@ -669,7 +662,7 @@ int send_echo_off(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_ECHO);
 
-	echo_off(ses);
+	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
 	telopt_debug(ses, "SENT IAC DO ECHO");
 
@@ -680,7 +673,7 @@ int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_ECHO);
 
-	echo_off(ses);
+	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
 	telopt_debug(ses, "SENT IAC WILL ECHO");
 

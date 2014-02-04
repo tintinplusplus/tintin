@@ -17,34 +17,16 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
-/*********************************************************************/
-/* file: function.c - functions related to the functions             */
-/* Modified the substitute.c file to create this,   //SN             */
-/*********************************************************************/
+/******************************************************************************
+*               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
+*                                                                             *
+*                       coded by Sverre Normann 1999                          *
+*                    recoded by Igor van den Hoven 2004                       *
+******************************************************************************/
 
 #include "tintin.h"
-
-/************************************************************************/
-/* Usage of functions:                                                  */
-/************************************************************************/
-/* ex1:                                                                 */
-/* #function {rnd} {#format {result} {%R} {%0}}                         */
-/* #showme A random number between 1 and 100: @rnd{100}                 */
-/************************************************************************/
-/* ex2:                                                                 */
-/* #function {ifs} {#math result {"%0" == "%1"}}                        */
-/* #if {!@ifs{{$name} {$myname}} && $spam} {say Hi $name!}              */
-/************************************************************************/
-/* In short: functions are treated much like variables. Their value is  */
-/* a command-line which is executed, and the functions are substituted  */
-/* by the parameter last sent to the #result command                    */
-/************************************************************************/
-/* last ex:                                                             */
-/* #function {lastfuncresult} {#nop}                                    */
-/* #showme Last use of a function gave @lastfuncresult{} as result.     */
-/************************************************************************/
 
 
 DO_COMMAND(do_function)

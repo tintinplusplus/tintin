@@ -20,10 +20,10 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: chat.c - funtions related to p2p chatting                           *
-*           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by Sean Butler 1998                               *
-*                   recoded by Igor van den Hoven 2005                        *
+*               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
+*                                                                             *
+*                         coded by Sean Butler 1998                           *
+*                    recoded by Igor van den Hoven 2005                       *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -42,7 +42,6 @@
 #define CALL_TIMEOUT 5
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.96.3"
 
 DO_COMMAND(do_chat)
 {
@@ -58,16 +57,7 @@ DO_COMMAND(do_chat)
 
 		for (cnt = 0 ; *chat_table[cnt].name != 0 ; cnt++)
 		{
-			if (strlen(left) + 20 > ses->cols)
-			{
-				tintin_printf(NULL, "%s", left);
-				*left = 0;
-			}
-			cat_sprintf(left, "%-20s", chat_table[cnt].name);
-		}
-		if (*left)
-		{
-			tintin_printf(NULL, "%s", left);
+			tintin_printf2(ses, "  [%-13s] %s", chat_table[cnt].name, chat_table[cnt].desc);
 		}
 		tintin_header(NULL, "");
 
@@ -81,14 +71,14 @@ DO_COMMAND(do_chat)
 			continue;
 		}
 
-		if (chat_table[cnt].chat != chat_initialize && gtd->chat == NULL)
+		if (chat_table[cnt].fun != chat_initialize && gtd->chat == NULL)
 		{
 			tintin_printf(NULL, "\033[1;31m<CHAT> You must initialize a chat port first.");
 
 			return ses;
 		}
 
-		chat_table[cnt].chat (right);
+		chat_table[cnt].fun(right);
 
 		return ses;
 	}
@@ -656,7 +646,7 @@ int process_chat_input(struct chat_data *buddy)
 
 			RESTRING(buddy->name, name);
 
-			chat_socket_printf(buddy, "%c%s%c", CHAT_VERSION, TINTIN_VERSION, CHAT_END_OF_COMMAND);
+			chat_socket_printf(buddy, "%c%s%s%c", CHAT_VERSION, "TinTin++ ", VERSION_NUM, CHAT_END_OF_COMMAND);
 
 			sep = strchr(buf, '\n');
 
@@ -812,7 +802,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 			case CHAT_VERSION:
 				if (buddy->version == NULL)
 				{
-					chat_socket_printf(buddy, "%c%s%c", CHAT_VERSION, TINTIN_VERSION, CHAT_END_OF_COMMAND);
+					chat_socket_printf(buddy, "%c%s%s%c", CHAT_VERSION, "TinTin++ ", VERSION_NUM, CHAT_END_OF_COMMAND);
 
 					buddy->version = strdup(txt);
 				}
@@ -1353,17 +1343,13 @@ DO_CHAT(chat_paste)
 
 	if (arg == NULL)
 	{
-		if (strlen(rl_line_buffer))
+		if (strlen(gtd->input_buf))
 		{
-			sprintf(temp, "%s\n%s", gtd->chat->paste_buf, rl_line_buffer);
+			sprintf(temp, "%s\n%s", gtd->chat->paste_buf, gtd->input_buf);
 
 			RESTRING(gtd->chat->paste_buf, temp);
 
-			rl_point = 0;
-
-			rl_delete_text(0, strlen(rl_line_buffer));
-
-			rl_redisplay();
+			cursor_clear_line();
 		}
 
 		arg = get_arg_in_braces(gtd->chat->paste_buf, left, FALSE);
@@ -1667,25 +1653,9 @@ DO_CHAT(chat_accept)
 
 	buddy->file_start_time = utime();
 
-	/*
-		I'm sending 3 requests here to speed things up. - Scandum
-	*/
-
-	if (buddy->file_block_tot >= 10 && *right == 'b')
-	{
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
-	}
 	chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
 
-	chat_printf("Started %sfile transfer from %s, file: %s, size: %lld", !strcasecmp(right, "boost") ? "boosted " : "", buddy->name, buddy->file_name, buddy->file_size);
+	chat_printf("Started file transfer from %s, file: %s, size: %lld", buddy->name, buddy->file_name, buddy->file_size);
 }
 
 
@@ -2096,7 +2066,7 @@ DO_CHAT(chat_color)
 
 	arg = get_arg_in_braces(arg, left, TRUE);
 
-	if (*left == 0 || get_highlight_codes(left, color) == FALSE)
+	if (*left == 0 || get_highlight_codes(gtd->ses, left, color) == FALSE)
 	{
 		chat_printf("Valid colors are:\r\n\r\nreset, bold, faint, underscore, blink, reverse, dim, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 
