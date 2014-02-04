@@ -325,8 +325,6 @@ DO_COMMAND(do_grep)
 	return ses;
 }
 
-
-
 int show_buffer(struct session *ses)
 {
 	char temp[STRING_SIZE], wrap[STRING_SIZE], *temp_ptr, *wrap_ptr;
@@ -518,91 +516,80 @@ int show_buffer(struct session *ses)
 DO_COMMAND(do_buffer)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	int cnt;
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-	switch (left[0])
+	if (*left == 0)
 	{
-		case 'h':
-			buffer_h("");
-			break;
+		tintin_header(ses, " BUFFER COMMANDS ");
 
-		case 'u':
-			buffer_u("");
-			break;
+		for (cnt = 0 ; *buffer_table[cnt].name != 0 ; cnt++)
+		{
+			tintin_printf2(ses, "  [%-13s] %s", buffer_table[cnt].name, buffer_table[cnt].desc);
+		}
+		tintin_header(ses, "");
 
-		case 'd':
-			buffer_d("");
-			break;
-
-		case 'e':
-			buffer_e("");
-			break;
-
-		case 'f':
-			buffer_f(right);
-			break;
-
-		case 'w':
-			do_writebuffer(ses, right);
-			break;
-
-		case 'i':
-			do_hash(ses, right);
-			break;
-
-		case 'l':
-			buffer_l("");
-			break;
-
-		default:
-			buffer_e("");
-			break;
+		return ses;
 	}
+
+	for (cnt = 0 ; *buffer_table[cnt].name ; cnt++)
+	{
+		if (!is_abbrev(left, buffer_table[cnt].name))
+		{
+			continue;
+		}
+
+		buffer_table[cnt].fun(ses, right);
+
+		return ses;
+	}
+
+	do_buffer(ses, "");
 
 	return ses;
 }
 
-DO_CURSOR(buffer_u)
+DO_BUFFER(buffer_up)
 {
 	int scroll_size, scroll_cnt, buffer_add, buffer_tmp;
 
-	if (gtd->ses->buffer == NULL)
+	if (ses->buffer == NULL)
 	{
 		return;
 	}
 
-	if (gtd->ses->scroll_line == -1)
+	if (ses->scroll_line == -1)
 	{
-		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+		ses->scroll_line = ses->scroll_row + 1;
 	}
 
-	scroll_size = get_scroll_size(gtd->ses);
-	scroll_cnt  = gtd->ses->scroll_line;
-	buffer_add  = 0 - gtd->ses->scroll_base;
+	scroll_size = get_scroll_size(ses);
+	scroll_cnt  = ses->scroll_line;
+	buffer_add  = 0 - ses->scroll_base;
 
 	while (TRUE)
 	{
-		if (gtd->ses->buffer[scroll_cnt] == NULL)
+		if (ses->buffer[scroll_cnt] == NULL)
 		{
 			break;
 		}
 
-		buffer_tmp = str_hash_lines(gtd->ses->buffer[scroll_cnt]);
+		buffer_tmp = str_hash_lines(ses->buffer[scroll_cnt]);
 
 		if (scroll_size < buffer_add + buffer_tmp)
 		{
-			gtd->ses->scroll_line = scroll_cnt;
-			gtd->ses->scroll_base = scroll_size - buffer_add;
+			ses->scroll_line = scroll_cnt;
+			ses->scroll_base = scroll_size - buffer_add;
 
 			break;
 		}
 
 		buffer_add += buffer_tmp;
 
-		if (scroll_cnt == gtd->ses->scroll_max - 1)
+		if (scroll_cnt == ses->scroll_max - 1)
 		{
 			scroll_cnt = 0;
 		}
@@ -612,38 +599,38 @@ DO_CURSOR(buffer_u)
 		}
 	}
 
-	show_buffer(gtd->ses);
+	show_buffer(ses);
 }
 
-DO_CURSOR(buffer_d)
+DO_BUFFER(buffer_down)
 {
 	int scroll_size, scroll_cnt, buffer_add, buffer_tmp;
 
-	if (gtd->ses->buffer == NULL)
+	if (ses->buffer == NULL)
 	{
 		return;
 	}
 
-	if (gtd->ses->scroll_line == -1)
+	if (ses->scroll_line == -1)
 	{
 		return;
 	}
 
-	scroll_size = get_scroll_size(gtd->ses);
-	scroll_cnt  = gtd->ses->scroll_line;
-	buffer_add  = gtd->ses->scroll_base;
+	scroll_size = get_scroll_size(ses);
+	scroll_cnt  = ses->scroll_line;
+	buffer_add  = ses->scroll_base;
 
 	if (scroll_size <= buffer_add)
 	{
-		gtd->ses->scroll_base = buffer_add - scroll_size;
+		ses->scroll_base = buffer_add - scroll_size;
 
-		show_buffer(gtd->ses);
+		show_buffer(ses);
 		return;
 	}
 
 	if (scroll_cnt == 0)
 	{
-		scroll_cnt = gtd->ses->scroll_max - 1;
+		scroll_cnt = ses->scroll_max - 1;
 	}
 	else
 	{
@@ -652,18 +639,18 @@ DO_CURSOR(buffer_d)
 
 	while (TRUE)
 	{
-		if (gtd->ses->buffer[scroll_cnt] == NULL)
+		if (ses->buffer[scroll_cnt] == NULL)
 		{
-			buffer_e("");
+			buffer_end(ses, "");
 			return;
 		}
 
-		buffer_tmp = str_hash_lines(gtd->ses->buffer[scroll_cnt]);
+		buffer_tmp = str_hash_lines(ses->buffer[scroll_cnt]);
 
 		if (scroll_size <= buffer_add + buffer_tmp)
 		{
-			gtd->ses->scroll_line = scroll_cnt;
-			gtd->ses->scroll_base = buffer_tmp - (scroll_size - buffer_add);
+			ses->scroll_line = scroll_cnt;
+			ses->scroll_base = buffer_tmp - (scroll_size - buffer_add);
 
 			break;
 		}
@@ -672,7 +659,7 @@ DO_CURSOR(buffer_d)
 
 		if (scroll_cnt == 0)
 		{
-			scroll_cnt = gtd->ses->scroll_max - 1;
+			scroll_cnt = ses->scroll_max - 1;
 		}
 		else
 		{
@@ -680,71 +667,71 @@ DO_CURSOR(buffer_d)
 		}
 	}
 
-	show_buffer(gtd->ses);
+	show_buffer(ses);
 }
 
-DO_CURSOR(buffer_h)
+DO_BUFFER(buffer_home)
 {
-	if (gtd->ses->buffer == NULL)
+	if (ses->buffer == NULL)
 	{
 		return;
 	}
 
-	if (gtd->ses->buffer[0])
+	if (ses->buffer[0])
 	{
-		gtd->ses->scroll_line = gtd->ses->scroll_row - 1;
+		ses->scroll_line = ses->scroll_row - 1;
 	}
 	else
 	{
-		gtd->ses->scroll_line = gtd->ses->scroll_max - 1;
+		ses->scroll_line = ses->scroll_max - 1;
 	}
-	gtd->ses->scroll_base = str_hash_lines(gtd->ses->buffer[gtd->ses->scroll_line]);
+	ses->scroll_base = str_hash_lines(ses->buffer[ses->scroll_line]);
 
-	buffer_d("");
+	buffer_down(ses, "");
 }
 
-DO_CURSOR(buffer_e)
+DO_BUFFER(buffer_end)
 {
-	if (gtd->ses->buffer == NULL)
+	if (ses->buffer == NULL)
 	{
 		return;
 	}
 
-	if (gtd->ses->scroll_row == gtd->ses->scroll_max - 1)
+	if (ses->scroll_row == ses->scroll_max - 1)
 	{
-		gtd->ses->scroll_line = 0;
+		ses->scroll_line = 0;
 	}
 	else
 	{
-		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+		ses->scroll_line = ses->scroll_row + 1;
 	}
 
-	gtd->ses->scroll_base = 0;
+	ses->scroll_base = 0;
 
-	show_buffer(gtd->ses);
+	show_buffer(ses);
 
-	gtd->ses->scroll_line = -1;
-	gtd->ses->scroll_base =  0;
+	ses->scroll_line = -1;
+	ses->scroll_base =  0;
 }
 
-DO_CURSOR(buffer_l)
+DO_BUFFER(buffer_lock)
 {
-	if (gtd->ses->buffer == NULL)
+	if (ses->buffer == NULL)
 	{
 		return;
 	}
 
-	if (gtd->ses->scroll_line == -1)
+	if (ses->scroll_line == -1)
 	{
-		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+		ses->scroll_line = ses->scroll_row + 1;
 	}
 	else
 	{
-		buffer_e("");
+		buffer_end(ses, "");
 	}
 }
 
-void buffer_f(char *arg)
+DO_BUFFER(buffer_find)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int scroll_cnt, grep_cnt, grep_max;
@@ -753,7 +740,7 @@ void buffer_f(char *arg)
 
 	get_arg_in_braces(arg, left, FALSE);
 
-	if (gtd->ses->buffer == NULL)
+	if (ses->buffer == NULL)
 	{
 		tintin_puts2(NULL, "#BUFFER, NO SCROLL BUFFER AVAILABLE.");
 	}
@@ -783,11 +770,11 @@ void buffer_f(char *arg)
 
 		if (grep_max >= 0)
 		{
-			scroll_cnt = gtd->ses->scroll_row;
+			scroll_cnt = ses->scroll_row;
 
 			do
 			{
-				if (scroll_cnt == gtd->ses->scroll_max -1)
+				if (scroll_cnt == ses->scroll_max -1)
 				{
 					scroll_cnt = 0;
 				}
@@ -796,17 +783,17 @@ void buffer_f(char *arg)
 					scroll_cnt++;
 				}
 
-				if (gtd->ses->buffer[scroll_cnt] == NULL)
+				if (ses->buffer[scroll_cnt] == NULL)
 				{
 					break;
 				}
 
-				if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
 				{
 					continue;
 				}
 
-				if (find(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
+				if (find(ses, ses->buffer[scroll_cnt], right))
 				{
 					if (grep_cnt == grep_max)
 					{
@@ -815,41 +802,41 @@ void buffer_f(char *arg)
 					grep_cnt++;
 				}
 			}
-			while (scroll_cnt != gtd->ses->scroll_row);
+			while (scroll_cnt != ses->scroll_row);
 		}
 		else
 		{
-			if (gtd->ses->buffer[0])
+			if (ses->buffer[0])
 			{
-				scroll_cnt = gtd->ses->scroll_row - 1;
+				scroll_cnt = ses->scroll_row - 1;
 			}
 			else
 			{
-				scroll_cnt = gtd->ses->scroll_max - 1;
+				scroll_cnt = ses->scroll_max - 1;
 			}
 
 			do
 			{
 				if (scroll_cnt == 0)
 				{
-					scroll_cnt = gtd->ses->scroll_max -1;
+					scroll_cnt = ses->scroll_max -1;
 				}
 				else
 				{
 					scroll_cnt--;
 				}
 
-				if (gtd->ses->buffer[scroll_cnt] == NULL)
+				if (ses->buffer[scroll_cnt] == NULL)
 				{
 					break;
 				}
 
-				if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
 				{
 					continue;
 				}
 
-				if (find(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
+				if (find(ses, ses->buffer[scroll_cnt], right))
 				{
 					grep_cnt--;
 
@@ -860,18 +847,87 @@ void buffer_f(char *arg)
 
 				}
 			}
-			while (scroll_cnt != gtd->ses->scroll_row);
+			while (scroll_cnt != ses->scroll_row);
 		}
 
-		if (gtd->ses->buffer[scroll_cnt] == NULL || scroll_cnt == gtd->ses->scroll_row)
+		if (ses->buffer[scroll_cnt] == NULL || scroll_cnt == ses->scroll_row)
 		{
 			tintin_puts(NULL, "#BUFFER FIND, NO MATCHES FOUND.");
 		}
 		else
 		{
-			gtd->ses->scroll_line = scroll_cnt;
+			ses->scroll_line = scroll_cnt;
 
-			show_buffer(gtd->ses);
+			show_buffer(ses);
+		}
+	}
+	return;
+}
+
+DO_BUFFER(buffer_write)
+{
+	FILE *fp;
+	char left[BUFFER_SIZE], out[STRING_SIZE];
+	int cnt;
+
+	arg = get_arg_in_braces(arg, left, FALSE);
+
+	if (*left == 0)
+	{
+		tintin_printf(ses, "#SYNTAX: #BUFFER WRITE <FILENAME>]");
+	}
+	else
+	{
+		if ((fp = fopen(left, "w")))
+		{
+			show_message(ses, LIST_MESSAGE, "#OK: WRITING BUFFER TO '%s'.", left);
+
+			if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+			{
+				write_html_header(fp);
+			}
+
+			cnt = ses->scroll_row;
+
+			do
+			{
+				if (cnt == 0)
+				{
+					cnt = ses->scroll_max - 1;
+				}
+				else
+				{
+					cnt--;
+				}
+
+				if (ses->buffer[cnt] == NULL)
+				{
+					continue;
+				}
+
+				if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
+				{
+					strip_vt102_codes(ses->buffer[cnt], out);
+				}
+				else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+				{
+					vt102_to_html(ses, ses->buffer[cnt], out);
+				}
+				else
+				{
+					strcpy(out, ses->buffer[cnt]);
+				}
+				strcat(out, "\n");
+
+				fputs(out, fp);
+			}
+			while (cnt != ses->scroll_row);
+
+			fclose(fp);
+		}
+		else
+		{
+			tintin_printf(ses, "#ERROR: #BUFFER WRITE {%s} - FAILED TO OPEN FILE.", left);
 		}
 	}
 	return;

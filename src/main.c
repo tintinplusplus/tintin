@@ -310,7 +310,7 @@ void init_tintin(void)
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
 	do_configure(gts, "{LOG}               {RAW}");
-	do_configure(gts, "{BUFFER SIZE}      {5000}");
+	do_configure(gts, "{BUFFER SIZE}     {20000}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");
 	do_configure(gts, "{HISTORY SIZE}     {2500}");
 	do_configure(gts, "{CONNECT RETRY}      {15}");
@@ -374,7 +374,7 @@ void quitmsg(char *message)
 
 		sprintf(filename, "%s/%s", getenv("HOME"), HISTORY_FILE);
 
-		write_history(gts, filename);
+		history_write(gts, filename);
 	}
 */
 	reset_terminal();

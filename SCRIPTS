@@ -156,3 +156,38 @@
         #line log mylog.txt {<178>@timestamp{} \};
         #line log mylog.txt
 }
+
+009 Old school tick support.
+
+#tick {oldtick}
+{
+	#delay 50 #showme #10 SECONDS TO TICK!!;
+	#showme #TICK!!!
+}
+{60}
+
+010 Execute speedwalks with .
+
+#alias {.%0}
+{
+	#list cnt clr;
+
+	#parse {%0}
+	{
+		#if {"&0" >= "0" && "&0" <= "9"}
+		{
+			#var cnt ${cnt}&0
+		}
+		#if {"$cnt" == ""}
+		{
+			#send &0
+		}
+		{
+			#loop {1 $cnt}
+			{
+				#send &0;
+			};
+			#list cnt clr
+		}
+	}   
+}

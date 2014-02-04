@@ -92,6 +92,8 @@ typedef void            MAP     (struct session *ses, char *left, char *right);
 typedef void            CURSOR  (char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
 typedef void            LINE    (struct session *ses, char *arg);
+typedef void            HISTORY (struct session *ses, char *arg);
+typedef void            BUFFER  (struct session *ses, char *arg);
 
 /*
 	A bunch of constants
@@ -472,7 +474,8 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define DO_PATH(path) void path (struct session *ses, char *arg)
 #define DO_LINE(line) void line (struct session *ses, char *arg)
 #define DO_CURSOR(cursor) void cursor (char *arg)
-
+#define DO_HISTORY(history) void history (struct session *ses, char *arg)
+#define DO_BUFFER(buffer) void buffer (struct session *ses, char *arg)
 
 
 
@@ -722,6 +725,20 @@ struct line_type
 	LINE                  * fun;
 };
 
+struct history_type
+{
+	char                  * name;
+	HISTORY               * fun;
+	char                  * desc;
+};
+
+struct buffer_type
+{
+	char                  * name;
+	BUFFER                * fun;
+	char                  * desc;
+};
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
@@ -783,6 +800,11 @@ struct exit_data
 extern DO_COMMAND(do_cursor);
 
 extern DO_CURSOR(cursor_backspace);
+extern DO_CURSOR(cursor_buffer_down);
+extern DO_CURSOR(cursor_buffer_end);
+extern DO_CURSOR(cursor_buffer_home);
+extern DO_CURSOR(cursor_buffer_lock);
+extern DO_CURSOR(cursor_buffer_up);
 extern DO_CURSOR(cursor_check_line);
 extern DO_CURSOR(cursor_clear_left);
 extern DO_CURSOR(cursor_clear_line);
@@ -1118,7 +1140,7 @@ extern unsigned short str_hash_lines(char *str);
 extern unsigned short str_hash_grep(char *str, int write);
 extern void reset_hash_table(void);
 
-extern DO_COMMAND(do_hash);
+extern DO_BUFFER(buffer_info);
 
 #endif
 
@@ -1130,12 +1152,13 @@ extern void add_line_buffer(struct session *ses, char *line, int more_output);
 extern DO_COMMAND(do_buffer);
 extern DO_COMMAND(do_grep);
 extern int show_buffer(struct session *ses);
-extern DO_CURSOR(buffer_u);
-extern DO_CURSOR(buffer_d);
-extern DO_CURSOR(buffer_h);
-extern DO_CURSOR(buffer_e);
-extern DO_CURSOR(buffer_l);
-extern void buffer_f(char *arg);
+extern DO_BUFFER(buffer_up);
+extern DO_BUFFER(buffer_down);
+extern DO_BUFFER(buffer_home);
+extern DO_BUFFER(buffer_end);
+extern DO_BUFFER(buffer_lock);
+extern DO_BUFFER(buffer_find);
+extern DO_BUFFER(buffer_write);
 
 #endif
 
@@ -1236,6 +1259,15 @@ extern void search_line_history(struct session *ses, char *line);
 extern int write_history(struct session *ses, char *filename);
 extern int read_history(struct session *ses, char *filename);
 
+DO_HISTORY(history_character);
+DO_HISTORY(history_delete);
+DO_HISTORY(history_insert);
+DO_HISTORY(history_list);
+DO_HISTORY(history_size);
+DO_HISTORY(history_read);
+DO_HISTORY(history_write);
+
+
 #endif
 
 
@@ -1281,7 +1313,6 @@ extern DO_COMMAND(do_debug);
 extern void logit(struct session *ses, char *txt, FILE *file, int newline);
 extern DO_COMMAND(do_log);
 extern DO_COMMAND(do_logline);
-extern DO_COMMAND(do_writebuffer);
 extern void write_html_header(FILE *fp);
 extern void vt102_to_html(struct session *ses, char *txt, char *out);
 #endif
@@ -1494,6 +1525,8 @@ extern struct map_type map_table[];
 extern struct timer_type timer_table[];
 extern struct path_type path_table[];
 extern struct line_type line_table[];
+extern struct history_type history_table[];
+extern struct buffer_type buffer_table[];
 
 #endif
 

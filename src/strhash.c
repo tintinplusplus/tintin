@@ -49,7 +49,7 @@ unsigned short generate_hash_key(char *str)
 	return h % MAX_STR_HASH;
 }
 
- 
+
 char *str_hash(char *str, int lines)
 {
 	unsigned short hash;
@@ -128,44 +128,42 @@ void reset_hash_table(void)
 	}
 }
 
-DO_COMMAND(do_hash)
+DO_BUFFER(buffer_info)
 {
 	struct str_hash_data *hash_ptr;
-	int hash, cnt_hash, max_hash, cnt_used, cnt_str, cnt_count, cnt_size, cnt_unhashed_size;
+	int hash, hash_cnt, hash_max, index_cnt, string_cnt, pointer_cnt, hashed_size, unhashed_size;
 
-	hash = cnt_hash = max_hash = cnt_used = cnt_str = cnt_count = cnt_size = cnt_unhashed_size = 0;
+	hash = hash_cnt = hash_max = index_cnt = string_cnt = pointer_cnt = hashed_size = unhashed_size = 0;
 
 	for (hash = 0 ; hash < MAX_STR_HASH ; hash++)
 	{
 		if (str_hash_index[hash].f_node)
 		{
-			cnt_used++;
+			index_cnt++;
 		}
 
-		for (cnt_hash = 0, hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
+		for (hash_cnt = 0, hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
 		{
 			if (hash != generate_hash_key((char *) hash_ptr + gtd->str_hash_size))
 			{
 				tintin_printf2(ses, "corrupted hash node: %s", (char *) hash_ptr + gtd->str_hash_size);
 			}
-			cnt_hash          += 1;
-			cnt_str           += 1;
-			cnt_count         += hash_ptr->count;
-			cnt_size          += gtd->str_hash_size + strlen((char *) hash_ptr + gtd->str_hash_size);
-			cnt_unhashed_size += hash_ptr->count    * strlen((char *) hash_ptr + gtd->str_hash_size);
+			hash_cnt          += 1;
+			string_cnt        += 1;
+			pointer_cnt       += hash_ptr->count;
+			hashed_size       += gtd->str_hash_size + strlen((char *) hash_ptr + gtd->str_hash_size);
+			unhashed_size     += hash_ptr->count    * strlen((char *) hash_ptr + gtd->str_hash_size);
 		}
-		if (cnt_hash > max_hash)
+		if (hash_cnt > hash_max)
 		{
-			max_hash = cnt_hash;
+			hash_max = hash_cnt;
 		}
 	}
-	tintin_printf2(NULL, "Strings Allocated: %8d", cnt_str);
-	tintin_printf2(NULL, "Total Links:       %8d", cnt_count);
-	tintin_printf2(NULL, "Max Hash:          %8d", max_hash);
-	tintin_printf2(NULL, "Used Hash:         %8d", cnt_used);
-	tintin_printf2(NULL, "Average Hash:      %8d", cnt_str / cnt_used);
-	tintin_printf2(NULL, "Total Memory:      %8d", cnt_size);
-	tintin_printf2(NULL, "Saved Memory:      %8d", cnt_unhashed_size - cnt_size);
-
-	return ses;
+	tintin_printf2(ses, "Total string count:   %8d", string_cnt);
+	tintin_printf2(ses, "Total pointer count:  %8d", pointer_cnt);
+	tintin_printf2(ses, "Total buckets count:  %8d", index_cnt);
+	tintin_printf2(ses, "Fullest bucket count: %8d", hash_max);
+	tintin_printf2(ses, "Average bucket usage: %8.2f", (float) string_cnt / index_cnt);
+	tintin_printf2(ses, "Total memory usage:   %8d", hashed_size + MAX_STR_HASH * sizeof(struct str_hash_index_data));
+	tintin_printf2(ses, "Total memory saved:   %8d", unhashed_size - hashed_size - MAX_STR_HASH * sizeof(struct str_hash_index_data));
 }

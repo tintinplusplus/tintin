@@ -69,7 +69,7 @@ void process_input(void)
 
 	if (gtd->ses->scroll_line != -1)
 	{
-		buffer_e("");
+		buffer_end(gtd->ses, "");
 	}
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);

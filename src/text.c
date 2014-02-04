@@ -47,9 +47,14 @@ void printline(struct session *ses, char *str, int prompt)
 		return;
 	}
 
-	word_wrap(ses, str, wrapped_str, TRUE);
-
-/*	strcpy(wrapped_str, str); */
+	if (HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
+	{
+		word_wrap(ses, str, wrapped_str, TRUE);
+	}
+	else
+	{
+		strcpy(wrapped_str, str);
+	}
 
 	if (prompt)
 	{
@@ -143,7 +148,7 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 			continue;
 		}
 
-		if (*pti == ' ' && HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
+		if (*pti == ' ')
 		{
 			los = pto;
 			lis = pti;
@@ -154,11 +159,7 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 			cnt++;
 			ses->cur_col = 1;
 
-			if (!HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
-			{
-				continue;
-			}
-			else if (pto - los > 15 || !SCROLL(ses))
+			if (pto - los > 15 || !SCROLL(ses))
 			{
 				*pto = '\r';
 				pto++;

@@ -124,6 +124,7 @@ void tokenize_script(struct scripttoken *root, int lvl, char *str)
 
 	while (*str)
 	{
+
 		if (*str != gtd->tintin_char)
 		{
 			str = get_arg_all(str, line);
@@ -150,44 +151,45 @@ void tokenize_script(struct scripttoken *root, int lvl, char *str)
 					str = get_arg_all(str, line);
 					addtoken(root, lvl, TOKEN_OPR_SESSION, -1, line);
 				}
-				continue;
 			}
-
-			switch (command_table[cmd].type)
+			else
 			{
-				case TOKEN_OPR_IF:
-					str = get_arg_in_braces(arg, line, FALSE);
-					addtoken(root, lvl++, TOKEN_OPR_IF, cmd, line);
+				switch (command_table[cmd].type)
+				{
+					case TOKEN_OPR_IF:
+						str = get_arg_in_braces(arg, line, FALSE);
+						addtoken(root, lvl++, TOKEN_OPR_IF, cmd, line);
 
-					str = get_arg_in_braces(str, line, TRUE);
-					tokenize_script(root, lvl--, line);
-
-					if (*str && *str != COMMAND_SEPARATOR)
-					{
 						str = get_arg_in_braces(str, line, TRUE);
-						addtoken(root, lvl++, TOKEN_OPR_ELSE, -1, "else");
-
 						tokenize_script(root, lvl--, line);
-					}
-					addtoken(root, lvl, TOKEN_OPR_ENDIF, -1, "endif");
-					break;
 
-				case TOKEN_OPR_RETURN:
-					str = get_arg_all(arg, line);
-					addtoken(root, lvl, TOKEN_OPR_RETURN, cmd, line);
-					break;
+						if (*str && *str != COMMAND_SEPARATOR)
+						{
+							str = get_arg_in_braces(str, line, TRUE);
+							addtoken(root, lvl++, TOKEN_OPR_ELSE, -1, "else");
 
-				default:
-					str = get_arg_all(arg, line);
-					addtoken(root, lvl, TOKEN_OPR_CMD, cmd, line);
-					break;
+							tokenize_script(root, lvl--, line);
+						}
+						addtoken(root, lvl, TOKEN_OPR_ENDIF, -1, "endif");
+						break;
+
+					case TOKEN_OPR_RETURN:
+						str = get_arg_all(arg, line);
+						addtoken(root, lvl, TOKEN_OPR_RETURN, cmd, line);
+						break;
+
+					default:
+						str = get_arg_all(arg, line);
+						addtoken(root, lvl, TOKEN_OPR_CMD, cmd, line);
+						break;
+				}
 			}
 		}
-
 		if (*str == ';')
 		{
 			str++;
 		}
+
 	}
 
 	free(line);

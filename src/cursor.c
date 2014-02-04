@@ -83,6 +83,33 @@ DO_CURSOR(cursor_backspace)
 	cursor_delete("");
 }
 
+
+DO_CURSOR(cursor_buffer_down)
+{
+	buffer_down(gtd->ses, "");
+}
+
+DO_CURSOR(cursor_buffer_end)
+{
+	buffer_end(gtd->ses, "");
+}
+
+DO_CURSOR(cursor_buffer_home)
+{
+	buffer_home(gtd->ses, "");
+}
+
+DO_CURSOR(cursor_buffer_lock)
+{
+	buffer_lock(gtd->ses, "");
+}
+
+DO_CURSOR(cursor_buffer_up)
+{
+	buffer_up(gtd->ses, "");
+}
+
+
 DO_CURSOR(cursor_check_line)
 {
 	if (gtd->input_pos != gtd->input_cur)

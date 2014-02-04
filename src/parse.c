@@ -124,7 +124,7 @@ int is_speedwalk(struct session *ses, char *input)
 {
 	int flag = FALSE;
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK))
+	if (!HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK))
 	{
 		return FALSE;
 	}
@@ -208,6 +208,8 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	struct session *sesptr;
 
 	input = get_arg_stop_spaces(input, line);
+
+	substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
 	for (sesptr = gts ; sesptr ; sesptr = sesptr->next)
 	{

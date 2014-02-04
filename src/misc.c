@@ -356,6 +356,7 @@ DO_COMMAND(do_showme)
 
 	arg = get_arg_in_braces(arg, left, TRUE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+
 	arg = get_arg_in_braces(arg, right, FALSE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 

@@ -379,7 +379,8 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 								substitute(ses, temp, temp, SUB_VAR|SUB_FUN);
 
 								get_list_item(ses, node, temp);
-								strcpy(pto, temp);
+
+								substitute(ses, temp, pto, flags_neol - SUB_VAR);
 							}
 						}
 						pto += strlen(pto);
@@ -469,6 +470,38 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = '5';
 						*pto++ = ';';
 						cnt = 16 + (pti[1] - 'A') + (pti[2] - 'A') * 6 + (pti[3] - 'A') * 36;
+						*pto++ = '0' + cnt / 100;
+						*pto++ = '0' + cnt % 100 / 10;
+						*pto++ = '0' + cnt % 10;
+						*pto++ = 'm';
+						pti += 5;
+					}
+					else if (pti[1] == 'g' && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
+					{
+						*pto++ = ESCAPE;
+						*pto++ = '[';
+						*pto++ = '3';
+						*pto++ = '8';
+						*pto++ = ';';
+						*pto++ = '5';
+						*pto++ = ';';
+						cnt = 232 + (pti[2] - '0') * 10 + (pti[3] - '0');
+						*pto++ = '0' + cnt / 100;
+						*pto++ = '0' + cnt % 100 / 10;
+						*pto++ = '0' + cnt % 10;
+						*pto++ = 'm';
+						pti += 5;
+					}
+					else if (pti[1] == 'G' && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
+					{
+						*pto++ = ESCAPE;
+						*pto++ = '[';
+						*pto++ = '4';
+						*pto++ = '8';
+						*pto++ = ';';
+						*pto++ = '5';
+						*pto++ = ';';
+						cnt = 232 + (pti[2] - '0') * 10 + (pti[3] - '0');
 						*pto++ = '0' + cnt / 100;
 						*pto++ = '0' + cnt % 100 / 10;
 						*pto++ = '0' + cnt % 10;

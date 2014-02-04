@@ -88,7 +88,7 @@ void check_all_actions(struct session *ses, char *original, char *line)
 		{
 			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", node->left);
 
-			substitute(ses, node->right, buf, SUB_ARG|SUB_ESC);
+			substitute(ses, node->right, buf, SUB_ARG|SUB_SEC);
 
 			script_driver(ses, buf);
 

@@ -55,13 +55,13 @@ DO_COMMAND(do_chat)
 
 	if (*cmd == 0)
 	{
-		tintin_header(NULL, " CHAT COMMANDS ");
+		tintin_header(ses, " CHAT COMMANDS ");
 
 		for (cnt = 0 ; *chat_table[cnt].name != 0 ; cnt++)
 		{
 			tintin_printf2(ses, "  [%-13s] %s", chat_table[cnt].name, chat_table[cnt].desc);
 		}
-		tintin_header(NULL, "");
+		tintin_header(ses, "");
 
 		return ses;
 	}

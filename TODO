@@ -1,5 +1,7 @@
 * Stuff that needs to be done
 
+- Add end of path event.
+
 - Look into [A|An] parsing bug.
 
 - fix stunnel #run

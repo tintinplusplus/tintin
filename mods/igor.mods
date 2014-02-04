@@ -8,7 +8,7 @@
 
 
 
-feb 2004
+February 2004
 
 
 - net.c         added telopt negotiations in net.c for naws, terminal type,
@@ -116,7 +116,7 @@ feb 2004
                 placed the prompt commands/routines there as well.
 
 
-mar 2004
+March 2004
 
 
 - math.c        Added a close to complete mathematical expression routine.
@@ -204,13 +204,13 @@ split.c         Added check so a prompt isn't shown for background sessions.
 variable.c      Added %R and %C to #format for nr of rows and columns
 
 
-apr 2004
+April 2004
 
 
 misc.c          removed speedwalk command, it's a config option anyways.
 
 
-jun 2004
+June 2004
 
 
 log.c           added variable substitution to *arg
@@ -240,7 +240,7 @@ main.c         the verbatimchar is set as \\ instead of \ as default, this to
                causing trouble.
 
 
-aug 2004
+August 2004
 
 
 mapper.c       added the redit command, for basic mapper manipulation, still
@@ -278,7 +278,7 @@ mapper.c       Added the function find_coord, which tries to find a room at the
                given coordinate, starting room being 0,0,0
 
 
-dec 2004
+Dec 2004
 
 
 net.c          Fixed a crash bug that slipped in with hiding passwords.
@@ -321,7 +321,7 @@ buffer.c       Fixed some dodgy behavior of the scroll back buffer, it should
                Added scroll lock to the config menu, to freeze the screen
                while scrolling.
 
-march 2005
+March 2005
 
 
 rl.c           mainloop now uses a threaded call for the old mainloop. This
@@ -389,7 +389,8 @@ files.c        Only stripping leading spaces now, so #var bla { } will work
 files.c        I got tired of confusing readnew and readold, so I removed
                readold.
 
-april 2005
+
+April 2005
 
 log.c          Added the option for a second argument to the #logline command.
                If second argument is used it will instead print the given line
@@ -433,7 +434,8 @@ telopt.c       With #config {CONVERT META} set to ON mud output will have
 split.c        Using #split 0 0 will create an input line without the split
                line. Useful for people who don't use #prompt.
 
-may 2005
+
+May 2005
 
 rl.c           Fixed a bug that caused prompts to be printed twice.
 debug.c        Fixed possible crash from overloading the debug stack.
@@ -489,7 +491,8 @@ antisubstitute Removed antisubstitutions since there seems little reason to
                ever need them.
 rl.c           Checking internal messages for prompt gags now
 
-june 2005
+
+June 2005
 
 files.c        If the bracing level is off in the last line tintin reports
                the correct line instead of 0.
@@ -540,6 +543,7 @@ configure      BIG5 configuration was giving me issues on slackware.
                Since I didn't feel like figuring out how the script works
                I changed it from --enable-big5 to --big5 and fiddled with
                the script till it seemed to work again.
+
 
 September 2005 - 1.95.5
 
@@ -1116,6 +1120,7 @@ map.c          #map map now takes an optional <x>x<y> size argument and an
 config.c       Added a timestamp config option to add timestamps to log
                files using the strftime format.
 
+
 December 2008  1.98.8
 
 tokenize.c     New pre-parser to deal with nesting issues.
@@ -1139,3 +1144,25 @@ variable.c     Changed %t format option to use a strftime format instead to
                print the current time.
 
 telopt.c       Streamlined telopt handling slightly to deal with MCCP errors.
+
+
+January 2009   1.98.9
+
+variable.c     Rewrote the 'd' format option to use a digit, mainly to enable
+               the + option of normal digit formatting.
+
+parse.c        Fixed speedwalk toggle bug.
+
+tinexp.c       Added <g00> to <g23> xterm 256 color codes to support the
+               greyscale colors.
+
+history.c      Updated history command with the list, size and character
+               options.
+
+tokenize.c     Fixed ; issue sending out enters in the pre-parser.
+
+action.c       Fixed ; issue in actions, which managed to unfixed itself.
+
+history.c      Updated the history command, now takes #history list to view
+               the command history.
+

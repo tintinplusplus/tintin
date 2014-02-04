@@ -420,7 +420,7 @@ void timestring(struct session *ses, char *str)
 
 DO_COMMAND(do_format)
 {
-	char temp[BUFFER_SIZE], destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
+	char temp[BUFFER_SIZE], destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf, *ptt;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
@@ -458,7 +458,9 @@ DO_COMMAND(do_format)
 
 		if (*ptf == '%')
 		{
-			ptf++;
+			ptt = temp;
+
+			*ptt++ = *ptf++;
 
 			if (*ptf == 0)
 			{
@@ -472,7 +474,7 @@ DO_COMMAND(do_format)
 			{
 				while (!isalpha(*ptf))
 				{
-					ptf++;
+					*ptt++ = *ptf++;
 				}
 
 				if (*ptf == 0)
@@ -491,9 +493,8 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'd':
-						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
-						timeval_tm = *localtime(&timeval_t);
-						strftime(arglist[i], BUFFER_SIZE, "%d-%m-%Y", &timeval_tm);
+						strcpy(ptt, "lld");
+						sprintf(arglist[i], temp, (long long) get_number(ses, arglist[i]));
 						break;
 
 					case 'h':

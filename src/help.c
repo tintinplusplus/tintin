@@ -117,10 +117,11 @@ struct help_type help_table[] =
 	},
 	{
 		"BUFFER",
-		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>write filename<178>|<078>info<178>}<078>\n"
+		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>lock<178><078>write filename<178>|<078>info<178>}<078>\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
-		"         the entire scrollback buffer to file.\n"
+		"         the entire scrollback buffer to file. The lock options toggles the\n"
+		"         scrolling state of the screen.\n"
 		"\n"
 		"<178>Example<078>: #macro {(press ctrl-v)(press F1)} {#buffer end}\n"
 		"         Associates F1 key to 'scroll buffer to its end' command.\n"
@@ -183,7 +184,7 @@ struct help_type help_table[] =
 		"COLORS",
 		"<178>Syntax<078>:  <<888>xyz>  with x, y, z being parameters\n"
 		"\n"
-		"         Parameter 'x': VT102 code\n"
+		"         Parameter 'x': VT100 code\n"
 		"\n"
 		"         0 - Reset all colors and codes to default\n"
 		"         1 - Bold\n"
@@ -280,18 +281,15 @@ struct help_type help_table[] =
 	},
 	{
 		"ECHO",
-		"<178>Command<078>: #echo <178>{<078>format<178>}<078> <178>{<078>argument1 argument2 etc<178>}<078>\n"
+		"<178>Command<078>: #echo <178>{<078>format<178>}<078> <178>{<078>{argument1} {argument2} {etc}<178>}<078>\n"
 		"\n"
 		"         Echo command displays text on the screen with formatting options. See\n"
 		"         the help file for the format command for more informations.\n"
 		"\n"
 		"         The echo command does not trigger actions.\n"
 		"\n"
-		"<178>Example<078>: #format {time} {%T}\n"
-		"         #echo {The current time and date is: %d %t} {$time $time}\n"
-		"         Stores the current epoch value in the $time variable, and echoes\n"
-		"         the military date and time based on this value. As I write this it\n"
-		"         printed: The current time and date is: 10-03-2004 23:34\n"
+		"<178>Example<078>: #echo {The current date is %t.} {{%Y-%m-%d %H:%M:%S}}\n"
+		"         #echo {[%38s][%-38s]} {{Hello World} {Hello World}}\n"
 	},
 	{
 		"END",
@@ -353,6 +351,7 @@ struct help_type help_table[] =
 		"         #format {test} {%.8s} {string}  copy at most 8 characters\n"
 		"         #format {test} {%a}   {number}  print corresponding ascii character\n"
 		"         #format {test} {%c}   {string}  use a highlight color name\n"
+		"         #format {test} {%d}   {number}  print a number with integer formatting\n"
 		"         #format {test} {%h}   {string}  turn text into a header line\n"
 		"         #format {test} {%l}   {string}  lowercase text\n"
 		"         #format {test} {%m}   {string}  perform mathematical calculation\n"
@@ -467,15 +466,15 @@ struct help_type help_table[] =
 	},
 	{
 		"HISTORY",
-		"<178>Command<078>: #history <178>{<078>delete<178>}<078> \n"
-		"         #history <178>{<078>insert<178>} {<078>command<178>}<078>\n"
-		"         #history <178>{<078>read<178>}   {<078>filename<178>}<078>\n"
-		"         #history <178>{<078>write<178>}  {<078>filename<178>}<078>\n"
+//		"<178>Command<078>: #history <178>{<078>character<178>} {<078>character<178>}<078>  Set the repeat character.\n"
+		"<178>Command<078>: #history <178>{<078>delete<178>}<078>                 Delete the last command.\n"
+		"         #history <178>{<078>insert<178>}    {<078>command<178>}<078>    Insert a command.\n"
+		"         #history <178>{<078>list<178>}<078>                   Display the entire command history.\n"
+		"         #history <178>{<078>read<178>}      {<078>filename<178>}<078>   Read a command history from file.\n"
+//		"         #history <178>{<078>size<178>}      {<078>number<178>}<078>     Set the size of the command history.\n"
+		"         #history <178>{<078>write<178>}     {<078>filename<178>}<078>   Write a command history to file.\n"
 		"\n"
-		"         Either deletes the last command, inserts a new last command,\n"
-		"         or saves/loads the history from file.\n"
-		"\n"
-		"         Without an argument your entire command history is shown.\n"
+		"         Without an argument all available options are shown.\n"
 	},
 	{
 		"IF",
@@ -1033,7 +1032,7 @@ struct help_type help_table[] =
 		"SPLIT",
 		"<178>Command<078>: #split <178>{<078>top border height<178>}<078> <178>{<078>bottom border height<178>}<078>\n"
 		"\n"
-		"         This option only works with a VT102 emulator, this allows you to set up\n"
+		"         This option only works with a VT100 emulator, this allows you to set up\n"
 		"         a screen.  The keyboard input will be displayed in the bottom line,\n"
 		"         while mud text is displayed in the main window.  This requires a fairly\n"
 		"         decent emulator, but works on most I have tested.\n"
