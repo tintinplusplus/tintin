@@ -265,7 +265,7 @@ void readmud(struct session *ses)
 			}
 		}
 
-		if (*line && ses->more_output[0])
+		if (ses->more_output[0])
 		{
 			if (ses->check_output)
 			{
@@ -273,7 +273,7 @@ void readmud(struct session *ses)
 
 				ses->more_output[0] = 0;
 			}
-			else if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+			else if (*line && HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 			{
 				sprintf(linebuf, "%s%s", ses->more_output, line);
 

@@ -38,15 +38,15 @@ void mainloop(void)
 	static struct timeval curr_time, wait_time, last_time;
 	int usec_loop, usec_wait;
 
-	short int pulse_poll_input      = PULSE_POLL_INPUT;
-	short int pulse_poll_sessions   = PULSE_POLL_SESSIONS;
-	short int pulse_poll_chat       = PULSE_POLL_CHAT;
-	short int pulse_update_ticks    = PULSE_UPDATE_TICKS;
-	short int pulse_update_delays   = PULSE_UPDATE_DELAYS;
-	short int pulse_update_packets  = PULSE_UPDATE_PACKETS;
-	short int pulse_update_chat     = PULSE_UPDATE_CHAT;
-	short int pulse_update_terminal = PULSE_UPDATE_TERMINAL;
-	short int pulse_update_memory   = PULSE_UPDATE_MEMORY;
+	short int pulse_poll_input      = 0 + PULSE_POLL_INPUT;
+	short int pulse_poll_sessions   = 0 + PULSE_POLL_SESSIONS;
+	short int pulse_poll_chat       = 0 + PULSE_POLL_CHAT;
+	short int pulse_update_ticks    = 0 + PULSE_UPDATE_TICKS;
+	short int pulse_update_delays   = 0 + PULSE_UPDATE_DELAYS;
+	short int pulse_update_packets  = 0 + PULSE_UPDATE_PACKETS;
+	short int pulse_update_chat     = 0 + PULSE_UPDATE_CHAT;
+	short int pulse_update_terminal = 0 + PULSE_UPDATE_TERMINAL;
+	short int pulse_update_memory   = 0 + PULSE_UPDATE_MEMORY;
 
 	wait_time.tv_sec = 0;
 

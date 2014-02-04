@@ -87,6 +87,14 @@ int check_all_aliases(struct session *ses, char *input)
 		return FALSE;
 	}
 
+	for (i = 1 ; i < 100 ; i++)
+	{
+		if (*gtd->vars[i])
+		{
+			RESTRING(gtd->vars[i], "");
+		}
+	}
+
 	substitute(ses, input, line, SUB_VAR|SUB_FUN);
 
 	for (node = root->update = root->f_node ; node ; node = root->update)
@@ -108,7 +116,7 @@ int check_all_aliases(struct session *ses, char *input)
 
 				RESTRING(gtd->vars[0], arg)
 
-				for (i = 1 ; 1 < 100 && *arg ; i++)
+				for (i = 1 ; i < 100 && *arg ; i++)
 				{
 					arg = get_arg_in_braces(arg, tmp, FALSE);
 

@@ -31,8 +31,7 @@ void process_input(void)
 {
 	int flags;
 
-	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)
-	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
 		read_key();
 	}
@@ -276,11 +275,23 @@ void read_key(void)
 	{
 		switch (gtd->macro_buf[cnt])
 		{
-/*			case '\r': */
+			case '\r':
+				printf("\n\[1;31mfound \\r!\n");
+				break;
+
 			case '\n':
 				gtd->input_buf[0] = 0;
 				gtd->macro_buf[0] = 0;
-				socket_printf(gtd->ses, 2, "%c%c", '\r', '\n'); 
+				gtd->input_len = 0;
+
+				if (HAS_BIT(gtd->ses->flags, SES_FLAG_RUN))
+				{
+					socket_printf(gtd->ses, 1, "%c", '\r');
+				}
+				else
+				{
+					socket_printf(gtd->ses, 2, "%c%c", '\r', '\n');
+				}
 				break;
 
 			default:

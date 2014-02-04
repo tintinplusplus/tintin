@@ -1377,6 +1377,8 @@ void follow_map(struct session *ses, char *argument)
 	struct exit_data *exit;
 	int room;
 
+	push_call("follow_map(%p,%p)",ses,argument);
+
 	exit = find_exit(ses, ses->map->in_room, argument);
 
 	if (exit)
@@ -1401,6 +1403,7 @@ void follow_map(struct session *ses, char *argument)
 			{
 				follow_map(ses, exit->name);
 
+				pop_call();
 				return;
 			}
 
@@ -1410,6 +1413,7 @@ void follow_map(struct session *ses, char *argument)
 				{
 					follow_map(ses, exit->name);
 	
+					pop_call();
 					return;
 				}
 			}
@@ -1417,6 +1421,7 @@ void follow_map(struct session *ses, char *argument)
 
 		show_vtmap(ses);
 
+		pop_call();
 		return;
 	}
 
@@ -1427,6 +1432,7 @@ void follow_map(struct session *ses, char *argument)
 
 		if ((node = searchnode_list(ses->list[LIST_PATHDIR], argument)) == NULL)
 		{
+			pop_call();
 			return;
 		}
 
@@ -1442,6 +1448,7 @@ void follow_map(struct session *ses, char *argument)
 		{
 			tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached. Consider updating updating the C value in your map file.", ses->map->size);
 
+			pop_call();
 			return;
 		}
 
@@ -1473,6 +1480,9 @@ void follow_map(struct session *ses, char *argument)
 		goto_room(ses, room);
 
 		show_vtmap(ses);
+
+		pop_call();
+		return;
 	}
 }
 
@@ -1480,6 +1490,8 @@ void insert_undo(struct session *ses, char *format, ...)
 {
 	char buf[BUFFER_SIZE], *arg, dir[BUFFER_SIZE], rev[BUFFER_SIZE], flag[BUFFER_SIZE];
 	va_list args;
+
+	push_call("insert_undo(%s,%s)",ses->name, format);
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
@@ -1495,6 +1507,8 @@ void insert_undo(struct session *ses, char *format, ...)
 	{
 		deletenode_list(ses, ses->list[LIST_MAP]->f_node, LIST_MAP);
 	}
+	pop_call();
+	return;
 }
 
 /*
@@ -2068,9 +2082,14 @@ int find_room(struct session *ses, char *arg)
 
 void goto_room(struct session *ses, int room)
 {
+	push_call("goto_room(%p,%d)",ses,room);
+
 	ses->map->in_room = room;
 
 	check_all_events(ses, 0, 1, "MAP ENTER ROOM", ntos(room));
+
+	pop_call();
+	return;
 }
 
 struct exit_data *find_exit(struct session *ses, int room, char *arg)

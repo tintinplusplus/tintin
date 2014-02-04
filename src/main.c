@@ -277,7 +277,7 @@ void init_tintin(void)
 
 	gtd->input_off      = 1;
 
-	for (cnt = 0 ; cnt < 99 ; cnt++)
+	for (cnt = 0 ; cnt < 100 ; cnt++)
 	{
 		gtd->vars[cnt] = strdup("");
 		gtd->cmds[cnt] = strdup("");

@@ -357,7 +357,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						break;
 
 					default:
-						tintin_printf(NULL, "#IAC BAD TELOPT %d", cpsrc);
+						tintin_printf(NULL, "#IAC BAD TELOPT %d", cpsrc[1]);
 						skip = 1;
 						break;
 				}
@@ -405,7 +405,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					continue;
 
 				case '\r':
-					if (cplen > 1 && cpsrc[1] == '\n')
+					if (cplen < 2 || cpsrc[1] != 0)
 					{
 						cpsrc++;
 						cplen--;

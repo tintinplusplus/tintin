@@ -277,8 +277,15 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 			case '\0':
 				if (HAS_BIT(flags, SUB_EOL))
 				{
-					*pto++ = '\r';
-					*pto++ = '\n';
+					if (HAS_BIT(ses->flags, SES_FLAG_RUN))
+					{
+						*pto++ = '\r';
+					}
+					else
+					{
+						*pto++ = '\r';
+						*pto++ = '\n';
+					}
 				}
 
 				if (HAS_BIT(flags, SUB_LNF))

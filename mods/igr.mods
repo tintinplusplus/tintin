@@ -1,3 +1,14 @@
+March 2009     1.99.4
+
+utils.c        Fixed 100 move map crash bug.
+
+input.c        Now sending \r on enter when using #run, seems to give the best
+               behavior.
+
+log.c          Added xterm 256 color html logging.
+
+terminal.c     Disabled default ctrl-s and ctrl-q behavior.
+
 March 2009     1.99.3
 
 llist.c        Now properly inheriting triggers from the startup session.
@@ -32,7 +43,7 @@ parse.c        Fixed VERBATIM behavior, aliases can now be used in verbatim
 
 alias.c        Now possible to #ignore aliases.
 
-highlight.c    Fixed highlights, %0 should never be used in the trigger.
+highlight.c    Fixed highlights.
 
 March 2009     1.99.2
 --------------------------------------------------------------------------------

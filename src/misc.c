@@ -209,11 +209,16 @@ DO_COMMAND(do_info)
 {
 	int cnt;
 
-	printf("--%s--\n", arg);
-
 	if (*arg == 'c')
 	{
 		show_cpu(ses);
+
+		return ses;
+	}
+
+	if (*arg == 's')
+	{
+		dump_stack();
 
 		return ses;
 	}

@@ -1000,10 +1000,12 @@ struct help_type help_table[] =
 		"         can run these scrips either from file or from within tintin if the\n"
 		"         scripting language allows this.\n"
 		"\n"
+		"         If you provide a variable the output of the script is stored as a list.\n"
+		"\n"
 		"<178>Example<078>: #script {ruby -e 'print \"#showme hello world\"'}\n"
 		"<178>Example<078>: #script {python -c 'print \"#showme hello world\"'}\n"
 		"<178>Example<078>: #script {php -r 'echo \"#showme hello world\"'}\n"
-		"<178>Example<078>: #script {path} {pwd}\n"
+		"<178>Example<078>: #script {path} {pwd};#showme The path is $path[1].\n"
 	},
 
 	{

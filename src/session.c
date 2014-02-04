@@ -241,13 +241,15 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	dirty_screen(newsession);
 
+	tintin_printf2(ses, "#Trying to connect to %s port %s.", newsession->host, newsession->port);
+
 	if (desc == 0)
 	{
 		connect_session(newsession);
 	}
 	else
 	{
-		SET_BIT(newsession->flags, SES_FLAG_CONNECTED);
+		SET_BIT(newsession->flags, SES_FLAG_CONNECTED|SES_FLAG_RUN);
 
 		SET_BIT(newsession->telopts, TELOPT_FLAG_SGA);
 		DEL_BIT(newsession->telopts, TELOPT_FLAG_ECHO);
@@ -264,8 +266,6 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 void connect_session(struct session *ses)
 {
 	int sock;
-
-	tintin_printf(ses, "#Trying to connect to %s port %s.\n", ses->host, ses->port);
 
 	ses->connect_retry = utime() + gts->connect_retry;
 
@@ -289,7 +289,9 @@ void connect_session(struct session *ses)
 
 		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
 
-		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n", ses->name, ses->host, ses->port);
+		tintin_printf2(ses, "");
+
+		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'", ses->name, ses->host, ses->port);
 
 		if (atoi(ses->port) == TELNET_PORT)
 		{

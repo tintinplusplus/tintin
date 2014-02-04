@@ -189,9 +189,11 @@ char *ntos(long long number)
 	static char outbuf[100][NUMBER_SIZE];
 	static int cnt;
 
+	cnt = (cnt + 1) % 100;
+
 	sprintf(outbuf[cnt], "%lld", number);
 
-	return outbuf[cnt++];
+	return outbuf[cnt];
 }
 
 char *indent(int cnt)

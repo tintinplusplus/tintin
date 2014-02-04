@@ -4,7 +4,6 @@
 #CONFIG           {COMMAND COLOR}         {<078>}
 #CONFIG           {COMMAND ECHO}          {ON}
 #CONFIG           {HISTORY SIZE}          {2500}
-#CONFIG           {LOG}                   {RAW}
 #CONFIG           {PACKET PATCH}          {0}
 #CONFIG           {REPEAT ENTER}          {OFF}
 #CONFIG           {REPEAT CHAR}           {!}
@@ -35,3 +34,96 @@
 #PATHDIR          {sw}                    {ne}                         {12}
 #PATHDIR          {u}                     {d}                          {16}
 #PATHDIR          {d}                     {u}                          {32}
+
+#var bla {}
+
+#forall {a b c d e f}
+{
+	#forall {a b c d e f}
+	{
+		#forall {a b c d e f}
+		{
+			#var bla {$bla <&0&&0&&&0>(&0&&0&&&0)}
+		};
+		#showme $bla;
+		#var bla {}
+	}
+}
+
+#loop {0 23}
+{
+	#format tmp {g%+02s} {{&0}};
+	#var bla $bla <$tmp>($tmp)
+}
+
+#showme $bla
+
+
+#var bla {}
+
+#forall {A B C D E F}
+{
+	#forall {A B C D E F}
+	{
+		#forall {A B C D E F}
+		{
+			#var bla {$bla <&0&&0&&&0>(&0&&0&&&0)}
+		};
+		#showme $bla;
+		#var bla {}
+	}
+}
+
+#loop {0 23}
+{
+	#format tmp {G%+02s} {{&0}};
+	#var bla $bla <$tmp>($tmp)
+}
+
+#showme $bla
+
+#alias {bla}
+{
+	#math {hp_percent}{100 * %1 / %2};
+	#math {hpbars1}   {$hp_percent / 5};
+	#math {hpbars2}   {20 - $hpbars1};
+
+	#format {hpbar} {<011>%+${hpbars1}s<099><000>%+${hpbars2}s<099> };
+
+	#showme [$hpbar][$hpbar]
+}
+
+#function {hpbars}
+{
+  #math result %1 / 100;
+  #format result {%+${result}s};
+  #replace result { } {-}
+}
+
+#showme @hpbars{500}
+
+#map read x.map
+
+#MACRO {\eOA}
+{
+	n
+}
+
+#MACRO {\eOB}
+{
+	s
+}
+
+#MACRO {\eOC}
+{
+	e
+}
+
+#MACRO {\eOD}
+{
+	w
+}
+
+#split 31 1
+#map flag vtmap
+#map goto 10

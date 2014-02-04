@@ -4,13 +4,15 @@
 
 GENERAL STUFF:
 
+- look into auto tabbing
+
+- fix double enter in #run bla bash
+
 - Add a ARG_LEN / ARG_MAX setting.
 
-- See if it's possible to add better #path run support.
-
-- Events for prompt lines.
-
 - Add a #line skip option.
+
+- Add a #line sub option.
 
 -------------------------------------------------------------------------------
 
@@ -55,6 +57,10 @@ MAPPING STUFF:
 - Color code compression, particularly useful with vt map drawing.
 
 - link http://www.lauzet.com/argon on webpage
+
+- See if it's possible to add better #path run support.
+
+- Events for prompt lines.
 
 -------------------------------------------------------------------------------
 

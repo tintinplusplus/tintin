@@ -124,7 +124,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.99.3"
+#define VERSION_NUM               "1.99.4"
 
 #define ESCAPE                          27
 
@@ -152,7 +152,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define PULSE_UPDATE_PACKETS             2
 #define PULSE_UPDATE_CHAT                2
 #define PULSE_UPDATE_TERMINAL            1
-#define PULSE_UPDATE_MEMORY              1
+#define PULSE_UPDATE_MEMORY              2
 
 /*
 	Index for lists used by tintin
@@ -206,10 +206,12 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 */
 
 #define COL_BLD                       (1 << 1)
-#define COL_ITL                       (1 << 2)
-#define COL_UND                       (1 << 3)
-#define COL_BLK                       (1 << 4)
-#define COL_REV                       (1 << 5)
+#define COL_UND                       (1 << 2)
+#define COL_BLK                       (1 << 3)
+#define COL_REV                       (1 << 4)
+#define COL_XTF                       (1 << 5)
+#define COL_XTB                       (1 << 6)
+#define COL_256                       (1 << 7)
 
 #define CHAT_NAME_CHANGE                 1
 #define CHAT_REQUEST_CONNECTIONS         2

@@ -51,8 +51,10 @@ void init_terminal()
 
 	DEL_BIT(io.c_lflag, ICANON);
 
-	io.c_cc[VMIN]  = 1;
-	io.c_cc[VTIME] = 0;
+	io.c_cc[VMIN]   = 1;
+	io.c_cc[VTIME]  = 0;
+	io.c_cc[VSTART] = 255;
+	io.c_cc[VSTOP]  = 255;
 
 	/*
 		Make the terminalal as raw as possible
