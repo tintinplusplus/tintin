@@ -84,6 +84,8 @@ void process_input(void)
 	{
 		erase_toeol();
 	}
+
+	gtd->input_buf[0] = 0;
 }
 
 void read_line()

@@ -308,8 +308,19 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 				return;
 
 			case '$':
-				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1])))
+				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '$'))
 				{
+					if (pti[1] == '$')
+					{
+						while (pti[1] == '$')
+						{
+							*pto++ = *pti++;
+						}
+						pti++;
+
+						continue;
+					}
+
 					if (pti[1] == DEFAULT_OPEN)
 					{
 						for (ptt = buf, i = 2 ; pti[i] && pti[i] != DEFAULT_CLOSE ; i++)

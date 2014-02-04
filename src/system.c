@@ -116,16 +116,18 @@ DO_COMMAND(do_scan)
 
 DO_COMMAND(do_script)
 {
-	char left[BUFFER_SIZE], *cptr, buffer[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], *cptr, buffer[BUFFER_SIZE];
+	struct listnode *node;
 	FILE *script;
 
 	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0)
 	{
 		show_message(ses, LIST_MESSAGE, "#SCRIPT: ONE ARGUMENT REQUIRED.");
 	}
-	else
+	else if (*right == 0)
 	{
 		script = popen(left, "r");
 
@@ -139,6 +141,27 @@ DO_COMMAND(do_script)
 			}
 
 			pre_parse_input(ses, buffer, SUB_NONE);
+		}
+
+		pclose(script);
+	}
+	else
+	{
+		script = popen(right, "r");
+
+		internal_variable(ses, "{%s}", left);
+
+		node = searchnode_list(ses->list[LIST_VARIABLE], left);
+
+		while (fgets(buffer, BUFFER_SIZE - 1, script))
+		{
+			cptr = strchr(buffer, '\n');
+
+			if (cptr)
+			{
+				*cptr = 0;
+			}
+			array_ins(ses, node, "-1", buffer);
 		}
 
 		pclose(script);

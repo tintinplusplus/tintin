@@ -1011,9 +1011,9 @@ tintin19.txt   Rewrote the large manual file to contain a brief up to date
 
 July 2008      1.98.4
 
-               Added glob/regex support to reverse history searches.
+cursor.c       Added glob/regex support to reverse history searches.
 
-               wildcard searches should work as old again, and regexp searches
+tinexp.c       wildcard searches should work as old again, and regexp searches
                work more like old wildcard searches.
 
 tick.c         Can use variables for ticker names.
@@ -1036,7 +1036,7 @@ mapper.c       Fixed going through void rooms with #map travel.
 variable.c     #format will use the current time if no time value is provided
                for the %M %Y %D %d and %t arguments.
 
-mapper.c       asciigraphics is now the default map displaying setting.
+mapper.c       asciigraphics is now the default map display setting.
 
 terminal.c     Enabled the ISIG flag allowing ctrl-c to be mapped.
 
@@ -1046,8 +1046,29 @@ cursor.c       Updated ctrl-c to clear the line rather than exiting tintin.
 
 config.c       Changed #config {echo command} to #config {command echo}
 
-config.c       Added the #config {command color} {000} option.
+config.c       Added the #config {command color} {<000>} option.
 
-mapper.c       #map insert now allows adding 1 roomflag as the 2nd argument.
+mapper.c       #map insert now allows adding a roomflag as the 2nd argument.
 
 tinexp.c       Can now use %{variable} besides %0 - %99 in actions.
+
+
+August 2008    1.98.5
+
+mapper.c       Added #map jump <x> <y> to goto rooms using coordinates
+               relative to the user's current room.
+
+array.c        Added #script {var} {command} option.
+
+input.c        Fixed bug with the first input character being ignored in
+               character mode.
+
+tinexp.c       Can now escape variables using 2 or more dollar signs.
+
+cursor.c       Fixed bug with ctrl-w
+
+cursor.c       Fixed bug with ctrl-r's input offset.
+
+mapper.c       When using #map find, run, and goto and there are multiple
+               matching rooms the nearest room will be returned.
+

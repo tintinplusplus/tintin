@@ -266,7 +266,7 @@ DO_CURSOR(cursor_delete_word_left)
 
 	sprintf(gtd->paste_buf, "%.*s", index_cur - gtd->input_cur, &gtd->input_buf[gtd->input_cur]);
 
-	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], index_cur + 1);
+	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], gtd->input_len - index_cur + 1);
 
 	input_printf("\033[%dD\033[%dP", index_cur - gtd->input_cur, index_cur - gtd->input_cur);
 
@@ -375,6 +375,8 @@ DO_CURSOR(cursor_enter)
 		{
 			strcpy(gtd->input_buf, gtd->input_his->left);
 		}
+
+		gtd->input_off = 1;
 	}
 	gtd->input_his = NULL;
 

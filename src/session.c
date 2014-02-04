@@ -241,7 +241,8 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		SET_BIT(newsession->telopts, TELOPT_FLAG_SGA);
 		DEL_BIT(newsession->telopts, TELOPT_FLAG_ECHO);
 
-		gtd->ses         = newsession;
+		gtd->ses = newsession;
+
 		gtd->ses->socket = desc;
 	}
 

@@ -4,8 +4,6 @@
 
 GENERAL STUFF:
 
-- look into adding #map jump <coords>
-
 - see if it's possible to add better #path run support.
 
 - events for prompt lines
@@ -23,6 +21,8 @@ GENERAL STUFF:
 
 - leave unmatched backslashes untouched?
 
+- keep last input with repeat enter enabled.
+
 -------------------------------------------------------------------------------
 
 READLINE:
@@ -31,8 +31,6 @@ Use \e[ X to erase an amount of characters to deal with ctrl-r and redraw line f
 
 -------------------------------------------------------------------------------
 MAPPING STUFF:
-
-- look into #map walk working correctly.
 
 - look into adding a crawler to find rooms, so the avoid flag can be used to only search rooms within an area.
 

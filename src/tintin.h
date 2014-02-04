@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.4"
+#define VERSION_NUM               "1.98.5"
 
 #define ESCAPE                          27
 
@@ -725,7 +725,7 @@ struct map_data
 	struct room_data      * room_list[MAX_ROOM];
 	int                     flags;
 	int                     in_room;
-	char                    legenda[17][100];
+	char                    legend[17][100];
 };
 
 struct room_data
@@ -956,8 +956,9 @@ extern DO_MAP(map_get);
 extern DO_MAP(map_goto);
 extern DO_MAP(map_info);
 extern DO_MAP(map_insert);
+extern DO_MAP(map_jump);
 extern DO_MAP(map_leave);
-extern DO_MAP(map_legenda);
+extern DO_MAP(map_legend);
 extern DO_MAP(map_link);
 extern DO_MAP(map_list);
 extern DO_MAP(map_map);
@@ -978,7 +979,7 @@ extern int  create_room(struct session *ses, char *arg);
 extern void delete_room(struct session *ses, int room, int exits);
 extern void create_exit(struct session *ses, int room, char *arg);
 extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
-extern void create_legenda(struct session *ses, char *arg);
+extern void create_legend(struct session *ses, char *arg);
 extern int  find_room(struct session *ses, char *arg);
 extern void goto_room(struct session *ses, int room);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
@@ -990,6 +991,7 @@ extern void follow_map(struct session *ses, char *argument);
 extern void insert_undo(struct session *ses, char *format, ...);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
 extern void search_path(short room, short size, short dir);
+extern void fill_map(struct session *ses);
 extern void shortest_path(struct session *ses, int run, char *left, char *right);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
 extern int find_coord(struct session *ses, char *arg);
@@ -1212,6 +1214,7 @@ extern int get_highlight_codes(struct session *ses, char *htype, char *result);
 
 extern DO_COMMAND(do_history);
 extern void add_line_history(struct session *ses, char *line);
+extern void insert_line_history(struct session *ses, char *line);
 extern void search_line_history(struct session *ses, char *line);
 extern int write_history(struct session *ses, char *filename);
 extern int read_history(struct session *ses, char *filename);

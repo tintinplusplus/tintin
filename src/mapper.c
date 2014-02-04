@@ -32,7 +32,7 @@
 */
 
 void show_map(struct session *ses, char *argument);
-void create_legenda(struct session *ses, char *arg);
+void create_legend(struct session *ses, char *arg);
 
 short               map_grid_x;
 short               map_grid_y;
@@ -50,8 +50,8 @@ short               map_search_tar_room;
 /*
 	MUD font
 
-	#map legenda {128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 161}
-	#map legenda {144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 161}
+	#map legend {128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 161}
+	#map legend {144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 161}
 */
 
 unsigned char	map_palet0[]	= { 42, 35, 35, 43, 35,124, 43, 43, 35, 43, 45, 43, 43, 43, 43, 43, 120};
@@ -104,12 +104,13 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
 		tintin_printf2(ses, "#map insert   <direction>  [roomflag]  (insert a new room)");
+		tintin_printf2(ses, "#map jump     <x> <y>                  (go to given coordinate)");
 		tintin_printf2(ses, "#map find     <room name>              (saves path to #path)");
 		tintin_printf2(ses, "#map flag     <map flag>               (set map wide flags)");
 		tintin_printf2(ses, "#map get      <option>     <variable>  (get various values)");
 		tintin_printf2(ses, "#map goto     <room name>              (moves you to given room)");
 		tintin_printf2(ses, "#map leave                             (leave the map, return with goto)");
-		tintin_printf2(ses, "#map legenda  <symbols>                (sets the map legenda)");
+		tintin_printf2(ses, "#map legend   <symbols>                (sets the map legend)");
 		tintin_printf2(ses, "#map link     <direction>  <room name> (links 2 rooms)");
 		tintin_printf2(ses, "#map list                              (shows list of created rooms)");
 		tintin_printf2(ses, "#map map      <radius>                 (shows an ascii map)");
@@ -236,6 +237,8 @@ DO_MAP(map_dig)
 	if (find_coord(ses, left))
 	{
 		room = map_search_tar_room;
+
+		show_message(ses, LIST_MAP, "Found linkable room {%d}", room);
 	}
 	else
 	{
@@ -543,6 +546,44 @@ DO_MAP(map_insert)
 	tintin_printf2(ses, "#MAP: Inserted room {%d}.", room);
 }
 
+DO_MAP(map_jump)
+{
+	int vnum;
+
+	map_grid_x = 0;
+	map_grid_y = 0;
+	map_grid_z = 0;
+
+	map_search_ses       = ses;
+	map_search_tar_room  = 0;
+
+	map_grid_x += atoi(left);
+	map_grid_y += atoi(right);
+
+	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	{
+		if (ses->map->room_list[vnum])
+		{
+			ses->map->room_list[vnum]->size = 0;
+		}
+	}
+
+	search_coord(ses->map->in_room, 0, 0, 0);
+
+	if (map_search_tar_room)
+	{
+		insert_undo(ses, "%d %d %d", map_search_tar_room, ses->map->in_room, 0);
+
+		goto_room(ses, map_search_tar_room);
+
+		show_message(ses, LIST_MAP, "#MAP: Location set to room {%s}.", ses->map->room_list[map_search_tar_room]->name);
+	}
+	else
+	{
+		show_message(ses, LIST_MAP, "#MAP: Couldn't find room at {%s} {%s}.", left, right);
+	}
+}
+
 DO_MAP(map_leave)
 {
 	CHECK_INSIDE();
@@ -551,23 +592,23 @@ DO_MAP(map_leave)
 	tintin_printf2(ses, "#MAP: Leaving the map. Use goto to return.");
 }
 
-DO_MAP(map_legenda)
+DO_MAP(map_legend)
 {
 	CHECK_MAP();
 
 	if (*left == 0)
 	{
-		tintin_printf2(ses, "#MAP: Current legenda: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
-			ses->map->legenda[0],  ses->map->legenda[1],  ses->map->legenda[2],
-			ses->map->legenda[3],  ses->map->legenda[4],  ses->map->legenda[5],
-			ses->map->legenda[6],  ses->map->legenda[7],  ses->map->legenda[8],
-			ses->map->legenda[9],  ses->map->legenda[10], ses->map->legenda[11],
-			ses->map->legenda[12], ses->map->legenda[13], ses->map->legenda[14],
-			ses->map->legenda[15], ses->map->legenda[16]);
+		tintin_printf2(ses, "#MAP: Current legend: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
+			ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],
+			ses->map->legend[3],  ses->map->legend[4],  ses->map->legend[5],
+			ses->map->legend[6],  ses->map->legend[7],  ses->map->legend[8],
+			ses->map->legend[9],  ses->map->legend[10], ses->map->legend[11],
+			ses->map->legend[12], ses->map->legend[13], ses->map->legend[14],
+			ses->map->legend[15], ses->map->legend[16]);
 	}
 	else
 	{
-		create_legenda(ses, left);
+		create_legend(ses, left);
 	}
 }
 
@@ -611,17 +652,14 @@ DO_MAP(map_list)
 {
 	int room;
 	struct exit_data *exit;
-	char str[BUFFER_SIZE];
 
 	CHECK_MAP();
-
-	sprintf(str, "*%s*", left);
 
 	for (room = 0 ; room < MAX_ROOM ; room++)
 	{
 		if (ses->map->room_list[room])
 		{
-			if (*left == 0 || find(ses, ses->map->room_list[room]->name, str))
+			if (*left == 0 || match(ses, ses->map->room_list[room]->name, left))
 			{
 				tintin_printf2(ses, "[%5d] %s", ses->map->room_list[room]->vnum, ses->map->room_list[room]->name);
 
@@ -667,6 +705,7 @@ DO_MAP(map_name)
 DO_MAP(map_read)
 {
 	FILE *myfile;
+	struct exit_data *exit;
 	char buffer[BUFFER_SIZE], *cptr;
 	int room = 0;
 
@@ -708,7 +747,7 @@ DO_MAP(map_read)
 				break;
 
 			case 'L':
-				create_legenda(ses, &buffer[2]);
+				create_legend(ses, &buffer[2]);
 				break;
 
 			case 'R':
@@ -725,7 +764,7 @@ DO_MAP(map_read)
 			default:
 				gtd->quiet--;
 
-				tintin_printf2(ses, "#MAP: Invalid file, aborting.");
+				tintin_printf2(ses, "#MAP: Invalid command '%c'. Aborting read.", buffer[0]);
 
 				fclose(myfile);
 
@@ -739,7 +778,25 @@ DO_MAP(map_read)
 
 	fclose(myfile);
 
-	show_message(ses, LIST_MAP, "#MAP: Map file {%s} loaded.", left);
+	for (room = 0 ; room < MAX_ROOM ; room++)
+	{
+		if (ses->map->room_list[room] == NULL)
+		{
+			continue;
+		}
+
+		for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+		{
+			if (ses->map->room_list[exit->vnum] == NULL)
+			{
+				tintin_printf2(ses, "#MAP READ: Room %d - invalid exit '%s'.", room, exit->name);
+			}
+		}
+	}
+
+	show_message(ses, LIST_MAP, "#MAP READ: Map file {%s} loaded.", left);
+
+
 }
 
 DO_MAP(map_roomflag)
@@ -965,12 +1022,12 @@ DO_MAP(map_write)
 	fputs(temp, file);
 
 	sprintf(temp, "L %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n\n",
-		ses->map->legenda[0],  ses->map->legenda[1],  ses->map->legenda[2],
-		ses->map->legenda[3],  ses->map->legenda[4],  ses->map->legenda[5],
-		ses->map->legenda[6],  ses->map->legenda[7],  ses->map->legenda[8],
-		ses->map->legenda[9],  ses->map->legenda[10], ses->map->legenda[11],
-		ses->map->legenda[12], ses->map->legenda[13], ses->map->legenda[14],
-		ses->map->legenda[15], ses->map->legenda[16]);
+		ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],
+		ses->map->legend[3],  ses->map->legend[4],  ses->map->legend[5],
+		ses->map->legend[6],  ses->map->legend[7],  ses->map->legend[8],
+		ses->map->legend[9],  ses->map->legend[10], ses->map->legend[11],
+		ses->map->legend[12], ses->map->legend[13], ses->map->legend[14],
+		ses->map->legend[15], ses->map->legend[16]);
 	fputs(temp, file);
 
 	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
@@ -1021,7 +1078,7 @@ void create_map(struct session *ses)
 
 	for (index = 0 ; index < 17 ; index++)
 	{
-		sprintf(ses->map->legenda[index], "%c", map_palet0[index]);
+		sprintf(ses->map->legend[index], "%c", map_palet0[index]);
 	}
 }
 
@@ -1041,7 +1098,7 @@ void delete_map(struct session *ses)
 	ses->map = NULL;
 }
 		
-void create_legenda(struct session *ses, char *arg)
+void create_legend(struct session *ses, char *arg)
 {
 	int cnt;
 	char buf[BUFFER_SIZE];
@@ -1054,11 +1111,11 @@ void create_legenda(struct session *ses, char *arg)
 
 		if (is_number(buf))
 		{
-			sprintf(ses->map->legenda[cnt], "%c", atoi(buf));
+			sprintf(ses->map->legend[cnt], "%c", atoi(buf));
 		}
 		else
 		{
-			sprintf(ses->map->legenda[cnt], "%s", buf);
+			sprintf(ses->map->legend[cnt], "%s", buf);
 		}
 	}
 }
@@ -1280,6 +1337,8 @@ void follow_map(struct session *ses, char *argument)
 		{
 			room = map_search_tar_room;
 
+			show_message(ses, LIST_MAP, "Found linkable room {%d}", room);
+
 			insert_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_LINK);
 		}
 		else
@@ -1452,10 +1511,20 @@ void show_map(struct session *ses, char *argument)
 	{
 		strcpy(buf, "");
 
-		for (x = 0 ; x <= map_grid_x ; x++)
+		for (x = 0 ; x < map_grid_x ; x++)
 		{
 			strcat(buf, draw_room(ses, map_grid[x][y], 0));
 		}
+
+		for (x = strlen(buf) - 1 ; x > 0 ; x--)
+		{
+			if (buf[x] != ' ')
+			{
+				break;
+			}
+		}
+
+		buf[x+1] = 0;
 
 		substitute(ses, buf, out, SUB_COL);
 
@@ -1655,11 +1724,11 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 	{
 		if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
 		{
-			sprintf(buf, "<118>\033[12m%s\033[10m", ses->map->legenda[16]);
+			sprintf(buf, "<118>\033[12m%s\033[10m", ses->map->legend[16]);
 		}
 		else
 		{
-			sprintf(buf, "<118>%s", ses->map->legenda[16]);
+			sprintf(buf, "<118>%s", ses->map->legend[16]);
 		}
 		pop_call();
 		return buf;
@@ -1675,11 +1744,11 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
 	{
-		sprintf(buf, "%s\033[12m%s\033[10m", room->color, ses->map->legenda[exits]);
+		sprintf(buf, "%s\033[12m%s\033[10m", room->color, ses->map->legend[exits]);
 	}
 	else
 	{
-		sprintf(buf, "%s%s", room->color, ses->map->legenda[exits]);
+		sprintf(buf, "%s%s", room->color, ses->map->legend[exits]);
 	}
 	pop_call();
 	return buf;
@@ -1688,7 +1757,7 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 int find_room(struct session *ses, char *arg)
 {
-	int room;
+	int room, vnum, size;
 
 	room = atoi(arg);
 
@@ -1701,14 +1770,25 @@ int find_room(struct session *ses, char *arg)
 		return -1;
 	}
 
+	fill_map(ses);
+
+	vnum = -1;
+	size = map_search_max_size;
+
 	for (room = 0 ; room < MAX_ROOM ; room++)
 	{
-		if (ses->map->room_list[room] && find(ses, ses->map->room_list[room]->name, arg))
+		if (ses->map->room_list[room] && match(ses, ses->map->room_list[room]->name, arg))
 		{
-			return room;
+			show_debug(ses, LIST_MAP, "%-5d %-20s (%3d)", room, ses->map->room_list[room]->name, ses->map->room_list[room]->size);
+
+			if (ses->map->room_list[room]->size <= size)
+			{
+				size = ses->map->room_list[room]->size;
+				vnum = room;
+			}
 		}
 	}
-	return -1;
+	return vnum;
 }
 
 void goto_room(struct session *ses, int room)
@@ -1732,6 +1812,43 @@ struct exit_data *find_exit(struct session *ses, int room, char *arg)
 	return NULL;
 }
 
+int revdir(int dir)
+{
+	int revdir = 0;
+
+	if (HAS_BIT(dir, MAP_EXIT_N))
+	{
+		SET_BIT(revdir, MAP_EXIT_S);
+	}
+
+	if (HAS_BIT(dir, MAP_EXIT_E))
+	{
+		SET_BIT(revdir, MAP_EXIT_W);
+	}
+
+	if (HAS_BIT(dir, MAP_EXIT_S))
+	{
+		SET_BIT(revdir, MAP_EXIT_N);
+	}
+
+	if (HAS_BIT(dir, MAP_EXIT_W))
+	{
+		SET_BIT(revdir, MAP_EXIT_E);
+	}
+
+	if (HAS_BIT(dir, MAP_EXIT_U))
+	{
+		SET_BIT(revdir, MAP_EXIT_D);
+	}
+
+	if (HAS_BIT(dir, MAP_EXIT_D))
+	{
+		SET_BIT(revdir, MAP_EXIT_U);
+	}
+
+	return revdir;
+}
+
 struct exit_data *find_exit_dir(struct session *ses, int room, short dir)
 {
 	struct exit_data *exit;
@@ -1743,11 +1860,26 @@ struct exit_data *find_exit_dir(struct session *ses, int room, short dir)
 			return exit;
 		}
 	}
-	return NULL;
+
+	if (get_map_exits(ses, room) != 2)
+	{
+		show_debug(map_search_ses, LIST_MAP, "#ERROR: ROOM {%d} IS AN INVALID VOID ROOM.", room);
+
+		return NULL;
+	}
+
+	if (ses->map->room_list[room]->f_exit->dir != revdir(dir))
+	{
+		return ses->map->room_list[room]->f_exit;
+	}
+	else
+	{
+		return ses->map->room_list[room]->l_exit;
+	}
 }
 
 /*
-	Fast, short distance node weighted algorithm - Igor
+	Fast, short distance node weighted algorithms - Igor
 */
 
 short follow_void(struct session *ses, short from, short room, short dir)
@@ -1763,28 +1895,21 @@ short follow_void(struct session *ses, short from, short room, short dir)
 
 	exit = find_exit_dir(ses, room, dir);
 
-	if (exit == NULL)
+	if (exit)
 	{
-		if (get_map_exits(ses, room) != 2)
+		if (HAS_BIT(ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_VOID))
 		{
-			show_message(map_search_ses, LIST_MAP, "#TRAVERSE VOID: ROOM {%d} IS AN INVALID VOID ROOM.", room);
-		}
-
-		if (ses->map->room_list[room]->f_exit->vnum != from)
-		{
-			exit = ses->map->room_list[room]->f_exit;
+			return follow_void(ses, room, exit->vnum, exit->dir);
 		}
 		else
 		{
-			exit = ses->map->room_list[room]->l_exit;
+			return exit->vnum;
 		}
 	}
-
-	if (HAS_BIT(ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_VOID))
+	else
 	{
-		return follow_void(ses, room, exit->vnum, exit->dir);
+		return room;
 	}
-	return exit->vnum;
 }
 
 void search_path(short room, short size, short dir)
@@ -1807,12 +1932,16 @@ void search_path(short room, short size, short dir)
 	{
 		if (HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_AVOID))
 		{
+			show_debug(map_search_ses, LIST_MAP, "Avoiding room %d.", room);
+
 			return;
 		}
 
-		if (HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID) && (exit = find_exit_dir(map_search_ses, room, dir)))
+		if (HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID))
 		{
-			if (map_search_ses->map->room_list[exit->vnum] != NULL)
+			exit = find_exit_dir(map_search_ses, room, dir);
+
+			if (exit && map_search_ses->map->room_list[exit->vnum]->size > size)
 			{
 				search_path(exit->vnum, size, exit->dir);
 			}
@@ -1823,11 +1952,6 @@ void search_path(short room, short size, short dir)
 
 			for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
 			{
-				if (map_search_ses->map->room_list[exit->vnum] == NULL)
-				{
-					continue;
-				}
-
 				if (map_search_ses->map->room_list[exit->vnum]->size > size)
 				{
 					search_path(exit->vnum, size, exit->dir);
@@ -1835,6 +1959,38 @@ void search_path(short room, short size, short dir)
 			}
 		}
 	}
+}
+
+void fill_map(struct session *ses)
+{
+	int vnum, room;
+	struct exit_data *exit;
+
+	map_search_ses       = ses;
+	map_search_tar_room  = -1;
+	map_search_max_size  = 500;
+
+	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	{
+		if (ses->map->room_list[vnum])
+		{
+			ses->map->room_list[vnum]->size = map_search_max_size;
+		}
+	}
+
+	room = ses->map->in_room;
+
+	ses->map->room_list[room]->size = 0;
+
+	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+	{
+		if (ses->map->room_list[exit->vnum])
+		{
+			search_path(exit->vnum, 1, exit->dir);
+		}
+	}
+
+	return;
 }
 
 void shortest_path(struct session *ses, int run, char *left, char *right)
@@ -2010,7 +2166,6 @@ void search_coord(int vnum, short x, short y, short z)
 
 	if (map_grid_x == x && map_grid_y == y && map_grid_z == z)
 	{
-		tintin_printf2(map_search_ses, "#MAP: Found linkable room: %d.", vnum);
 		map_search_tar_room = vnum;
 	}
 	else

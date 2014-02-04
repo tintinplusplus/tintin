@@ -46,7 +46,7 @@ DO_COMMAND(do_history)
 			break;
 
 		case 'i':
-			insertnode_list(gts, right, "", "", LIST_HISTORY);
+			insert_line_history(gts, right);
 			break;
 
 		case 'r':
@@ -121,6 +121,44 @@ void add_line_history(struct session *ses, char *line)
 	return;
 }
 
+void insert_line_history(struct session *ses, char *line)
+{
+	struct listroot *root;
+	struct listnode *node;
+
+	root = ses->list[LIST_HISTORY];
+
+	if (root->l_node && !strcmp(line, root->l_node->left))
+	{
+		return;
+	}
+
+	for (node = root->f_node ; node ; node = node->next)
+	{
+		if (!strcmp(line, node->left))
+		{
+			if (node == gtd->input_his)
+			{
+				gtd->input_his = NULL;
+			}
+			deletenode_list(ses, node, LIST_HISTORY);
+			break;
+		}
+	}
+
+	insertnode_list(ses, line, "", "", LIST_HISTORY);
+
+	while (root->count > gtd->history_size)
+	{
+		if (root->f_node == gtd->input_his)
+		{
+			gtd->input_his = NULL;
+		}
+		deletenode_list(ses, root->f_node, LIST_HISTORY);
+	}
+
+	return;
+}
 
 void search_line_history(struct session *ses, char *line)
 {

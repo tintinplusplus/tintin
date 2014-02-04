@@ -82,7 +82,14 @@ int is_number(char *str)
 {
 	int i;
 
-	if (!isdigit(str[0]) && str[0] != '-' && str[0] != '+')
+	i = 0;
+
+	if (str[i] == '-' || str[i] == '+')
+	{
+		i++;
+	}
+
+	if (!isdigit(str[i]))
 	{
 		return FALSE;
 	}
