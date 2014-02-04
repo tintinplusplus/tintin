@@ -85,6 +85,7 @@ OFILES = action.o alias.o antisub.o files.o help.o highlight.o \
          text.o substitute.o tick.o math.o variables.o debug.o \
          tables.o strhash.o telopt.o buffer.o macro.o config.o \
          tinexp.o split.o mapper.o class.o utils.o prompt.o    \
+         echo.o \
 
 default: all
 

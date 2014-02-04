@@ -36,182 +36,14 @@
 
 DO_COMMAND(do_read)
 {
-	FILE *myfile;
-	char buffer[BUFFER_SIZE], temp, *cptr;
-	const char *filename = arg;
-	int cnt, counter[LIST_MAX];
-
-	get_arg_in_braces(filename, buffer, 1);
-
-	if ((myfile = fopen(buffer, "r")) == NULL)
-	{
-		tintin_puts("#ERROR - COULDN'T OPEN THAT FILE.", ses);
-		return(ses);
-	}
-
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		counter[cnt] = ses->list[cnt]->count;
-	}
-
-	temp = getc(myfile);
-
-	if (!isgraph(temp))
-	{
-		tintin_puts("#ERROR - COULDN'T OPEN THAT FILE.", ses);
-		fclose(myfile);
-		return(ses);
-	}
-
-	if (temp != gtd->tintin_char)
-	{
-		sprintf(buffer, "{TINTIN CHAR} {%c}", temp);
-		do_configure(ses, buffer);
-	}
-	ungetc(temp, myfile);
-
-	SET_BIT(gts->flags, SES_FLAG_QUIET);
-
-	while (fgets(buffer, BUFFER_SIZE - 1, myfile))
-	{
-		for (cptr = buffer ; *cptr && *cptr != '\n' ; cptr++);
-
-		*cptr = 0;
-
-		if (buffer[0] != '\0')
-		{
-			ses = parse_input(buffer, ses);
-		}
-	}
-
-	DEL_BIT(gts->flags, SES_FLAG_QUIET);
-
-	if (!HAS_BIT(gts->flags, SES_FLAG_VERBOSE))
-	{
-		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			switch (ses->list[cnt]->count - counter[cnt])
-			{
-				case 0:
-					break;
-
-				case 1:
-					tintin_printf2(ses, "#OK %2d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
-					break;
-
-				default:
-					tintin_printf2(ses, "#OK %2d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
-					break;
-			}
-		}
-	}
-	fclose(myfile);
-	return(ses);
-}
-
-
-DO_COMMAND(do_write)
-{
-	FILE *file;
-	char temp[BUFFER_SIZE], filename[BUFFER_SIZE];
-	struct listnode *node;
-	int cnt;
-
-	get_arg_in_braces(arg, temp, TRUE);
-
-	substitute(ses, temp, filename, SUB_VAR|SUB_FUN);
-
-	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
-	{
-		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", filename);
-		return ses;
-	}
-
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
-		{
-			prepare_for_write(cnt, node, temp);
-
-			fputs(temp, file);
-		}
-	}
-
-	fclose(file);
-
-	if (show_message(ses, -1))
-	{
-		tintin_printf2(ses, "#COMMANDO-FILE WRITTEN.");
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_writesession)
-{
-	FILE *file;
-	char buffer[BUFFER_SIZE];
-	struct listnode *node;
-	int cnt;
-
-	get_arg_in_braces(arg, buffer, 1);
-
-	if (*buffer == 0 || (file = fopen(buffer, "w")) == NULL)
-	{
-		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", buffer);
-		return ses;
-	}
-
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
-		{
-			if (gts != ses && searchnode_list(gts->list[cnt], node->left))
-			{
-				continue;
-			}
-
-			prepare_for_write(cnt, node, buffer);
-
-			fputs(buffer, file);
-		}
-	}
-
-	fclose(file);
-
-	tintin_printf2(ses, "#COMMANDO-FILE WRITTEN.");
-
-	return ses;
-}
-
-
-void prepare_for_write(int list, struct listnode *node, char *result)
-{
-	int llen = strlen(node->left)  > 20 ? 20 : strlen(node->left);
-	int rlen = strlen(node->right) > 25 ? 25 : strlen(node->right);
-
-	switch (list_table[list].args)
-	{
-		case 0:
-			result[0] = 0;
-			break;
-		case 1:
-			sprintf(result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
-			break;
-		case 2:
-			sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
-			break;
-		case 3:
-			sprintf(result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
-			break;
-	}
+	return readfile(ses, arg, NULL);
 }
 
 /*
 	Rewritten from scratch since old version wasn't working - Scandum
 */
 
-DO_COMMAND(do_readnew)
+struct session *readfile(struct session *ses, const char *arg, struct listnode *class)
 {
 	FILE *fp;
 	char bufi[FILE_SIZE], bufo[FILE_SIZE], filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
@@ -400,9 +232,9 @@ DO_COMMAND(do_readnew)
 
 	sprintf(temp, "{TINTIN CHAR} {%c}", bufo[0]);
 
-	do_configure(ses, temp);
-
 	SET_BIT(gts->flags, SES_FLAG_QUIET);
+
+	do_configure(ses, temp);
 
 	lvl = 0;
 	pti = bufo;
@@ -432,7 +264,14 @@ DO_COMMAND(do_readnew)
 
 		if (bufi[0])
 		{
-			ses = parse_input(bufi, ses);
+			if (class == NULL || HAS_BIT(class->data, NODE_FLAG_CLASS))
+			{
+				ses = parse_input(bufi, ses);
+			}
+			else
+			{
+				parse_class(ses, bufi, class);
+			}
 		}
 		pto = bufi;
 		pti++;
@@ -463,6 +302,104 @@ DO_COMMAND(do_readnew)
 
 	return ses;
 }
+
+DO_COMMAND(do_write)
+{
+	FILE *file;
+	char temp[BUFFER_SIZE], filename[BUFFER_SIZE];
+	struct listnode *node;
+	int cnt;
+
+	get_arg_in_braces(arg, temp, TRUE);
+
+	substitute(ses, temp, filename, SUB_VAR|SUB_FUN);
+
+	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
+	{
+		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", filename);
+		return ses;
+	}
+
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	{
+		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+		{
+			prepare_for_write(cnt, node, temp);
+
+			fputs(temp, file);
+		}
+	}
+
+	fclose(file);
+
+	if (show_message(ses, -1))
+	{
+		tintin_printf2(ses, "#COMMANDO-FILE WRITTEN.");
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_writesession)
+{
+	FILE *file;
+	char buffer[BUFFER_SIZE];
+	struct listnode *node;
+	int cnt;
+
+	get_arg_in_braces(arg, buffer, 1);
+
+	if (*buffer == 0 || (file = fopen(buffer, "w")) == NULL)
+	{
+		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", buffer);
+		return ses;
+	}
+
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	{
+		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+		{
+			if (gts != ses && searchnode_list(gts->list[cnt], node->left))
+			{
+				continue;
+			}
+
+			prepare_for_write(cnt, node, buffer);
+
+			fputs(buffer, file);
+		}
+	}
+
+	fclose(file);
+
+	tintin_printf2(ses, "#COMMANDO-FILE WRITTEN.");
+
+	return ses;
+}
+
+
+void prepare_for_write(int list, struct listnode *node, char *result)
+{
+	int llen = strlen(node->left)  > 20 ? 20 : strlen(node->left);
+	int rlen = strlen(node->right) > 25 ? 25 : strlen(node->right);
+
+	switch (list_table[list].args)
+	{
+		case 0:
+			result[0] = 0;
+			break;
+		case 1:
+			sprintf(result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
+			break;
+		case 2:
+			sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
+			break;
+		case 3:
+			sprintf(result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
+			break;
+	}
+}
+
 
 
 DO_COMMAND(do_textin)

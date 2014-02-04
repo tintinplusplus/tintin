@@ -9,15 +9,15 @@ David Hedbot                               original GNU autoconfig
 Andrew Chernov                             FreeBSD bug fixes
 Jim Goddard                                SOCKS #ifdefs
 Greg Jarman                                original #if code
-Yoon-Chan Jhi                              see mods/MODS.ycjhi
-Peter Kjellerstedt                         see mods/MODS.pkj
-Sverre Norrman                             see mods/MODS.sverre
-David Chan                                 see mods/MODS.dsc
-Chitchat                                   see mods/MODS.dsc
-Kuang-che Wu                               see mods/MODS.dsc
-Robert Ellsworth                           see mods/MODS.rse
-Igor van den Hoven                         see mods/MODS.scandum
-Julia Longtin                              see mods/MODS.juri
+Yoon-Chan Jhi                              see mods/ycjhi.mods
+Peter Kjellerstedt                         see mods/pkj.mods
+Sverre Norrman                             see mods/sverre.mods
+David Chan                                 see mods/dsc.mods
+Chitchat                                   see mods/dsc.mods
+Kuang-che Wu                               see mods/dsc.mods
+Robert Ellsworth                           see mods/rse.mods
+Igor van den Hoven                         see mods/scandum.mods
+Julia Longtin                              see mods/juri.mods
 
 Testers
 -------

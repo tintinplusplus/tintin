@@ -640,5 +640,36 @@ telopt.c       With #config {CONVERT META} set to ON mud output will have
                it's meta characters translated, this to aid in making color
                triggers.
 
-split.c        With #split 0 0 will create an input line without the split
+split.c        Using #split 0 0 will create an input line without the split
                line. Useful for people who don't use #prompt.
+
+
+
+may 2005
+
+
+rl.c           Fixed a bug that caused prompts to be printed twice.
+
+debug.c        Fixed possible crash from overloading the debug stack.
+
+variable.c     Added #debug messages for #replacestring and #format.
+
+split.c        Fixed various #split bugs when creating or switching sessions.
+
+buffer.c       #buffer {i} will now give some info about the scrollback buffer.
+
+tick.c         #delay now works in the startup session. Tickers are still 
+               disabled.
+
+class.c        #class <class> read <file>, now only reads in stuff that belongs
+               to the given class name. Hence in order for this to work you
+               need #class <class> open, and #class <class> close, calls in
+               the file itself for this to work.
+
+help.c         Removed David Chan from the credit screen shown when starting
+               up TinTin++. I'm sure he had the best intentions, but he should
+               have let more capable persons develop instead of spending two
+               years making 6 minor changes, fiddling with variables, adding
+               patches written by others, and stuffing his name in the credit
+               list before vanishing into thin air.
+

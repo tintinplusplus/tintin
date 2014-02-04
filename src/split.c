@@ -80,8 +80,6 @@ void init_split(struct session *ses, int top, int bot)
 
 	init_screen_size(ses);
 
-	clean_screen(ses);
-
 	scroll_region(ses, top, bot);
 
 	do_one_prompt(ses, "", 1);
@@ -123,5 +121,17 @@ void dirty_screen(struct session *ses)
 	{
 		init_split(ses, ses->top_row, ses->bot_row);
 	}
-}
+	else
+	{
+		clean_screen(ses);
+	}
 
+	if (HAS_BIT(ses->flags, SES_FLAG_LOCALECHO))
+	{
+		echo_on(ses);
+	}
+	else
+	{
+		echo_off(ses);
+	}
+}

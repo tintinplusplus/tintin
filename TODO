@@ -22,4 +22,8 @@
 
   http://www.kmuddy.org/libmxp/
 
+  Tintin will also need a hypertext terminal, which is being developed here:
+
+  http://xmlterm.sourceforge.net/
+
 - msp support: my sound card does not work, and nobody asked yet.

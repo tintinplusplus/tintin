@@ -120,9 +120,7 @@ void write_line_mud(const char *line, struct session *ses)
 		memset(&outtext[4], '*', strlen(line));
 	}
 
-	strcat(ses->more_output, outtext);
-
-	add_line_buffer(ses, ses->more_output, FALSE);
+	add_line_buffer(ses, outtext, FALSE);
 
 	sprintf(outtext, "%s\r\n", line);
 

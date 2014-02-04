@@ -451,8 +451,6 @@ void send_echo_on(struct session *ses)
 
 	SET_BIT(ses->flags, SES_FLAG_LOCALECHO);
 
-	readline_echoing_p = TRUE;
-
 	telopt_debug(ses, "SENT IAC DONT ECHO");
 }
 
@@ -461,8 +459,6 @@ void send_echo_off(struct session *ses)
 	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_ECHO);
 
 	DEL_BIT(ses->flags, SES_FLAG_LOCALECHO);
-
-	readline_echoing_p = FALSE;
 
 	telopt_debug(ses, "SENT IAC DO ECHO");
 }

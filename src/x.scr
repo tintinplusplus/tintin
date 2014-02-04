@@ -1,3 +1,4 @@
+#class bla open
 #CONFIG           {VERBOSE}               {ON}
 #CONFIG           {SPEEDWALK}             {ON}
 #CONFIG           {VERBATIM}              {OFF}
@@ -5,6 +6,7 @@
 #CONFIG           {ECHO COMMAND}          {OFF}
 #CONFIG           {WORDWRAP}              {ON}
 #CONFIG           {LOG}                   {HTML}
+#class bla close
 #CONFIG           {BUFFER SIZE}           {20000}
 #CONFIG           {SCROLL LOCK}           {ON}
 #CONFIG           {HISTORY SIZE}          {2000}

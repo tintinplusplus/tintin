@@ -32,7 +32,7 @@ A01) Tintin should compile on almost any UNIX machine.  The following
      Cygwin 1.5 (needs readline to be installed)
      OS X (needs readline to be installed)
 
-     Pretty much any UNIX machine with a (modern) compiler and the "readline"
+     Pretty much any UNIX machine with a modern compiler and the "readline"
      library available should work.
 
 
@@ -50,8 +50,7 @@ Q03) Where can I get the readline library?
 
 A03) You can get the readline library from many ftp sites.  The main ftp
      site for the readline library is ftp.gnu.org.  The most recent version
-     should be available there.  Tintin has been tested with readline 4.0,
-     4.1 and 4.3
+     should be available there.
      It has been reported that readline 2.0 does not work, so make sure you
      get a recent version of readline.
 
@@ -70,9 +69,9 @@ A04) Configure normally only checks the standard default directories for
      If you put readline in /tmp/readline-4.1 then you would need to do the 
      following:
 
-  1) rename it to be called readline (mv readline-4.1 readline)
+  1) rename it to be called readline: mv readline-4.1 readline
 
-  2) tell configure to look there (./configure --includedir=/tmp --libdir=tmp)
+  2) tell configure to look there: ./configure --includedir=/tmp --libdir=tmp
 
   3) You must use the full path when specifying the directory.
 
@@ -117,8 +116,7 @@ A09) Fan mail is always welcomed :)
 Q11) Can I use code from tintin?
 
 A11) Yes, provided that you follow the terms of the license.  The license
-     used for tintin is GPL.  Any questions/requests regarding the license,
-     please contact me (Davin Chan).
+     used for tintin is GPL.
 
 Q12) I contributed code X, why isn't my name listed in the CREDITS file?
 
@@ -126,8 +124,7 @@ A12) Most likely your name slipped by before Davin Chan started
      maintaining tintin and adding people to the CREDITS file. If you
      believe you have contributed code to tintin, please email me and
      let me know. Make sure to see if your code is still existant in this
-     version. I'll make an attempt sometime to get the credits sorted
-     out as good as I can.
+     version.
 
 
 Q13) I would like to put all of my tintin files in a common directory,
@@ -135,8 +132,8 @@ Q13) I would like to put all of my tintin files in a common directory,
 
 A13) You can set enviroment variables for the history file with the
      TINTIN_HISTORY variable.  The syntax  depends on your shell, but for csh
-     it's TINTIN_HISTORY <path to help file> and for bash it's 
-     TINTIN_HELP=<path to help file>;export TINTIN_HELP.
+     it's TINTIN_HISTORY <path to file> and for bash it's 
+     TINTIN_HISTORY=<path to file>;export TINTIN_HISTORY.
 
      The #read and #write command allow you to specify a path beside the
      filename. So just set your scripts/aliasses to write to specific dirs
@@ -167,6 +164,11 @@ Q16) #prompt {string} does not work
 A16) That's because the new syntax is: #prompt {search string} {substitution}
      Read the help for the substitute command for more information.
 
-     Please let me know, if you think there is a common question that isn't
-     answered by this FAQ, but should be.
+Q17) I want to make an ALIAS that created an ACTION, but both use %0, how to
+     go about this?
 
+A17) Use %%90 %%91 %%92. When the alias is parsed %9 will be replaced with the
+     9th argument which mostly isn't given, this leaves %0 %1 %2.
+
+     Another way to go about it is using classes which you can read from file
+     and are easy to delete when you want them removed.

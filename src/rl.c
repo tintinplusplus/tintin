@@ -71,8 +71,6 @@ void printline(struct session *ses, const char *str, int prompt)
 {
 	char wrapped_str[BUFFER_SIZE * BUFFER_SAFE];
 
-	add_line_buffer(ses, str, prompt);
-
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
 	{
 		return;
@@ -130,8 +128,6 @@ void bait(void)
 				
 			}
 
-			readline_echoing_p = HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO) ? TRUE : FALSE;
-          
 			for (ses = gts->next ; ses ; ses = ses_next)
 			{
 				ses_next = ses->next;
@@ -146,6 +142,7 @@ void bait(void)
 			}
 		}
 	}
+	readline_echoing_p = HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO);
 }
 
 
@@ -268,24 +265,29 @@ void readmud(struct session *ses)
 
 		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
 		{
-			strcat(ses->more_output, line);
-
 			if (gts->check_output)
 			{
+				strcat(ses->more_output, line);
 				ses->check_output = utime() + gts->check_output;
 				break;
 			}
 		}
 
-		if (next_line && ses->more_output[0])
+		strcpy(linebuf, line);
+/*
+		if (next_line && gts->check_output && ses->more_output[0])
 		{
 			sprintf(linebuf, "%s%s", ses->more_output, line);
 		}
 		else
 		{
+			if (ses->more_output[0])
+			{
+				add_line_buffer(ses, ses->more_output, TRUE);
+			}
 			sprintf(linebuf, "%s", line);
 		}
-
+*/
 		process_mud_output(ses, linebuf, next_line == NULL);
 	}
 
@@ -325,6 +327,8 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		return;
 	}
+
+	add_line_buffer(ses, linebuf, prompt);
 
 	if (ses == gtd->ses)
 	{
@@ -506,6 +510,8 @@ void tintin_puts2(const char *cptr, struct session *ses)
 	}
 
 	sprintf(output, "\033[0m%s\033[0m", cptr);
+
+	add_line_buffer(ses, output, FALSE);
 
 	printline(ses, output, FALSE);
 

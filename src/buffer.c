@@ -96,6 +96,8 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 		return;
 	}
 
+	strcat(ses->more_output, line);
+
 	if (more_output && strlen(ses->more_output) < BUFFER_SIZE / 2)
 	{
 		return;
@@ -108,7 +110,7 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 		reset_hash_table();
 	}
 
-	pti = (char *) line;
+	pti = ses->more_output;
 	pto = linebuf;
 
 	while (*pti != 0)
@@ -479,6 +481,10 @@ DO_COMMAND(do_buffer)
 
 		case 'w':
 			do_writebuffer(ses, right);
+			break;
+
+		case 'i':
+			do_hash(ses, right);
 			break;
 
 		default:

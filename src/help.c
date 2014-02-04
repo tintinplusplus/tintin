@@ -20,7 +20,7 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: buffer.c - funtions related to the scroll back buffer               *
+*   file: help.c - funtions related to the internal help file                 *
 *           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
 *                  original help files by various persons                     *
 *                   recoded by Igor van den Hoven 2004                        *
@@ -121,7 +121,7 @@ const struct help_type help_table[81] =
 	},
 	{
 		"BUFFER",
-		"Command: #buffer {home|up|down|end|write filename}\n"
+		"Command: #buffer {home|up|down|end|write filename|info}\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
 		"         the entire scrollback buffer to file.\n"
@@ -134,7 +134,7 @@ const struct help_type help_table[81] =
 		"         will be assigned to that class.\n"
 		"         The {close} option will close the given class and make the last\n"
 		"         accessed open class active.\n"
-		"         The {read} option will open the given class, read a file, and close\n"
+		"         The {read} option will only read triggers of the given class from file.\n"
 		"         the class when finished.\n"
 		"         The {write} option will write all triggers of the given class to file.\n"
 		"         The {kill} option will delete all triggers of the given class.\n"
@@ -196,10 +196,10 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<078>                 Original TINTIN code by Peter Unold                <068>#\n"
 		"<068>    #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,      <068>#\n"
-		"<068>    #<078>           Jeremy C. Jack, Davin Chan, Igor van den Hoven           <068>#\n"
+		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.94.4                           <068>#\n"
+		"<068>    #<078>                           Version 1.94.5                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{

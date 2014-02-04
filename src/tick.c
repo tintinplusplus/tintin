@@ -170,6 +170,11 @@ void tick_update(void)
 				parse_input(result, ses);
 			}
 		}
+	}
+
+	for (ses = gts ; ses ; ses = gtd->update)
+	{
+		gtd->update = ses->next;
 
 		root = ses->list[LIST_DELAY];	
 
@@ -191,6 +196,11 @@ void tick_update(void)
 				deletenode_list(ses, node, LIST_DELAY);
 			}
 		}
+	}
+
+	for (ses = gts->next ; ses ; ses = gtd->update)
+	{
+		gtd->update = ses->next;
 
 		if (ses->check_output && gtd->time > ses->check_output)
 		{
@@ -200,7 +210,10 @@ void tick_update(void)
 				goto_rowcol(ses, ses->bot_row, 1);
 			}
 
-			process_mud_output(ses, ses->more_output, TRUE);
+			strcpy(result, ses->more_output);
+			ses->more_output[0] = 0;
+
+			process_mud_output(ses, result, TRUE);
 
 			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 			{
@@ -208,7 +221,6 @@ void tick_update(void)
 			}
 		}
 	}
-
 	fflush(stdout);
 
 	pop_call();

@@ -302,6 +302,10 @@ DO_COMMAND(do_replacestring)
 
 		sprintf(result, "{%s} {%s}", node->left, var);
 
+		if (show_message(ses, LIST_VARIABLE))
+		{
+			tintin_printf2(ses, "#REPLACESTRING: $%s is now set to {%s}", node->left, var);
+		}
 		do_internal_variable(ses, result);
 	}
 	return ses;
@@ -576,6 +580,11 @@ DO_COMMAND(do_format)
 	sprintf(argument, format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
 
 	sprintf(format, "{%s} {%s}", destvar, argument);
+
+	if (show_message(ses, LIST_VARIABLE))
+	{
+		tintin_printf2(ses, "#FORMAT: $%s is now set to {%s}", destvar, argument);
+	}
 
 	do_internal_variable(ses, format);
 

@@ -92,8 +92,10 @@ void scroll_region(struct session *ses, int top, int bot)
 
 void reset_scroll_region(struct session *ses)
 {
-	printf("%c[r", ESCAPE);
-
+	if (ses == gtd->ses)
+	{
+		printf("%c[r", ESCAPE);
+	}
 	ses->top_row = 1;
 	ses->bot_row = ses->rows;
 }

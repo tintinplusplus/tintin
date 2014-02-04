@@ -138,7 +138,6 @@ struct session *newactive_session(void)
 		gtd->ses = gts;
 		tintin_puts("#THERE'S NO ACTIVE SESSION NOW.", NULL);
 	}
-	clean_screen(gtd->ses);
 	dirty_screen(gtd->ses);
 
 	return gtd->ses;
@@ -188,8 +187,7 @@ struct session *new_session(const char *name, const char *address, struct sessio
 	}
 
 	init_screen_size(newsession);
-	clean_screen(newsession);
-	dirty_screen(newsession);
+
 	init_buffer(newsession, gts->scroll_max);
 
 	connect_session(newsession);
@@ -225,6 +223,11 @@ void connect_session(struct session *ses)
 		ses->socket = sock;
 
 		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
+
+		if (IS_SPLIT(gts))
+		{
+			init_split(ses, gts->top_row, gts->bot_row);
+		}
 
 		tintin_printf2(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);
 
@@ -279,6 +282,10 @@ void cleanup_session(struct session *ses)
 
 	tintin_printf(ses, "\n\r#SESSION '%s' DIED.", ses->name);
 
+	if (ses == gtd->ses)
+	{
+		gtd->ses = newactive_session();
+	}
 	do_killall(ses, NULL);
 
 	if (ses->socket)
@@ -305,14 +312,8 @@ void cleanup_session(struct session *ses)
 	init_buffer(ses, 2);
 	free(ses->buffer);
 
-	if (ses == gtd->ses)
-	{
-		gtd->ses = newactive_session();
-	}
-
 	free(ses);
 
 	pop_call();
 	return;
 }
-

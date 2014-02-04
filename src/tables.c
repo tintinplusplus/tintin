@@ -54,7 +54,6 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"getitemnr",         do_getitemnr         },
 	{	"getlistlength",     do_getlistlength     },
 	{	"grep",              do_grep              },
-/*	{	"hash",              do_hash              }, */
 	{	"help",              do_help              },
 	{	"highlight",         do_highlight         },
 	{	"if",                do_if                },
@@ -77,7 +76,7 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"redit",             do_redit             },
 	{	"removestring",      do_removestring      },
 	{	"replacestring",     do_replacestring     },
-	{	"read",              do_readnew           },
+	{	"read",              do_read              },
 	{	"readmap",           do_readmap           },
 	{	"savepath",          do_savepath          },
 	{	"session",           do_session           },

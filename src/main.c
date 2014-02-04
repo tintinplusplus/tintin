@@ -82,8 +82,6 @@ RETSIGTYPE winchhandler(int no_care)
 
 RETSIGTYPE tstphandler(int no_care)
 {
-	clean_screen(gtd->ses);
-
 	kill(0, SIGSTOP);
 
 	dirty_screen(gtd->ses);
@@ -210,7 +208,7 @@ int main(int argc, char **argv)
 
 	if (argc > arg_num && argv[arg_num])
 	{
-		gtd->ses = do_readnew(gts, argv[arg_num]);
+		gtd->ses = do_read(gts, argv[arg_num]);
 	}
 
 	commandloop();
@@ -262,8 +260,6 @@ void init_tintin(void)
 	*/
 
 	printf("\e=\e[?1h");
-
-	readline_echoing_p = HAS_BIT(gts->flags, SES_FLAG_LOCALECHO) ? TRUE : FALSE;
 
 	SET_BIT(gts->flags, SES_FLAG_VERBOSE);
 

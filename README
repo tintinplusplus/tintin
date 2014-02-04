@@ -14,20 +14,21 @@ and figure out the differences will simply have to use the old version.
 TINEXP 1.0 (tintin expressions) are as of now more clearly:
 
 %0 - %9 are passed along with triggers. Actions, Aliasses, etc
-&0 - &9 are passed along with fucntions.
+&0 - &9 are passed along with functions.
 $       are used for variables
 @       are used for functions, the arguments are stored in &0 - &9
 <000>   are used for colors
-\       is used to escape a character, but can be kludgy.
+\       is used to escape a character, but doesn't always work.
 { }     are used for seperating multi word command arguments.
-" "     are used for strings in if checks
+" "     are used for strings in #math
 * ? \   are wildcards in regular expressions.
 
 
 
 If you want to convert your scripts take notice of the following changes:
 
-1) #LOOP #FORALL #FUNCTION now use &0-&9 instead of %0-%9.
+1) #LOOP #FORALL #FUNCTION now use &0-&9 instead of %0-%9. You can also use
+   the $loop and $forall variables which are set by these commands.
 
 2) #HIGHLIGHT had to be changed because this tintin version is less flexible
 when it comes to the parsing of commands as the old tintin versions. Basicly
@@ -35,30 +36,30 @@ the old #high {color} {string} is now parsed as: #high {string} {color} you
 can load your old highlights, but they will be not added to the highlight
 list, because they'll generate a 'color code not found' error message. So
 you'll have to redo your highlights, or perhaps look into the #substite
-command combined with the new color codes #help colors
+command combined with the new color codes, see #help colors
 
 Also the way highlight deals with colors has been changed. {b light green} is
 no longer valid, instead you would want to use {light b green}, the highlights
 also only use the valid VT100 codes, italic has been replaced with underscore,
-since there's no such thing as italic that I know about.
+since italic was never implemented in VT100 terminals.
 
-3) #FORMAT replaces many commands, get used to it as fast as you can I'd suggest.
+3) #FORMAT replaces many commands, I'd suggest checking it out.
 
 4) #MESSAGE, #CONFIG, #INFO, #IGNORE, #DEBUG are all you need to configure
    tintin, changes to #config are written to file with #write.
 
 5) The old walk code has been removed, instead you can use the old mark command
-to start marking a path. When finished you use savepath {backward/forward}
+to start mapping a path. When finished you use savepath {backward/forward}
 {alias name}. Next you can use #loadpath {alias} to load an alias, with #map
 you can see (used to be #path) what directions are stored in the path.
 With #path and #unpath you can push and pop directions from the path list,
-non valid directions are allowed such as #path {open door} {open door} will
-add those commands to the forward and backward aliasses.
+non valid directions are allowed: #path {open door west} {open door east} for
+example will add those commands to the forward and backward aliasses.
 Once you've used #loadpath {alias} you can use the #walk command, this will
 remove one node from the path list and execute it. This way you can walk down
 the path by typing #walk repeatedly, or by using a ticker. When there are no
 more moves left on the path you'll receive a message. Notice this is perfect
-for auto level scripts that require walking.
+for automated scripts that require walking.
 
 6) #TICK has been changed quite a bit, new commands: #TICK #UNTICK, you can have
 as many tickers as you want. The old #tick commands are gone.
@@ -70,36 +71,28 @@ Can use #read to load this simulator, for the few muds that still have a
 non random tick:
 
 #var ticksize 60
-#var ticktick 10
 
 #tick {oldtick}
 {
-	#math ticktick {$ticktick + 10};
-
-	#if {$ticktick % $ticksize == $ticksize - 10}
-	{
-		#echo %s "#10 SECONDS TO TICK!!"
-	};
-	#if {$ticktick % $ticksize == 0}
-	{
-		#echo %s "#TICK!!!"
-	}
+	#delay 50 #showme #10 SECONDS TO TICK!!;
+	#showme #TICK!!!
 }
 {10}
 
 
-7) Fixed #newread, so feel free to try it out, it checks the nesting level
-before doing anything so you don't end up with bogus, and trims leading and
-trailing spaces/tabs. Probably a couple of bugs left. Make sure to remove
-non matching { }'s from #nop comments. Cause it'll error msg otherwise.
+7) #read now supports multiline triggers, it also checks the nesting level
+before doing anything so you don't end up with bogus, and trims leading 
+spaces/tabs. Make sure to remove non matching { }'s from #nop comments. Cause
+it'll error msg with the line number to look at otherwise.
 
-Turn on verbose with #config if you want more debug info with #newread
-
-Since #newread worked well it has been replaced, and #read uses #newread.
 
 8) Can place ^ at the end of an action if you want a perfect match.
 #act {^The trail leads north^} {n} {5} will not trigger on:
 The trail leads northwest
+
+   In order to make a color trigger start a trigger with ~ In order to see
+   color codes the way tintin wants you to enter them type: #config CONVERT on
+   when done use: #config CONVERT off.
 
 9) Added macros, see help file on macro and unmacro
 
@@ -112,11 +105,11 @@ say @dosomething{} will print 2, the #RESULT command has been removed.
 You can still use the result variable as a normal variable, but it might get
 messy if you use it in combination with #echo or functions, or both.
 
-11) #forall now uses space seperation instead of comma seperation, added helpfile
-as well
+11) #forall now uses space seperation instead of comma seperation, added
+    a helpfile as well
 
 12) Fixed #cr for diku muds, #10 #cr should work now, test old tintin versions
-if you don't believe me.
+    if you don't believe me.
 
 13) Rewrote the mathematical expression interpreter used by #if and #math,
 it can now deal with both strings and numbers, strings must be enclosed in " ",
@@ -126,8 +119,8 @@ Can look into it if requested.
 
 14) #pathdir is now specificly designed to hold a direction, and the opposite
 direction, there was some confusion by a help file writer about this who
-thought it was meant to hold a direction and the specific command to use that
-direction.
+thought it was meant to hold a direction and the specific command to use with
+that direction.
 
 15) Defaults are no longer in a .rc file, if someone wants different defaults
 they can write a command file for it I figured.

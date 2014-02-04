@@ -37,8 +37,9 @@
 struct session *parse_input(char *input, struct session *ses)
 {
 	char temp[BUFFER_SIZE], command[BUFFER_SIZE], arg[BUFFER_SIZE];
-	char *input2;
+	char *pti, *pta;
 	struct listnode *ln;
+	int i;
 
 	push_call("[%s] parse_input(%s,%p)",ses->name,input,ses);
 
@@ -70,20 +71,19 @@ struct session *parse_input(char *input, struct session *ses)
 		return(ses);
 	}
 
-	input2 = input;
+	pti = input;
 
-	while (*input2)
+	while (*pti)
 	{
-		if (*input2 == ';')
+		if (*pti == ';')
 		{
-			input2++;
+			if (*++pti == 0)
+			{
+				break;
+			}
 		}
-		if (*input2 == 0)
-		{
-			break;
-		}
-		input2 = (char *)get_arg_stop_spaces(input2, temp);
-		input2 = (char *)get_arg_all(input2, arg);
+		pti = (char *)get_arg_stop_spaces(pti, temp);
+		pti = (char *)get_arg_all(pti, arg);
 
 		substitute(ses, temp, command, SUB_VAR|SUB_FUN);
 
@@ -93,26 +93,21 @@ struct session *parse_input(char *input, struct session *ses)
 		}
 		else if ((ln = searchnode_list_begin(ses->list[LIST_ALIAS], command, ALPHA)))
 		{
-			int i;
-			char newcommand[BUFFER_SIZE], temp[BUFFER_SIZE];
-			const char *pta = arg;
-
 			strcpy(gtd->vars[0], arg);
+
+			pta = arg;
 
 			for (i = 1 ; i < 10 ; i++)
 			{
-				pta = get_arg_in_braces(pta, temp, FALSE);
-
-				strcpy(gtd->vars[i], temp);
+				pta = (char *) get_arg_in_braces(pta, gtd->vars[i], FALSE);
 			}
-			substitute(ses, ln->right, newcommand, SUB_ARG);
+			substitute(ses, ln->right, command, SUB_ARG);
 
-			if (!strcmp(ln->right, newcommand) && *arg)
+			if (!strcmp(ln->right, command) && *arg)
 			{
-				sprintf(newcommand, "%s %s", ln->right, arg);
+				sprintf(command, "%s %s", ln->right, arg);
 			}
-
-			ses = parse_input(newcommand, ses);
+			ses = parse_input(command, ses);
 		}
 		else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && !*arg && is_speedwalk_dirs(command))
 		{
@@ -233,6 +228,8 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 			else
 			{
 				gtd->ses = sesptr;
+
+				dirty_screen(sesptr);
 
 				tintin_printf(sesptr, "#SESSION '%s' ACTIVATED.", sesptr->name);
 

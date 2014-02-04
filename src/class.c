@@ -177,11 +177,11 @@ DO_CLASS(class_close)
 
 DO_CLASS(class_read)
 {
-	class_open(ses, arg);
+	struct listnode *node = search_node_with_wild(ses->list[LIST_CLASS], arg);
 
-	do_read(ses, ses->class->pr);
+	DEL_BIT(node->data, NODE_FLAG_CLASS);
 
-	class_close(ses, arg);
+	readfile(ses, node->pr, node);
 
 	return ses;
 }
@@ -255,4 +255,70 @@ DO_CLASS(class_kill)
 	deletenode_list(ses, class, LIST_CLASS);
 
 	return ses;
+}
+
+void parse_class(struct session *ses, char *input, struct listnode *class)
+{
+	char temp[BUFFER_SIZE], command[BUFFER_SIZE], arg[BUFFER_SIZE];
+	char *pti, *pta;
+	struct listnode *ln;
+	int i;
+
+	push_call("parse_class(%p,%p,%p)",ses,input,class);
+
+	pti = input;
+
+	while (*pti)
+	{
+		if (*pti == ';')
+		{
+			if (*++pti == 0)
+			{
+				break;
+			}
+		}
+		pti = (char *)get_arg_stop_spaces(pti, temp);
+		pti = (char *)get_arg_all(pti, arg);
+
+		substitute(ses, temp, command, SUB_VAR|SUB_FUN);
+
+		if (*command == gtd->tintin_char)
+		{
+			for (i = 0 ; *command_table[i].name != 0 ; i++)
+			{
+				if (is_abbrev(&command[1], command_table[i].name))
+				{
+					break;
+				}
+			}
+			if (strcmp(command_table[i].name, "class"))
+			{
+				continue;
+			}
+			if (!is_abbrev(class->left, arg))
+			{
+				continue;
+			}
+			(command_table[i].command) (ses, arg);
+		}
+		else if ((ln = searchnode_list_begin(ses->list[LIST_ALIAS], command, ALPHA)))
+		{
+			strcpy(gtd->vars[0], arg);
+
+			pta = arg;
+
+			for (i = 1 ; i < 10 ; i++)
+			{
+				pta = (char *) get_arg_in_braces(pta, gtd->vars[i], FALSE);
+			}
+			substitute(ses, ln->right, command, SUB_ARG);
+
+			if (!strcmp(ln->right, command) && *arg)
+			{
+				sprintf(command, "%s %s", ln->right, arg);
+			}
+			parse_class(ses, command, class);
+		}
+	}
+	return;
 }

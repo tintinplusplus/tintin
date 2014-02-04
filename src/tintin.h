@@ -161,17 +161,21 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define LIST_PROMPT                   12
 #define LIST_TAB                      13
 #define LIST_CLASS                    14
-#define LIST_MAX                      15
+#define LIST_EVENT                    15
+#define LIST_MAX                      16
 
-#define LIST_MATH                     15
-#define LIST_DELAY                    16
-#define LIST_ALL                      17
+#define LIST_MATH                     LIST_MAX + 0
+#define LIST_DELAY                    LIST_MAX + 1
+#define LIST_ALL                      LIST_MAX + 2
 
 #define CONFIG_MAX                    17
 
 #define COLOR_MAX                     24
 
 #define CLASS_MAX                      5
+
+#define EVENT_MAX                      4
+
 /*
 	Various flags
 */
@@ -448,6 +452,7 @@ struct class_type
 	CLASS                 * class;
 };
 
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
@@ -497,6 +502,14 @@ extern int readline_echoing_p;
 	Function declarations
 */
 
+#ifndef __ECHO_H__
+#define __ECHO_H__
+
+extern void echo_on(struct session *ses);
+extern void echo_off(struct session *ses);
+
+#endif
+
 #ifndef __CLASS_H__
 #define __CLASS_H__
 
@@ -507,6 +520,7 @@ extern DO_CLASS(class_close);
 extern DO_CLASS(class_read);
 extern DO_CLASS(class_write);
 extern DO_CLASS(class_kill);
+extern void parse_class(struct session *ses, char *input, struct listnode *class);
 
 #endif
 
@@ -674,8 +688,8 @@ extern int check_all_antisubstitutions(const char *original, char *line, struct 
 #define __FILES_H__
 
 extern DO_COMMAND(do_read);
+extern struct session *readfile(struct session *ses, const char *arg, struct listnode *class);
 extern DO_COMMAND(do_readmap);
-extern DO_COMMAND(do_readnew);
 extern DO_COMMAND(do_writesession);
 extern DO_COMMAND(do_write);
 extern DO_COMMAND(do_writemap);

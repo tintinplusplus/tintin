@@ -1,6 +1,6 @@
 /******************************************************************************
 *   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   Copyright (C) 2005 (See CREDITS file)                                     *
 *                                                                             *
 *   This program is protected under the GNU GPL (See COPYING)                 *
 *                                                                             *
@@ -20,62 +20,42 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: debug.c - funtions related to the debugging stack                   *
+*   file: echo.c - funtions related to localecho                              *
 *           (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t ++ 2.00              *
-*                     coded by Igor van den Hoven 2004                        *
+*                     coded by Igor van den Hoven 2005                        *
 ******************************************************************************/
 
 
 #include "tintin.h"
 
-#include <stdarg.h>
 
-#define MAX_STACK_SIZE     200
-#define MAX_DEBUG_SIZE     500
+#include <termios.h>
 
-char          debug_stack[MAX_STACK_SIZE][MAX_DEBUG_SIZE];
-unsigned char debug_index;
-
-void push_call(char *f, ...)
+void echo_off(struct session *ses)
 {
-	va_list ap;
+	struct termios io;
 
-	va_start(ap, f);
+	tcgetattr(STDIN_FILENO, &io);
 
-	if (debug_index >= MAX_STACK_SIZE)
-	{
-		dump_stack();
-		debug_index = 0;
-	}
+	DEL_BIT(io.c_lflag, ECHO);
 
-	vsnprintf(debug_stack[debug_index], MAX_DEBUG_SIZE - 1, f, ap);
+	DEL_BIT(ses->flags, SES_FLAG_LOCALECHO);
 
-/*	debug_stack[debug_index][MAX_DEBUG_SIZE - 1] = 0; */
+	readline_echoing_p = FALSE;
 
-	debug_index++;
+	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
 }
 
-void pop_call(void)
+void echo_on(struct session *ses)
 {
-	if (debug_index > 0)
-	{
-		debug_index--;
-	}
-	else
-	{
-		fprintf(stderr, "pop_call: index is zero: %s", debug_stack[0]);
-	}
+	struct termios io;
+
+	tcgetattr(STDIN_FILENO, &io);
+
+	SET_BIT(io.c_lflag, ECHO);
+
+	SET_BIT(ses->flags, SES_FLAG_LOCALECHO);
+
+	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
 }
 
-void dump_stack(void)
-{
-	unsigned char i;
-
-	tintin_header(gtd->ses, " DEBUG STACK ");
-
-	for (i = 0 ; i < debug_index ; i++)
-	{
-		tintin_printf2(gtd->ses, "\033[1;31mDEBUG_STACK[%03d] = %s", i, debug_stack[i]);
-	}
-	tintin_header(gtd->ses, "");
-}
