@@ -205,6 +205,7 @@ DO_COMMAND(do_grep)
 	grep_max = ses->bot_row - ses->top_row - 2;
 
 	get_arg_in_braces(arg, left, FALSE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (ses->buffer == NULL)
 	{
@@ -520,6 +521,7 @@ DO_COMMAND(do_buffer)
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	switch (left[0])
 	{

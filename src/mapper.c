@@ -138,7 +138,9 @@ DO_COMMAND(do_map)
 			if (is_abbrev(cmd, map_table[cnt].name))
 			{
 				arg = get_arg_in_braces(arg, left,  map_table[cnt].lval);
+				substitute(ses, left, left, SUB_VAR|SUB_FUN);
 				arg = get_arg_in_braces(arg, right, map_table[cnt].rval);
+				substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 				map_table[cnt].map (ses, left, right);
 				break;
@@ -1761,7 +1763,7 @@ void show_map(struct session *ses, char *left, char *right)
 
 	if (logfile)
 	{
-		fflush(logfile);
+		fclose(logfile);
 	}
 
 	pop_call();
@@ -2382,7 +2384,7 @@ void shortest_path(struct session *ses, int run, char *left, char *right)
 		{
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				pre_parse_input(ses, ses->list[LIST_PATH]->f_node->left, SUB_NONE);
+				script_driver(ses, ses->list[LIST_PATH]->f_node->left);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}
@@ -2589,7 +2591,7 @@ void explore_path(struct session *ses, int run, char *left, char *right)
 		{
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				pre_parse_input(ses, ses->list[LIST_PATH]->f_node->left, SUB_NONE);
+				script_driver(ses, ses->list[LIST_PATH]->f_node->left);
 
 				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}

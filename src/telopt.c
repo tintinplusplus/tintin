@@ -48,13 +48,13 @@ char iac_do_lflow[]           = { IAC, DO,    TELOPT_LFLOW           };
 char iac_do_oldenviron[]      = { IAC, DO,    TELOPT_OLD_ENVIRON     };
 char iac_wont_echo[]          = { IAC, WONT,  TELOPT_ECHO            };
 char iac_will_echo[]          = { IAC, WILL,  TELOPT_ECHO            };
+char iac_will_mccp1[]         = { IAC, WILL,  TELOPT_MCCP1           };
+char iac_sb_mccp1[]           = { IAC, SB,    TELOPT_MCCP1, WILL, SE };
 char iac_will_mccp2[]         = { IAC, WILL,  TELOPT_MCCP2           };
 char iac_sb_mccp2[]           = { IAC, SB,    TELOPT_MCCP2, IAC, SE  };
 char iac_will_eor[]           = { IAC, WILL,  TELOPT_EOR             };
 char iac_eor[]                = { IAC, EOR                           };
 char iac_ga[]                 = { IAC, GA                            };
-char iac_do[]                 = { IAC, DO                            };
-char iac_will[]               = { IAC, WILL                          };
 char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
 
 struct iac_type
@@ -83,13 +83,13 @@ struct iac_type iac_table [] =
 	{   3,  iac_do_echo,          &send_echo_will          },
 	{   3,  iac_will_echo,        &send_echo_off           },
 	{   3,  iac_wont_echo,        &send_echo_on            },
+/*	{   3,  iac_will_mccp1,       &send_do_mccp1           }, */
+	{   5,  iac_sb_mccp1,         &init_mccp               },
 	{   3,  iac_will_mccp2,       &send_do_mccp2           },
 	{   5,  iac_sb_mccp2,         &init_mccp               },
 	{   3,  iac_will_eor,         &send_do_eor             },
 	{   2,  iac_eor,              &mark_prompt             },
 	{   2,  iac_ga,               &mark_prompt             },
-	{   2,  iac_do,               &send_wont_telopt        },
-	{   2,  iac_will,             &send_dont_telopt        },
 	{   3,  iac_sb_zmp,           &exec_zmp                },
 	{   0,  NULL,                 NULL                     }
 };
@@ -113,7 +113,7 @@ void telopt_debug(struct session *ses, char *format, ...)
 
 void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 {
-	int skip, cnt, os;
+	int skip, cnt;
 	unsigned char *cpdst;
 	unsigned char *cpsrc;
 
@@ -128,7 +128,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 		ses->mccp->avail_in  = cplen;
 
 		ses->mccp->next_out  = gtd->mccp_buf;
-		ses->mccp->avail_out = gtd->mccp_buf_max;
+		ses->mccp->avail_out = gtd->mccp_len;
 
 		inflate:
 
@@ -137,23 +137,24 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			case Z_OK:
 				if (ses->mccp->avail_out == 0)
 				{
-					gtd->mccp_buf_max    *= 2;
-					gtd->mccp_buf         = realloc(gtd->mccp_buf, gtd->mccp_buf_max);
+					gtd->mccp_len *= 2;
+					gtd->mccp_buf  = realloc(gtd->mccp_buf, gtd->mccp_len);
 
-					ses->mccp->avail_out  = gtd->mccp_buf_max / 2;
-					ses->mccp->next_out   = gtd->mccp_buf + gtd->mccp_buf_max / 2;
+					ses->mccp->avail_out = gtd->mccp_len / 2;
+					ses->mccp->next_out  = gtd->mccp_buf + gtd->mccp_len / 2;
 
 					goto inflate;
 				}
-				cplen = gtd->mccp_buf_max - ses->mccp->avail_out;
+				cplen = ses->mccp->next_out - gtd->mccp_buf;
 				cpsrc = gtd->mccp_buf;
 				break;
 
 			case Z_STREAM_END:
-				tintin_puts2(ses, "");
-				tintin_puts2(ses, "#COMPRESSION END, DISABLING MCCP.");
 				cplen = ses->mccp->next_out - gtd->mccp_buf;
 				cpsrc = gtd->mccp_buf;
+
+				tintin_puts2(ses, "");
+				tintin_puts2(ses, "#COMPRESSION END, DISABLING MCCP.");
 				inflateEnd(ses->mccp);
 				free(ses->mccp);
 				ses->mccp = NULL;
@@ -161,9 +162,8 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 			default:
 				tintin_puts2(ses, "");
-				tintin_puts2(ses, "#COMPRESSION ERROR, RESETTING MCCP.");
+				tintin_puts2(ses, "#COMPRESSION ERROR, DISABLING MCCP.");
 				send_dont_mccp2(ses, 0, NULL);
-				send_do_mccp2(ses, 0, NULL);
 				inflateEnd(ses->mccp);
 				free(ses->mccp);
 				ses->mccp = NULL;
@@ -183,6 +183,17 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 		fflush(ses->logfile);
 	}
 
+	if (ses->telopt_len)
+	{
+		memmove(&src[ses->telopt_len], cpsrc, cplen);
+		memmove(src, ses->telopt_buf, ses->telopt_len);
+
+		cplen += ses->telopt_len;
+		ses->telopt_len = 0;
+
+		cpsrc = src;
+	}
+
 	while (gtd->mud_output_len + cplen >= gtd->mud_output_max)
 	{
 		gtd->mud_output_max *= 2;
@@ -191,24 +202,13 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	cpdst = (unsigned char *) gtd->mud_output_buf + gtd->mud_output_len;
 
-	
 	while (cplen > 0)
 	{
-		if (*cpsrc == IAC || HAS_BIT(ses->telopts, TELOPT_FLAG_IAC))
+		if (*cpsrc == IAC)
 		{
-			if (HAS_BIT(ses->telopts, TELOPT_FLAG_IAC))
-			{
-				DEL_BIT(ses->telopts, TELOPT_FLAG_IAC);
-				os = 0;
-			}
-			else
-			{
-				os = 1; /* offset */
-			}
-
 			if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
 			{
-				switch(cpsrc[os])
+				switch(cpsrc[1])
 				{
 					case NOP:   
 					case DM:
@@ -218,12 +218,16 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case AYT:   
 					case EC:    
 					case EL:
-						tintin_printf2(ses, "RCVD %s", TELCMD(cpsrc[os]));
+						tintin_printf2(ses, "RCVD %s", TELCMD(cpsrc[1]));
+						break;
+
+					case IAC:
+						tintin_printf2(ses, "RCVD IAC IAC");
 						break;
 
 					case GA:
 					case EOR:
-						sprintf((char *) cpdst, "RCVD %s", TELCMD(cpsrc[os])); 
+						sprintf((char *) cpdst, "RCVD %s", TELCMD(cpsrc[1])); 
 						gtd->mud_output_len += strlen((char *) cpdst);
 						cpdst += strlen((char *) cpdst);
 						break;
@@ -232,24 +236,35 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case DONT:
 					case WILL:
 					case WONT:
-						if (TELOPT_OK(cpsrc[os+1]))
+						if (TELOPT_OK(cpsrc[2]) && cplen > 2)
 						{
-							tintin_printf2(ses, "RCVD %s %s", TELCMD(cpsrc[os]), TELOPT(cpsrc[os+1]));
+							tintin_printf2(ses, "RCVD IAC %s %s", TELCMD(cpsrc[1]), TELOPT(cpsrc[2]));
 						}
 						else
 						{
-							tintin_printf2(ses, "RCVD %s %d", TELCMD(cpsrc[os]), cpsrc[os+1]);
+							tintin_printf2(ses, "RCVD IAC %s %d (BAD TELOPT)", TELCMD(cpsrc[1]), cpsrc[2]);
 						}
 						break;
 
 					case SB:
-						if (TELOPT_OK(cpsrc[os+1]))
+						if (TELOPT_OK(cpsrc[2]))
 						{
-							tintin_printf2(ses, "RCVD IAC SB %s SEND", TELOPT(cpsrc[os+1]));
+							tintin_printf2(ses, "RCVD IAC SB %s SEND", TELOPT(cpsrc[2]));
 						}
 						else
 						{
 							tintin_printf2(ses, "RCVD IAC SB %d SEND", cpsrc[2]);
+						}
+						break;
+
+					default:
+						if (TELCMD_OK(cpsrc[1]))
+						{
+							tintin_printf2(ses, "RCVD IAC %s %d", TELCMD(cpsrc[1]), cpsrc[2]);
+						}
+						else
+						{
+							tintin_printf2(ses, "RCVD IAC %d %d", cpsrc[1], cpsrc[2]);
 						}
 						break;
 				}
@@ -257,9 +272,20 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 			for (skip = cnt = 0 ; iac_table[cnt].code != NULL ; cnt++)
 			{
+				if (cplen < iac_table[cnt].size && !memcmp(cpsrc, iac_table[cnt].code, cplen))
+				{
+					ses->telopt_len = cplen;
+
+					memcpy(ses->telopt_buf, cpsrc, ses->telopt_len);
+
+					gtd->mud_output_buf[gtd->mud_output_len] = 0;
+
+					return;
+				}
+
 				if (cplen >= iac_table[cnt].size && !memcmp(cpsrc, iac_table[cnt].code, iac_table[cnt].size))
 				{
-					skip = os - 1 + iac_table[cnt].func(ses, cplen, cpsrc);
+					skip = iac_table[cnt].func(ses, cplen, cpsrc);
 
 					if (iac_table[cnt].func == init_mccp)
 					{
@@ -273,7 +299,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 			if (skip == 0)
 			{
-				switch (cpsrc[os])
+				switch (cpsrc[1])
 				{
 					case SE:
 					case NOP:
@@ -286,38 +312,35 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case EL:
 					case GA:
 					case EOR:
-					     skip = os + 1;
+					     skip = 2;
 					     break;
 
 					case WILL:
-					case WONT:
+						skip = send_dont_telopt(ses, cplen, cpsrc);
+						break;
+
 					case DO:
+						skip = send_wont_telopt(ses, cplen, cpsrc);
+						break;
+
+					case WONT:
 					case DONT:
-						skip = os + 2;
+						skip = 3;
 						break;
 
 					case SB:
-						skip = os + 2;
+						skip = 3;
 						break;
 
 					case IAC:
 						gtd->mud_output_len++;
 						*cpdst++ = 0xFF;
-						skip = os + 1;
+						skip = 2;
 						break;
 
 					default:
-						if (cplen == 1)
-						{
-							skip  = 0;
-							cplen = 0;
-							SET_BIT(ses->telopts, TELOPT_FLAG_IAC);
-						}
-						else
-						{
-							tintin_printf(NULL, "#IAC BAD TELOPT %d", cpsrc[os]);
-							skip = 1;
-						}
+						tintin_printf(NULL, "#IAC BAD TELOPT %d", cpsrc);
+						skip = 1;
 						break;
 				}
 			}
@@ -729,12 +752,37 @@ int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc)
 	return len + 1;
 }
 
+int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP1);
+
+		telopt_debug(ses, "SENT IAC DO MCCP1");
+	}
+	else
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP1);
+
+		telopt_debug(ses, "SENT IAC WONT MCCP1 (MCCP HAS BEEN DISABLED)");
+	}
+	return 3;
+}
+
 int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP2);
+	if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP2);
 
-	telopt_debug(ses, "SENT IAC DO MCCP2");
+		telopt_debug(ses, "SENT IAC DO MCCP2");
+	}
+	else
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP2);
 
+		telopt_debug(ses, "SENT IAC WONT MCCP2 (MCCP HAS BEEN DISABLED)");
+	}
 	return 3;
 }
 
@@ -764,14 +812,14 @@ int init_mccp(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	if (inflateInit(ses->mccp) != Z_OK)
 	{
-		tintin_puts2(ses, "#FAILED TO INITIALIZE MCCP2.");
+		tintin_puts2(ses, "#FAILED TO INITIALIZE MCCP.");
 		send_dont_mccp2(ses, 0, NULL);
 		free(ses->mccp);
 		ses->mccp = NULL;
 	}
 	else
 	{
-		telopt_debug(ses, "MCCP2 INITIALIZED.");
+		telopt_debug(ses, "MCCP INITIALIZED.");
 	}
 	return 5;
 }

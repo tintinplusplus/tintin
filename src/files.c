@@ -42,6 +42,7 @@ DO_COMMAND(do_read)
 	int counter[LIST_MAX];
 
 	get_arg_in_braces(arg, filename, TRUE);
+	substitute(ses, filename, filename, SUB_VAR|SUB_FUN);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -308,7 +309,7 @@ DO_COMMAND(do_read)
 
 		if (bufi[0])
 		{
-			ses = pre_parse_input(ses, bufi, SUB_NONE);
+			ses = script_driver(ses, bufi);
 		}
 		pto = bufi;
 		pti++;
@@ -389,6 +390,19 @@ void prepare_for_write(int list, struct listnode *node, char *result)
 {
 	int llen = strlen(node->left)  > 20 ? 20 : strlen(node->left);
 	int rlen = strlen(node->right) > 25 ? 25 : strlen(node->right);
+
+	switch (list)
+	{
+		case LIST_ALIAS:
+		case LIST_EVENT:
+		case LIST_FUNCTION:
+		case LIST_MACRO:
+			sprintf(result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(NULL, node->right));
+			return;
+		case LIST_ACTION:
+			sprintf(result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(NULL, node->right), node->pr);
+			return;
+	}
 
 	switch (list_table[list].args)
 	{

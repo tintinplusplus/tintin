@@ -89,7 +89,7 @@ void check_all_events(struct session *ses, char *line)
 	{
 		if (!strcmp(node->left, line))
 		{
-			pre_parse_input(ses, node->right, SUB_NONE);
+			script_driver(ses, node->right);
 		}
 	}
 }

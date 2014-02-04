@@ -46,7 +46,9 @@ DO_COMMAND(do_run)
 	char *argv[4] = {"sh", "-c", "", NULL};
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -71,7 +73,7 @@ DO_COMMAND(do_run)
 			break;
 
 		default:
-			ses = new_session(ses, left, "", desc);
+			ses = new_session(ses, left, right, desc);
 			break;
 	}
 	return gtd->ses;
@@ -83,6 +85,7 @@ DO_COMMAND(do_scan)
 	char filename[BUFFER_SIZE];
 
 	get_arg_in_braces(arg, filename, TRUE);
+	substitute(ses, filename, filename, SUB_VAR|SUB_FUN);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -121,7 +124,9 @@ DO_COMMAND(do_script)
 	FILE *script;
 
 	arg = get_arg_in_braces(arg, left, TRUE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -140,7 +145,7 @@ DO_COMMAND(do_script)
 				*cptr = 0;
 			}
 
-			pre_parse_input(ses, buffer, SUB_NONE);
+			ses = script_driver(ses, buffer);
 		}
 
 		pclose(script);
@@ -174,6 +179,7 @@ DO_COMMAND(do_system)
 	char left[BUFFER_SIZE];
 
 	get_arg_in_braces(arg, left, TRUE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -208,6 +214,7 @@ DO_COMMAND(do_textin)
 	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
 
 	get_arg_in_braces(arg, filename, TRUE);
+	substitute(ses, filename, filename, SUB_VAR|SUB_FUN);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{

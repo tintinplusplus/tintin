@@ -226,6 +226,7 @@ struct help_type help_table[] =
 		"         #CONFIG {CONVERT META} {ON|OFF} Shows color codes and key bindings.\n"
 		"         #CONFIG {COLOR PATCH}  {ON|OFF} Fixes color code usage on some muds.\n"
 		"         #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
+		"         #CONFIG {MCCP}         {ON|OFF} Enable or disable MCCP support.\n"
 		"         #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers\n"
 		"         #CONFIG {TIMESTAMP}    {FORMAT} Prepend given strftime format to log\n"
 		"                                         files.\n"
@@ -351,26 +352,23 @@ struct help_type help_table[] =
 		"         #format {test} {%-9s} {string}  post pad string with up to 9 spaces\n"
 		"         #format {test} {%.8s} {string}  copy at most 8 characters\n"
 		"         #format {test} {%a}   {number}  print corresponding ascii character\n"
-		"         #format {test} {%c}   {string}  turn string into a color code\n"
-		"         #format {test} {%d}     {time}  print the current military day\n"
+		"         #format {test} {%c}   {string}  use a highlight color name\n"
 		"         #format {test} {%h}   {string}  turn text into a header line\n"
 		"         #format {test} {%l}   {string}  lowercase text\n"
 		"         #format {test} {%m}   {string}  perform mathematical calculation\n"
 		"         #format {test} {%n}     {name}  capitalize the first letter\n"
 		"         #format {test} {%p}   {string}  strip leading and trailing spaces\n"
 		"         #format {test} {%r}   {string}  reverse text, hiya = ayih\n"
-		"         #format {test} {%t}     {time}  print the current military time\n"
+		"         #format {test} {%s}   {string}  print given string\n"
+		"         #format {test} {%t}   {format}  display time with strftime format\n"
 		"         #format {test} {%u}   {string}  uppercase text\n"
 		"         #format {test} {%w}   {string}  wordwrap text\n"
 		"         #format {cols} {%C}         {}  store the screen width in {cols}\n"
-		"         #format {test} {%D}     {time}  print the current day\n"
 		"         #format {test} {%G}   {number}  perform thousand grouping on {number}\n"
 		"         #format {test} {%L}   {string}  store the string length in {test}\n"
-		"         #format {test} {%M}     {time}  print the current month\n"
 		"         #format {rows} {%R}         {}  store the screen height in {rows}\n"
 		"         #format {time} {%T}         {}  store the epoch time in {time}\n"
 		"         #format {time} {%U}         {}  store the micro epoch time in {time}\n"
-		"         #format {test} {%Y}     {time}  print the current year\n"
 	},
 	{
 		"FUNCTION",
@@ -558,6 +556,9 @@ struct help_type help_table[] =
 		"         given index, while a negative index will append the item.\n"
 		"\n"
 		"         A length of 0 is returned for an empty or non existant list.\n"
+		"\n"
+		"         You can directly access elements in a list variable using $var[1],\n"
+		"         $var[2], $var[-1], etc.\n"
 	},
 
 	{

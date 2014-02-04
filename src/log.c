@@ -69,7 +69,9 @@ DO_COMMAND(do_log)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (ses->logfile)
 	{

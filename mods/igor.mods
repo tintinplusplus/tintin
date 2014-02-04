@@ -1115,3 +1115,27 @@ map.c          #map map now takes an optional <x>x<y> size argument and an
 
 config.c       Added a timestamp config option to add timestamps to log
                files using the strftime format.
+
+December 2008  1.98.8
+
+tokenize.c     New pre-parser to deal with nesting issues.
+
+misc.c         Added #while {var} {commands} command.
+
+misc.c         #loop no longer works like a while loop.
+
+misc.c         The $loop, $parse, and $forall variables are no longer
+               automatically set.
+
+Makefile.in    Added tokenize.o
+
+files.c        #write now formats its output.
+
+tinexp.c       Casting regex arguments to integers so it works properly on os x.
+
+config.c       Added a config option to enable/disable MCCP support.
+
+variable.c     Changed %t format option to use a strftime format instead to
+               print the current time.
+
+telopt.c       Streamlined telopt handling slightly to deal with MCCP errors.

@@ -33,7 +33,7 @@
 
 DO_COMMAND(do_list)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
 	int cnt;
@@ -42,6 +42,10 @@ DO_COMMAND(do_list)
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, FALSE);
+
+	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
+
+	arg = temp;
 
 	if (*left == 0 || *right == 0)
 	{

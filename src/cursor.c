@@ -35,6 +35,7 @@ DO_COMMAND(do_cursor)
 
 	arg = get_arg_in_braces(arg, left,  TRUE);
 	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{

@@ -92,8 +92,6 @@ int connect_mud(char *host, char *port, struct session *ses)
 		return 0;
 	}
 
-	inet_ntop(address->ai_family, address->ai_addr, host, address->ai_addrlen);
-
 	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
 	{
 		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
@@ -193,7 +191,7 @@ void write_line_mud(char *line, struct session *ses)
 
 int read_buffer_mud(struct session *ses)
 {
-	unsigned char buf[STRING_SIZE];
+	char buf[STRING_SIZE];
 	int size;
 
 	push_call("read_buffer_mud(%p)",ses);

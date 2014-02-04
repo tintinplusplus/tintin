@@ -115,3 +115,44 @@
         #system echo '#map goto $room' >> %0
 }
 
+
+007 Treat . as a speedwalk command.
+
+#alias {.%0}
+{
+	#list cnt clr;
+
+	#parse {%0}
+	{
+		#if {"&0" >= "0" && "&0" <= "9"}
+		{
+			#var cnt ${cnt}&0
+		}
+		#if {"$cnt" == ""}
+		{
+			#send &0
+		}
+		{
+			#loop {1 $cnt}
+			{			 
+				#send &0;
+			};		   
+			#list cnt clr
+		}
+	}   
+}
+
+008 Log all text to a file with a timestamp with decisecond precision.
+
+#function {timestamp}
+{
+	#format utime {%U};
+
+	#format result {%t.%m} {{%Y-%m-%d %H:%M:%S} {$utime % 1000000 / 100000}}
+}
+
+#event {RECEIVED LINE}
+{
+        #line log mylog.txt {<178>@timestamp{} \};
+        #line log mylog.txt
+}

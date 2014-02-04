@@ -155,11 +155,13 @@ DO_COMMAND(do_regexp)
 
 		if (regexp_cmds(left, right))
 		{
-			ses = pre_parse_input(ses, true, SUB_CMD);
+			substitute(ses, true, true, SUB_CMD);
+
+			ses = script_driver(ses, true);
 		}
 		else if (*false)
 		{
-			ses = pre_parse_input(ses, false, SUB_NONE);
+			ses = script_driver(ses, false);
 		}
 	}
 	return ses;
@@ -187,7 +189,7 @@ int regexp_cmds(char *str, char *exp)
 	{
 		if (match[i].rm_so != -1)
 		{
-			gtd->cmds[i] = refstring(gtd->cmds[i], "%.*s", match[i].rm_eo - match[i].rm_so, &str[match[i].rm_so]);
+			gtd->cmds[i] = refstring(gtd->cmds[i], "%.*s", (int) match[i].rm_eo - (int) match[i].rm_so, &str[match[i].rm_so]);
 		}
 		else
 		{
@@ -225,7 +227,7 @@ int action_regexp(char *str, char *exp)
 		}
 		else
 		{
-			gtd->vars[i] = refstring(gtd->vars[i], "%.*s", match[i].rm_eo - match[i].rm_so, &str[match[i].rm_so]);
+			gtd->vars[i] = refstring(gtd->vars[i], "%.*s", (int) match[i].rm_eo - (int) match[i].rm_so, &str[match[i].rm_so]);
 		}
 	}
 
@@ -524,9 +526,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						}
 					}
 
-					pre_parse_input(ses, node->right, SUB_ARG);
+					substitute(ses, node->right, buf, SUB_ARG);
 
-					DEL_BIT(ses->flags, SES_FLAG_BREAK);
+					script_driver(ses, buf);
 
 					substitute(ses, "$result", pto, flags_neol|SUB_VAR);
 

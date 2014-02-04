@@ -74,6 +74,7 @@ DO_COMMAND(do_unaction)
 
 void check_all_actions(struct session *ses, char *original, char *line)
 {
+	char buf[BUFFER_SIZE];
 	struct listnode *node;
 	struct listroot *root;
 
@@ -87,10 +88,11 @@ void check_all_actions(struct session *ses, char *original, char *line)
 		{
 			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", node->left);
 
-			pre_parse_input(ses, node->right, SUB_ARG|SUB_SEC);
+			substitute(ses, node->right, buf, SUB_ARG|SUB_ESC);
+
+			script_driver(ses, buf);
 
 			return;
 		}
 	}
-	return;
 }

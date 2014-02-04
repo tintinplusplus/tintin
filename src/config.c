@@ -40,6 +40,7 @@ DO_COMMAND(do_configure)
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, FALSE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -578,6 +579,31 @@ DO_CONFIG(config_timestamp)
 	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, *ses->timestamp ? "ON" : "OFF", str, LIST_CONFIG);
+
+	return ses;
+}
+
+DO_CONFIG(config_mccp)
+{
+	char str[BUFFER_SIZE];
+
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_MCCP);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_MCCP);
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	sprintf(str, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
 
 	return ses;
 }

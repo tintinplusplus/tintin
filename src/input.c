@@ -74,7 +74,7 @@ void process_input(void)
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
 
-	pre_parse_input(gtd->ses, gtd->input_buf, SUB_NONE);
+	script_driver(gtd->ses, gtd->input_buf);
 
 	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND|TINTIN_FLAG_SHOWMESSAGE);
 
@@ -121,7 +121,7 @@ void read_line()
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				pre_parse_input(gtd->ses, node->right, SUB_NONE);
+				script_driver(gtd->ses, node->right);
 
 				gtd->macro_buf[0] = 0;
 
@@ -251,7 +251,7 @@ void read_key(void)
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				pre_parse_input(gtd->ses, node->right, SUB_NONE);
+				script_driver(gtd->ses, node->right);
 
 				gtd->macro_buf[0] = 0;
 				return;

@@ -184,6 +184,17 @@ char *capitalize(char *str)
 	return outbuf;
 }
 
+char *indent(int cnt)
+{
+	static char outbuf[BUFFER_SIZE];
+
+	memset(outbuf, '\t', cnt);
+
+	outbuf[cnt] = 0;
+
+	return outbuf;
+}
+
 void cat_sprintf(char *dest, char *fmt, ...)
 {
 	char buf[STRING_SIZE];

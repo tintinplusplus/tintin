@@ -72,7 +72,7 @@ DO_COMMAND(do_unalias)
 	return ses;
 }
 
-int alias_glob(char *exp, char *str)
+int alias_glob(char *str, char *exp)
 {
 	short cnt, arg;
 
@@ -107,7 +107,7 @@ int alias_glob(char *exp, char *str)
 
 					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (alias_glob(exp + (isdigit(exp[2]) ? 3 : 2), &str[cnt]))
+						if (alias_glob(&str[cnt], exp + (isdigit(exp[2]) ? 3 : 2)))
 						{
 							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
 
@@ -145,7 +145,7 @@ int check_all_aliases(struct session *ses, char *input)
 {
 	struct listnode *node;
 	struct listroot *root;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], alias[BUFFER_SIZE], *arg;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
@@ -158,9 +158,9 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			root->update = node->next;
 
-			substitute(ses, node->left, alias, SUB_VAR|SUB_FUN);
+			substitute(ses, node->left, right, SUB_VAR|SUB_FUN);
 
-			if (action_regexp(left, alias))
+			if (action_regexp(left, right))
 			{
 				substitute(ses, node->right, input, SUB_ARG);
 
@@ -189,9 +189,9 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			root->update = node->next;
 
-			substitute(ses, node->left, alias, SUB_VAR|SUB_FUN);
+			substitute(ses, node->left, right, SUB_VAR|SUB_FUN);
 
-			if (alias_glob(alias, left))
+			if (alias_glob(left, right))
 			{
 				substitute(ses, node->right, right, SUB_ARG);
 

@@ -37,7 +37,10 @@ DO_COMMAND(do_variable)
 	root = ses->list[LIST_VARIABLE];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+
 	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -140,7 +143,9 @@ DO_COMMAND(do_replacestring)
 
 	arg = get_arg_in_braces(arg, var, FALSE);
 	arg = get_arg_in_braces(arg, old, FALSE);
+	substitute(ses, old, old, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, new, TRUE);
+	substitute(ses, new, new, SUB_VAR|SUB_FUN);
 
 	if (*var == 0 || *old == 0)
 	{
@@ -389,12 +394,40 @@ int stringlength(struct session *ses, char *str)
 	return strip_vt102_strlen(str);
 }
 
+void timestring(struct session *ses, char *str)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
+
+	struct tm timeval_tm;
+	time_t    timeval_t;
+
+	arg = get_arg_in_braces(str, left, TRUE);
+	arg = get_arg_in_braces(arg, right, TRUE);
+
+	if (*right)
+	{
+		timeval_t = (time_t) atoll(right);
+	}
+	else
+	{
+		timeval_t = (time_t) time(NULL);
+	}
+
+	timeval_tm = *localtime(&timeval_t);
+
+	strftime(str, BUFFER_SIZE, left, &timeval_tm);
+}
+
 DO_COMMAND(do_format)
 {
-	char destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
+	char temp[BUFFER_SIZE], destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
+
+	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
+
+	arg = temp;
 
 	arg = get_arg_in_braces(arg, destvar,  FALSE);
 	arg = get_arg_in_braces(arg, format,   FALSE);
@@ -491,6 +524,9 @@ DO_COMMAND(do_format)
 						break;
 
 					case 't':
+						timestring(ses, arglist[i]);
+						break;
+
 						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%H:%M", &timeval_tm);

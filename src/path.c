@@ -31,8 +31,12 @@
 
 DO_COMMAND(do_path)
 {
-	char left[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], left[BUFFER_SIZE];
 	int cnt;
+
+	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
+
+	arg = temp;
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
@@ -195,7 +199,7 @@ DO_PATH(path_save)
 		}
 		strcat(result, "}");
 
-		pre_parse_input(ses, result, SUB_NONE);
+		script_driver(ses, result);
 	}
 }
 
@@ -328,7 +332,7 @@ DO_PATH(path_run)
 		{
 			while (root->f_node)
 			{
-				pre_parse_input(ses, root->f_node->left, SUB_NONE);
+				script_driver(ses, root->f_node->left);
 
 				deletenode_list(ses, root->f_node, LIST_PATH);
 			}
@@ -361,13 +365,13 @@ DO_PATH(path_walk)
 		switch (tolower(*left))
 		{
 			case 'b':
-				pre_parse_input(ses, root->l_node->right, SUB_NONE);
+				script_driver(ses, root->l_node->right);
 				deletenode_list(ses, root->l_node, LIST_PATH);
 				break;
 
 			case '\0':
 			case 'f':
-				pre_parse_input(ses, root->f_node->left, SUB_NONE);
+				script_driver(ses, root->f_node->left);
 				deletenode_list(ses, root->f_node, LIST_PATH);
 				break;
 

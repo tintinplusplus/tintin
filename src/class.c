@@ -31,7 +31,7 @@
 
 DO_COMMAND(do_class)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], third[BUFFER_SIZE];
 
 	struct listroot *root;
 	struct listnode *node;
@@ -41,7 +41,8 @@ DO_COMMAND(do_class)
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, FALSE);
-	arg = get_arg_in_braces(arg, pr,    FALSE);
+	arg = get_arg_in_braces(arg, third, FALSE);
+	substitute(ses, third, third, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -93,9 +94,9 @@ DO_COMMAND(do_class)
 		{
 			if (!searchnode_list(root, left))
 			{
-				updatenode_list(ses, left, right, pr, LIST_CLASS);
+				updatenode_list(ses, left, right, third, LIST_CLASS);
 			}
-			class_table[cnt].class(ses, left, pr);
+			class_table[cnt].class(ses, left, third);
 		}
 	}
 	return ses;

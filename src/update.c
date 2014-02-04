@@ -306,7 +306,7 @@ void tick_update(void)
 
 				show_debug(ses, LIST_TICKER, "#TICKER DEBUG: %s", node->right);
 
-				pre_parse_input(ses, node->right, SUB_NONE);
+				script_driver(ses, node->right);
 			}
 		}
 	}
@@ -340,7 +340,7 @@ void delay_update(void)
 			{
 				show_debug(ses, LIST_DELAY, "#DELAY DEBUG: %s", node->right);
 
-				pre_parse_input(ses, node->right, SUB_NONE);
+				script_driver(ses, node->right);
 
 				deletenode_list(ses, node, LIST_DELAY);
 			}

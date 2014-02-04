@@ -27,48 +27,21 @@
 
 #include "tintin.h"
 
-
-/*
-	Recursive and alters input, so keep it on a tight leash
-*/
-
-struct session *pre_parse_input(struct session *ses, char *input, int flags)
-{
-	char buffer[BUFFER_SIZE];
-
-	if (flags)
-	{
-		substitute(ses, input, buffer, flags);
-	}
-	else
-	{
-		strcpy(buffer, input);
-	}
-
-	return parse_input(ses, buffer);
-}
-
 struct session *parse_input(struct session *ses, char *input)
 {
-	char line[BUFFER_SIZE];
+	char *line;
 
-	if (push_call("[%s] parse_input(%p,%s,%d)",ses->name,ses,input))
-	{
-		pop_call();
-		return ses;
-	}
-
-	DEL_BIT(ses->flags, SES_FLAG_BREAK);
+	push_call("parse_input(%s,%s)",ses->name,input);
 
 	if (*input == 0)
 	{
-		write_mud(ses, "", SUB_EOL);
+		write_mud(ses, input, SUB_EOL);
 
 		pop_call();
 		return ses;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 	{
 		write_mud(ses, input, SUB_EOL);
 
@@ -84,7 +57,7 @@ struct session *parse_input(struct session *ses, char *input)
 		return ses;
 	}
 
-	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
+	line = malloc(BUFFER_SIZE);
 
 	while (*input)
 	{
@@ -92,17 +65,13 @@ struct session *parse_input(struct session *ses, char *input)
 
 		if (parse_command(ses, line))
 		{
-			ses = parse_input(ses, line);
-		}
-		else if (*line == gtd->tintin_char)
-		{
-			ses = parse_tintin_command(ses, line+1);
+			ses = script_driver(ses, line);
 		}
 		else if (check_all_aliases(ses, line))
 		{
-			ses = parse_input(ses, line);
+			ses = script_driver(ses, line);
 		}
-		else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && is_speedwalk(line))
+		else if (is_speedwalk(ses, line))
 		{
 			process_speedwalk(ses, line);
 		}
@@ -111,24 +80,25 @@ struct session *parse_input(struct session *ses, char *input)
 			write_mud(ses, line, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 		}
 
-		if (HAS_BIT(ses->flags, SES_FLAG_BREAK))
-		{
-			break;
-		}
-
 		if (*input == ';')
 		{
 			input++;
 		}
 	}
 
+	free(line);
+
 	pop_call();
 	return ses;
 }
 
+/*
+	Deal with variables and functions used as commands.
+*/
+
 struct session *parse_command(struct session *ses, char *input)
 {
-	char cmd1[BUFFER_SIZE], cmd2[BUFFER_SIZE], *arg, argument[BUFFER_SIZE];
+	char *arg, line[BUFFER_SIZE], cmd1[BUFFER_SIZE], cmd2[BUFFER_SIZE];
 
 	push_call("parse_command(%p,%p)",ses,input);
 
@@ -142,24 +112,22 @@ struct session *parse_command(struct session *ses, char *input)
 		return NULL;
 	}
 
-	strcpy(argument, arg);
+	sprintf(line, "%s%s%s", cmd2, *arg ? " " : "", arg);
 
-	if (*argument)
-	{
-		sprintf(input, "%s %s", cmd2, argument);
-	}
-	else
-	{
-		strcpy(input, cmd2);
-	}
+	strcpy(input, line);
 
 	pop_call();
 	return ses;
 }
 
-int is_speedwalk(char *input)
+int is_speedwalk(struct session *ses, char *input)
 {
 	int flag = FALSE;
+
+	if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK))
+	{
+		return FALSE;
+	}
 
 	while (*input)
 	{
@@ -236,78 +204,34 @@ void process_speedwalk(struct session *ses, char *input)
 
 struct session *parse_tintin_command(struct session *ses, char *input)
 {
-	char argument[BUFFER_SIZE];
-	int cmd;
+	char line[BUFFER_SIZE];
 	struct session *sesptr;
 
-	push_call("parse_tintin_command(%p,%s)", ses, input);
-
-	input = get_arg_stop_spaces(input, argument);
+	input = get_arg_stop_spaces(input, line);
 
 	for (sesptr = gts ; sesptr ; sesptr = sesptr->next)
 	{
-		if (!strcmp(sesptr->name, argument))
+		if (!strcmp(sesptr->name, line))
 		{
 			if (*input)
 			{
-				input = get_arg_in_braces(input, argument, TRUE);
+				input = get_arg_in_braces(input, line, TRUE);
 
-				pre_parse_input(sesptr, argument, SUB_VAR|SUB_FUN);
+				substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
-				pop_call();
+				script_driver(sesptr, line);
+
 				return ses;
 			}
 			else
 			{
-				pop_call();
 				return activate_session(sesptr);
 			}
 		}
 	}
 
-	cmd = atoi(argument);
+	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", line);
 
-	if (cmd > 0)
-	{
-		get_arg_in_braces(input, argument, TRUE);
-
-		while (cmd-- > 0)
-		{
-			ses = pre_parse_input(ses, argument, SUB_NONE);
-		}
-		pop_call();
-		return ses;
-	}
-
-	if (isalpha(*argument))
-	{
-		cmd = gtd->command_ref[tolower(*argument) - 'a'];
-
-		for ( ; *command_table[cmd].name != 0 ; cmd++)
-		{
-			if (is_abbrev(argument, command_table[cmd].name))
-			{
-				if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
-				{
-					substitute(ses, input, argument, SUB_VAR|SUB_FUN);
-
-					ses = (*command_table[cmd].command) (ses, argument);
-				}
-				else
-				{
-					strcpy(argument, input);
-
-					ses = (*command_table[cmd].command) (ses, argument);
-				}
-				pop_call();
-				return ses;
-			}
-		}
-	}
-
-	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", argument);
-
-	pop_call();
 	return ses;
 }
 

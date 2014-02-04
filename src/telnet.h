@@ -100,7 +100,7 @@
 #define     TELOPT_ENCRYPT       38     /* Encryption option */
 #define     TELOPT_NEW_ENVIRON   39     /* New - Environment variables */
 #define     TELOPT_STARTTLS      46     /* Transport Layer Security */
-#define     TELOPT_MCCP          85     /* mud Compression Protocol v1 */
+#define     TELOPT_MCCP1         85     /* mud Compression Protocol v1 */
 #define     TELOPT_MCCP2         86     /* mud Compression Protocol v2 */
 #define     TELOPT_MSP           90     /* mud Sound Protocol */
 #define     TELOPT_MXP           91     /* mud Extention Protocol */
@@ -119,7 +119,7 @@ char *telcmds[] =
 
 #define  TELCMD_FIRST   xEOF
 #define  TELCMD_LAST    IAC
-#define  TELCMD_OK(x)   ((x) <= TELCMD_LAST && (x) >= TELCMD_FIRST)
+#define  TELCMD_OK(x)   ((x) >= TELCMD_FIRST)
 #define  TELCMD(x)      telcmds[(x)-TELCMD_FIRST]
 
 

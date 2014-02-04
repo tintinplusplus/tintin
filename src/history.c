@@ -38,6 +38,7 @@ DO_COMMAND(do_history)
 
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 1);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	switch (tolower(left[0]))
 	{

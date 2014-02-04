@@ -15,47 +15,35 @@ $       are used for variables
 \       is used to escape a character, but doesn't always work.
 { }     are used for seperating multi word command arguments.
 " "     are used for strings in #math
-* ? \   are wildcards in regular expressions.
+* ? \   are used as wildcards for string matching.
 
 
 
 If you want to convert your scripts take notice of the following changes:
 
-1) #LOOP and #FORALL now use &0 instead of %0.
+01) #LOOP and #FORALL now use &0 instead of %0.
 
-2) #HIGHLIGHT had to be changed because this tintin version is less flexible
+02) #HIGHLIGHT had to be changed because this tintin version is less flexible
 when it comes to the parsing of commands as the old tintin versions. Basicly
 the old #high {color} {string} is now parsed as: #high {string} {color} 
-(which makes much more sense don't you think?) You can load your old
-highlights, but they will not be added to the highlight list, because they'll
-generate a 'color code not found' error message. So you'll have to redo your
-highlights, or perhaps look into the #substite command combined with the new
-color codes, see #help colors
+You can load your old highlights, but they will not be added to the highlight
+list, because they'll generate a 'color code not found' error message. So
+you'll have to redo your highlights, or perhaps look into the #substite
+command combined with the new color codes, see #help colors
 
 Also the way highlight deals with colors has been changed. {b light green} is
 no longer valid, instead you would want to use {bold b green}, the highlights
 also only use the valid VT100 codes, italic has been replaced with underscore,
 since italic was never part of the protocol of VT100 terminals.
 
-3) #FORMAT replaces many commands, I'd suggest checking it out.
+03) #FORMAT replaces many commands, I'd suggest checking it out.
 
-4) #MESSAGE, #CONFIG, #INFO, #IGNORE, #DEBUG are all you need to configure
+04) #MESSAGE, #CONFIG, #IGNORE, #DEBUG are all you need to configure
    tintin, changes to #config are written to file with #write.
 
-5) The old walk code has been removed, instead you can use the old mark command
-to start mapping a path. When finished you use savepath {backward/forward}
-{alias name}. Next you can use #loadpath {alias} to load an alias, with #map
-you can see (used to be #path) what directions are stored in the path.
-With #path and #unpath you can push and pop directions from the path list,
-non valid directions are allowed: #path {open door west} {open door east} for
-example will add those commands to the forward and backward aliasses.
-Once you've used #loadpath {alias} you can use the #walk command, this will
-remove one node from the path list and execute it. This way you can walk down
-the path by typing #walk repeatedly, or by using a ticker. When there are no
-more moves left on the path you'll receive a message. Notice this is perfect
-for automated scripts that require walking.
+05) The old walk code has been removed, instead you can use the #path command.
 
-6) #TICK has been changed quite a bit, new commands: #TICK #UNTICK, you can
+06) #TICK has been changed quite a bit, new commands: #TICK #UNTICK, you can
 have as many tickers as you want. The old #tick commands are gone.
 Syntax: #tick {name} {commands} {seconds to tick}
 The name is added so you can delete it. You will no longer receive spam, but
@@ -72,13 +60,13 @@ non random tick:
 {60}
 
 
-7) #read now supports multiline triggers, it also checks the nesting level
+07) #read now supports multiline triggers, it also checks the nesting level
 before doing anything so you don't end up with bogus, and trims leading 
 spaces/tabs. Make sure to remove non matching { }'s from #nop comments. Cause
 it'll error msg with the line number to look at otherwise.
 
 
-8) Can place ^ at the end of an action if you want a perfect match.
+08) Can place ^ at the end of an action if you want a perfect match.
 #act {^The trail leads north^} {n} {5} will not trigger on:
 The trail leads northwest
 
@@ -86,7 +74,7 @@ The trail leads northwest
    color codes the way tintin wants you to enter them type: #config CONVERT on
    when done use: #config CONVERT off.
 
-9) Added macros, see help file on macro and unmacro
+09) Added macros, see help file on macro and unmacro
 
 10) Finished function code, $result is now a default variable that can be used
 
@@ -97,84 +85,50 @@ say @dosomething{} will print 2, the #RESULT command has been removed.
 You can still use the result variable as a normal variable, but it might get
 messy if you use it in combination with #echo or functions, or both.
 
-11) #forall now uses space seperation instead of comma seperation, added
-    a helpfile as well
-
-12) Fixed #cr for diku muds, #10 #cr should work now, test old tintin versions
-    if you don't believe me.
+11) #forall and loop now use space seperation instead of comma seperation.
 
 13) Rewrote the mathematical expression interpreter used by #if and #math,
 it can now deal with both strings and numbers, strings must be enclosed in " ",
-and has more options, see help on math.
-T and F are not currently supported, though they're just as short as 0 and 1
-Can look into it if requested.
+and has more options, see help on math. T and F are not supported, use 0 and
+1 since I'm trying to comply to C standards.
 
 14) #pathdir is now specificly designed to hold a direction, and the opposite
 direction, there was some confusion by a help file writer about this who
 thought it was meant to hold a direction and the specific command to use with
-that direction.
+that direction. Pathdir now also needs a 3rd argument for the #map command,
+these values are set automatically.
 
 15) Defaults are no longer in a .rc file, if someone wants different defaults
 they can write a command file for it.
 
-16) Can now set the top and bottom row of the scrolling region with #split,
-if some machines still cannot report the correct screen size I'll add a 
-config setting for the rows/columns used. The current setup allows a top
-line or a wider split line for muds with 2 line prompts. Not entirely sure
-about this approach though.
+16) Can now set the top and bottom row of the scrolling region with #split.
 
 17) Can now have multiple prompt triggers, the 2nd argument is the substitution
 string that works the same as #substitute. the 3rd argument is the row the
 line should be printed on, if left blank it picks the normal split line.
-This stuff needs more work still, but works
 
 18) Fixed suspend for tintin sessions started using a linux script
 
 19) #sleep has been removed, use #delay.
 
-20) Tintin is now capable of wordwrapping, fixed bug in the previous linewrap
-routine that wrapped at 79 instead of 80 columns.
+20) Tintin is now capable of wordwrapping, can be disabled with #config.
 
-21) Fixed color loss bug in split mode, for muds that send wrapped lines,
-probably wasn't discovered because the only muds I know about doing their
-own wrapping, not surprisingly have their own vt102 split mode implementation.
-But should fix some odd color losses in certain situations on some muds.
+21) Fixed color loss bug in split mode for muds that send wrapped lines.
 
 22) #system can no longer be renamed, I fixed the %0-9 issue passing along ';'
-removing the $0-9 'bug fix' variable. One would be surprised how many people
-are still using %0-9 in their triggers. Sort of makes me wonder how bad some
-people will feel about this non backward compatable tintin version o.O
+removing the $0-9 'bug fix' variable - which nobody seemed to use anyway.
 
 23) Settings are now inherited from the startup session when creating a new
-session, so it's important to read in a config file if you don't want the
-defaults before starting a new session.
+session.
 
-24) Got rid of needing double %% or triple %%%, the script engine should
-behave like php now pretty much. You can still nest using %%90 %%91 for %0
-and %1 when there isn't a 9th argument.
+25) Added internal color codes, see help color
 
-25) Added internal color codes, help color
-
-
-26) MCCP support added
-
-27) NAWS (negotiate about window size) added
+26) MCCP and NAWS support added
 
 28) Scroll back buffer, with scrolling macros, home, pgup, pgdown, end, and
     a #grep command to search through the buffer added
 
 29) cursor positioning for split mode has been fixed once and for all hopefully
-
-31) chat has been removed, too much of a mess to deal with atm, might put
-    it back if it's actually working and popular.
-
-32) Zombie code removed, some simple, and actually working connection handling
-    code added to replace it.
-
-33 ${variable} no longer works, variables can contain numbers and alphabetic
-   characters. I don't see what multi line variable names are good for, and
-   the code was bugging up some stuff as well, though could be caused
-   by other code I removed/rewrote
 
 34 !<argument> will repeat the last command starting with that argument.
    score
@@ -187,44 +141,3 @@ and %1 when there isn't a 9th argument.
 
 35 You can turn on repeat on enter with the #config command
 
-36 I'm using the following method to test speed:
-
-  My admin char stands on the mud in debugging mode which prints the current
-  time with 0.1 second precision in it's prompt.
-
-  v1.5 and v1.86 do:
-
-  #loop {1,2000} #act lllll%0 smile
-  #act {End of area list} {nod} {9}
-
-  v1.9 does:
-
-  #loop {1 2000} #act lllll&0 smile
-  #act {End of area list} {nod} {9}
-
-  The area list contains about 150 areas, the characters are connected from
-  the same machine, the admin char forces the character to execute the area
-  command, marking the executing time in it's prompt, and the prompt being
-  shown once again holding the response time when the character nods.
-
-  Results:
-
-  Version      Average Response time in seconds
-  v1.90        0.3
-  v1.86        0.9
-  v1.50        0.6
-
-37 history has been changed, default the last 1000 commands are remembered,
-   you can recall commands using !<partial command prefix> or control-r
-   which will give the reverse search prompt.
-
-   Example:
-
-   where all
-   who
-   area
-   score
-   !w   <== executes: who
-   !a   <== executes: area
-   !whe <== executes: where
-   !    <== executes: score

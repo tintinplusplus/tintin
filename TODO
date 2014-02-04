@@ -2,6 +2,8 @@
 
 - Look into [A|An] parsing bug.
 
+- fix stunnel #run
+
 -------------------------------------------------------------------------------
 
 GENERAL STUFF:
@@ -16,14 +18,10 @@ GENERAL STUFF:
 
 - Tab completion based on scroll back history.
 
-- Look into mccp routine which sometimes doesn't work properly.
-
 - Add a pre-parser to determine whether a trigger is a regex or color
   trigger.
 
 - Leave unmatched backslashes untouched? - double escapes required in regex.
-
-
 
 -------------------------------------------------------------------------------
 
@@ -34,8 +32,6 @@ Use \e[ X to erase an amount of characters to deal with ctrl-r and redraw line f
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:
-
-- Add a return option.
 
 - Display hidden exits differently.
 
@@ -71,9 +67,11 @@ MAPPING STUFF:
 
 - Look into packet defragmentation for chat.
 
-- Tokenize / precompile scripts
-
 - Color code compression, particularly useful with vt map drawing.
+
+- link http://www.lauzet.com/argon on webpage
+
+- look into %0^ not working.
 
 -------------------------------------------------------------------------------
 
@@ -108,5 +106,3 @@ MAPPING STUFF:
   can use a command line sound mixer with the #system command.
 
 - Plugins: Maybe sometime far in the future I'll add a plugin to add plugins.
-
-- Upgrade the #write command to format. Formatting should be up to the user.

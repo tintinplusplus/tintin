@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 			switch (c)
 			{
 				case 'e':
-					gtd->ses = pre_parse_input(gtd->ses, optarg, SUB_NONE);
+					gtd->ses = script_driver(gtd->ses, optarg);
 					break;
 
 				case 'h':
@@ -246,7 +246,7 @@ void init_tintin(void)
 {
 	int ref, cnt;
 
-	gts                 = calloc(1, sizeof(struct session));
+	gts = calloc(1, sizeof(struct session));
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
@@ -259,20 +259,19 @@ void init_tintin(void)
 	gts->port           = strdup("");
 	gts->timestamp      = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
+	gts->flags          = SES_FLAG_MCCP;
 	gts->socket         = 1;
 
 	gtd                 = calloc(1, sizeof(struct tintin_data));
 
 	gtd->ses            = gts;
 
-	gtd->mem            = calloc(1, sizeof(struct memory_data));
-
 	gtd->str_hash_size  = sizeof(struct str_hash_data);
 
-	gtd->mccp_buf_max   = 64;
-	gtd->mccp_buf       = calloc(1, gtd->mccp_buf_max);
+	gtd->mccp_len       = 4096;
+	gtd->mccp_buf       = calloc(1, gtd->mccp_len);
 
-	gtd->mud_output_max = 64;
+	gtd->mud_output_max = 4096;
 	gtd->mud_output_buf = calloc(1, gtd->mud_output_max);
 
 	gtd->input_off      = 1;
@@ -344,7 +343,7 @@ void init_tintin(void)
 	do_showme(gts, "<068>      #<078>                 Original TINTIN code by Peter Unold               <068>#");
 	do_showme(gts, "<068>      #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,     <068>#");
 	do_showme(gts, "<068>      #<078>                 Jeremy C. Jack, Igor van den Hoven                <068>#");
-	do_showme(gts, "<068>      #<078>                             1992, 2007                            <068>#");
+	do_showme(gts, "<068>      #<078>                             1992, 2008                            <068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
 	do_showme(gts, "<068>      #<078>                               "VERSION_NUM"                              <068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");

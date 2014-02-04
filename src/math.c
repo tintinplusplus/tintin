@@ -86,11 +86,9 @@ DO_COMMAND(do_if)
 	}
 	else
 	{
-		substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
 		if (mathexp(ses, left))
 		{
-			ses = parse_input(ses, right);
+			ses = script_driver(ses, right);
 		}
 		else
 		{
@@ -98,7 +96,7 @@ DO_COMMAND(do_if)
 
 			if (*right)
 			{
-				ses = parse_input(ses, right);
+				ses = script_driver(ses, right);
 			}
 		}
 	}
@@ -107,20 +105,12 @@ DO_COMMAND(do_if)
 
 double get_number(struct session *ses, char *str)
 {
-	char number[BUFFER_SIZE];
-
-	substitute(ses, str, number, SUB_VAR|SUB_FUN);
-
-	return mathexp(ses, number);
+	return mathexp(ses, str);
 }
 
 void get_number_string(struct session *ses, char *str, char *result)
 {
-	char number[BUFFER_SIZE];
-
-	substitute(ses, str, number, SUB_VAR|SUB_FUN);
-
-	sprintf(result, "%.*f", precision, mathexp(ses, number));
+	sprintf(result, "%.*f", precision, mathexp(ses, str));
 }
 
 /*
@@ -129,13 +119,16 @@ void get_number_string(struct session *ses, char *str, char *result)
 
 double mathexp(struct session *ses, char *str)
 {
+	char buf[BUFFER_SIZE];
 	struct listnode *node;
+
+	substitute(ses, str, buf, SUB_VAR|SUB_FUN);
 
 	mathses = ses;
 
-	if (mathexp_tokenize(ses, str) == FALSE)
+	if (mathexp_tokenize(ses, buf) == FALSE)
 	{
-		tintin_printf2(ses, "#MATH EXP: INVALID INPUT {%s}.", str);
+		tintin_printf2(ses, "#MATH EXP: INVALID INPUT {%s}.", buf);
 
 		return 0;
 	}

@@ -28,10 +28,10 @@
 
 #include "tintin.h"
 
-#define MAX_STACK_SIZE     101
+#define MAX_STACK_SIZE     51
 #define MAX_DEBUG_SIZE     400
 
-char          debug_stack[MAX_STACK_SIZE][MAX_DEBUG_SIZE];
+char debug_stack[MAX_STACK_SIZE][MAX_DEBUG_SIZE];
 
 short debug_index;
 
@@ -39,7 +39,7 @@ int push_call(char *f, ...)
 {
 	va_list ap;
 
-	if (debug_index <= 100)
+	if (debug_index < MAX_STACK_SIZE)
 	{
 		va_start(ap, f);
 
@@ -48,7 +48,7 @@ int push_call(char *f, ...)
 		va_end(ap);
 	}
 
-	if (++debug_index == 50)
+	if (++debug_index == 10000)
 	{
 		dump_stack();
 

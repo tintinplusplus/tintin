@@ -35,9 +35,13 @@
 
 DO_COMMAND(do_session)
 {
-	char left[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], left[BUFFER_SIZE];
 	struct session *sesptr;
 	int cnt;
+
+	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
+
+	arg = temp;
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
 
@@ -190,7 +194,7 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		}
 	}
 
-	for (newsession = gts->next ; newsession ; newsession = newsession->next)
+	for (newsession = gts ; newsession ; newsession = newsession->next)
 	{
 		if (!strcmp(newsession->name, name))
 		{

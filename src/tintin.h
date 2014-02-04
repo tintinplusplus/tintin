@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.7"
+#define VERSION_NUM               "1.98.8"
 
 #define ESCAPE                          27
 
@@ -174,6 +174,20 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define LIST_TICKER                     18
 #define LIST_VARIABLE                   19
 #define LIST_MAX                        20
+
+/*
+	Command type
+*/
+
+#define TOKEN_OPR_UNKNOWN               -1
+#define TOKEN_OPR_STRING                 1
+#define TOKEN_OPR_CMD                    2
+#define TOKEN_OPR_IF                     3
+#define TOKEN_OPR_ELSE                   4
+#define TOKEN_OPR_ENDIF                  5
+#define TOKEN_OPR_RETURN                 6
+#define TOKEN_OPR_REPEAT                 7
+#define TOKEN_OPR_SESSION                8
 
 /*
 	generic define for show_message
@@ -260,6 +274,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
+#define SES_FLAG_MCCP                 (1 <<  3)
 #define SES_FLAG_MAPPING              (1 <<  4)
 #define SES_FLAG_SPLIT                (1 <<  5)
 #define SES_FLAG_SPEEDWALK            (1 <<  6)
@@ -338,9 +353,6 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define MAP_UNDO_LINK                 (1 <<  1)
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
-
-#define CMD_FLAG_NONE                 (0 <<  0)
-#define CMD_FLAG_SUB                  (1 <<  0)
 
 #define MAX_STR_HASH                  10000
 
@@ -539,9 +551,11 @@ struct session
 	char                  * host;
 	char                  * port;
 	char                  * timestamp;
+	unsigned char           telopt_buf[NUMBER_SIZE];
+	int                     telopt_len;
 	long long               connect_retry;
 	int                     connect_error;
-	char                    more_output[STRING_SIZE];
+	char                    more_output[BUFFER_SIZE];
 	char                    color[100];
 	char                    command_color[100];
 	long long               check_output;
@@ -552,14 +566,13 @@ struct tintin_data
 	struct session        * ses;
 	struct session        * update;
 	struct chat_data      * chat;
-	struct memory_data    * mem;
 	struct termios          old_terminal;
 	struct termios          new_terminal;
 	char                  * mud_output_buf;
 	int                     mud_output_max;
 	int                     mud_output_len;
 	unsigned char         * mccp_buf;
-	int                     mccp_buf_max;
+	int                     mccp_len;
 	char                    input_buf[BUFFER_SIZE];
 	char                    input_tmp[BUFFER_SIZE];
 	char                    macro_buf[BUFFER_SIZE];
@@ -650,7 +663,7 @@ struct command_type
 {
 	char                  * name;
 	COMMAND               * command;
-	int                     flags;
+	int                     type;
 };
 
 struct config_type
@@ -757,13 +770,6 @@ struct exit_data
 	char                    * cmd;
 };
 
-struct memory_data
-{
-	struct memory_data      * next;
-	struct memory_data      * prev;
-	char                    * data;
-};
-
 #endif
 
 
@@ -843,6 +849,7 @@ extern void set_list_item(struct session *ses, struct listnode *node, char *left
 
 #ifndef __CHAT_H__
 #define __CHAT_H__
+
 
 extern DO_COMMAND(do_chat);
 extern DO_CHAT(chat_accept);
@@ -1087,6 +1094,7 @@ extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
 extern DO_CONFIG(config_regexp);
 extern DO_CONFIG(config_timestamp);
+extern DO_CONFIG(config_mccp);
 
 #endif
 
@@ -1326,7 +1334,9 @@ extern DO_COMMAND(do_run);extern DO_COMMAND(do_send);
 extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_snoop);
 extern DO_COMMAND(do_suspend);
+extern DO_COMMAND(do_while);
 extern DO_COMMAND(do_zap);
+
 extern DO_COMMAND(do_gagline);
 
 #endif
@@ -1371,6 +1381,7 @@ extern int send_ip(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int init_mccp(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1384,11 +1395,10 @@ extern void init_telnet_session(struct session *ses);
 #ifndef __PARSE_H__
 #define __PARSE_H__
 
-extern struct session *pre_parse_input(struct session *ses, char *input, int flags);
 extern struct session *parse_input(struct session *ses, char *input);
 extern struct session *parse_command(struct session *ses, char *input);
 
-extern int is_speedwalk(char *input);
+extern int is_speedwalk(struct session *ses, char *input);
 extern void process_speedwalk(struct session *ses, char *input);
 extern struct session *parse_tintin_command(struct session *ses, char *input);
 extern char *get_arg_all(char *string, char *result);
@@ -1503,9 +1513,15 @@ extern DO_COMMAND(do_untick);
 extern DO_COMMAND(do_delay);
 extern DO_COMMAND(do_undelay);
 
-
 #endif
 
+#ifndef __TOKENIZE_H__
+#define __TOKENIZE_H__
+
+extern struct session *script_driver(struct session *ses, char *str);
+extern char *script_writer(struct session *ses, char *str);
+
+#endif
 
 #ifndef __UPDATE_H__
 #define __UPDATE_H__
@@ -1523,7 +1539,6 @@ extern void memory_update(void);
 
 #endif
 
-
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
@@ -1535,6 +1550,7 @@ extern int hex_number(char *str);
 extern long long utime(void);
 extern char *timestamp(char *str);
 extern char *capitalize(char *str);
+extern char *indent(int cnt);
 extern void cat_sprintf(char *dest, char *fmt, ...);
 extern void ins_sprintf(char *dest, char *fmt, ...);
 extern void syserr(char *msg);

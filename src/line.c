@@ -29,10 +29,12 @@
 
 DO_COMMAND(do_line)
 {
-	char left[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int cnt;
 
 	arg = get_arg_in_braces(arg, left, FALSE);
+
+	substitute(ses, arg, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -54,7 +56,7 @@ DO_COMMAND(do_line)
 		}
 		else
 		{
-			line_table[cnt].fun(ses, arg);
+			line_table[cnt].fun(ses, right);
 		}
 	}
 	return ses;

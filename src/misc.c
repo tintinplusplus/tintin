@@ -37,11 +37,13 @@ DO_COMMAND(do_all)
 	{
 		get_arg_in_braces(arg, left, TRUE);
 
+		substitute(ses, left, left, SUB_VAR|SUB_FUN);
+
 		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
 		{
 			next_ses = sesptr->next;
 
-			pre_parse_input(sesptr, left, SUB_NONE);
+			script_driver(sesptr, left);
 		}
 	}
 	else
@@ -178,11 +180,11 @@ DO_COMMAND(do_forall)
 		{
 			arg = get_arg_in_braces(arg, temp, FALSE);
 
-			internal_variable(ses, "{forall} {%s}", temp);
-
 			RESTRING(gtd->cmds[0], temp);
 
-			ses = pre_parse_input(ses, right, SUB_CMD);
+			substitute(ses, right, temp, SUB_CMD);
+
+			ses = script_driver(ses, temp);
 		}
 	}
 	return ses;
@@ -243,47 +245,39 @@ DO_COMMAND(do_loop)
 	arg = get_arg_in_braces(arg, right, 0);
 
 
-	if (*command == 0 || (*left == 0 && *right == 0))
+	if (*command == 0 || *right == 0)
 	{
 		show_message(ses, LIST_MATH, "#LOOP: INVALID ARGUMENTS.");
 
 		return ses;
 	}
 
-	if (*left && *right)
+	bound1 = (long long) get_number(ses, left);
+	bound2 = (long long) get_number(ses, right);
+
+	if (bound1 <= bound2)
 	{
-		bound1 = (long long) get_number(ses, left);
-		bound2 = (long long) get_number(ses, right);
-
-		if (bound1 <= bound2)
-		{
-			step = 1;
-			bound2++;
-		}
-		else
-		{
-			step = -1;
-			bound2--;
-		}
-
-		for (counter = bound1 ; counter != bound2 ; counter += step)
-		{
-			gtd->cmds[0] = refstring(gtd->cmds[0], "%lld", counter);
-
-			internal_variable(ses, "{loop} {%lld}", counter);
-
-			ses = pre_parse_input(ses, command, SUB_CMD);
-		}
+		step = 1;
+		bound2++;
 	}
 	else
 	{
-		while ((long long) get_number(ses, left))
-		{
-			ses = pre_parse_input(ses, command, SUB_NONE);
-		}
+		step = -1;
+		bound2--;
 	}
+
+	for (counter = bound1 ; counter != bound2 ; counter += step)
+	{
+		gtd->cmds[0] = refstring(gtd->cmds[0], "%lld", counter);
+
+		substitute(ses, command, temp, SUB_CMD);
+
+		ses = script_driver(ses, temp);
+	}
+
 	return ses;
 }
+
 
 
 DO_COMMAND(do_nop)
@@ -327,9 +321,9 @@ DO_COMMAND(do_parse)
 
 			RESTRING(gtd->cmds[0], temp);
 
-			internal_variable(ses, "{parse} {%s}", gtd->cmds[0]);
+			substitute(ses, right, temp, SUB_CMD);
 
-			ses = pre_parse_input(ses, right, SUB_CMD);
+			ses = script_driver(ses, temp);
 		}
 	}
 	return ses;
@@ -338,8 +332,6 @@ DO_COMMAND(do_parse)
 
 DO_COMMAND(do_return)
 {
-	SET_BIT(ses->flags, SES_FLAG_BREAK);
-
 	if (*arg)
 	{
 		internal_variable(ses, "{result} %s", arg);
@@ -362,10 +354,10 @@ DO_COMMAND(do_showme)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], output[STRING_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  1);
-	arg = get_arg_in_braces(arg, right, 0);
-
-	substitute(ses, left, left, SUB_COL|SUB_ESC);
+	arg = get_arg_in_braces(arg, left, TRUE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+	arg = get_arg_in_braces(arg, right, FALSE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*right)
 	{
@@ -420,6 +412,7 @@ DO_COMMAND(do_snoop)
 	char left[BUFFER_SIZE];
 
 	get_arg_in_braces(arg, left, 1);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left)
 	{
@@ -462,6 +455,27 @@ DO_COMMAND(do_suspend)
 	return ses;
 }
 
+
+DO_COMMAND(do_while)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
+
+	if (*left == 0 || *right == 0)
+	{
+		show_message(ses, LIST_MATH, "#SYNTAX: WHILE {CONDITION} {COMMANDS}");
+
+		return ses;
+	}
+
+	while (get_number(ses, left))
+	{
+		ses = script_driver(ses, right);
+	}
+	return ses;
+}
 
 DO_COMMAND(do_zap)
 {

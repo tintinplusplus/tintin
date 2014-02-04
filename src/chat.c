@@ -81,8 +81,9 @@ DO_COMMAND(do_chat)
 		}
 
 		arg = get_arg_in_braces(arg, left,  chat_table[cnt].lval);
+		substitute(ses, left, left, SUB_VAR|SUB_FUN);
 		arg = get_arg_in_braces(arg, right, chat_table[cnt].rval);
-
+		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 		chat_table[cnt].fun(left, right);
 
 		return ses;
