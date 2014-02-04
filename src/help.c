@@ -38,7 +38,7 @@ struct help_type
 	This help table is a mess, but I got better things to do - Scandum
 */
 
-const struct help_type help_table[81] =
+const struct help_type help_table[82] =
 {
 	{
 		"ALIAS",
@@ -116,6 +116,36 @@ const struct help_type help_table[81] =
 		"         the entire scrollback buffer to file.\n"
 	},
 	{
+		"CHAT",
+		"Command: #chat {option} {argument}\n"
+		"\n"
+		"         #chat {init}     {port}             Initilizes a chat port.\n"
+		"         #chat {name}     {name}             Sets your chat name.\n"
+		"         #chat {message}  {buddy|all} {text} Sends a chat message\n"
+		"\n"
+		"         #chat {accept}   {buddy}            Accept a file transfer\n"
+		"         #chat {call}     {address} {port}   Connect to a buddy\n"
+		"         #chat {cancel}   {buddy}            Cancel a file transfer\n"
+		"         #chat {decline}  {buddy}            Decline a file transfer\n"
+		"         #chat {download} {buddy}            Set your download dir\n"
+		"         #chat {emote}    {buddy|all} {text} Send an emote message\n"
+		"         #chat {forward}  {buddy}            Forward all chat messages\n"
+		"         #chat {filestat} {buddy}            Show file transfer data\n"
+		"         #chat {ignore}   {buddy}            Ignores someone\n"
+		"         #chat {info}                        Displays your info\n"
+		"         #chat {ip}       {address}          Changes your IP address\n"
+		"         #chat {paste}    {buddy|all} {text} Pastes a block of text\n"
+		"         #chat {peek}     {buddy}            Show one's public connections\n"
+		"         #chat {ping}     {buddy}            Display response time\n"
+		"         #chat {private}  {buddy}            Make a connection private\n"
+		"         #chat {reply}    {text}             Reply to last private message\n"
+		"         #chat {request}  {buddy}            Request one's public connections\n"
+		"         #chat {sendfile} {buddy} {filename} Start a file transfer\n"
+		"         #chat {serve}    {buddy}            Forward all public chat messages\n"
+		"         #chat {who}                         Show all connections\n"
+		"         #chat {zap}      {buddy}            Close a connection\n"
+	},
+	{
 		"CLASS",
 		"Command: #class {name} {open|close|read filename|write filename|kill}\n"
 		"\n"
@@ -188,7 +218,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.4                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.5                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -355,6 +385,7 @@ const struct help_type help_table[81] =
 		"         #format {test} {%l}   {string}  lowercase text\n"
 		"         #format {test} {%m}   {string}  perform mathematical calculation\n"
 		"         #format {test} {%n}     {name}  capitalize the first letter\n"
+		"         #format {test} {%p}   {string}  strip leading and trailing spaces\n"
 		"         #format {test} {%r}   {string}  reverse text, hiya = ayih\n"
 		"         #format {test} {%t}     {time}  print the current military time\n"
 		"         #format {test} {%u}   {string}  uppercase text\n"
@@ -389,28 +420,6 @@ const struct help_type help_table[81] =
 		"This will print the current military time.\n"
 	},
 	{
-		"GETITEMNR",
-		"\n"
-		"Command: getitemnr - retrieves specified element from a list (NEW)\n"
-		"\n"
-		"Syntax:  #getitemnr {destination variable} {item number} {list}\n"
-		"\n"
-		"Example: #geti {dothis} {2} {smile {say Hi!} flip bounce}  <--- sets dothis to 'say Hi!'\n"
-		"\n"
-		"Example: #getl Length {$rndsocial};#math itemnr {1 d $Length};#geti temp {$itemnr}\n"
-		"{$rndsocial};{$temp}\n"
-		"         (will perform a random social from the 'rndsocial' list)\n"
-	},
-	{
-		"GETLISTLENGTH",
-		"\n"
-		"Command: getlistlength - returns the length of a list\n"
-		"\n"
-		"Syntax:  #getlistlength {dest var} {list}\n"
-		"\n"
-		"Example: #getl Length {$alignlist}   <--- returns 3 in the Length variable\n"
-	},
-	{
 		"GREP",
 		"Command: #grep [page] {search string}\n"
 		"         This command allows you to search for matching lines in your scroll\n"
@@ -433,6 +442,25 @@ const struct help_type help_table[81] =
 		"\n"
 		"         Killall deletes all lists.  Useful so you don't have to exit tintin++\n"
 		"         to load up a new command file.\n"
+	},
+	{
+		"LIST",
+		"Command: #list {variable} {del|ins|get|set|len} {argument}\n"
+		"\n"
+		"#list {list} {del} {index}            Delete an item from the list\n"
+		"#list {list} {ins} {index} {string}   Insert {string} at given index\n"
+		"#list {list} {get} {index} {variable} Copy an item to {variable}\n"
+		"#list {list} {set} {index} {string}   Change an item at the given index\n"
+		"#list {list} {len} {variable}         Copy list length to {variable}\n"
+		"\n"
+		"The index should be between 1 and the list's length. You can also give\n"
+		"a negative value, in which case -1 equals the last item in the list, -2\n"
+		"the second last, etc.\n"
+		"\n"
+		"When inserting an item a positive index will prepend the item at the given\n"
+		"index, while a negative index will append the item.\n"
+		"\n"
+		"A length of 0 is returned for an empty or non existant list."
 	},
 	{
 		"LOADPATH",

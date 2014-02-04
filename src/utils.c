@@ -47,6 +47,15 @@ int is_abbrev(const char *s1, const char *s2)
 	return(!strncasecmp(s2, s1, strlen(s1)));
 }
 
+int is_suffix(const char *s1, const char *s2)
+{
+	int sl1, sl2;
+
+	sl1 = strlen(s1);
+	sl2 = strlen(s2);
+
+	return (sl1 <= sl2 && !strcasecmp(s1, s2 + sl2 - sl1)) ? FALSE : TRUE;
+}
 /*
 	return TRUE if the string is a number
 */
@@ -96,13 +105,6 @@ char *capitalize(const char *str)
 	outbuf[cnt] = 0;
 
 	return outbuf;
-}
-
-char *restring(char *old, const char *new)
-{
-	free(old);
-
-	return strdup(new);
 }
 
 void cat_sprintf(char *dest, const char *fmt, ...)

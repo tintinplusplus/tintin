@@ -60,6 +60,7 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"ignore",            do_ignore,            CMD_FLAG_SUB     },
 	{	"info",              do_info,              CMD_FLAG_NONE    },
 	{	"killall",           do_killall,           CMD_FLAG_NONE    },
+	{	"list",              do_list,              CMD_FLAG_SUB     },
 	{	"loadpath",          do_loadpath,          CMD_FLAG_SUB     },
 	{	"log",               do_log,               CMD_FLAG_SUB     },
 	{	"logline",           do_logline,           CMD_FLAG_SUB     },
@@ -407,10 +408,13 @@ const struct class_type class_table[CLASS_MAX] =
 
 const struct chat_type chat_table[CHAT_MAX] =
 {
-/*	{     "AUTOACCEPT",                chat_autoaccept        }, */
+	{     "ACCEPT",                    chat_accept            },
 	{     "CALL",                      chat_call              },
 	{     "CANCELFILE",                chat_cancelfile        },
+	{     "DECLINE",                   chat_decline           },
+	{     "DOWNLOADDIR",               chat_downloaddir       },
 	{     "EMOTE",                     chat_emote             },
+	{     "FORWARD",                   chat_forward           },
 	{     "FILESTAT",                  chat_filestat          },
 	{     "IGNORE",                    chat_ignore            },
 	{     "INITIALIZE",                chat_initialize        },
@@ -418,12 +422,24 @@ const struct chat_type chat_table[CHAT_MAX] =
 	{     "IP",                        chat_ip                },
 	{     "MESSAGE",                   chat_message           },
 	{     "NAME",                      chat_name              },
+	{     "PASTE",                     chat_paste             },
 	{     "PEEK",                      chat_peek              },
 	{     "PING",                      chat_ping              },
+	{     "PRIVATE",                   chat_private           },
+	{     "REPLY",                     chat_reply             },
 	{     "REQUEST",                   chat_request           },
 	{     "SENDFILE",                  chat_sendfile          },
 	{     "SERVE",                     chat_serve             },
-	{     "TRANSFER",                  chat_transfer          },
 	{     "WHO",                       chat_who               },
 	{     "ZAP",                       chat_zap               }
 };
+
+
+const struct array_type array_table[ARRAY_MAX] =
+{
+	{     "DEL",                       array_del              },
+	{     "GET",                       array_get              },
+	{     "INS",                       array_ins              },
+	{     "LEN",                       array_len              },
+	{     "SET",                       array_set              }
+};	

@@ -176,20 +176,22 @@ DO_COMMAND(do_echo)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], result[BUFFER_SIZE], output[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], output[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, temp, TRUE);
 	arg = get_arg_in_braces(arg, right, FALSE);
 
-	substitute(ses, left, result, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC|SUB_EOL);
+	substitute(ses, temp, left, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
 	if (*right)
 	{
-		do_one_prompt(ses, result, atoi(right));
+		do_one_prompt(ses, left, atoi(right));
 
 		return ses;
 	}
-	do_one_line(result, ses);
+	do_one_line(left, ses);
+
+	substitute(ses, left, temp, SUB_EOL);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG) || HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
 	{
@@ -215,7 +217,7 @@ DO_COMMAND(do_showme)
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	sprintf(output, "\033[0m\033[0K%s\033[0m", result);
+	sprintf(output, "\033[0m\033[0K%s\033[0m", temp);
 
 	add_line_buffer(ses, output, FALSE);
 

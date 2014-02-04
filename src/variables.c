@@ -415,6 +415,30 @@ void thousandgroupingstring(char *str)
 	strcpy(str, result);
 }
 
+
+void stripspaces(char *str)
+{
+	int cnt;
+
+	for (cnt = strlen(str) - 1 ; cnt >= 0 ; cnt--)
+	{
+		if (!isspace(str[cnt]))
+		{
+			break;
+		}
+		str[cnt] = 0;
+	}
+
+	for (cnt = 0 ; str[cnt] != 0 ; cnt++)
+	{
+		if (!isspace(str[cnt]))
+		{
+			break;
+		}
+	}
+	strcpy(str, &str[cnt]);
+}
+
 /******************************************************************************
 * #format command - Scandum                                                   *
 *******************************************************************************
@@ -507,6 +531,10 @@ DO_COMMAND(do_format)
 
 					case 'n':
 						arglist[i][0] = toupper(arglist[i][0]);
+						break;
+
+					case 'p':
+						stripspaces(arglist[i]);
 						break;
 
 					case 'r':

@@ -46,3 +46,99 @@ oops 5
 #alias {sgaw}  {ÿü\}
 
 #alias {telnet} {#config {debug telnet} on;#ses x %0}
+
+#var travel 0
+
+#function {revdir}
+{
+     #if {"&0" == "north"} {#var result south};
+     #if {"&0" == "east"}  {#var result west};
+     #if {"&0" == "south"} {#var result north};
+     #if {"&0" == "west"}  {#var result east};
+     #if {"&0" == "up"}    {#var result down};
+     #if {"&0" == "down"}  {#var result up}
+}
+ 
+#function {longdir}
+{
+     #if {"&0" == "n"} {#var result north};
+     #if {"&0" == "e"} {#var result east};
+     #if {"&0" == "s"} {#var result south};
+     #if {"&0" == "w"} {#var result west};
+     #if {"&0" == "u"} {#var result up};
+     #if {"&0" == "d"} {#var result down}
+}
+ 
+#function {shortdir}
+{
+     #if {"&0" == "north"} {#var result n};
+     #if {"&0" == "east"}  {#var result e};
+     #if {"&0" == "south"} {#var result s};
+     #if {"&0" == "west"}  {#var result w};
+     #if {"&0" == "up"}    {#var result u};
+     #if {"&0" == "down"}  {#var result d}
+}
+ 
+#function {finddir}
+{
+     #if {"&0" == "&1"}
+     {
+          #var result &2
+     }
+     {
+          #var result &1
+     }
+}
+
+#alias {travel}
+{
+     #if {$travel}
+     {
+          #var travel 0;
+          #showme <118>You stop traveling.
+     }
+     {
+          #var travel 1;
+          #var lastdir @longdir{%0};
+          #var lastdir @revdir{$lastdir}; 
+          #showme <118>You travel %0.;
+          %0
+     }
+}
+
+#act {^Obvious exits:^}
+{
+	#if {$travel}
+	{
+		#format path %s;
+		#delay 0.5 checkexits
+	}
+}
+
+#act {%0  - A Gravel Path^} {#if {"$path" == ""} {#var path %0} {#var path $path %0}}
+
+#alias {checkexits}
+{
+        #if {"$path" != "* *"}
+          {
+               #var travel 0;
+               #showme <118>You stop traveling due to a dead end.
+          };      
+
+          #if {"$path" == "* * *"}
+          {
+               #var travel 0;
+               #showme <118>You stop traveling to pick up directions.
+          };
+
+          #if {$travel}
+          {
+               #var newdir @finddir{$lastdir $path};
+               #showme <118>You travel $newdir.;
+
+               #var lastdir @revdir{$newdir};
+
+               @shortdir{$newdir}
+          }
+}
+{1}

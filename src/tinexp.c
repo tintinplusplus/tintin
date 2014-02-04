@@ -104,10 +104,12 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 	struct listnode *node;
 	char temp[BUFFER_SIZE], funcargs[BUFFER_SIZE], *pti, *pto, *ptt;
 	const char *pte;
-	short i, cnt;
+	int i, cnt, flags_neol = flags;
 
 	pti = (char *) string;
 	pto = (char *) result;
+
+	DEL_BIT(flags_neol, SUB_EOL);
 
 	while (TRUE)
 	{
@@ -166,7 +168,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 					if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) != NULL)
 					{
-						substitute(ses, node->right, pto, flags & ~SUB_EOL);
+						substitute(ses, node->right, pto, flags_neol - SUB_VAR);
 
 						if (pti[1] == DEFAULT_OPEN)
 						{
@@ -260,14 +262,19 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						continue;
 					}
 
-					pti = (char *) get_arg_in_braces(&pti[i], funcargs, FALSE);
+					pti = (char *) get_arg_in_braces(&pti[i], temp, FALSE);
+
+					substitute(ses, temp, funcargs, flags_neol);
+
 					pte = funcargs;
 
+					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
+					{
+						tintin_printf2(ses, "#FUNCTION DEBUG: (%s) (%s)", node->left, funcargs);
+					}
 					for (i = 0 ; i < 10 ; i++)
 					{
-						pte = get_arg_in_braces(pte, temp, FALSE);
-
-						substitute(ses, temp, gtd->cmds[i], flags & ~SUB_EOL);
+						pte = get_arg_in_braces(pte, gtd->cmds[i], FALSE);
 					}
 					substitute(ses, node->right, temp, SUB_CMD);
 

@@ -82,28 +82,29 @@
 	Typedefs
 */
 
+typedef struct listnode LNODE;
+
 typedef struct session *COMMAND (struct session *ses, const char *arg);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *CLASS   (struct session *ses, char *arg);
-
 typedef void CHAT (const char *arg);
-
+typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *arg);
 /*
 	A bunch of constants
 */
 
-#define	TRUE                    1
-#define	FALSE                   0
+#define TRUE                    1
+#define FALSE                   0
 
-#define	SCREEN_WIDTH            80
-#define	SCREEN_HEIGHT           24
+#define SCREEN_WIDTH            80
+#define SCREEN_HEIGHT           24
 
-#define	PRIORITY                0
-#define	ALPHA                   1
+#define PRIORITY                0
+#define ALPHA                   1
 #define APPEND                  2
 
-#define	DEFAULT_OPEN            '{'
-#define	DEFAULT_CLOSE           '}'
+#define DEFAULT_OPEN            '{'
+#define DEFAULT_CLOSE           '}'
 
 #define HISTORY_FILE              ".tt_history"
 
@@ -172,7 +173,9 @@ typedef void CHAT (const char *arg);
 
 #define CLASS_MAX                      5
 
-#define CHAT_MAX                      18
+#define CHAT_MAX                      24
+
+#define ARRAY_MAX                      5
 
 /*
 	Various flags
@@ -209,17 +212,16 @@ typedef void CHAT (const char *arg);
 #define CHAT_PING_RESPONSE              27 
 #define CHAT_PEEK_CONNECTIONS           28
 #define CHAT_PEEK_LIST                  29
+#define CHAT_SNOOP_START                30
+#define CHAT_SNOOP_DATA                 31
 
 #define CHAT_END_OF_COMMAND            255
 
-#define CHAT_FLAG_TRANSFER            (1 <<  0)
-#define CHAT_FLAG_PRIVATE             (1 <<  1)
-#define CHAT_FLAG_REBIND              (1 <<  2)
-#define CHAT_FLAG_AUTOACCEPT          (1 <<  3)
-#define CHAT_FLAG_REQUEST             (1 <<  4)
-#define CHAT_FLAG_PEEK                (1 <<  5)
-#define CHAT_FLAG_SERVE               (1 <<  6)
-#define CHAT_FLAG_IGNORE              (1 <<  7)
+#define CHAT_FLAG_PRIVATE             (1 <<  0)
+#define CHAT_FLAG_REQUEST             (1 <<  1)
+#define CHAT_FLAG_SERVE               (1 <<  2)
+#define CHAT_FLAG_IGNORE              (1 <<  3)
+#define CHAT_FLAG_FORWARD             (1 <<  4)
 
 #define SUB_NONE                      0
 #define SUB_ARG                       (1 <<  0)
@@ -368,8 +370,11 @@ typedef void CHAT (const char *arg);
 #define DO_COMMAND(command) struct session  *command (struct session *ses, const char *arg)
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
 #define DO_CLASS(class) struct session *class (struct session *ses, char *arg)
+#define DO_ARRAY(array) struct session *array (struct session *ses, LNODE *list, const char *arg)
 
 #define DO_CHAT(chat) void chat (const char *arg)
+
+
 
 /*
 	Bit operations
@@ -473,11 +478,15 @@ struct chat_data
 	struct chat_data      * prev;
 	char                  * name;
 	char                  * ip;
+	char                  * version;
+	char                  * download;
+	char                  * reply;
+	char                  * paste_buf;
 	int                     port;
 	int                     fd;
-	char                  * version;
+	time_t                  timeout;
 	int                     flags;
-	char                  * download;
+	long long               paste_time;
 	FILE                  * file_pt;
 	char                  * file_name;
 	int                     file_size;
@@ -529,12 +538,18 @@ struct chat_type
 	CHAT                  * chat;
 };
 
+struct array_type
+{
+	char                  * name;
+	ARRAY                 * array;
+};
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
 	struct str_hash_data    * prev;
 	unsigned short            count;
-        unsigned short            flags;
+     unsigned short            flags;
 	unsigned short            lines;
 	unsigned short            hash;
 };
@@ -579,27 +594,45 @@ extern int readline_echoing_p;
 	Function declarations
 */
 
+#ifndef __ARRAY_H__
+#define __ARRAY_H__
+
+extern DO_COMMAND(do_list);
+
+extern DO_ARRAY(array_ins);
+extern DO_ARRAY(array_del);
+extern DO_ARRAY(array_get);
+extern DO_ARRAY(array_len);
+extern DO_ARRAY(array_set);
+
+#endif
+
 #ifndef __CHAT_H__
 #define __CHAT_H__
 
 extern DO_COMMAND(do_chat);
-
-extern DO_CHAT(chat_transfer);
-extern DO_CHAT(chat_autoaccept);
+extern DO_CHAT(chat_accept);
 extern DO_CHAT(chat_call);
 extern DO_CHAT(chat_cancelfile);
+extern DO_CHAT(chat_decline);
+extern DO_CHAT(chat_downloaddir);
 extern DO_CHAT(chat_emote);
 extern DO_CHAT(chat_filestat);
+extern DO_CHAT(chat_forward);
 extern DO_CHAT(chat_ignore);
 extern DO_CHAT(chat_initialize);
 extern DO_CHAT(chat_info);
 extern DO_CHAT(chat_ip);
 extern DO_CHAT(chat_message);
 extern DO_CHAT(chat_name);
+extern DO_CHAT(chat_paste);
 extern DO_CHAT(chat_peek);
 extern DO_CHAT(chat_ping);
+extern DO_CHAT(chat_private);
+extern DO_CHAT(chat_reply);
 extern DO_CHAT(chat_request);
 extern DO_CHAT(chat_sendfile);
+extern DO_CHAT(chat_transfer);
 extern DO_CHAT(chat_serve);
 extern DO_CHAT(chat_who);
 extern DO_CHAT(chat_zap);
@@ -613,7 +646,7 @@ extern void process_chat_connections(fd_set *input_set, fd_set *exc_set);
 extern void chat_socket_printf(struct chat_data *buddy, const char *format, ...);
 extern void chat_printf(const char *format, ...);
 extern  int process_chat_input(struct chat_data *buddy);
-extern void get_chat_commands(struct chat_data *buddy, char *buf);
+extern void get_chat_commands(struct chat_data *buddy, char *buf, int len);
 extern void chat_receive_text_everybody(struct chat_data *buddy, char *txt);
 extern void chat_receive_text_personal(struct chat_data *buddy, char *txt);
 extern void chat_receive_message(struct chat_data *buddy, char *txt);
@@ -632,6 +665,7 @@ extern void send_block(struct chat_data *ch);
 extern void receive_block(unsigned char *s, struct chat_data *ch);
 extern void deny_file(struct chat_data *ch, char *arg);
 extern void file_denied(struct chat_data *ch, char *txt);
+extern void file_cleanup(struct chat_data *buddy);
 
 extern int get_file_size(char *fpath);
 
@@ -1128,6 +1162,7 @@ extern const struct config_type config_table[CONFIG_MAX];
 extern const struct color_type color_table[COLOR_MAX];
 extern const struct class_type class_table[CLASS_MAX];
 extern const struct chat_type chat_table[CHAT_MAX];
+extern const struct array_type array_table[ARRAY_MAX];
 
 #endif
 
@@ -1153,10 +1188,10 @@ extern void tick_update(void);
 #define __UTILS_H__
 
 extern int is_abbrev(const char *s1, const char *s2);
+extern int is_suffix(const char *s1, const char *s2);
 extern int is_number(const char *str);
 extern long long utime(void);
 extern char *capitalize(const char *str);
-extern char *restring(char *old, const char *new);
 extern void cat_sprintf(char *dest, const char *fmt, ...);
 extern void syserr(const char *msg);
 

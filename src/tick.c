@@ -143,6 +143,7 @@ void tick_update(void)
 	struct session *ses;
 	struct listnode *node;
 	struct listroot *root;
+	struct chat_data *buddy, *buddy_next;
 
 	push_call("tick_update(void)");
 
@@ -167,6 +168,10 @@ void tick_update(void)
 
 				strcpy(result, node->right);
 
+				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
+				{
+					tintin_printf2(ses, "#TICKER DEBUG: %s", result);
+				}
 				parse_input(result, ses);
 			}
 		}
@@ -193,6 +198,10 @@ void tick_update(void)
 
 				deletenode_list(ses, node, LIST_DELAY);
 
+				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
+				{
+					tintin_printf2(ses, "#DELAY DEBUG: %s", result);
+				}
 				parse_input(result, ses);
 			}
 		}
@@ -226,6 +235,27 @@ void tick_update(void)
 			}
 		}
 	}
+
+	if (gtd->chat)
+	{
+		for (buddy = gtd->chat->next ; buddy ; buddy = buddy_next)
+		{
+			buddy_next = buddy->next;
+
+			if (buddy->name == NULL && buddy->timeout < time(NULL))
+			{
+				chat_socket_printf(buddy, "<CHAT> Connection timed out.");
+
+				close_chat(buddy);
+			}
+		}
+
+		if (gtd->chat->paste_time && gtd->chat->paste_time < utime())
+		{
+			chat_paste(NULL);
+		}
+	}
+
 	fflush(stdout);
 
 	pop_call();

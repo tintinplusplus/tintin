@@ -202,6 +202,15 @@ void commandloop(void)
 			continue;
 		}
 
+		if (gtd->chat && gtd->chat->paste_time)
+		{
+			chat_paste(line);
+
+			free(line);
+
+			continue;
+		}
+
 		if (HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
 		{
 			if ((line = rlhist_expand(line)) == NULL)
@@ -209,7 +218,6 @@ void commandloop(void)
 				continue;
 			}
 		}
-
 
 		sprintf(buffer, "%s", line);
 

@@ -795,6 +795,10 @@ files.c        Now skipping chinese characters in #read
 
 
 
+August 2005
+
+
+
 tinexp.c       Fixed some bugs in substitute that slipped in.
 
 tinexp.c       Added skipping of chinese characters in regexp functions.
@@ -814,3 +818,16 @@ configure      BIG5 configuration was giving me issues on slackware.
                Since I didn't feel like figuring out how the script works
                I changed it from --enable-big5 to --big5 and fiddled with
                the script till it seemed to work again.
+
+
+
+September 2005 - 1.95.5
+
+
+chat.c         Added some extra chat functionality: paste, serve, forward,
+               ignore and peek.
+
+tinexp.c       Fixed parsing of function arguments some more.
+
+array.c        Added #list command with basic list support.
+
