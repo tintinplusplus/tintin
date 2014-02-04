@@ -168,6 +168,7 @@ void read_line(char *line)
 				gtd->input_pos    = 0;
 				gtd->input_buf[0] = 0;
 				gtd->macro_buf[0] = 0;
+				gtd->input_tmp[0] = 0;
 
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 				{
@@ -199,6 +200,7 @@ void read_line(char *line)
 				}
 
 				gtd->macro_buf[0] = 0;
+				gtd->input_tmp[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;
 
 				cursor_check_line("");
@@ -395,9 +397,9 @@ void echo_command(struct session *ses, char *line, int newline)
 {
 	char buffer[STRING_SIZE];
 
-	if (IS_SPLIT(ses) && ses->more_output[0] == 0)
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT) && ses->more_output[0] == 0)
 	{
-		sprintf(buffer, "\033[0m%s", line);
+		sprintf(buffer, "\033[0;37m%s", line);
 	}
 	else
 	{
@@ -412,18 +414,20 @@ void echo_command(struct session *ses, char *line, int newline)
 		}
 		ses->check_output = 0;
 
-		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+		if (HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
+		{
+			SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
-		tintin_printf2(ses, "%s", buffer);
+			tintin_printf2(ses, "%s", buffer);
 
-		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
-
-		add_line_buffer(ses, buffer, FALSE);
+			DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+		}
+		add_line_buffer(ses, buffer, 0);
 
 		return;
 	}
 
-	if (IS_SPLIT(ses))
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
 		if (!HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND) && ses->more_output[0] == 0)
 		{
@@ -435,15 +439,18 @@ void echo_command(struct session *ses, char *line, int newline)
 		{
 			ses->check_output = 0;
 
-			tintin_printf2(ses, "%s%s", ses->more_output, buffer);
+			sprintf(buffer, "%s\033[0;37m%s", ses->more_output, line);
 		}
-		else
-		{
-			tintin_printf2(ses, "%s", buffer);
-		}
+		add_line_buffer(ses, buffer, -1);
+
+		tintin_printf2(ses, "%s", buffer);
+
 		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 	}
-	add_line_buffer(ses, buffer, -1);
+	else
+	{
+		add_line_buffer(ses, buffer, -1);
+	}
 }
 
 void input_printf(char *format, ...)

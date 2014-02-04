@@ -41,7 +41,7 @@ DO_COMMAND(do_session)
 
 	arg = get_arg_in_braces(arg, &left,  FALSE);
 
-	if (!*left)
+	if (*left == 0)
 	{
 		tintin_puts(ses, "#THESE SESSIONS HAVE BEEN DEFINED:");
 
@@ -91,7 +91,7 @@ void show_session(struct session *ses, struct session *ptr)
 {
 	char temp[BUFFER_SIZE];
 
-	sprintf(temp, "%-12s%-15s", ptr->name, ptr->host);
+	sprintf(temp, "%-12s%20s:%-5s", ptr->name, ptr->host, ptr->port);
 
 	if (ptr == gtd->ses)
 	{

@@ -10,6 +10,10 @@ GENERAL STUFF:
 
 - look into packet defragmentation for chat
 
+- only add words longer than one or two bytes to the history buffer
+
+- looking into making gagline work better with #showme.
+
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:

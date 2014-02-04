@@ -86,6 +86,11 @@ void add_line_history(struct session *ses, char *line)
 		search_line_history(ses, line);
 	}
 
+	if (strlen(line) <= 2)
+	{
+		return;
+	}
+
 	for (node = root->f_node ; node ; node = node->next)
 	{
 		if (!strcmp(line, node->left))

@@ -349,6 +349,7 @@ struct help_type help_table[] =
 		"         #format {test} {%r}   {string}  reverse text, hiya = ayih\n"
 		"         #format {test} {%t}     {time}  print the current military time\n"
 		"         #format {test} {%u}   {string}  uppercase text\n"
+		"         #format {test} {%w}   {string}  wordwrap text\n"
 		"         #format {cols} {%C}         {}  store the screen width in {cols}\n"
 		"         #format {test} {%D}     {time}  print the current day\n"
 		"         #format {test} {%G}   {number}  perform thousand grouping on {number}\n"
@@ -399,7 +400,11 @@ struct help_type help_table[] =
 		"GAGLINE",
 		"<178>Command<078>: #gagline\n"
 		"\n"
-		"         When called from within an action the trigger string is not displayed.\n"
+		"         The gagline command will stop the next line from being displayed.\n"
+		"         If used in an action it will work in a similar fashion as the gag\n"
+		"         command. If you use gagline before a showme in an action the showme\n"
+		"         will be gagged, rather than the line triggering the action. To avoid\n"
+		"         this place the gagline command add the end of the action."
 	},
 	{
 		"GREP",

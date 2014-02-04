@@ -325,9 +325,16 @@ DO_CURSOR(cursor_history_next)
 		return;
 	}
 
-	gtd->input_his = gtd->input_his->next;
+	node = gtd->input_his->next;
+
+	while (node && strncmp(gtd->input_tmp, node->left, strlen(gtd->input_tmp)))
+	{
+		node = node->next;
+	}
 
 	cursor_clear_line("");
+
+	gtd->input_his = node;
 
 	if (gtd->input_his == NULL)
 	{
@@ -382,16 +389,29 @@ DO_CURSOR(cursor_history_prev)
 	{
 		strcpy(gtd->input_tmp, gtd->input_buf);
 
-		gtd->input_his = gts->list[LIST_HISTORY]->l_node;
+		node = gts->list[LIST_HISTORY]->l_node;
+
+		while (node && strncmp(gtd->input_tmp, node->left, strlen(gtd->input_tmp)))
+		{
+			node = node->prev;
+		}
 	}
 	else
 	{
-		if (gtd->input_his->prev == NULL)
+		node = gtd->input_his->prev;
+
+		while (node && strncmp(gtd->input_tmp, node->left, strlen(gtd->input_tmp)))
 		{
-			return;
+			node = node->prev;
 		}
-		gtd->input_his = gtd->input_his->prev;
 	}
+
+	if (node == NULL)
+	{
+		return;
+	}
+
+	gtd->input_his = node;
 
 	cursor_clear_line("");
 

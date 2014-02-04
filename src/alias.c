@@ -176,7 +176,7 @@ int check_all_aliases(struct session *ses, char *str1, char *str2, char **comman
 				*command = stringf_alloc("%s %s", *command, str2);
 			}
 
-			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s : %s", str1, str2);
+			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s : %s %s", str1, *command, str2);
 
 			return TRUE;
 		}

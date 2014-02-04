@@ -499,7 +499,7 @@ int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	SET_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
+//	SET_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
 
 	return 2;
 }

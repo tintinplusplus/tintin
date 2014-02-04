@@ -33,7 +33,7 @@
 
 struct session *parse_input(struct session *ses, char *input)
 {
-	char *command, *arg1, *arg2, *unwind;
+	char *command, *arg1, *arg2;
 
 	if (push_call("[%s] parse_input(%p,%s)",ses->name,ses,input))
 	{
@@ -57,8 +57,6 @@ struct session *parse_input(struct session *ses, char *input)
 
 		write_line_mud(command, ses);
 
-		string_free(command);
-
 		pop_call();
 		return(ses);
 	}
@@ -69,16 +67,12 @@ struct session *parse_input(struct session *ses, char *input)
 
 		write_line_mud(command, ses);
 
-		string_free(command);
-
 		pop_call();
 		return ses;
 	}
 
 	while (*input)
 	{
-		unwind = string_alloc("");
-
 		if (*input == COMMAND_SEPARATOR)
 		{
 			if (*++input == 0)
@@ -135,8 +129,6 @@ struct session *parse_input(struct session *ses, char *input)
 				}
 			}
 		}
-
-		string_free(unwind);
 
 		if (HAS_BIT(ses->flags, SES_FLAG_BREAK))
 		{
@@ -282,9 +274,15 @@ struct session *parse_tintin_command(struct session *ses, char *command, char *a
 			{
 				if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
 				{
-					substitute(ses, arg, &arg, SUB_VAR|SUB_FUN);
+					substitute(ses, arg, &command, SUB_VAR|SUB_FUN);
+
+					ses = (*command_table[cmd].command) (ses, command);
 				}
-				return (ses = (*command_table[cmd].command) (ses, arg));
+				else
+				{
+					ses = (*command_table[cmd].command) (ses, arg);
+				}
+				return ses;
 			}
 		}
 	}

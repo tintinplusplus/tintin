@@ -315,7 +315,7 @@ DO_COMMAND(do_return)
 
 	if (*arg)
 	{
-		internal_variable(ses, "{result} {%s}", arg);
+		internal_variable(ses, "{result} %s", arg);
 	}
 	return ses;
 }

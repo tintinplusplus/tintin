@@ -322,6 +322,65 @@ void stripspaces(char *str)
 	strcpy(str, &str[cnt]);
 }
 
+void wrapstring(struct session *ses, char *str)
+{
+	char *pti, *lis, *sos, buf[STRING_SIZE], tmp[STRING_SIZE];
+	int col = 1;
+
+	pti = lis = sos = str;
+
+	buf[0] = 0;
+
+	while (*pti != 0)
+	{
+		if (skip_vt102_codes(pti))
+		{
+			pti += skip_vt102_codes(pti);
+
+			continue;
+		}
+
+		if (*pti == ' ')
+		{
+			lis = pti;
+		}
+
+		if (col > ses->cols)
+		{
+			col = 1;
+
+			if (pti - lis > 15)
+			{
+				sprintf(tmp, "%.*s", pti - str, str);
+				strip_non_vt102_codes(tmp, tmp);
+				cat_sprintf(buf, "{%s%.*s}", tmp, pti - sos, sos);
+
+				lis = sos = pti;
+			}
+			else
+			{
+				sprintf(tmp, "%.*s", lis - str, str);
+				strip_non_vt102_codes(tmp, tmp);
+				cat_sprintf(buf, "{%s%.*s}", tmp, lis - sos, sos);
+
+				lis++;
+
+				pti = sos = lis;
+			}
+		}
+		else
+		{
+			pti++;
+			col++;
+		}
+	}
+	sprintf(tmp, "%.*s", pti - str, str);
+	strip_non_vt102_codes(tmp, tmp);
+
+	cat_sprintf(buf, "{%s%s}", tmp, sos);
+
+	strcpy(str, buf);
+}
 
 DO_COMMAND(do_format)
 {
@@ -434,6 +493,9 @@ DO_COMMAND(do_format)
 						upperstring(arglist[i]);
 						break;
 
+					case 'w':
+						wrapstring(ses, arglist[i]);
+						break;
 
 					case 'C':
 						sprintf(arglist[i], "%d", ses->cols);

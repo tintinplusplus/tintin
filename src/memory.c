@@ -70,8 +70,6 @@ char *string_realloc(char *point, char *string)
 			return mem->data;
 		}
 	}
-	printf("string_realloc: %s\n", string);
-
 	return point;
 }
 

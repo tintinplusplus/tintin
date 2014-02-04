@@ -64,7 +64,6 @@ void init_terminal()
 
 	DEL_BIT(io.c_cflag, CSIZE|PARENB);
 */
-
 	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN);
 
 	SET_BIT(io.c_cflag, CS8);

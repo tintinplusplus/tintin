@@ -114,7 +114,11 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 			cnt++;
 			ses->cur_col = 1;
 
-			if (pto - los > 15 || !SCROLL(ses))
+			if (!HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
+			{
+				continue;
+			}
+			else if (pto - los > 15 || !SCROLL(ses))
 			{
 				*pto = '\r';
 				pto++;

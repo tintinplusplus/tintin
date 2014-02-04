@@ -273,7 +273,7 @@ DO_COMMAND(do_read)
 
 	sprintf(temp, "{TINTIN CHAR} {%c}", bufo[0]);
 
-	SET_BIT(gtd->flags, TINTIN_FLAG_QUIET);
+	gtd->quiet++;
 
 	do_configure(ses, temp);
 
@@ -292,7 +292,7 @@ DO_COMMAND(do_read)
 
 		if (strlen(bufi) >= BUFFER_SIZE)
 		{
-			DEL_BIT(gtd->flags, TINTIN_FLAG_QUIET);
+			gtd->quiet--;
 
 			bufi[20] = 0;
 
@@ -314,7 +314,7 @@ DO_COMMAND(do_read)
 		pti++;
 	}
 
-	DEL_BIT(gtd->flags, TINTIN_FLAG_QUIET);
+	gtd->quiet--;
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
 	{

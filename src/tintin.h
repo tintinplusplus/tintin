@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.5"
+#define VERSION_NUM               "1.97.6"
 
 #define ESCAPE                          27
 
@@ -240,7 +240,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
 #define TINTIN_FLAG_CONVERTMETACHAR   (1 <<  1)
 #define TINTIN_FLAG_HISTORYSEARCH     (1 <<  2)
-#define TINTIN_FLAG_QUIET             (1 <<  3)
+
 #define TINTIN_FLAG_USERCOMMAND       (1 <<  4)
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  5)
 
@@ -552,6 +552,7 @@ struct tintin_data
 	int                     history_size;
 	int                     command_ref[26];
 	int                     flags;
+	int                     quiet;
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;

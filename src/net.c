@@ -217,7 +217,7 @@ int read_buffer_mud(struct session *ses)
 
 void readmud(struct session *ses)
 {
-	char *line, *next_line, *unwind;
+	char *line, *next_line;
 	char linebuf[STRING_SIZE];
 
 	push_call("readmud(%p)", ses);
@@ -225,8 +225,6 @@ void readmud(struct session *ses)
 	gtd->mud_output_len = 0;
 
 	/* separate into lines and print away */
-
-	unwind = string_alloc("");
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
@@ -293,8 +291,6 @@ void readmud(struct session *ses)
 	{
 		restore_pos(gtd->ses);
 	}
-
-	string_free(unwind);
 
 	pop_call();
 	return;

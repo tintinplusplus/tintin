@@ -343,7 +343,7 @@ void tintin_puts2(struct session *ses, char *string)
 		ses = gtd->ses;
 	}
 
-	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && HAS_BIT(gtd->flags, TINTIN_FLAG_QUIET))
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet)
 	{
 		return;
 	}

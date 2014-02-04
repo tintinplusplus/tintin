@@ -505,6 +505,12 @@ DO_MAP(map_insert)
 		return;
 	}
 
+	if (node == NULL)
+	{
+		tintin_printf2(ses, "#MAP: Given direction must be a pathdir.");
+		return;
+	}
+
 	in_room = ses->map->in_room;
 	to_room = exit->vnum;
 
@@ -676,7 +682,7 @@ DO_MAP(map_read)
 		return;
 	}
 
-	SET_BIT(gtd->flags, TINTIN_FLAG_QUIET);
+	gtd->quiet++;
 
 	if (ses->map == NULL)
 	{
@@ -719,7 +725,7 @@ DO_MAP(map_read)
 				break;
 
 			default:
-				DEL_BIT(gtd->flags, TINTIN_FLAG_QUIET);
+				gtd->quiet--;
 
 				tintin_printf2(ses, "#MAP: Invalid file, aborting.");
 
@@ -731,7 +737,7 @@ DO_MAP(map_read)
 		}
 	}
 
-	DEL_BIT(gtd->flags, TINTIN_FLAG_QUIET);
+	gtd->quiet--;
 
 	fclose(myfile);
 

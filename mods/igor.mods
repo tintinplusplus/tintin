@@ -847,3 +847,21 @@ August 2007    1.97.5
                #run now shows the stderr when failing to run.
 
                Fixed a bug with #config {packet patch}.
+
+August 2007    1.97.6
+
+input.c        Fixed some server side VT issues with command echoing.
+
+text.c         Tintin no longer line wraps when word wrap is disabled, this to
+               fix pasting issues, and assuming that most terminals will line
+               wrap correctly.
+
+history.c      No longer add input with less than 2 bytes to the history.
+
+cursor.c       Added prefix history searching.
+
+files.c        Fixed verbose behavior when reading a file which reads a file.
+
+net.c          Fixed address reporting in #session.
+
+variable.c     Added %w option to wrap text.
