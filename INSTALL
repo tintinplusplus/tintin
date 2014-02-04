@@ -21,7 +21,7 @@ Options configure current supports:
 --includedir    Additional include directory
 --bindir        Location you want tt++ to be installed (default is the src dir)
 --libdir        Addition library directory
---big5          To use the big5 encoding
+--enable-big5   To use the big5 encoding
 
 If you wish, you can edit src/Makefile.in before running ./configure.
 It shouldn't be necessary unless you have some unorthodox request

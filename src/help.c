@@ -28,6 +28,7 @@
 
 #include "tintin.h"
 
+
 struct help_type
 {
 	char                  * name;
@@ -128,11 +129,13 @@ const struct help_type help_table[] =
 		"         #chat {cancel}     {buddy}            Cancel a file transfer\n"
 		"         #chat {color}      {color names}      Set the default color\n"
 		"         #chat {decline}    {buddy}            Decline a file transfer\n"
+		"         #chat {dnd}                           Decline new connections\n"
 		"         #chat {download}   {buddy}            Set your download dir\n"
 		"         #chat {emote}      {buddy|all} {text} Send an emote message\n"
 		"         #chat {forward}    {buddy}            Forward all chat messages\n"
 		"         #chat {forwardall} {buddy}            Forward all session output\n"
 		"         #chat {filestat}   {buddy}            Show file transfer data\n"
+		"         #chat {group}      {buddy} {name}     Assign a chat group\n"
 		"         #chat {ignore}     {buddy}            Ignores someone\n"
 		"         #chat {info}                          Displays your info\n"
 		"         #chat {ip}         {address}          Changes your IP address\n"
@@ -143,6 +146,7 @@ const struct help_type help_table[] =
 		"         #chat {public}     {buddy|all}        Make a connection public\n"
 		"         #chat {reply}      {text}             Reply to last private message\n"
 		"         #chat {request}    {buddy}            Request one's public connections\n"
+		"         #chat {send}       {buddy|all} {text} Sends a raw data string\n"
 		"         #chat {sendfile}   {buddy} {filename} Start a file transfer\n"
 		"         #chat {serve}      {buddy}            Forward all public chat messages\n"
 		"         #chat {who}                           Show all connections\n"
@@ -216,7 +220,8 @@ const struct help_type help_table[] =
 	{
 		"CREDITS",
 		"\n"
-		"<068>    ######################################################################\n"
+		"<068>    #<068>####################################################################<068>#\n"
+		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<078>                           T I N T I N + +                          <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<078>            (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t            <068>#\n"
@@ -224,10 +229,11 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Original TINTIN code by Peter Unold                <068>#\n"
 		"<068>    #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,      <068>#\n"
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
-		"<068>    #<078>                              1992,2006                             <068>#\n"
+		"<068>    #<078>                             1992, 2006                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.9                           <068>#\n"
-		"<068>    ######################################################################<088>\n\n"
+		"<068>    #<078>                           Version 1.96.0                           <068>#\n"
+		"<068>    #<078>                                                                    <068>#\n"
+		"<068>    #<068>####################################################################<068>#<088>\n\n"
 	},
 	{
 		"DELAY",
@@ -460,12 +466,14 @@ const struct help_type help_table[] =
 		"         Displays all the settings of every tintin list available.\n"
 	},
 	{
-		"KILLALL",
+		"KILL",
 		"\n"
-		"Command: #killall\n"
+		"Command: #kill {list|all}\n"
 		"\n"
-		"         Killall deletes all lists.  Useful so you don't have to exit tintin++\n"
-		"         to load up a new command file.\n"
+		"         Without an argument kill deletes all lists.  Useful so you don't\n"
+		"         have to exit tintin++ to load up a new command file.\n"
+		"\n"
+		"         With an argument a specific list can be killed.\n"
 	},
 	{
 		"LIST",
@@ -718,6 +726,14 @@ const struct help_type help_table[] =
 		"\n"
 		"Reads in a file and sends it to the screen as if it was send by a mud. This is\n"
 		"useful to convert ansi color files to html or viewing log files.\n"
+	},
+	{
+		"SEND",
+		"\n"
+		"Command: #send {text}\n"
+		"\n"
+		"Sends the text directly to the MUD, useful if you want to start with an\n"
+		"escape code.\n"
 	},
 	{
 		"SESSION",
@@ -1097,6 +1113,7 @@ const struct help_type help_table[] =
 		""
 	}
 };
+
 
 DO_COMMAND(do_help)
 {

@@ -199,9 +199,10 @@ int check_all_aliases(char *original, char *line, struct session *ses)
 			{
 				cat_sprintf(original, " %s", gtd->vars[0]);
 			}
+
 			if (HAS_BIT(ses->list[LIST_ALIAS]->flags, LIST_FLAG_DEBUG))
 			{
-				show_message(ses, LIST_ALIAS, "#ALIAS DEBUG: %s", line);
+				show_message(ses, LIST_ALIAS, "#ALIAS DEBUG: %s", original);
 			}
 			return TRUE;
 		}

@@ -174,7 +174,7 @@ A17) Use %%90 %%91 %%92. When the alias is parsed %9 will be replaced with the
 
 Q18) How to enable support for chinese muds?
 
-A18  Try: ./configure --big5 to use the big5 encoding
+A18  Try: ./configure --enable-big5 to use the big5 encoding
 
 Q19) I use OS X and am totally friggin confused...I ran tintin a few times,
      and now every time I open a terminal window, it runs tintin automatically.

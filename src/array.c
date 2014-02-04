@@ -160,6 +160,38 @@ DO_ARRAY(array_del)
 }
 
 
+DO_ARRAY(array_fnd)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE], temp[BUFFER_SIZE];
+	int cnt, index;
+
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
+
+	index = get_list_length(list);
+
+	sprintf(buf, "%d", 0);
+
+	arg = list->right;
+
+	for (cnt = 1 ; cnt <= index ; cnt++)
+	{
+		arg = get_arg_in_braces(arg, temp, FALSE);
+
+		if (!strcmp(temp, left))
+		{
+			sprintf(buf, "%d", cnt);
+		}
+	}
+	strcpy(temp, buf);
+
+	sprintf(buf, "{%s} {%s}", right, temp);
+
+	do_internal_variable(ses, buf);
+
+	return ses;
+}
+
 DO_ARRAY(array_get)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE], temp[BUFFER_SIZE];
@@ -303,3 +335,4 @@ DO_ARRAY(array_set)
 
 	return ses;
 }
+

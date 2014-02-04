@@ -96,7 +96,6 @@ const struct command_type command_table[] =
 	{	"ticker",            do_tick,              CMD_FLAG_NONE    },
 	{	"unaction",          do_unaction,          CMD_FLAG_NONE    },
 	{	"unalias",           do_unalias,           CMD_FLAG_NONE    },
-	{    "unclass",           do_unclass,           CMD_FLAG_NONE    },
 	{	"unfunction",        do_unfunction,        CMD_FLAG_NONE    },
 	{	"ungag",             do_ungag,             CMD_FLAG_NONE    },
 	{	"unhighlight",       do_unhighlight,       CMD_FLAG_NONE    },
@@ -437,6 +436,7 @@ const struct chat_type chat_table[] =
 	{     "FORWARD",                   chat_forward           },
 	{     "FORWARDALL",                chat_forwardall        },
 	{     "FILESTAT",                  chat_filestat          },
+	{     "GROUP",                     chat_group             },
 	{     "IGNORE",                    chat_ignore            },
 	{     "INITIALIZE",                chat_initialize        },
 	{     "INFO",                      chat_info              },
@@ -450,8 +450,10 @@ const struct chat_type chat_table[] =
 	{     "PUBLIC",                    chat_public            },
 	{     "REPLY",                     chat_reply             },
 	{     "REQUEST",                   chat_request           },
+	{     "SEND",                      chat_send              },
 	{     "SENDFILE",                  chat_sendfile          },
 	{     "SERVE",                     chat_serve             },
+	{     "UNINITIALIZE",              chat_uninitialize      },
 	{     "WHO",                       chat_who               },
 	{     "ZAP",                       chat_zap               },
 	{     "",                          NULL                   }
@@ -461,8 +463,9 @@ const struct chat_type chat_table[] =
 const struct array_type array_table[ARRAY_MAX] =
 {
 	{     "DEL",                       array_del              },
+	{     "FND",                       array_fnd              },
 	{     "GET",                       array_get              },
 	{     "INS",                       array_ins              },
 	{     "LEN",                       array_len              },
-	{     "SET",                       array_set              }
-};	
+	{     "SET",                       array_set              },
+};

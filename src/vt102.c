@@ -494,14 +494,13 @@ int interpret_vt102_codes(struct session *ses, const char *str, int real)
 				break;
 
 			case 'r':
-				if (data[0])
+				if (sscanf(data, "%d;%d", &ses->top_row, &ses->bot_row) != 2)
 				{
-					sscanf(data, "%d;%d", &ses->top_row, &ses->bot_row);
-				}
-				else
-				{
-					ses->top_row = 1;
-					ses->bot_row = ses->rows;
+					if (sscanf(data, "%d", &ses->top_row) != 1)
+					{
+						ses->top_row = 1;
+						ses->bot_row = ses->rows;
+					}
 				}
 				break;
 

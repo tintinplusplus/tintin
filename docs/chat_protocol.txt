@@ -1,25 +1,20 @@
-Mud Master Chat
+Mud Master Chat Protocol
 
 Establishing a Connection
 
 Caller: Once a connection is made the caller sends a connection string;
 which looks like: "CHAT:<chat name>\n<ip address><port>".   The sprintf
 syntax is: "CHAT:%s\n%s%-5u".  The port must be 5 characters, padded on the
-right side with spaces.  Once this string has been sent it waits for a
+right side with spaces. Once this string has been sent it waits for a
 response from the other side.  If a "NO" is received the call is cancelled. 
-If the call was accepted the string "YES:<chat name>\n" is received.  Next
-the MM version number is sent out.  The version number sending is not
-required and can happen independently of the connection.  It's just a
-convenient place to do it. 
+If the call was accepted the string "YES:<chat name>\n" is received.
 
 Receiver
 
 When a socket call is detected it accepts the socket then waits
 for the "CHAT:" string to be send from the caller.  If the receiver wishes
 to deny the call, the string "NO" needs to be sent back to the caller.  To
-accept the call, the string "YES:<chat name>\n" is sent back.  That's all
-the receiver has to do.  Next the MM version number is sent out.  This is
-not required.
+accept the call, the string "YES:<chat name>\n" is sent back.
 
 Chat Data Blocks
 
@@ -27,6 +22,7 @@ A chat data block looks like this:  <block ID byte><data><end of data byte>.
 All data dealing with needs to follow this format with a couple exceptions. 
 The connection process doesn't use the data blocks and the file transfer
 blocks are a fixed size and don't need the <end of data> byte.
+
 Below is a list of the <block ID> values:
 
 #define CHAT_NAME_CHANGE                      1
@@ -48,9 +44,6 @@ Below is a list of the <block ID> values:
 #define CHAT_PING_REQUEST                    26
 #define CHAT_PING_RESPONSE                   27
 
-#define CHAT_EMAIL_ADDRESS                  102
-#define CHAT_SEND_COMMAND                   105
-
 #define CHAT_END_OF_COMMAND                 255
 
 The <end of data> byte is 255:
@@ -66,7 +59,7 @@ all of their connections.
 
 <CHAT_REQUEST_CONNECTIONS><CHAT_END_OF_COMMAND>
 
-Sender: Requesting connections from another connection asks to see all the
+Sender: Requesting connections from another connection asking to see all the
 people that person has marked as public, then try to connect to all of those
 yourself.
 
@@ -114,7 +107,7 @@ Just print the string that comes in if you aren't ignoring this connection.
 
 Used when you send text to a specific group of connections.  Works basically
 the same as the other text commands.  The group name is a 15 character
-string.  If *must* be 15 characters long – pad it on the right with spaces
+string.  It *must* be 15 characters long, pad it on the right with spaces
 to fill it out.  "\n%s chats to the group, '%s'\n"
 
 Receiver:
@@ -161,7 +154,7 @@ CHAT_FILE_DENY should be sent back to abort the transfer.  If you want to
 continue with the transfer you need to start it off by requesting a block of
 data with CHAT_FILE_BLOCK_REQUEST.
 
-CHAT_FILE_DENY
+
 
 <CHAT_FILE_DENY><message><CHAT_END_OF_COMMAND>
 
@@ -192,8 +185,7 @@ user know it is done sending.
 
 <CHAT_FILE_BLOCK><block of data>
 
-A file block is 500 bytes.  A file block is ALWAYS 500 bytes so no
-CHAT_END_OF_COMMAND is needed.
+A file block is 500 bytes.  A file block is ALWAYS 500 bytes so no CHAT_END_OF_COMMAND should be added.
 
 Receiver:
 
@@ -208,7 +200,7 @@ back out to get more data.
 
 <CHAT_FILE_END><CHAT_END_OF_COMMAND>
 
-Close up your files and be done with it.
+Close up your files and be done with it. This command isn't required for TinTin since it keeps track of the file transfer progress itself.
 
 
 
@@ -217,12 +209,11 @@ Either side can send this command to abort a file transfer in progress.
 
 
 
-CHAT_PING_REQUEST
-Sender: <CHAT_PING_REQUEST><timing data><CHAT_END_OF_COMMAND>
+<CHAT_PING_REQUEST><timing data><CHAT_END_OF_COMMAND>
 
-The timing data is up to the ping requester. TinTin sentsa 64 bit time stamp.
+The timing data is up to the ping requester. TinTin sents a 64 bit time stamp.
 
 
 <CHAT_PING_RESPONSE><timing data><CHAT_END_OF_COMMAND>
 
-The timing data is the data that was sent with the CHAT_PING_REQUEST.
+Send back the timing data is the data that was sent with the CHAT_PING_REQUEST.

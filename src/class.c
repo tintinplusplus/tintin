@@ -105,6 +105,8 @@ DO_COMMAND(do_class)
 	return ses;
 }
 
+/*
+	Not needed with #class <name> kill
 
 DO_COMMAND(do_unclass)
 {
@@ -133,6 +135,7 @@ DO_COMMAND(do_unclass)
 	return ses;
 }
 
+*/
 
 int count_class(struct session *ses, struct listnode *class)
 {
@@ -152,6 +155,24 @@ int count_class(struct session *ses, struct listnode *class)
 	return cnt;
 }
 
+void kill_classes(struct session *ses)
+{
+	int list;
+	struct listnode *node, *node_next;
+
+	for (list = 0 ; list < LIST_ALL ; list++)
+	{
+		for (node = ses->list[list]->f_node ; node ; node = node_next)
+		{
+			node_next = node->next;
+
+			if (node->class || list == LIST_CLASS)
+			{
+				deletenode_list(ses, node, list);
+			}
+		}
+	}
+}
 
 DO_CLASS(class_open)
 {
@@ -244,7 +265,7 @@ DO_CLASS(class_write)
 
 DO_CLASS(class_kill)
 {
-	struct listnode *node, *class;
+	struct listnode *node, *node_next, *class;
 	int cnt;
 
 	class = search_node_with_wild(ses->list[LIST_CLASS], left);
@@ -255,9 +276,9 @@ DO_CLASS(class_kill)
 		{
 			continue;
 		}
-		for (node = ses->list[cnt]->f_node ; node ; node = ses->list[cnt]->update)
+		for (node = ses->list[cnt]->f_node ; node ; node = node_next)
 		{
-			ses->list[cnt]->update = node->next;
+			node_next = node->next;
 
 			if (node->class == class)
 			{

@@ -213,7 +213,7 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #PATH <command> <reversed command>");
+		tintin_printf(ses, "#SYNTAX: #PATH {command} {reversed command}");
 	}
 	else if (*right == 0 && searchnode_list(ses->list[LIST_PATHDIR], left))
 	{

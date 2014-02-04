@@ -261,3 +261,19 @@ oops 5
 	};
 	#buffer lock
 }
+
+#ALIAS {walk} {#var path %0;#ticker {slowwalk} {#walk} {0.1}}
+
+#ACTION {^#END OF PATH.^}
+{
+    #list {path} {len} {result};
+    #if {$result == 0}
+    {
+        #untick slowwalk
+    }
+    {
+        #list {path} {get} {1} {result};
+        #list {path} {del} {1};
+        #loadpath $result
+    }
+}

@@ -127,6 +127,7 @@ void bait(void)
 				if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 				{
 					FD_SET(ses->socket, &readfds);
+					FD_SET(ses->socket, &excfds);
 				}
 			}
 
@@ -155,6 +156,16 @@ void bait(void)
 			if (gtd->chat)
 			{
 				process_chat_connections(&readfds, &excfds);
+			}
+
+			for (ses = gts->next ; ses ; ses = gtd->update)
+			{
+				gtd->update = ses->next;
+
+				if (FD_ISSET(ses->socket, &excfds))
+				{
+					cleanup_session(ses);
+				}
 			}
 
 			for (ses = gts->next ; ses ; ses = gtd->update)
@@ -537,6 +548,11 @@ void quitmsg(const char *m)
 	while ((ses = gts->next) != NULL) 
 	{
 		cleanup_session(ses);
+	}
+
+	if (gtd->chat)
+	{
+		close(gtd->chat->fd);
 	}
 
 	if (history_max_entries != 0)

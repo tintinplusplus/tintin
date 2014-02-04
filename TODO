@@ -7,6 +7,13 @@
 
 - Add color bleeding for #split. Bloats the code though.
 
+- upgrade the #write command to format.
+
+- place #grep output in the buffer
+
+
+
+
 * This is a list of new features/improvements that are planned.
 
 - auto mapper (half finished)
@@ -40,3 +47,11 @@
 
 - external script support: Python, Ruby, etc is fun, but I'd rather develop
   tintin's scripting language instead.
+
+
+--------------------------------------------------------------------------------
+
+If a line doesn't contain a ; do not modify it.
+
+If a line contains a ; place the bracket on a new line level alligned and space
+depending on level.

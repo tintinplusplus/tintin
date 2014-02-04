@@ -389,6 +389,12 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					}
 					else
 					{
+						if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+						{
+							DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
+							*cpdst++ = '\n';
+							gtd->mud_output_len++;
+						}
 						*cpdst++ = *cpsrc;
 						gtd->mud_output_len++;
 					}

@@ -60,33 +60,6 @@ void kill_list(struct session *ses, int index)
 	}
 }
 
-/*
-	This function will clear all lists associated with a session
-*/
-
-DO_COMMAND(do_killall)
-{
-	int cnt;
-
-	push_call("kill_all(%p,%p)",ses,arg);
-
-	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
-	{
-		kill_list(ses, cnt);
-
-		if (arg == NULL)
-		{
-			free(ses->list[cnt]);
-		}
-	}
-
-	if (arg != NULL)
-	{
-		tintin_printf(ses, "#OK: #KILLALL - ALL LISTS CLEARED.");
-	}
-	pop_call();
-	return ses;
-}
 
 /*
 	make a copy of a list - return: ptr to copy
@@ -255,14 +228,6 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 		if (node == ses->list[index]->update)
 		{
 			ses->list[index]->update = node->next;
-		}
-
-		if (index == LIST_CLASS && count_class(ses, node) != 0)
-		{
-			class_kill(ses, node->left, "");
-
-			pop_call();
-			return;
 		}
 
 		if (ses->class == node)
@@ -443,6 +408,57 @@ int count_list(struct listroot *listhead)
 	return cnt;
 }
 
+DO_COMMAND(do_killall)
+{
+	char left[BUFFER_SIZE];
+	int cnt, fnd = FALSE;
+
+	if (arg == NULL || *arg == 0) 
+	{
+		for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
+		{
+			kill_list(ses, cnt);
+
+			if (arg == NULL)
+			{
+				free(ses->list[cnt]);
+			}
+		}
+		if (arg != NULL)
+		{
+			tintin_printf(ses, "#OK: #KILL - ALL LISTS CLEARED.");
+		}
+		return ses;
+	}
+
+	arg = get_arg_in_braces(arg, left,  0);
+
+	for (cnt = fnd = 0 ; cnt < LIST_ALL ; cnt++)
+	{
+		if (!is_abbrev(left, list_table[cnt].name_multi) && strcasecmp(left, "ALL"))
+		{
+			continue;
+		}
+
+		switch (cnt)
+		{
+			case LIST_CLASS:
+				kill_classes(ses);
+				break;
+
+			default:
+				kill_list(ses, cnt);
+				break;
+		}
+		tintin_printf(ses, "#OK: #%s LIST CLEARED.", list_table[cnt].name);
+		fnd = TRUE;
+	}
+	if (fnd == FALSE)
+	{
+		tintin_printf(ses, "#ERROR: #KILL {%s} - NO MATCH FOUND.", left);
+	}
+	return ses;
+}
 
 DO_COMMAND(do_message)
 {

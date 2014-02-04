@@ -42,7 +42,7 @@
 #define CALL_TIMEOUT 5
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.95.9"
+#define TINTIN_VERSION "TinTin++ 1.96.0"
 
 #define RESTRING(point, value)   \
 {                                \
@@ -86,7 +86,7 @@ DO_COMMAND(do_chat)
 		return ses;
 	}
 
-	for (cnt = 0 ; cnt < *chat_table[cnt].name != 0 ; cnt++)
+	for (cnt = 0 ; *chat_table[cnt].name != 0 ; cnt++)
 	{
 		if (!is_abbrev(left, chat_table[cnt].name))
 		{
@@ -136,7 +136,7 @@ DO_CHAT(chat_initialize)
 	gtd->chat->name     = strdup("TinTin");
 	gtd->chat->ip       = strdup("<Unknown>");
 	gtd->chat->reply    = strdup("");
-	gtd->chat->color    = strdup("\033[1;31m");
+	gtd->chat->color    = strdup("\033[0;1;31m");
 
 	chat_downloaddir("");
 
@@ -175,8 +175,6 @@ DO_CHAT(chat_initialize)
 		return;
 	}
 
-/*	nonblock(sock); */
-
 	if (listen(sock, 3) == -1)
 	{
 		perror("chat_initialize: listen:");
@@ -191,6 +189,22 @@ DO_CHAT(chat_initialize)
 }
 
 
+DO_CHAT(chat_uninitialize)
+{
+	int port = gtd->chat->fd;
+
+	while (gtd->chat->next)
+	{
+		close_chat(gtd->chat->next, TRUE);
+	}
+	close_chat(gtd->chat, FALSE);
+
+	gtd->chat = NULL;
+
+	tintin_printf(NULL, "#OK: Uninitialized chat on port %d.", port);
+}
+
+
 /*
 	Accept an incoming chat connection.
 */
@@ -198,22 +212,23 @@ DO_CHAT(chat_initialize)
 int chat_new(int s)
 {
 	struct chat_data *new_buddy;
-	struct sockaddr_in isa;
+	struct sockaddr_in sock;
 	int i, fd;
-	struct timeval to;
 
-	to.tv_sec  = 0;
-	to.tv_usec = 0;
+	i = sizeof(sock);
 
-	i = sizeof(isa);
+	getsockname(s, (struct sockaddr *) &sock, &i);
 
-	getsockname(s, (struct sockaddr *) &isa, &i);
-
-	if ((fd = accept(s, (struct sockaddr *) &isa, &i)) < 0)
+	if ((fd = accept(s, (struct sockaddr *) &sock, &i)) < 0)
 	{
 		perror("chat_new: accept");
 
 		return -1;
+	}
+
+	if (fcntl(fd, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+	{
+		perror("chat_new: fcntl O_NDELAY|O_NONBLOCK");
 	}
 
 	if (HAS_BIT(gtd->chat->flags, CHAT_FLAG_DND))
@@ -223,13 +238,12 @@ int chat_new(int s)
 		return -1;
 	}
 
-/*	nonblock(fd); */
-
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
-	new_buddy->ip   = strdup(inet_ntoa(isa.sin_addr));
-	new_buddy->fd   = fd;
-	new_buddy->name = strdup("Unknown");
+	new_buddy->ip    = strdup(inet_ntoa(sock.sin_addr));
+	new_buddy->fd    = fd;
+	new_buddy->name  = strdup("Unknown");
+	new_buddy->group = strdup("");
 
 	new_buddy->timeout = CALL_TIMEOUT + time(NULL);
 
@@ -248,7 +262,7 @@ int chat_new(int s)
 void *threaded_chat_call(void *arg)
 {
 	int sock, dig;
-	char ip[BUFFER_SIZE], pn[BUFFER_SIZE];
+	char ip[BUFFER_SIZE], pn[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct sockaddr_in dest_addr;
 	struct chat_data *new_buddy;
 	struct timeval to;
@@ -256,7 +270,7 @@ void *threaded_chat_call(void *arg)
 
 	chat_printf("Attempting to call %s ...", arg);
 
-	to.tv_sec = CALL_TIMEOUT;                
+	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
 	arg = (void *) get_arg_in_braces((const char *) arg, ip, FALSE);
@@ -306,6 +320,8 @@ void *threaded_chat_call(void *arg)
 	{
 		chat_printf("Failed to connect to %s:%s", ip, pn);
 
+		close(sock);
+
 		return NULL;
 	}
 
@@ -317,6 +333,8 @@ void *threaded_chat_call(void *arg)
 	{
 		chat_printf("Failed to connect to %s %s", ip, pn);
 
+		close(sock);
+
 		return NULL;
 	}
 
@@ -324,22 +342,24 @@ void *threaded_chat_call(void *arg)
 	{
 		chat_printf("Connection timed out.");
 
+		close(sock);
+
 		return NULL;
 	}
 
-/*	nonblock(sock); */
-
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
+	new_buddy->ip    = strdup(ip);
+	new_buddy->port  = atoi(pn);
+	new_buddy->fd    = sock;
+	new_buddy->name  = strdup("");
+	new_buddy->group = strdup("");
+
+	strip_vt102_codes(gtd->chat->name, name);
+
+	chat_socket_printf(new_buddy, "CHAT:%s\n%s%-5u", name, gtd->chat->ip, gtd->chat->port);
+
 	chat_printf("Socket connected, negotiating protocol...");
-
-	new_buddy->ip   = strdup(ip);
-	new_buddy->port = atoi(pn);
-	new_buddy->fd   = sock;
-	new_buddy->name = strdup("");
-
-
-	chat_socket_printf(new_buddy, "CHAT:%s\n%s%-5u", gtd->chat->name, gtd->chat->ip, gtd->chat->port);
 
 	FD_ZERO(&rds);
 	FD_SET(sock, &rds);
@@ -367,6 +387,11 @@ void *threaded_chat_call(void *arg)
 	}
 	else
 	{
+		if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+		{
+			perror("chat_new: fcntl O_NDELAY|O_NONBLOCK");
+		}
+
 		LINK(new_buddy, gtd->chat->next, gtd->chat->prev);
 		chat_printf("Connection made to %s.", new_buddy->name);
 	}
@@ -390,73 +415,34 @@ void close_chat(struct chat_data *buddy, int unlink)
 {
 	buddy->flags = 0;
 
-	if (*buddy->name == 0)
-	{
-		chat_printf("Closing connection to %s D%d", buddy->ip, buddy->fd);
-	}
-	else
-	{
-		chat_printf("Closing connection to %s@%s.", buddy->name, buddy->ip);
-	}
-
 	if (unlink)
 	{
 		UNLINK(buddy, gtd->chat->next, gtd->chat->prev);
 	}
+
+	if (buddy != gtd->chat)
+	{
+		if (*buddy->name == 0)
+		{
+			chat_printf("Closing connection to %s D%d", buddy->ip, buddy->fd);
+		}
+		else
+		{
+			chat_printf("Closing connection to %s@%s.", buddy->name, buddy->ip);
+		}
+	}
+
 	STRFREE(buddy->name);
 	STRFREE(buddy->ip);
 	STRFREE(buddy->download);
 	STRFREE(buddy->version);
+	STRFREE(buddy->group);
 
 	close(buddy->fd);
 
 	free(buddy);
 }
 
-
-/*
-	Set a socket to nonblocking.
-*/
-
-void nonblock(int s)
-{
-	int flags;
-
-	if ((flags = fcntl(s, F_GETFL, 0)) == -1)
-	{
-		exit(1);
-	}
-
-	SET_BIT(flags, O_NONBLOCK);
-
-	if (fcntl(s, F_SETFL, flags) == -1)
-	{
-		perror("nonblock: fcntl");
-		exit(1);
-	}
-}
-
-/*
-	Set a socket to blocking.
-*/
-
-void block(int s)
-{
-	int flags;
-
-	if ((flags = fcntl(s, F_GETFL, 0)) == -1)
-	{
-		exit(1);
-  	}
-
-	DEL_BIT(flags, O_NONBLOCK);
-
-	if (fcntl(s, F_SETFL, flags) == -1)
-  	{
-  		perror("block: fcntl");
-  		exit(1);
-  	}
-}
 
 /*
 	Check for incoming calls and poll for input on 
@@ -486,6 +472,26 @@ void process_chat_connections(fd_set *input_set, fd_set *exc_set)
 	{
 		buddy_next = buddy->next;
 
+		if (HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST))
+		{
+			close_chat(buddy, TRUE);
+		}
+	}
+
+	for (buddy = gtd->chat->next ; buddy ; buddy = buddy_next)
+	{
+		buddy_next = buddy->next;
+
+		if (FD_ISSET(buddy->fd, exc_set))
+		{
+			close_chat(buddy, TRUE);
+		}
+	}
+
+	for (buddy = gtd->chat->next ; buddy ; buddy = buddy_next)
+	{
+		buddy_next = buddy->next;
+
 		if (FD_ISSET(buddy->fd, input_set))
 		{
 			if (process_chat_input(buddy) < 0)
@@ -507,10 +513,14 @@ void chat_socket_printf(struct chat_data *buddy, const char *format, ...)
 	vsprintf(buf, format, args);
 	va_end(args);
 
-	if (write(buddy->fd, buf, strlen(buf)) < 0)
+	if (!HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST))
 	{
-		chat_printf("%s went link lost.", buddy->name);
-		close_chat(buddy, TRUE);
+		if (write(buddy->fd, buf, strlen(buf)) < 0)
+		{
+			chat_printf("%s went link lost.", buddy->name);
+
+			SET_BIT(buddy->flags, CHAT_FLAG_LINKLOST);
+		}
 	}
 }
 
@@ -558,7 +568,7 @@ int process_chat_input(struct chat_data *buddy)
 {
 	struct chat_data *node;
 
-	char buf[BUFFER_SIZE], name[BUFFER_SIZE], ip[BUFFER_SIZE], *sep;
+	char buf[BUFFER_SIZE], name[BUFFER_SIZE], temp[BUFFER_SIZE], ip[BUFFER_SIZE], *sep;
 	int size;
 
 	push_call("process_chat_input(%p)",buddy);
@@ -581,13 +591,15 @@ int process_chat_input(struct chat_data *buddy)
 		{
 			*sep = 0;
 
-			strcpy(name, &buf[5]);
+			strcpy(temp, &buf[5]);
 			strcpy(ip,   &sep[1]);
 
 			if (strlen(ip) >= 5)
 			{
 				buddy->port = atoi(ip + strlen(ip) - 5);
 			}
+
+			strip_vt102_codes(temp, name);
 
 			RESTRING(buddy->name, name);
 
@@ -597,17 +609,37 @@ int process_chat_input(struct chat_data *buddy)
 			{
 				if (node != buddy && !strcasecmp(name, node->name))
 				{
-					chat_socket_printf(buddy, "%c\n%s is already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
+					if (!strcmp(buddy->ip, node->ip))
+					{
+						close_chat(node, TRUE);
+						break;
+					}
+					else
+					{
+						chat_socket_printf(buddy, "%c\n%s is already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
 
-					chat_printf("Refusing connection from %s:%d, already connected to someone named %s.", buddy->ip, buddy->port, name);
+						chat_printf("Refusing connection from %s:%d, already connected to someone named %s.", buddy->ip, buddy->port, name);
 
-					pop_call();
-					return -1;
+						pop_call();
+						return -1;
+					}
 				}
+			}
+
+			if (!strcasecmp(buddy->name, "ALL"))
+			{
+				chat_socket_printf(buddy, "%c\n%s is an invalid name.\n%c", CHAT_MESSAGE, name, CHAT_END_OF_COMMAND);
+
+				chat_printf("Refusing connection from %s:%d, %s is an invalid name.", buddy->ip, buddy->port, name);
+
+				pop_call();
+				return -1;
 			}
 		}
 
-		chat_socket_printf(buddy, "YES:%s\n", gtd->chat->name);
+		strip_vt102_codes(gtd->chat->name, name);
+
+		chat_socket_printf(buddy, "YES:%s\n", name);
 
 		chat_printf("Connected to %s@%s:%d", buddy->name, buddy->ip, buddy->port);
 
@@ -617,9 +649,11 @@ int process_chat_input(struct chat_data *buddy)
 
 	if (!strncmp(buf, "YES:", 4))
 	{
-		if (sscanf(buf, "YES:%s\n", name) == 1)
+		if (sscanf(buf, "YES:%s\n", temp) == 1)
 		{
-			buddy->name = strdup(name);
+			strip_vt102_codes(temp, name);
+
+			RESTRING(buddy->name, name);
 
 			chat_socket_printf(buddy, "%c%s%c", CHAT_VERSION, TINTIN_VERSION, CHAT_END_OF_COMMAND);
 
@@ -670,21 +704,34 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 		have to deal with these first
 	*/
 
-	while (*pti == CHAT_FILE_BLOCK)
+	while (*pti == CHAT_FILE_BLOCK || gtd->chat->file_block_patch)
 	{
-		receive_block((pti + 1), buddy);
-
-		len -= 502;
-
-		if (len <= 0)
+		if (gtd->chat->file_block_patch)
 		{
-			pop_call();
-			return;
+			len -= gtd->chat->file_block_patch;
+
+			receive_block(pti, buddy, gtd->chat->file_block_patch);
+
+			pti += gtd->chat->file_block_patch;
+
+			gtd->chat->file_block_patch = 0;
 		}
-		pti += 502;
+		else
+		{
+			receive_block((pti + 1), buddy, len - 1);
+
+			len -= 501;
+
+			if (len <= 0)
+			{
+				pop_call();
+				return;
+			}
+			pti += 501;
+		}
 	}
 
-	while (*pti)
+	while (*pti && buddy)
 	{
 		ptc = *pti++;
 		pto = txt;
@@ -718,8 +765,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 		switch (ptc)
 		{
 			case CHAT_NAME_CHANGE:
-				buddy->name = strdup(txt);
-				chat_printf("%s is now %s.\n", buddy->name, txt);
+				chat_name_change(buddy, txt);
 				break;
 
 			case CHAT_REQUEST_CONNECTIONS:
@@ -739,7 +785,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 				break;
 
 			case CHAT_TEXT_GROUP:
-				chat_socket_printf(buddy, "%c%s%c", CHAT_MESSAGE, "\nTintin++ does not yet support this.\n", CHAT_END_OF_COMMAND);
+				chat_receive_text_group(buddy, txt);
 				break;
 
 			case CHAT_MESSAGE:
@@ -781,10 +827,6 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 
 			case CHAT_FILE_BLOCK_REQUEST:
 				send_block(buddy);
-				break;
-
-			case CHAT_FILE_BLOCK:
-				receive_block(txt, buddy);
 				break;
 
 			case CHAT_FILE_END:
@@ -834,6 +876,47 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
  *  CHAT COMMUNICATION ROUTINES                                           *
  *************************************************************************/
 
+void chat_name_change(struct chat_data *buddy, char *txt)
+{
+	char temp[BUFFER_SIZE], name[BUFFER_SIZE];
+	struct chat_data *node;
+
+	strip_vt102_codes(txt, name);
+
+	for (node = gtd->chat ; node ; node = node->next)
+	{
+		if (node != buddy && !strcmp(name, node->name))
+		{
+			chat_socket_printf(buddy, "%c\n%s was already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
+
+			chat_printf("Refusing name change from %s@%s:%d, already connected to someone named %s.", buddy->name, buddy->ip, buddy->port, name);
+
+			close_chat(buddy, TRUE);
+
+			return;
+		}
+	}
+
+	if (!strcasecmp(name, "ALL"))
+	{
+		chat_socket_printf(buddy, "%c\n%s is an invalid name.\n%c", CHAT_MESSAGE, name, CHAT_END_OF_COMMAND);
+
+		chat_printf("Refusing name change from %s@%s:%d, %s is an invalid name.", buddy->name, buddy->ip, buddy->port, name);
+
+		close_chat(buddy, TRUE);
+
+		return;
+	}
+
+	if (strcmp(name, buddy->name))
+	{
+		strcpy(temp, buddy->name);
+
+		RESTRING(buddy->name, name);
+
+		chat_printf("%s is now %s.", temp, txt);
+	}
+}
 
 void chat_receive_text_everybody(struct chat_data *buddy, char *txt)
 {
@@ -852,7 +935,7 @@ void chat_receive_text_everybody(struct chat_data *buddy, char *txt)
 		{
 			if (node != buddy)
 			{
-				chat_socket_printf(node, "%c%s%c", CHAT_MESSAGE, txt, CHAT_END_OF_COMMAND);
+				chat_socket_printf(node, "%c\n%s %s[Served By %s%s]\n%c", CHAT_MESSAGE, txt, gtd->chat->color, gtd->chat->name, gtd->chat->color, CHAT_END_OF_COMMAND);
 			}
 		}
 	}
@@ -862,7 +945,7 @@ void chat_receive_text_everybody(struct chat_data *buddy, char *txt)
 		{
 			if (HAS_BIT(node->flags, CHAT_FLAG_SERVE))
 			{
-				chat_socket_printf(node, "%c%s%c", CHAT_SNOOP_DATA, txt, CHAT_END_OF_COMMAND);
+				chat_socket_printf(node, "%c\n%s %s[Served By %s%s]\n%c", CHAT_MESSAGE, txt, gtd->chat->color, gtd->chat->name, gtd->chat->color, CHAT_END_OF_COMMAND);
 			}
 		}
 	}
@@ -880,6 +963,18 @@ void chat_receive_text_personal(struct chat_data *buddy, char *txt)
 	chat_printf("%s", txt);
 }
 
+void chat_receive_text_group(struct chat_data *buddy, char *txt)
+{
+	if (HAS_BIT(buddy->flags, CHAT_FLAG_IGNORE))
+	{
+		return;
+	}
+
+	if (strlen(txt) > 16)
+	{
+		chat_printf("%s", &txt[16]);
+	}
+}
 
 void chat_receive_message(struct chat_data *buddy, char *txt)
 {
@@ -936,8 +1031,8 @@ void parse_peeked_connections(struct chat_data *buddy, char *txt)
 
 	comma = txt;
 
-	tintin_printf(NULL, " %-15s   %-15s   %-5s", "Name", "Address", "Port");
-	tintin_printf(NULL, " ---------------   ---------------   ----- ");
+	chat_printf(" %-15s   %-15s   %-5s", "Name", "Address", "Port");
+	chat_printf(" ---------------   ---------------   ----- ");
 
 	while (comma)
 	{
@@ -968,7 +1063,7 @@ void parse_peeked_connections(struct chat_data *buddy, char *txt)
 
 		if (*ip && *port && *name)
 		{
-			tintin_printf(NULL, " %-15s   %-15s   %-5s", name, ip, port);
+			chat_printf(" %-15s   %-15s   %-5s", name, ip, port);
 
 			*port = 0;
 			*ip   = 0;
@@ -1131,6 +1226,18 @@ DO_CHAT(chat_emote)
 
 			chat_socket_printf(buddy, "%c\n%s %s\n%c", CHAT_TEXT_PERSONAL, gtd->chat->name, right, CHAT_END_OF_COMMAND);
 		}
+		else if (find_group(left) != NULL)
+		{
+			chat_printf("You emote to %s: %s", left, right);
+
+			for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+			{
+				if (!strcmp(buddy->group, left))
+				{
+					chat_socket_printf(buddy, "%c%-15s\n%s %s\n%c", CHAT_TEXT_GROUP, buddy->group, gtd->chat->name, right, CHAT_END_OF_COMMAND);
+				}
+			}
+		}
 		else
 		{
 			chat_printf("You are not connected to anyone named '%s'.", left);
@@ -1188,6 +1295,18 @@ DO_CHAT(chat_message)
 
 			chat_socket_printf(buddy, "%c\n%s chats to you, '%s'\n%c", CHAT_TEXT_PERSONAL, gtd->chat->name, right, CHAT_END_OF_COMMAND);
 		}
+		else if (find_group(left) != NULL)
+		{
+			chat_printf("You chat to %s, '%s'", left, right);
+
+			for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+			{
+				if (!strcmp(buddy->group, left))
+				{
+					chat_socket_printf(buddy, "%c%-15s\n%s chats to the group, '%s'\n%c", CHAT_TEXT_GROUP, buddy->group, gtd->chat->name, right, CHAT_END_OF_COMMAND);
+				}
+			}
+		}
 		else
 		{
 			chat_printf("You are not connected to anyone named '%s'.", left);
@@ -1198,19 +1317,29 @@ DO_CHAT(chat_message)
 
 DO_CHAT(chat_name)
 {
+	char name[BUFFER_SIZE], temp[BUFFER_SIZE];
 	struct chat_data *buddy;
 
-	if (!strcmp(gtd->chat->name, arg))
+	substitute(gtd->ses, arg, name, SUB_COL|SUB_ESC);
+
+	if (!strcmp(gtd->chat->name, name))
 	{
 		chat_printf("Your name is already set to %s.", gtd->chat->name);
 
 		return;
 	}
-	RESTRING(gtd->chat->name, arg);
+	strip_vt102_codes(gtd->chat->name, temp);
 
-	for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+	RESTRING(gtd->chat->name, name);
+
+	strip_vt102_codes(gtd->chat->name, name);
+
+	if (strcmp(name, temp))
 	{
-		chat_socket_printf(buddy, "%c%s%c", CHAT_NAME_CHANGE, gtd->chat->name, CHAT_END_OF_COMMAND);
+		for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+		{
+			chat_socket_printf(buddy, "%c%s%c", CHAT_NAME_CHANGE, name, CHAT_END_OF_COMMAND);
+		}
 	}
 	chat_printf("Name changed to %s.", gtd->chat->name);
 }
@@ -1260,6 +1389,18 @@ DO_CHAT(chat_paste)
 				chat_printf("You paste to %s:\n%s", buddy->name, gtd->chat->paste_buf);
 	
 				chat_socket_printf(buddy, "%c\n%s pastes to you:\n%s\n%c", CHAT_TEXT_EVERYBODY, gtd->chat->name, gtd->chat->paste_buf, CHAT_END_OF_COMMAND);
+			}
+			else if (find_group(left) != NULL)
+			{
+				chat_printf("You paste to %s:\n%s", left, gtd->chat->paste_buf);
+
+				for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+				{
+					if (!strcmp(buddy->group, left))
+					{
+						chat_socket_printf(buddy, "%c%-15s\n%s pastes to the group:\n%s\n%c", CHAT_TEXT_GROUP, buddy->group, gtd->chat->name, gtd->chat->paste_buf, CHAT_END_OF_COMMAND);
+					}
+				}
 			}
 			else
 			{
@@ -1368,6 +1509,46 @@ DO_CHAT(chat_request)
 	return;
 }
 
+
+DO_CHAT(chat_send)
+{
+	struct chat_data *buddy;
+	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, temp, TRUE);
+
+	substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+
+	if (!strcasecmp(left, "ALL"))
+	{
+		for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+		{
+			chat_socket_printf(buddy, "%s", right);
+		}
+	}
+	else
+	{
+		if ((buddy = find_buddy(left)) != NULL)
+		{
+			chat_socket_printf(buddy, "%s", right);
+		}
+		else if (find_group(left) != NULL)
+		{
+			for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+			{
+				if (!strcmp(buddy->group, left))
+				{
+					chat_socket_printf(buddy, "%s", right);
+				}
+			}
+		}
+		else
+		{
+			chat_printf("You are not connected to anyone named '%s'.", left);
+		}
+	}
+}
 
 DO_CHAT(chat_serve)
 {
@@ -1489,7 +1670,7 @@ DO_CHAT(chat_accept)
 		I'm sending 3 requests here to speed things up. - Scandum
 	*/
 
-	if (buddy->file_block_tot >= 10 && !strcasecmp(right, "boost"))
+	if (buddy->file_block_tot >= 10 && *right == 'b')
 	{
 		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
 		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
@@ -1757,10 +1938,7 @@ void send_block(struct chat_data *buddy)
 		}
 		*pto++ = (unsigned char) c;
 	}
-	*pto++ = CHAT_END_OF_COMMAND;
-	*pto++ = 0;
-
-	write(buddy->fd, block, 502);
+	write(buddy->fd, block, 501);
 
 	buddy->file_block_cnt++;
 
@@ -1775,8 +1953,6 @@ void send_block(struct chat_data *buddy)
 			buddy->name,
 			1000LL * buddy->file_size / (utime() - buddy->file_start_time),
 			10000LL * buddy->file_size / (utime() - buddy->file_start_time) % 10);
-			
-			
 
 		chat_socket_printf(buddy, "%c%c", CHAT_FILE_END, CHAT_END_OF_COMMAND);
 
@@ -1788,17 +1964,26 @@ void send_block(struct chat_data *buddy)
 	Receive BLOCK_SIZE bytes of data for file sent by buddy.
 */
 
-void receive_block(unsigned char *s, struct chat_data *buddy)
+void receive_block(unsigned char *s, struct chat_data *buddy, int len)
 {
-	int len;
+	int size;
 
 	if (buddy->file_pt == NULL)
 	{
 		return;
 	}
 
+	if (gtd->chat->file_block_patch == 0 && buddy->file_block_cnt + 1 != buddy->file_block_tot && len < 500)
+	{
+		gtd->chat->file_block_patch = 500 - len;
+
+		fwrite(s, 1, len - 1, buddy->file_pt);
+
+		return;
+	}
+
 	/*
-		keep track of blocks recvd so we know when we are done
+		keep track of blocks received so we know when we are done
 	*/
 
 	buddy->file_block_cnt++;
@@ -1809,8 +1994,13 @@ void receive_block(unsigned char *s, struct chat_data *buddy)
 
 	if (buddy->file_block_cnt == buddy->file_block_tot)
 	{
-		len = buddy->file_size % BLOCK_SIZE;
-		fwrite(s, 1, len, buddy->file_pt);
+		size = buddy->file_size % BLOCK_SIZE;
+
+		if (gtd->chat->file_block_patch)
+		{
+			size -= BLOCK_SIZE - gtd->chat->file_block_patch;
+		}
+		fwrite(s, 1, size, buddy->file_pt);
 
 		chat_printf("Transfer of %s completed, size: %lld, speed: %lld.%lld KB/s.",
 			buddy->file_name,
@@ -1822,7 +2012,15 @@ void receive_block(unsigned char *s, struct chat_data *buddy)
 	}
 	else
 	{
-		fwrite(s, 1, BLOCK_SIZE, buddy->file_pt);
+		if (gtd->chat->file_block_patch)
+		{
+			size = len;
+		}
+		else
+		{
+			size = BLOCK_SIZE;
+		}
+		fwrite(s, 1, size, buddy->file_pt);
 
 		chat_socket_printf(buddy, "%c%c", CHAT_FILE_BLOCK_REQUEST, CHAT_END_OF_COMMAND);
 	}
@@ -1952,6 +2150,54 @@ DO_CHAT(chat_filestat)
 }
 
 
+DO_CHAT(chat_group)
+{
+	struct chat_data *buddy;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	int cnt = 0;
+
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
+
+	if (*left == 0)
+	{
+		tintin_printf(NULL, "     %-15s  %-20s  %-5s  %-15s", "Name", "Address", "Port", "Group");
+		tintin_printf(NULL, "     ===============  ====================  =====  ==================== ");
+
+		for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+		{
+			tintin_printf(NULL, " %03d %-15s  %-20s  %-5u  %-20s",
+				cnt++,
+				buddy->name,
+				buddy->ip,
+				buddy->port,
+				buddy->group);
+		}
+		tintin_printf(NULL, "     ===============  ====================  =====  ==================== ");
+	}
+	else if (!strcasecmp(left, "ALL"))
+	{
+		chat_printf("You set everyone's group to '%s'", right);
+
+		for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+		{
+			RESTRING(buddy->group, right);
+		}
+	}
+	else
+	{
+		if ((buddy = find_buddy(left)) != NULL)
+		{
+			RESTRING(buddy->group, right);
+
+			chat_printf("You set %s's group to '%s'", buddy->name, right);
+		}
+		else
+		{
+			chat_printf("You are not connected to anyone named '%s'.", left);
+		}
+	}
+}
 
 /*
 	TOGGLE FUNCTIONS
@@ -2207,6 +2453,26 @@ struct chat_data *find_buddy(const char *arg)
 		}
 	}
 
+	return NULL;
+}
+
+
+struct chat_data *find_group(const char *arg)
+{
+	struct chat_data *buddy;
+
+	if (*arg == 0)
+	{
+		return NULL;
+	}
+
+	for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+	{
+		if (!strcmp(arg, buddy->group))
+		{
+			return buddy;
+		}
+	}
 	return NULL;
 }
 

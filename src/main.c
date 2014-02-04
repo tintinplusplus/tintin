@@ -39,6 +39,19 @@
 struct session *gts;
 struct tintin_data *gtd;
 
+RETSIGTYPE pipe_handler(int no_care)
+{
+	tintin_printf(NULL, "broken_pipe: dumping stack");
+
+	dump_stack();
+
+	if (signal(SIGPIPE, pipe_handler) == BADSIG)
+	{
+		syserr("signal SIGPIPE");
+	}
+
+}
+
 /*
 	when the screen size changes, take note of it
 */
@@ -134,6 +147,11 @@ int main(int argc, char **argv)
 	if (signal(SIGINT, myquitsig) == BADSIG)
 	{
 		syserr("signal SIGINT");
+	}
+
+	if (signal(SIGPIPE, pipe_handler) == BADSIG)
+	{
+		syserr("signal SIGPIPE");
 	}
 
 	if (signal(SIGWINCH, winchhandler) == BADSIG)

@@ -310,9 +310,11 @@ DO_COMMAND(do_return)
 
 DO_COMMAND(do_send)
 {
-	char out[BUFFER_SIZE];
+	char left[BUFFER_SIZE], out[BUFFER_SIZE];
 
-	substitute(ses, arg, out, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
+	get_arg_in_braces(arg, left, TRUE);
+
+	substitute(ses, left, out, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
 	write_line_mud(out, ses);
 

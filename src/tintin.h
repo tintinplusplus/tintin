@@ -161,7 +161,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define CLASS_MAX                      5
 
-#define ARRAY_MAX                      5
+#define ARRAY_MAX                      6
 
 /*
 	Various flags
@@ -211,6 +211,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define CHAT_FLAG_FORWARDBY           (1 <<  6)
 #define CHAT_FLAG_FORWARDALL          (1 <<  7)
 #define CHAT_FLAG_DND                 (1 <<  8)
+#define CHAT_FLAG_LINKLOST            (1 <<  9)
 
 #define SUB_NONE                      0
 #define SUB_ARG                       (1 <<  0)
@@ -492,6 +493,7 @@ struct chat_data
 	char                  * reply;
 	char                  * paste_buf;
 	char                  * color;
+	char                  * group;
 	int                     port;
 	int                     fd;
 	time_t                  timeout;
@@ -502,6 +504,7 @@ struct chat_data
 	long long               file_size;
 	int                     file_block_cnt;
 	int                     file_block_tot;
+	int                     file_block_patch;
 	long long               file_start_time;
 };
 
@@ -559,7 +562,7 @@ struct str_hash_data
 	struct str_hash_data    * next;
 	struct str_hash_data    * prev;
 	unsigned short            count;
-     unsigned short            flags;
+	unsigned short            flags;
 	unsigned short            lines;
 	unsigned short            hash;
 };
@@ -620,6 +623,7 @@ extern DO_COMMAND(do_list);
 
 extern DO_ARRAY(array_ins);
 extern DO_ARRAY(array_del);
+extern DO_ARRAY(array_fnd);
 extern DO_ARRAY(array_get);
 extern DO_ARRAY(array_len);
 extern DO_ARRAY(array_set);
@@ -639,6 +643,7 @@ extern DO_CHAT(chat_dnd);
 extern DO_CHAT(chat_downloaddir);
 extern DO_CHAT(chat_emote);
 extern DO_CHAT(chat_filestat);
+extern DO_CHAT(chat_group);
 extern DO_CHAT(chat_forward);
 extern DO_CHAT(chat_forwardall);
 extern DO_CHAT(chat_ignore);
@@ -654,25 +659,27 @@ extern DO_CHAT(chat_private);
 extern DO_CHAT(chat_public);
 extern DO_CHAT(chat_reply);
 extern DO_CHAT(chat_request);
+extern DO_CHAT(chat_send);
 extern DO_CHAT(chat_sendfile);
 extern DO_CHAT(chat_transfer);
 extern DO_CHAT(chat_serve);
+extern DO_CHAT(chat_uninitialize);
 extern DO_CHAT(chat_who);
 extern DO_CHAT(chat_zap);
 
 extern  int chat_new(int s);
 extern void chat_call(const char *ip);
 extern void close_chat(struct chat_data *buddy, int unlink);
-extern void nonblock(int s);
-extern void block(int s);
 extern void process_chat_connections(fd_set *input_set, fd_set *exc_set);
 extern void chat_forward_session(struct session *ses, char *linelog);
 extern void chat_socket_printf(struct chat_data *buddy, const char *format, ...);
 extern void chat_printf(const char *format, ...);
 extern  int process_chat_input(struct chat_data *buddy);
 extern void get_chat_commands(struct chat_data *buddy, char *buf, int len);
+extern void chat_name_change(struct chat_data *buddy, char *txt);
 extern void chat_receive_text_everybody(struct chat_data *buddy, char *txt);
 extern void chat_receive_text_personal(struct chat_data *buddy, char *txt);
+extern void chat_receive_text_group(struct chat_data *buddy, char *txt);
 extern void chat_receive_message(struct chat_data *buddy, char *txt);
 extern void chat_receive_snoop_data(struct chat_data *buddy, char *txt);
 
@@ -687,7 +694,7 @@ extern void parse_peeked_connections(struct chat_data *buddy, char *txt);
 
 extern void chat_receive_file(char *arg, struct chat_data *ch);
 extern void send_block(struct chat_data *ch);
-extern void receive_block(unsigned char *s, struct chat_data *ch);
+extern void receive_block(unsigned char *s, struct chat_data *ch, int size);
 extern void deny_file(struct chat_data *ch, char *arg);
 extern void file_denied(struct chat_data *ch, char *txt);
 extern void file_cleanup(struct chat_data *buddy);
@@ -696,6 +703,7 @@ extern int get_file_size(char *fpath);
 
 extern void chat_puts(char *arg);
 extern struct chat_data *find_buddy(const char *arg);
+extern struct chat_data *find_group(const char *arg);
 extern char *fix_file_name(char *name);
 
 
@@ -715,8 +723,8 @@ extern void check_character_mode(struct session *ses);
 #define __CLASS_H__
 
 extern DO_COMMAND(do_class);
-extern DO_COMMAND(do_unclass);
 extern int count_class(struct session *ses, struct listnode *class);
+extern void kill_classes(struct session *ses);
 extern DO_CLASS(class_open);
 extern DO_CLASS(class_close);
 extern DO_CLASS(class_read);

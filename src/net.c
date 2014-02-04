@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 /**************************************************/
 /* try connect to the mud specified by the args   */
@@ -44,10 +45,10 @@
 
 int connect_mud(const char *host, const char *port, struct session *ses)
 {
-	int sock;
+	int sock, d;
 	struct sockaddr_in sockaddr;
 
-	if (isdigit(*host))                            /* interprete host part */
+	if (sscanf(host, "%d.%d.%d.%d", &d, &d, &d, &d) == 4)
 	{
 		sockaddr.sin_addr.s_addr = inet_addr(host);
 	}
@@ -87,6 +88,11 @@ int connect_mud(const char *host, const char *port, struct session *ses)
 		close(sock);
 
 		return 0;
+	}
+
+	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+	{
+		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
 	}
 
 	return sock;

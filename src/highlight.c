@@ -123,6 +123,11 @@ void check_all_highlights(char *original, char *line, struct session *ses)
 
 			pt1 = strstr(original, buf1) ? original : line;
 			pt2 = strstr(pt1, buf1);
+
+			if (pt2 == NULL)
+			{
+				break;
+			}
 			*pt2 = 0;
 			pt3 = pt2 + strlen(buf1);
 

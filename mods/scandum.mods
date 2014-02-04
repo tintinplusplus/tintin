@@ -968,3 +968,23 @@ llist.c        Issueing #tick {name} twice will now reset the ticker.
 math.c         Fixed invalid input handling.
 
 misc.c         Snooping a non existant session no longer crashes tintin.
+
+
+April 2006     - 1.96.0
+
+llist.c        Rewrote #killall to accept arguments to kill specific lists.
+
+chat.c         Added #chat unitialize
+
+chat.c         Added basic support for group chats.
+
+chat.c         Added support for colored names.
+
+highlight.c    Fixed crash bug for invalid highlights.
+
+class.c        Fixed crash bug with #killall related to classes.
+
+chat.c         Added #chat send which allows sending custom chat commands.
+
+chat.c         Fixed link lost crash bug.
+

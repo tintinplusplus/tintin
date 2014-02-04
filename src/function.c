@@ -49,7 +49,7 @@
 
 DO_COMMAND(do_function)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], *pti;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], *pti;
 	struct listroot *root;
 
 	root = ses->list[LIST_FUNCTION];
@@ -82,9 +82,7 @@ DO_COMMAND(do_function)
 				break;
 			}
 		}
-		substitute(ses, right, temp, SUB_FUN);
-
-		updatenode_list(ses, left, temp, "0", LIST_FUNCTION);
+		updatenode_list(ses, left, right, "0", LIST_FUNCTION);
 
 		show_message(ses, LIST_FUNCTION, "#OK. {%s} IS NOW A FUNCTION.", left);
 	}

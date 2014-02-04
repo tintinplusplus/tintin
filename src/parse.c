@@ -54,27 +54,24 @@ struct session *parse_input(char *input, struct session *ses)
 		return(ses);
 	}
 
-	if (ses != gts)
+	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char)
 	{
-		if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char)
-		{
-			sprintf(command, "%s\r\n", input);
+		sprintf(command, "%s\r\n", input);
 
-			write_line_mud(command, ses);
+		write_line_mud(command, ses);
 
-			pop_call();
-			return(ses);
-		}
+		pop_call();
+		return(ses);
+	}
 
-		if (*input == gtd->verbatim_char)
-		{
-			sprintf(command, "%s\r\n", &input[1]);
+	if (*input == gtd->verbatim_char)
+	{
+		sprintf(command, "%s\r\n", &input[1]);
 
-			write_line_mud(command, ses);
+		write_line_mud(command, ses);
 
-			pop_call();
-			return ses;
-		}
+		pop_call();
+		return ses;
 	}
 
 	while (*input)
@@ -105,6 +102,8 @@ struct session *parse_input(char *input, struct session *ses)
 
 			if (check_all_aliases(command, arg, ses))
 			{
+				DEL_BIT(gts->flags, SES_FLAG_USERCOMMAND);
+
 				ses = parse_input(command, ses);
 			}
 			else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && !*arg && is_speedwalk_dirs(command))
