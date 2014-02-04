@@ -32,19 +32,10 @@
 #include <sys/stat.h>
 
 /*
-	read and execute a command file
+	read and execute a command file, supports multi lines - Scandum
 */
 
 DO_COMMAND(do_read)
-{
-	return readfile(ses, arg, NULL);
-}
-
-/*
-	Rewritten from scratch since old version wasn't working - Scandum
-*/
-
-struct session *readfile(struct session *ses, const char *arg, struct listnode *class)
 {
 	FILE *fp;
 	struct stat filedata;
@@ -291,14 +282,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 		if (bufi[0])
 		{
-			if (class == NULL || HAS_BIT(class->data, NODE_FLAG_CLASS))
-			{
-				ses = parse_input(bufi, ses);
-			}
-			else
-			{
-				parse_class(ses, bufi, class);
-			}
+			ses = parse_input(bufi, ses);
 		}
 		pto = bufi;
 		pti++;

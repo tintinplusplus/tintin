@@ -84,6 +84,14 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 	char linebuf[BUFFER_SIZE], linelog[BUFFER_SIZE];
 	char *pti, *pto;
 	int lines;
+	int sav_row, sav_col, cur_row, cur_col, top_row, bot_row;
+
+	sav_row = ses->sav_row;
+	sav_col = ses->sav_col;
+	cur_row = ses->cur_row;
+	cur_col = ses->cur_col;
+	top_row = ses->top_row;
+	bot_row = ses->bot_row;
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP))
 	{
@@ -111,7 +119,7 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 	{
 		while (skip_vt102_codes_non_graph(pti))
 		{
-			interpret_vt102_codes(ses, pti);
+			interpret_vt102_codes(ses, pti, FALSE);
 
 			pti += skip_vt102_codes_non_graph(pti);
 		}
@@ -146,6 +154,11 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 		logit(ses, linelog, ses->logfile);
 	}
 
+	if (gtd->chat)
+	{
+		chat_forward_session(ses, linelog);
+	}
+
 	if (ses->logline)
 	{
 		logit(ses, linelog, ses->logline);
@@ -163,6 +176,14 @@ void add_line_buffer(struct session *ses, const char *line, int more_output)
 	{
 		ses->buffer[ses->scroll_row] = str_unhash(ses->buffer[ses->scroll_row]);
 	}
+
+	ses->sav_row = sav_row;
+	ses->sav_col = sav_col;
+	ses->cur_row = cur_row;
+	ses->cur_col = cur_col;
+	ses->top_row = top_row;
+	ses->bot_row = bot_row;
+
 	return;
 }
 

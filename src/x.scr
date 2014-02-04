@@ -247,3 +247,17 @@ oops 5
         #return pri&0
     }
 }
+
+#alias boss
+{
+	#format rows %R;
+	#loop {1 $rows}
+	{
+		#echo {in-order traverse of tree starting from node %+2m resulted in %+2m red nodes}
+		{
+			{$loop}
+			{$rows - $loop}
+		}
+	};
+	#buffer lock
+}

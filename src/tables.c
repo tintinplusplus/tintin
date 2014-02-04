@@ -83,6 +83,7 @@ const struct command_type command_table[] =
 	{	"return",            do_return,            CMD_FLAG_NONE    },
 	{	"savepath",          do_savepath,          CMD_FLAG_SUB     },
 	{	"scan",              do_scan,              CMD_FLAG_SUB     },
+	{	"send",              do_send,              CMD_FLAG_NONE    },
 	{	"session",           do_session,           CMD_FLAG_SUB     },
 	{	"showme",            do_showme,            CMD_FLAG_SUB     },
 	{	"snoop",             do_snoop,             CMD_FLAG_SUB     },
@@ -95,6 +96,7 @@ const struct command_type command_table[] =
 	{	"ticker",            do_tick,              CMD_FLAG_NONE    },
 	{	"unaction",          do_unaction,          CMD_FLAG_NONE    },
 	{	"unalias",           do_unalias,           CMD_FLAG_NONE    },
+	{    "unclass",           do_unclass,           CMD_FLAG_NONE    },
 	{	"unfunction",        do_unfunction,        CMD_FLAG_NONE    },
 	{	"ungag",             do_ungag,             CMD_FLAG_NONE    },
 	{	"unhighlight",       do_unhighlight,       CMD_FLAG_NONE    },
@@ -127,8 +129,8 @@ const struct list_type list_table[LIST_ALL] =
 	{
 		"ALIAS",
 		"ALIASES",
-		ALPHA,
-		2
+		PRIORITY,
+		3
 
 	},
 	{
@@ -218,7 +220,7 @@ const struct list_type list_table[LIST_ALL] =
 		"MATH",
 		"MATHEMATICS",
 		APPEND,
-		0
+		3
 	},
 
 	{
@@ -226,6 +228,13 @@ const struct list_type list_table[LIST_ALL] =
 		"DELAYS",
 		PRIORITY,
 		3
+	},
+
+	{
+		"HISTORY",
+		"HISTORIES",
+		APPEND,
+		1
 	}
 };
 
@@ -358,11 +367,12 @@ const struct config_type config_table[] =
 	}
 };
 
-const struct color_type color_table[COLOR_MAX] =
+const struct color_type color_table[] =
 {
 	{	"reset",          "0", "<088>" },
 	{	"light",          "1", "<188>" },
-	{	"faint",          "2", "<288>" },
+	{	"bold",           "1", "<188>" },
+	{    "faint",          "2", "<288>" },
 	{	"underscore",     "4", "<488>" },
 	{	"blink",          "5", "<588>" },
 	{	"reverse",        "7", "<788>" },
@@ -414,15 +424,18 @@ const struct class_type class_table[CLASS_MAX] =
 	}
 };
 
-const struct chat_type chat_table[CHAT_MAX] =
+const struct chat_type chat_table[] =
 {
 	{     "ACCEPT",                    chat_accept            },
 	{     "CALL",                      chat_call              },
 	{     "CANCELFILE",                chat_cancelfile        },
+	{     "COLOR",                     chat_color             },
 	{     "DECLINE",                   chat_decline           },
+	{     "DND",                       chat_dnd               },
 	{     "DOWNLOADDIR",               chat_downloaddir       },
 	{     "EMOTE",                     chat_emote             },
 	{     "FORWARD",                   chat_forward           },
+	{     "FORWARDALL",                chat_forwardall        },
 	{     "FILESTAT",                  chat_filestat          },
 	{     "IGNORE",                    chat_ignore            },
 	{     "INITIALIZE",                chat_initialize        },
@@ -434,12 +447,14 @@ const struct chat_type chat_table[CHAT_MAX] =
 	{     "PEEK",                      chat_peek              },
 	{     "PING",                      chat_ping              },
 	{     "PRIVATE",                   chat_private           },
+	{     "PUBLIC",                    chat_public            },
 	{     "REPLY",                     chat_reply             },
 	{     "REQUEST",                   chat_request           },
 	{     "SENDFILE",                  chat_sendfile          },
 	{     "SERVE",                     chat_serve             },
 	{     "WHO",                       chat_who               },
-	{     "ZAP",                       chat_zap               }
+	{     "ZAP",                       chat_zap               },
+	{     "",                          NULL                   }
 };
 
 

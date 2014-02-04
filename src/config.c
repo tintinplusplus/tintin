@@ -59,7 +59,7 @@ DO_COMMAND(do_configure)
 	}
 	else
 	{
-		for (cnt = 0 ; cnt < *config_table[cnt].name != 0 ; cnt++)
+		for (cnt = 0 ; *config_table[cnt].name != 0 ; cnt++)
 		{
 			if (is_abbrev(left, config_table[cnt].name))
 			{

@@ -37,115 +37,80 @@
 int word_wrap(struct session *ses, const char *textin, char *textout, int scroll)
 {
 	char *pti, *pto, *lis, *los;
-	int len = 0, skip = 0, cnt = 0;
+	int skip = 0, cnt = 0;
 
 	pti = lis = (char *) textin;
 	pto = los = (char *) textout;
 
+	ses->cur_col = 1;
+
 	while (*pti != 0)
 	{
-		if (*pti == ESCAPE)
+		if (skip_vt102_codes(pti))
 		{
-			interpret_vt102_codes(ses, pti);
-
-			for (skip = skip_vt102_codes(pti) ; skip > 0 ; skip--)
+			if (interpret_vt102_codes(ses, pti, TRUE))
 			{
-				*pto = *pti;
-				pto++;
-				pti++;
+				for (skip = skip_vt102_codes(pti) ; skip > 0 ; skip--)
+				{
+					*pto++ = *pti++;
+				}
 			}
-			continue;
-		}
-
-		*pto = *pti;
-
-		if (*pti == '\r')
-		{
-			pti++;
+			else
+			{
+				pti += skip_vt102_codes(pti);
+			}
 			continue;
 		}
 
 		if (*pti == '\n')
 		{
-			if (pti[1] == 0)
-			{
-				break;
-			}
-			pto++;
-			pti++;
 			*pto++ = '\r';
+			*pto++ = *pti++;
 			cnt = cnt + 1;
-			len = 0;
 			los = pto;
 			lis = pti;
+
+			ses->cur_col = 1;
 
 			continue;
 		}
 
-		if (*pti == ' ')
+		if (*pti == ' ' && HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
 		{
 			los = pto;
 			lis = pti;
 		}
-		pto++;
-		pti++;
-		len++;
 
-		if (len >= ses->cols)
+		if (ses->cur_col > ses->cols)
 		{
-			if (!SCROLL(ses) && scroll)
+			cnt++;
+			ses->cur_col = 1;
+
+			if (pto - los > 15 || !SCROLL(ses))
 			{
-				len = 0;
-				los = pto;
-				lis = pti;
-
-				continue;
-			}
-
-			while (*pti == ESCAPE)
-			{
-				interpret_vt102_codes(ses, pti);
-
-				for (skip = skip_vt102_codes(pti) ; skip > 0 ; skip--)
-				{
-					*pto = *pti;
-					pto++;
-					pti++;
-				}
-			}
-
-			if (*pti == '\0')
-			{
-				break;
-			}
-
-			if (*pti == ' ')
-			{
-				los = pto;
-				lis = pti;
-			}
-
-			if (pto - los > 15 || !HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
-			{
-				*pto = '\n';
-				pto++;
 				*pto = '\r';
 				pto++;
+				*pto = '\n';
+				pto++;
+				los = pto;
+				lis = pti;
 			}
 			else
 			{
-				 pto = los;
-				 *pto = '\n';
-				 pto++;
-				 *pto = '\r';
-				 pto++;
-				 pti = lis;
-				 pti++;
+				pto = los;
+				*pto = '\r';
+				pto++;
+				*pto = '\n';
+				pto++;
+				pti = lis;
+				pti++;
 			}
-			cnt = cnt + 1;
-			len = 0;
-			los = pto;
-			lis = pti;
+		}
+		else
+		{
+			ses->cur_col++;
+
+			*pto++ = *pti++;
 		}
 	}
 	*pto = 0;

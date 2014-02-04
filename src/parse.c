@@ -37,9 +37,6 @@
 struct session *parse_input(char *input, struct session *ses)
 {
 	char command[BUFFER_SIZE], arg[BUFFER_SIZE];
-	char *pti, *pta;
-	struct listnode *ln;
-	int i;
 
 	if (push_call("[%s] parse_input(%s,%p)",ses->name,input,ses))
 	{
@@ -80,57 +77,44 @@ struct session *parse_input(char *input, struct session *ses)
 		}
 	}
 
-	pti = input;
-
-	while (*pti)
+	while (*input)
 	{
-		if (*pti == ';')
+		if (*input == ';')
 		{
-			if (*++pti == 0)
+			if (*++input == 0)
 			{
 				break;
 			}
 		}
-		pti = (char *) get_arg_stop_spaces(pti, arg);
+		input = (char *) get_arg_stop_spaces(input, arg);
 
 		substitute(ses, arg, command, SUB_VAR|SUB_FUN);
 
-		pti = (char *) get_arg_all(pti, arg);
+		input = (char *) get_arg_all(input, arg);
 
 		if (*command == gtd->tintin_char)
 		{
 			ses = parse_tintin_command(command + 1, arg, ses);
 		}
-		else if ((ln = searchnode_list_begin(ses->list[LIST_ALIAS], command, ALPHA)))
-		{
-			if (!HAS_BIT(ses->list[LIST_ALIAS]->flags, LIST_FLAG_DEBUG))
-			{
-				DEL_BIT(ses->flags, SES_FLAG_USERCOMMAND); 
-			}
-			strcpy(gtd->vars[0], arg);
-
-			pta = arg;
-
-			for (i = 1 ; i < 10 ; i++)
-			{
-				pta = (char *) get_arg_in_braces(pta, gtd->vars[i], FALSE);
-			}
-			substitute(ses, ln->right, command, SUB_ARG);
-
-			if (!strcmp(ln->right, command) && *arg)
-			{
-				sprintf(command, "%s %s", ln->right, arg);
-			}
-			ses = parse_input(command, ses);
-		}
-		else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && !*arg && is_speedwalk_dirs(command))
-		{
-			process_speedwalk(command, ses);
-		}
 		else
 		{
-			get_arg_with_spaces(arg, arg);
-			write_com_arg_mud(command, arg, ses);
+			if (*arg)
+			{
+				cat_sprintf(command, " %s", arg);
+			}
+
+			if (check_all_aliases(command, arg, ses))
+			{
+				ses = parse_input(command, ses);
+			}
+			else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && !*arg && is_speedwalk_dirs(command))
+			{
+				process_speedwalk(command, ses);
+			}
+			else
+			{
+				write_mud(ses, command);
+			}
 		}
 		if (HAS_BIT(ses->flags, SES_FLAG_BREAK))
 		{
@@ -203,7 +187,7 @@ void process_speedwalk(const char *cp, struct session *ses)
 
 			for (i = 0 ; i < loopcnt ; i++)
 			{
-				write_com_arg_mud(sc, "", ses);
+				write_mud(ses, sc);
 			}
 			while (*cp != sc[0])
 			{
@@ -214,7 +198,7 @@ void process_speedwalk(const char *cp, struct session *ses)
 		{
 			sc[0] = *cp;
 
-			write_com_arg_mud(sc, "", ses);
+			write_mud(ses, sc);
 		}
 	}
 	pop_call();
@@ -529,11 +513,11 @@ const char *space_out(const char *s)
 	send command+argument to the mud
 */
 
-void write_com_arg_mud(const char *command, const char *argument, struct session *ses)
+void write_mud(struct session *ses, const char *command)
 {
-	char temp[BUFFER_SIZE], outtext[BUFFER_SIZE];
+	char output[BUFFER_SIZE];
 
-	if (ses->in_room && argument[0] == 0)
+	if (ses->in_room)
 	{
 		follow_map(ses, command);
 	}
@@ -543,17 +527,9 @@ void write_com_arg_mud(const char *command, const char *argument, struct session
 		check_insert_path(command, ses);
 	}
 
-	if (*argument == 0)
-	{
-		strcpy(temp, command);
-	}
-	else
-	{
-		sprintf(temp, "%s %s", command, argument);
-	}
-	substitute(ses, temp, outtext, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
+	substitute(ses, command, output, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
-	write_line_mud(outtext, ses);
+	write_line_mud(output, ses);
 }
 
 
@@ -570,10 +546,14 @@ void do_one_line(char *line, struct session *ses)
 
 	strip_vt102_codes(line, strip);
 
+	push_call("1");
+
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_actions(line, strip, ses);
 	}
+
+	push_call("2");
 
 	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
 	{
@@ -583,15 +563,21 @@ void do_one_line(char *line, struct session *ses)
 		}
 	}
 
+	push_call("3");
+
 	if (!HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_substitutions(line, strip, ses);
 	}
 
+	push_call("4");
+
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_highlights(line, strip, ses);
 	}
+	pop_call(); pop_call(); pop_call(); pop_call();
+
 	pop_call();
 	return;
 }

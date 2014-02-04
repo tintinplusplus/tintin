@@ -15,7 +15,7 @@
                                  VERSION 1.9 
 
 
-              Original documentation by Joann Ellsworth (C) 1994
+                  Original documentation by Joann Ellsworth
 
 
                              Table of Contents
@@ -1967,7 +1967,7 @@
 
 /******************************************************************************
 *   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   Copyright (C) 2006 (See CREDITS file)                                     *
 *                                                                             *
 *   This program is protected under the GNU GPL (See COPYING)                 *
 *                                                                             *

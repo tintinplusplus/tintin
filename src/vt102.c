@@ -36,6 +36,7 @@ void save_pos(struct session *ses)
 	printf("\0337"); 
 
 	ses->sav_row = ses->cur_row;
+	ses->sav_col = ses->cur_col;
 }
 
 
@@ -44,6 +45,7 @@ void restore_pos(struct session *ses)
 	printf("\0338"); 
 
 	ses->cur_row = ses->sav_row;
+	ses->cur_col = ses->sav_col;
 }
 
 
@@ -69,6 +71,7 @@ void erase_screen(struct session *ses)
 	printf("\0337\033[%d;1H\033[%dM\0338", ses->top_row, ses->bot_row - ses->top_row);
 
 	ses->sav_row = ses->cur_row;
+	ses->sav_col = ses->cur_col;
 }
 
 /*
@@ -188,6 +191,10 @@ int skip_vt102_codes_non_graph(const char *str)
 		case   7:   /* BEL */
 		case   8:   /* BS  */
 		case   9:   /* HT  */
+	/*	case  10: *//* LF  */
+		case  11:   /* VT  */
+		case  12:   /* FF  */
+		case  13:   /* CR  */
 		case  14:   /* SO  */
 		case  15:   /* SI  */
 		case  17:   /* DC1 */
@@ -359,35 +366,63 @@ int strip_vt102_strlen(const char *str)
 }
 
 
-void interpret_vt102_codes(struct session *ses, const char *str)
+int interpret_vt102_codes(struct session *ses, const char *str, int real)
 {
 	char data[BUFFER_SIZE] = { 0 };
-	int skip = 0, temp;
+	int skip = 0;
 
 	switch (str[skip])
 	{
+		case   5:
+			return FALSE; /* ^E fucks with the terminal */
+
 		case  27:   /* ESC */
 			break;
 
+		case  13:   /* CR  */
+			ses->cur_col = 1;
+
 		default:
-			return;
+			return TRUE;
 	}
 
 	switch (str[1])
 	{
 		case '7':
 			ses->sav_row = ses->cur_row;
-			return;
+			ses->sav_col = ses->cur_col;
+			return TRUE;
 
 		case '8':
 			ses->cur_row = ses->sav_row;
-			return;
+			ses->cur_col = ses->sav_col;
+			return TRUE;
+
+		case 'D':
+			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
+			return TRUE;
+
+		case 'E':
+			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
+			ses->cur_col = 1;
+			return TRUE;
+
+		case 'M':
+			ses->cur_row = URANGE(1, ses->cur_row - 1, ses->rows);
+			return TRUE;
+
+		case 'Z':
+			if (real)
+			{
+				socket_printf(ses, 5, "%c%c%c%c%c", ESCAPE, '[', '?', '6', 'c');
+			}
+			return FALSE;
 
 		case '[':
 			break;
 
 		default:
-			return;
+			return TRUE;
 	}
 
 	for (skip = 2 ; str[skip] != 0 ; skip++)
@@ -397,26 +432,59 @@ void interpret_vt102_codes(struct session *ses, const char *str)
 			case '@':
 			case '`':
 			case ']':
-				return;
+				return TRUE;
+
+			case 'c':
+				if (real)
+				{
+					socket_printf(ses, 5, "%c%c%c%c%c", ESCAPE, '[', '?', '6', 'c');
+				}
+				return FALSE;					
 
 			case 'A':
-			case 'F':
-				ses->cur_row += atoi(data);
+				ses->cur_row -= atoi(data);
 				break;
 
 			case 'B':
-			case 'E':
 			case 'e':
+				ses->cur_row += atoi(data);
+				break;
+
+			case 'C':
+			case 'a':
+				ses->cur_col += atoi(data);
+				break;
+
+			case 'D':
+				ses->cur_col -= atoi(data);
+				break;
+
+			case 'E':
 				ses->cur_row -= atoi(data);
+				ses->cur_col = 1;
+				break;
+
+			case 'F':
+				ses->cur_row -= atoi(data);
+				ses->cur_col = 1;
+				break;
+
+			case 'G':
+				ses->cur_col = atoi(data);
 				break;
 
 			case 'H':
 			case 'f':
-				if (sscanf(data, "%d;%d", &ses->cur_row, &temp) != 2)
+				if (sscanf(data, "%d;%d", &ses->cur_row, &ses->cur_col) != 2)
 				{
-					if (sscanf(data, "%d", &ses->cur_row) != 1)
+					if (sscanf(data, "%d", &ses->cur_row) == 1)
+					{
+						ses->cur_col = 1;
+					}
+					else
 					{
 						ses->cur_row = 1;
+						ses->cur_col = 1;
 					}
 				}
 				break;
@@ -439,10 +507,12 @@ void interpret_vt102_codes(struct session *ses, const char *str)
 
 			case 's':
 				ses->sav_row = ses->cur_row;
+				ses->sav_col = ses->cur_col;
 				break;
 
 			case 'u':
 				ses->cur_row = ses->sav_row;
+				ses->cur_col = ses->sav_col;
 				break;
 
 			default:
@@ -453,25 +523,18 @@ void interpret_vt102_codes(struct session *ses, const char *str)
 
 		if (isalpha(str[skip]))
 		{
-			if (ses->cur_row < 1)
-			{
-				ses->cur_row = 1;
-			}
-			else if (ses->cur_row > ses->rows)
-			{
-				ses->cur_row = ses->rows;
-			}
-			else if (ses->top_row < 1)
-			{
-				ses->top_row = 1;
-			}
-			else if (ses->bot_row > ses->rows)
-			{
-				ses->bot_row = ses->rows;
-			}
-			return;
+			ses->cur_row = URANGE(1, ses->cur_row, ses->rows);
+
+			ses->cur_col = URANGE(1, ses->cur_col, ses->cols + 1);
+
+
+			ses->top_row = URANGE(1, ses->top_row, ses->rows);
+
+			ses->bot_row = URANGE(1, ses->bot_row, ses->rows);
+
+			return TRUE;
 		}
 	}
-	return;
+	return TRUE;
 }
 

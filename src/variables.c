@@ -489,6 +489,10 @@ DO_COMMAND(do_format)
 
 				switch (*ptf)
 				{
+					case 'a':
+						sprintf(arglist[i], "%c", atoi(arglist[i]));
+						break;
+
 					case 'c':
 						colorstring(arglist[i]);
 						break;

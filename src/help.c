@@ -50,7 +50,7 @@ const struct help_type help_table[] =
 		"\n"
 		"         If the commands include variables %0-9, these are substituted as\n"
 		"         part of the parsing.  %0 is set to all text after the word was input,\n"
-		"         %1 is set to the first word following the aliased word, and %2 is the\n"
+    		"         %1 is set to the first word following the aliased word, and %2 is the\n"
 		"         second, and so on.\n"
 		"\n"
 		"Example: #alias gb get bread bag\n"
@@ -119,31 +119,34 @@ const struct help_type help_table[] =
 		"CHAT",
 		"Command: #chat {option} {argument}\n"
 		"\n"
-		"         #chat {init}     {port}             Initilizes a chat port.\n"
-		"         #chat {name}     {name}             Sets your chat name.\n"
-		"         #chat {message}  {buddy|all} {text} Sends a chat message\n"
+		"         #chat {init}       {port}             Initilizes a chat port.\n"
+		"         #chat {name}       {name}             Sets your chat name.\n"
+		"         #chat {message}    {buddy|all} {text} Sends a chat message\n"
 		"\n"
-		"         #chat {accept}   {buddy}            Accept a file transfer\n"
-		"         #chat {call}     {address} {port}   Connect to a buddy\n"
-		"         #chat {cancel}   {buddy}            Cancel a file transfer\n"
-		"         #chat {decline}  {buddy}            Decline a file transfer\n"
-		"         #chat {download} {buddy}            Set your download dir\n"
-		"         #chat {emote}    {buddy|all} {text} Send an emote message\n"
-		"         #chat {forward}  {buddy}            Forward all chat messages\n"
-		"         #chat {filestat} {buddy}            Show file transfer data\n"
-		"         #chat {ignore}   {buddy}            Ignores someone\n"
-		"         #chat {info}                        Displays your info\n"
-		"         #chat {ip}       {address}          Changes your IP address\n"
-		"         #chat {paste}    {buddy|all} {text} Pastes a block of text\n"
-		"         #chat {peek}     {buddy}            Show one's public connections\n"
-		"         #chat {ping}     {buddy}            Display response time\n"
-		"         #chat {private}  {buddy}            Make a connection private\n"
-		"         #chat {reply}    {text}             Reply to last private message\n"
-		"         #chat {request}  {buddy}            Request one's public connections\n"
-		"         #chat {sendfile} {buddy} {filename} Start a file transfer\n"
-		"         #chat {serve}    {buddy}            Forward all public chat messages\n"
-		"         #chat {who}                         Show all connections\n"
-		"         #chat {zap}      {buddy}            Close a connection\n"
+		"         #chat {accept}     {buddy} {boosted}  Accept a file transfer\n"
+		"         #chat {call}       {address} {port}   Connect to a buddy\n"
+		"         #chat {cancel}     {buddy}            Cancel a file transfer\n"
+		"         #chat {color}      {color names}      Set the default color\n"
+		"         #chat {decline}    {buddy}            Decline a file transfer\n"
+		"         #chat {download}   {buddy}            Set your download dir\n"
+		"         #chat {emote}      {buddy|all} {text} Send an emote message\n"
+		"         #chat {forward}    {buddy}            Forward all chat messages\n"
+		"         #chat {forwardall} {buddy}            Forward all session output\n"
+		"         #chat {filestat}   {buddy}            Show file transfer data\n"
+		"         #chat {ignore}     {buddy}            Ignores someone\n"
+		"         #chat {info}                          Displays your info\n"
+		"         #chat {ip}         {address}          Changes your IP address\n"
+		"         #chat {paste}      {buddy|all} {text} Pastes a block of text\n"
+		"         #chat {peek}       {buddy}            Show one's public connections\n"
+		"         #chat {ping}       {buddy}            Display response time\n"
+		"         #chat {private}    {buddy|all}        Make a connection private\n"
+		"         #chat {public}     {buddy|all}        Make a connection public\n"
+		"         #chat {reply}      {text}             Reply to last private message\n"
+		"         #chat {request}    {buddy}            Request one's public connections\n"
+		"         #chat {sendfile}   {buddy} {filename} Start a file transfer\n"
+		"         #chat {serve}      {buddy}            Forward all public chat messages\n"
+		"         #chat {who}                           Show all connections\n"
+		"         #chat {zap}        {buddy}            Close a connection\n"
 	},
 	{
 		"CLASS",
@@ -221,9 +224,9 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Original TINTIN code by Peter Unold                <068>#\n"
 		"<068>    #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,      <068>#\n"
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
-		"<068>    #<078>                              1994,2005                             <068>#\n"
+		"<068>    #<078>                              1992,2006                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.8                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.9                           <068>#\n"
 		"<068>    ######################################################################<088>\n\n"
 	},
 	{
@@ -284,10 +287,10 @@ const struct help_type help_table[] =
 	{
 		"HIGHLIGHT",
 		"\n"
-		"Command: #highlight {string} {color codes}\n"
+		"Command: #highlight {string} {color names}\n"
 		"\n"
 		"         The highlight command is used to allow you to highlight strings of text\n"
-		"         from the mud.  Available color codes are:\n"
+		"         from the mud.  Available color names are:\n"
 		"\n"
 		"         default, light, faint, underscore, blink, reverse, dim, black, red,\n"
 		"         green, yellow, blue, magenta, cyan, white, b black, b red, b green,\n"
@@ -308,6 +311,15 @@ const struct help_type help_table[] =
 		"         highlight the name Scandum as blinking, red, underscored text\n"
 		"\n"
 		"Notice:  See #help substitute, for more advanced color substitution.\n"
+	},
+	{
+		"HISTORY",
+		"\n"
+		"Command: #history {add} {line}\n"
+		"         #history {repeat} {number}\n"
+		"\n"
+		"         Either adds a command to the command history or repeats a command in\n"
+		"         the history list, 0 being the last command.\n"
 	},
 	{
 		"IF",
@@ -357,14 +369,14 @@ const struct help_type help_table[] =
 		"ESCAPE",
 		"You may use the escape character \\ for various special characters.\n"
 		"\n"
-		"\\a  will beep the terminal.\n"
-		"\\e  will start an escape sequence.\n"
-		"\\n  will send a new line.\n"
-		"\\r  will send a carriage return.\n"
-		"\\t  will send a tab.\n"
-		"\\x  will print a hexadecimal value, \xFF for example.\n"
-		"\\[  will send the '{' character\n"
-		"\\]  will send the '}' character\n"
+		"\\a   will beep the terminal.\n"
+		"\\e   will start an escape sequence.\n"
+		"\\n   will send a new line.\n"
+		"\\r   will send a carriage return.\n"
+		"\\t   will send a tab.\n"
+		"\\x   will print a hexadecimal value, \xFF for example.\n"
+		"\\x7B will send the '{' character.\n"
+		"\\x7D will send the '}' character.\n"
 		"\n"
 		"Ending a line with \\ will stop tintin from appending \\r\\n. To escape\n"
 		"arguments in an alias use %%90 %%91 %%92 etc.\n"
@@ -582,8 +594,6 @@ const struct help_type help_table[] =
 		"level.  The above will modify that variable after every kill, showing\n"
 		"the amount still needed.\n"
 		"#act {%0 tells %1} {#if {\"%0\" == \"Scandum\" && $afk} {reply $afk Sir} {reply $afk dude}}\n"
-		"Compare the string and reply appropriately if $afk has been set to\n"
-		"'Watching britney spears on MTV' or something of that nature =]\n"
 	},
 	{
 		"MESSAGE",
@@ -883,6 +893,15 @@ const struct help_type help_table[] =
 		"#unalias {*go*}\n"
 		"remove all aliases that contain the fragment 'go'\n"
 	},
+	{
+		"UNCLASS",
+		"\n"
+		"Command: #unclass {class}\n"
+		"\n"
+		"Removes class(es) from the class list which match {class}. All items\n"
+		"associated to the class will be removed as well.\n"
+	},
+
 	{
 		"UNFUNCTION",
 		"\n"

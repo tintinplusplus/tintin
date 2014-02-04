@@ -1,8 +1,3 @@
-This is an official development version of tintin++
-
-Current development is being done by Igor van den Hoven.
-
-
 **** OLD TINTIN SCRIPTS ARE NOT 100% COMPATIBLE WITH THIS VERSION ****
 
 
@@ -33,15 +28,15 @@ If you want to convert your scripts take notice of the following changes:
 2) #HIGHLIGHT had to be changed because this tintin version is less flexible
 when it comes to the parsing of commands as the old tintin versions. Basicly
 the old #high {color} {string} is now parsed as: #high {string} {color} you
-can load your old highlights, but they will be not added to the highlight
+can load your old highlights, but they will not be added to the highlight
 list, because they'll generate a 'color code not found' error message. So
 you'll have to redo your highlights, or perhaps look into the #substite
 command combined with the new color codes, see #help colors
 
 Also the way highlight deals with colors has been changed. {b light green} is
-no longer valid, instead you would want to use {light b green}, the highlights
+no longer valid, instead you would want to use {bold b green}, the highlights
 also only use the valid VT100 codes, italic has been replaced with underscore,
-since italic was never implemented in VT100 terminals.
+since italic was never part of the protocol of VT100 terminals.
 
 3) #FORMAT replaces many commands, I'd suggest checking it out.
 
@@ -61,8 +56,8 @@ the path by typing #walk repeatedly, or by using a ticker. When there are no
 more moves left on the path you'll receive a message. Notice this is perfect
 for automated scripts that require walking.
 
-6) #TICK has been changed quite a bit, new commands: #TICK #UNTICK, you can have
-as many tickers as you want. The old #tick commands are gone.
+6) #TICK has been changed quite a bit, new commands: #TICK #UNTICK, you can
+have as many tickers as you want. The old #tick commands are gone.
 Syntax: #tick {name} {commands} {seconds to tick}
 The name is added so you can delete it. You will no longer receive spam, but
 with a little bit of creativity you can rebuild the old tintin ticker spam.
@@ -70,14 +65,12 @@ with a little bit of creativity you can rebuild the old tintin ticker spam.
 Can use #read to load this simulator, for the few muds that still have a
 non random tick:
 
-#var ticksize 60
-
 #tick {oldtick}
 {
 	#delay 50 #showme #10 SECONDS TO TICK!!;
 	#showme #TICK!!!
 }
-{10}
+{60}
 
 
 7) #read now supports multiline triggers, it also checks the nesting level

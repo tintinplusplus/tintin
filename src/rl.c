@@ -85,6 +85,8 @@ void printline(struct session *ses, const char *str, int prompt)
 
 	word_wrap(ses, str, wrapped_str, TRUE);
 
+/*	strcpy(wrapped_str, str); */
+
 	if (prompt)
 	{
 		printf("%s", wrapped_str);
@@ -525,13 +527,6 @@ void quitmsg(const char *m)
 {
 	struct session *ses;
 	char filestring[256];
-
-	if (gtd->ses != gts && FALSE)
-	{
-		send_ip(gtd->ses);
-
-		return;
-	}
 
 	if (HAS_BIT(gts->flags, SES_FLAG_PREPPED))
 	{

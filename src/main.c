@@ -57,7 +57,7 @@ RETSIGTYPE winchhandler(int no_care)
 
 		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
 		{
-			send_sb_naws(ses);
+			send_sb_naws(ses, 0, NULL);
 		}
 	}
 
@@ -229,10 +229,6 @@ void init_tintin(void)
 	/*
 		Set application keypad mode and  ESC 0 prefix
 	*/
-
-/*
-	chat_init("");
-*/
 
 	printf("\033=\033[?1h");
 

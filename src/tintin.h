@@ -86,7 +86,7 @@ typedef struct listnode LNODE;
 
 typedef struct session *COMMAND (struct session *ses, const char *arg);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
-typedef struct session *CLASS   (struct session *ses, char *arg);
+typedef struct session *CLASS   (struct session *ses, char *left, char *right);
 typedef void CHAT (const char *arg);
 typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *arg);
 /*
@@ -131,14 +131,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define ESCAPE                         27
 
-
-/*
-	Size of the telopt table
-*/
-
-#define TELOPT_MAX                    21
-
-#define TELNET_PORT                   23
+#define TELNET_PORT                    23
 
 /*
 	Index for lists used by tintin
@@ -163,13 +156,10 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define LIST_MATH                     LIST_MAX + 0
 #define LIST_DELAY                    LIST_MAX + 1
-#define LIST_ALL                      LIST_MAX + 2
-
-#define COLOR_MAX                     24
+#define LIST_HISTORY                  LIST_MAX + 2
+#define LIST_ALL                      LIST_MAX + 3
 
 #define CLASS_MAX                      5
-
-#define CHAT_MAX                      24
 
 #define ARRAY_MAX                      5
 
@@ -213,11 +203,14 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define CHAT_END_OF_COMMAND            255
 
-#define CHAT_FLAG_PRIVATE             (1 <<  0)
-#define CHAT_FLAG_REQUEST             (1 <<  1)
-#define CHAT_FLAG_SERVE               (1 <<  2)
-#define CHAT_FLAG_IGNORE              (1 <<  3)
-#define CHAT_FLAG_FORWARD             (1 <<  4)
+#define CHAT_FLAG_PRIVATE             (1 <<  1)
+#define CHAT_FLAG_REQUEST             (1 <<  2)
+#define CHAT_FLAG_SERVE               (1 <<  3)
+#define CHAT_FLAG_IGNORE              (1 <<  4)
+#define CHAT_FLAG_FORWARD             (1 <<  5)
+#define CHAT_FLAG_FORWARDBY           (1 <<  6)
+#define CHAT_FLAG_FORWARDALL          (1 <<  7)
+#define CHAT_FLAG_DND                 (1 <<  8)
 
 #define SUB_NONE                      0
 #define SUB_ARG                       (1 <<  0)
@@ -379,7 +372,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 
 #define DO_COMMAND(command) struct session  *command (struct session *ses, const char *arg)
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
-#define DO_CLASS(class) struct session *class (struct session *ses, char *arg)
+#define DO_CLASS(class) struct session *class (struct session *ses, char *left, char *right)
 #define DO_ARRAY(array) struct session *array (struct session *ses, LNODE *list, const char *arg)
 
 #define DO_CHAT(chat) void chat (const char *arg)
@@ -422,6 +415,7 @@ struct listnode
 	char              * right;
 	char              * pr;
 	long long           data;
+	short               flags;
 };
 
 struct session
@@ -436,6 +430,7 @@ struct session
 	FILE                  * logfile;
 	FILE                  * logline;
 	struct listroot       * list[LIST_ALL];
+	struct listroot       * history;
 	struct listnode       * class;
 	int                     rows;
 	int                     cols;
@@ -443,6 +438,8 @@ struct session
 	int                     bot_row;
 	int                     cur_row;
 	int                     sav_row;
+	int                     cur_col;
+	int                     sav_col;
 	int                     map_size;
 	int                     scroll_max;
 	int                     scroll_row;
@@ -494,6 +491,7 @@ struct chat_data
 	char                  * download;
 	char                  * reply;
 	char                  * paste_buf;
+	char                  * color;
 	int                     port;
 	int                     fd;
 	time_t                  timeout;
@@ -501,7 +499,7 @@ struct chat_data
 	long long               paste_time;
 	FILE                  * file_pt;
 	char                  * file_name;
-	int                     file_size;
+	long long               file_size;
 	int                     file_block_cnt;
 	int                     file_block_tot;
 	long long               file_start_time;
@@ -635,11 +633,14 @@ extern DO_COMMAND(do_chat);
 extern DO_CHAT(chat_accept);
 extern DO_CHAT(chat_call);
 extern DO_CHAT(chat_cancelfile);
+extern DO_CHAT(chat_color);
 extern DO_CHAT(chat_decline);
+extern DO_CHAT(chat_dnd);
 extern DO_CHAT(chat_downloaddir);
 extern DO_CHAT(chat_emote);
 extern DO_CHAT(chat_filestat);
 extern DO_CHAT(chat_forward);
+extern DO_CHAT(chat_forwardall);
 extern DO_CHAT(chat_ignore);
 extern DO_CHAT(chat_initialize);
 extern DO_CHAT(chat_info);
@@ -650,6 +651,7 @@ extern DO_CHAT(chat_paste);
 extern DO_CHAT(chat_peek);
 extern DO_CHAT(chat_ping);
 extern DO_CHAT(chat_private);
+extern DO_CHAT(chat_public);
 extern DO_CHAT(chat_reply);
 extern DO_CHAT(chat_request);
 extern DO_CHAT(chat_sendfile);
@@ -664,6 +666,7 @@ extern void close_chat(struct chat_data *buddy, int unlink);
 extern void nonblock(int s);
 extern void block(int s);
 extern void process_chat_connections(fd_set *input_set, fd_set *exc_set);
+extern void chat_forward_session(struct session *ses, char *linelog);
 extern void chat_socket_printf(struct chat_data *buddy, const char *format, ...);
 extern void chat_printf(const char *format, ...);
 extern  int process_chat_input(struct chat_data *buddy);
@@ -671,6 +674,7 @@ extern void get_chat_commands(struct chat_data *buddy, char *buf, int len);
 extern void chat_receive_text_everybody(struct chat_data *buddy, char *txt);
 extern void chat_receive_text_personal(struct chat_data *buddy, char *txt);
 extern void chat_receive_message(struct chat_data *buddy, char *txt);
+extern void chat_receive_snoop_data(struct chat_data *buddy, char *txt);
 
 extern void ping_response(struct chat_data *ch, char *time);
 
@@ -712,6 +716,7 @@ extern void check_character_mode(struct session *ses);
 
 extern DO_COMMAND(do_class);
 extern DO_COMMAND(do_unclass);
+extern int count_class(struct session *ses, struct listnode *class);
 extern DO_CLASS(class_open);
 extern DO_CLASS(class_close);
 extern DO_CLASS(class_read);
@@ -872,6 +877,7 @@ extern void check_all_actions(const char *original, char *line, struct session *
 
 extern struct session *do_alias(struct session *ses, const char *arg);
 extern struct session *do_unalias(struct session *ses, const char *arg);
+extern int check_all_aliases(char *original, char *line, struct session *ses);
 
 #endif
 
@@ -889,7 +895,6 @@ extern int check_all_antisubstitutions(const char *original, char *line, struct 
 #define __FILES_H__
 
 extern DO_COMMAND(do_read);
-extern struct session *readfile(struct session *ses, const char *arg, struct listnode *class);
 extern DO_COMMAND(do_readmap);
 extern DO_COMMAND(do_write);
 extern DO_COMMAND(do_writemap);
@@ -982,25 +987,26 @@ extern void init_tintin(void);
 #ifndef __MISC_H__
 #define __MISC_H__
 
-extern DO_COMMAND(do_commands);
-extern DO_COMMAND(do_cr);
-extern DO_COMMAND(do_nop);
-extern DO_COMMAND(do_suspend);
-extern struct session *do_all(struct session *ses, const char *arg);
+extern DO_COMMAND(do_all);
 extern DO_COMMAND(do_bell);
 extern DO_COMMAND(do_boss);
+extern DO_COMMAND(do_commands);
+extern DO_COMMAND(do_cr);
 extern DO_COMMAND(do_echo);
 extern DO_COMMAND(do_end);
-extern DO_COMMAND(do_showme);
-extern DO_COMMAND(do_loop);
-extern DO_COMMAND(do_parse);
 extern DO_COMMAND(do_forall);
-
+extern DO_COMMAND(do_info);
+extern DO_COMMAND(do_loop);
+extern DO_COMMAND(do_nop);
+extern DO_COMMAND(do_parse);
 extern DO_COMMAND(do_return);
+extern DO_COMMAND(do_send);
+extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_snoop);
+extern DO_COMMAND(do_suspend);
 extern DO_COMMAND(do_system);
 extern DO_COMMAND(do_zap);
-extern DO_COMMAND(do_info);
+
 extern DO_COMMAND(do_gagline);
 #endif
 
@@ -1017,32 +1023,36 @@ extern void read_buffer_mud(struct session *ses);
 #define __TELOPT_H__
 
 extern void translate_telopts(struct session *ses, unsigned char *src, int cplen);
-extern void send_will_sga(struct session *ses);
-extern void send_do_eor(struct session *ses);
-extern void mark_prompt(struct session *ses);
-extern void send_will_ttype(struct session *ses);
-extern void send_will_tspeed(struct session *ses);
-extern void send_will_naws(struct session *ses);
-extern void send_wont_xdisploc(struct session *ses);
-extern void send_wont_new_environ(struct session *ses);
-extern void send_sb_naws(struct session *ses);
-extern void send_wont_lflow(struct session *ses);
-extern void send_sb_tspeed(struct session *ses);
-extern void send_sb_ttype(struct session *ses);
-extern void send_wont_status(struct session *ses);
-extern void send_dont_status(struct session *ses);
-extern void send_dont_sga(struct session *ses);
-extern void send_do_sga(struct session *ses);
-extern void send_wont_oldenviron(struct session *ses);
-extern void send_echo_on(struct session *ses);
-extern void send_echo_off(struct session *ses);
-extern void send_echo_will(struct session *ses);
-extern void send_ip(struct session *ses);
-extern void send_do_mccp2(struct session *ses);
-extern void send_dont_mccp2(struct session *ses);
-extern void init_mccp(struct session *ses);
+
+extern int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_will_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_will_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_wont_xdisploc(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_wont_new_environ(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_wont_lflow(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_wont_status(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_dont_status(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_dont_sga(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_wont_oldenviron(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_echo_on(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_echo_off(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_ip(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int init_mccp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern void *zlib_alloc(void *opaque, unsigned int items, unsigned int size);
 extern void zlib_free(void *opaque, void *address);
+
+extern void init_telnet_session(struct session *ses);
 
 #endif
 
@@ -1058,7 +1068,7 @@ extern const char *get_arg_with_spaces(const char *s, char *arg);
 extern const char *get_arg_in_braces(const char *s, char *arg, int flag);
 extern const char *get_arg_stop_spaces(const char *s, char *arg);
 extern const char *space_out(const char *s);
-extern void write_com_arg_mud(const char *command, const char *argument, struct session *ses);
+extern void write_mud(struct session *ses, const char *command);
 extern void do_one_line(char *line, struct session *ses);
 
 #endif
@@ -1136,7 +1146,7 @@ extern void strip_vt102_codes(const char *str, char *buf);
 extern void strip_vt102_codes_non_graph(const char *str, char *buf);
 extern void strip_non_vt102_codes(const char *str, char *buf);
 extern int strip_vt102_strlen(const char *str);
-extern void interpret_vt102_codes(struct session *ses, const char *str);
+extern int interpret_vt102_codes(struct session *ses, const char *str, int real);
 
 #endif
 
@@ -1151,7 +1161,7 @@ extern int get_scroll_size(struct session *ses);
 #ifndef __SESSION_H__
 #define __SESSION_H__
 
-extern void init_telnet_session(struct session *ses);
+
 extern struct session *session_command(const char *arg, struct session *ses);
 extern void show_session(struct session *ses, struct session *ptr);
 extern struct session *newactive_session(void);
@@ -1181,9 +1191,9 @@ extern void check_all_substitutions(char *original, char *line, struct session *
 extern const struct command_type command_table[];
 extern const struct list_type list_table[LIST_ALL];
 extern const struct config_type config_table[];
-extern const struct color_type color_table[COLOR_MAX];
+extern const struct color_type color_table[];
 extern const struct class_type class_table[CLASS_MAX];
-extern const struct chat_type chat_table[CHAT_MAX];
+extern const struct chat_type chat_table[];
 extern const struct array_type array_table[ARRAY_MAX];
 
 #endif

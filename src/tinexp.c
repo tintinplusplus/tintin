@@ -422,7 +422,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 							if (pti[0] && pti[1])
 							{
 								*pto++ = hex_number(pti);
-								pti += 2;
+								pti++;
 							}
 							break;
 						case '[':
@@ -506,6 +506,11 @@ int action_regexp(const char *exp, const char *str)
 {
 	short cnt;
 
+	for (cnt = 0 ; cnt < 10 ; cnt++)
+	{
+		gtd->vars[cnt][0] = 0;
+	}
+
 	while (*exp)
 	{
 #ifdef BIG5
@@ -533,7 +538,7 @@ int action_regexp(const char *exp, const char *str)
 						return TRUE;
 					}
 
-					for (cnt = 0 ; ; cnt++)
+					for (cnt = 0 ; cnt < 1000 ; cnt++)
 					{
 						if (action_regexp(exp + 2, &str[cnt]))
 						{

@@ -1,41 +1,37 @@
-#TinTin++
-#Copyright (C) 2001 Davin Chan, Robert Ellsworth, etc. (See CREDITS file)
-#
-#This program is protected under the GNU GPL (See COPYING)
-#
-#    This program is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 2 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program; if not, write to the Free Software
-#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-
-#For the configure program to check the set up of the user's machine
-#for tintin.  www.newclear.net/tintin
-#
-#Original written by ??
-#Modified and Updated by Davin Chan
-#
+###############################################################################
+#   TinTin++                                                                  #
+#   Copyright (C) 2006 (See CREDITS file)                                     #
+#                                                                             #
+#   This program is protected under the GNU GPL (See COPYING)                 #
+#                                                                             #
+#   This program is free software; you can redistribute it and/or modify      #
+#   it under the terms of the GNU General Public License as published by      #
+#   the Free Software Foundation; either version 2 of the License, or         #
+#   (at your option) any later version.                                       #
+#                                                                             #
+#   This program is distributed in the hope that it will be useful,           #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of            #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             #
+#   GNU General Public License for more details.                              #
+#                                                                             #
+#   You should have received a copy of the GNU General Public License         #
+#   along with this program; if not, write to the Free Software               #
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA #
+###############################################################################
 
 AC_INIT(tintin.h)
 AC_CONFIG_HEADER(config.h)
 
+AC_MSG_RESULT([Configuring TinTin++])
+
+
 AC_SUBST(MYINCLUDE)
-AC_SUBST(MYLIB)
+AC_SUBST(MYLIB)    
 AC_SUBST(mybindir)
 AC_SUBST(BIG5)
 
 if [ test $bindir != "\${exec_prefix}/bin" ]
 then
-	
 	mybindir="$bindir"
 else
 	mybindir="."
@@ -48,55 +44,62 @@ else
 	MYLIB=""
 fi
 
-if [ test $includedir != "\${prefix}/include" ] 
+if [ test $includedir != "\${prefix}/include" ]
 then
 	MYINCLUDE="-I$includedir"
 else
 	MYINCLUDE=""
 fi
 
-AC_ARG_ENABLE(big5, --enable-big5, BIG5="-DBIG5")
+AC_ARG_ENABLE(big5, [  --enable-big5          enable big5 support], BIG5="-DBIG5")
+
+# Checks for programs.
+
 AC_PROG_CC
-AC_PROG_CPP
-AC_ISC_POSIX
-AC_AIX
-AC_MINIX
+AC_PROG_MAKE_SET
+
+
+# Checks for header files.
+
+AC_HEADER_STDC
+AC_CHECK_HEADERS([arpa/inet.h ctype.h fcntl.h net/errno.h netdb.h netinet/in.h param.h pthread.h readline/history.h readline/readline.h socks.h stdlib.h string.h strings.h sys/ioctl.h sys/param.h sys/ptem.h sys/socket.h sys/termio.h sys/time.h termcap.h time.h unistd.h zlib.h ])
+
+# Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_C_INLINE
-
-dnl Checks for libraries.
-AC_CHECK_LIB(termcap, tgetent, , AC_CHECK_LIB(curses, tgetent, , AC_CHECK_LIB(ncurses, tgetent)))
-dnl AC_CHECK_LIB(readline, readline)
-AC_CHECK_LIB(socket, socket)
-AC_CHECK_LIB(nsl, gethostbyname)
-
-# Too many people had problems with -pipe and cc; dunno why
-# configure didn't detect that they don't work together, though.
-# Anyhow, I got rid of the pipe shit.
-
-dnl Checks for header files.
-AC_CHECK_HEADERS(strings.h string.h stdlib.h unistd.h time.h sys/time.h sys/termio.h sys/ioctl.h termcap.h param.h sys/ptem.h net/errno.h readline/readline.h ctype.h)
-
-dnl Check for current location of readline.h
-AC_TRY_CPP([#include <readline/readline.h>],echo > /dev/null,./readline.sh;echo)
-
-AC_TRY_CPP([#include "readline/readline.h"],echo > /dev/null,./readline.sh;echo)
-
-dnl Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_TYPE_SIZE_T
 AC_HEADER_TIME
+AC_STRUCT_TM
 
-dnl Checks for library functions.
-AC_PROG_GCC_TRADITIONAL
+
+# Checks for library functions.
+
+AC_FUNC_MEMCMP
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(strcasecmp)
+AC_FUNC_STAT
+AC_FUNC_STRFTIME
+AC_FUNC_UTIME_NULL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select socket strcasecmp strchr strdup strerror strftime strncasecmp strstr utime ])
+
+# Checks libraries
+
+AC_CHECK_LIB(termcap, tgetent)
+AC_CHECK_LIB(history, add_history)
+AC_CHECK_LIB(readline, rl_initialize)
+AC_CHECK_LIB(z, inflate)
+AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_LIB(nsl, gethostbyname)
 
 AC_CHECK_PROGS(MAKE, gmake make)
 
 AC_FUNC_GETMNTENT
-AC_HEADER_DIRENT
-AC_FUNC_STRFTIME
+AC_HEADER_DIRENT 
 
 AC_OUTPUT(Makefile)
+
 echo
 echo "Configure has finished.  To compile, type: make"
 echo

@@ -77,10 +77,10 @@ void check_character_mode(struct session *ses)
 		{
 			SET_BIT(gts->flags, SES_FLAG_PREPPED);
 
-			rl_initialize();
-			rl_prep_terminal(1);
+			rl_point = 0;
+			rl_delete_text(0, rl_end);
 
-			commandloop();
+			rl_stuff_char('\n');
 		}
 	}
 	else
@@ -89,10 +89,10 @@ void check_character_mode(struct session *ses)
 		{
 			DEL_BIT(gts->flags, SES_FLAG_PREPPED);
 
-			rl_initialize();
-			rl_deprep_terminal();
+			rl_point = 0;
+			rl_delete_text(0, rl_end);
 
-			commandloop();
+			rl_stuff_char('\0');
 		}
 	}
 }

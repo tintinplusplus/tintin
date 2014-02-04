@@ -32,6 +32,7 @@ void commandloop(void)
 {
 	char *line, buffer[BUFFER_SIZE];
 
+
 	while (TRUE)
 	{
 		if (HAS_BIT(gts->flags, SES_FLAG_PREPPED))
@@ -45,6 +46,14 @@ void commandloop(void)
 
 		if (line == NULL)
 		{
+			continue;
+		}
+
+		if (*line == 0 && HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+		{
+			rl_initialize();
+			rl_prep_terminal(0);
+
 			continue;
 		}
 
@@ -103,6 +112,14 @@ char * readkeyboard(void)
 	{
 		ch = rl_read_key();
 
+		if (ch == 0)
+		{
+			rl_initialize();
+			rl_deprep_terminal();
+
+			return NULL;
+		}
+
 		if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
 		{
 			switch (ch)
@@ -146,6 +163,7 @@ char * readkeyboard(void)
 		{
 			switch (ch)
 			{
+				
 				case '\n':
 				case '\r':
 					line = rl_line_buffer[0] == gtd->tintin_char ? strdup(rl_line_buffer) : NULL;
@@ -168,14 +186,18 @@ char * readkeyboard(void)
 					break;
 
 				case 127:
+					if (rl_line_buffer[0] != gtd->tintin_char)
+					{
+						socket_printf(gtd->ses, 1, "%c", ch);
+					}
+					else
+					{
+						printf("\b \b");
+					}
 					if (rl_point)
 					{
 						rl_point--;
 						rl_delete_text(rl_point, rl_point+1);
-					}
-					if (rl_line_buffer[0] != gtd->tintin_char)
-					{
-						socket_printf(gtd->ses, 1, "%c", ch);
 					}
 					break;
 

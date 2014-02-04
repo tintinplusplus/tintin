@@ -1,13 +1,11 @@
 * Stuff that isn't that hard to do, but somehow never ends up being fixed.
 
-- allow actions to use ! to repeat commands, possibly use #history 1
+- allow actions to use ! to repeat commands, possibly use #history 1, not as
+  easy at it seems.
 
-- fix up macro usage in character mode.
+- fix up macro usage in character mode. This might not be desirable.
 
-- Add a FAQ to the website.
-
-- Add color bleeding for #split
-
+- Add color bleeding for #split. Bloats the code though.
 
 * This is a list of new features/improvements that are planned.
 
@@ -16,8 +14,6 @@
 - custom readline support (some progress has been made)
 
 - floating point calculations (tricky)
-
-- code that deals with broken lines (beta, seems to work)
 
 - event system to deal with various situations
 
@@ -37,7 +33,8 @@
 
   Tintin will also need a html terminal, which isn't available yet.
 
-- msp support: I'm not aware of a good easy cross platform sound library.
+- msp support: I'm not aware of a good easy cross platform sound library. You
+  can use a command line sound mixer with the #system command.
 
 - plugins: Maybe sometime far in the future I'll add a plugin to add plugins.
 

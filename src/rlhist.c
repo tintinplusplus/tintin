@@ -27,6 +27,71 @@
 
 #include "tintin.h"
 
+/*
+	custom history support - Scandum
+
+char *add_line_history(struct session *ses, char *line)
+{
+	struct listroot *root;
+
+	root = ses->list[LIST_HISTORY];
+
+	if (root->l_node && !strcmp(line, root->l_node->left))
+	{
+		return line;
+	}
+
+	if (*line == 0)
+	{
+		if (root->l_node && HAS_BIT(gtd->ses->flags, SES_FLAG_REPEATENTER))
+		{
+			free(line);
+			line = strdup(root->l_node->left);
+		}
+		return line;
+	}
+
+	if (*line == gtd->repeat_char)
+	{
+		return search_line_history(line);
+	}
+
+	insertnode_list(ses, line, "", "", LIST_HISTORY);
+
+	while (root->count > gtd->history_size)
+	{
+		deletenode_list(ses, root->f_node, LIST_HISTORY);
+	}
+
+	return line;
+}
+
+
+char *search_line_history(struct session *ses, char *line)
+{
+	struct listroot *root;
+	struct listnode *node;
+
+	root = ses->list->[LIST_HISTORY];
+
+	for (node = root->l_node; node ; node = node->prev)
+	{
+		if (is_abbrev(&line[1], node->left))
+		{
+			free(line);
+
+			return strdup(node->left);
+		}
+	}
+	tintin_printf2(ses, "#REPEAT: NO MATCH FOUND FOR '%s'", line);
+
+	free(line);
+
+	return NULL;
+}
+
+*/
+
 char *search_history_line(char *line)
 {
 	int cnt;

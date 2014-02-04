@@ -48,10 +48,10 @@ DO_COMMAND(do_class)
 
 		for (node = root->f_node ; node ; node = node->next)
 		{
-			tintin_printf2(ses, "%-20s %3lld %s",
+			tintin_printf2(ses, "%-20s %3d %s",
 			node->left,
-			node->data / NODE_FLAG_MAX,
-			HAS_BIT(node->data, NODE_FLAG_CLASS) ? "OPEN" : "CLOSED");
+			count_class(ses, node),
+			HAS_BIT(node->flags, NODE_FLAG_CLASS) ? "OPEN" : "CLOSED");
 		}
 	}
 	else if (*right == 0)
@@ -95,9 +95,11 @@ DO_COMMAND(do_class)
 		}
 		else
 		{
-			updatenode_list(ses, left, right, pr, LIST_CLASS);
-
-			class_table[cnt].class(ses, left);
+			if (!searchnode_list(root, left))
+			{
+				updatenode_list(ses, left, right, pr, LIST_CLASS);
+			}
+			class_table[cnt].class(ses, left, pr);
 		}
 	}
 	return ses;
@@ -111,13 +113,13 @@ DO_COMMAND(do_unclass)
 	struct listnode *node;
 	int found = FALSE;
 
-	root = ses->list[LIST_TAB];
+	root = ses->list[LIST_CLASS];
 
-	arg = get_arg_in_braces(arg, left, 1);
+	arg = get_arg_in_braces(arg, left, TRUE);
 
 	while ((node = search_node_with_wild(root, left)) != NULL)
 	{
-		show_message(ses, LIST_CLASS, "#OK. {%s} IS NO LONGER A CLASS.", node->left);
+		show_message(ses, LIST_CLASS, "#OK. {%s} IS NO LONGER A CLASS.", left);
 
 		deletenode_list(ses, node, LIST_CLASS);
 
@@ -131,13 +133,33 @@ DO_COMMAND(do_unclass)
 	return ses;
 }
 
+
+int count_class(struct session *ses, struct listnode *class)
+{
+	struct listnode *node;
+	int list, cnt;
+
+	for (cnt = list = 0 ; list < LIST_MAX ; list++)
+	{
+		for (node = ses->list[list]->f_node ; node ; node = node->next)
+		{
+			if (node->class == class)
+			{
+				cnt++;
+			}
+		}
+	}
+	return cnt;
+}
+
+
 DO_CLASS(class_open)
 {
-	ses->class = search_node_with_wild(ses->list[LIST_CLASS], arg);
+	ses->class = search_node_with_wild(ses->list[LIST_CLASS], left);
 
-	SET_BIT(ses->class->data, NODE_FLAG_CLASS);
+	SET_BIT(ses->class->flags, NODE_FLAG_CLASS);
 
-	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", arg);
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", left);
 
 	return ses;
 }
@@ -146,11 +168,11 @@ DO_CLASS(class_close)
 {
 	struct listnode *node;
 
-	node = search_node_with_wild(ses->list[LIST_CLASS], arg);
+	node = search_node_with_wild(ses->list[LIST_CLASS], left);
 
 	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", node->left);
 
-	DEL_BIT(node->data, NODE_FLAG_CLASS);
+	DEL_BIT(node->flags, NODE_FLAG_CLASS);
 
 	if (node == ses->class)
 	{
@@ -158,25 +180,24 @@ DO_CLASS(class_close)
 
 		for (node = ses->list[LIST_CLASS]->l_node ; node ; node = node->prev)
 		{
-			if (HAS_BIT(node->data, NODE_FLAG_CLASS))
+			if (HAS_BIT(node->flags, NODE_FLAG_CLASS))
 			{
-				class_open(ses, node->left);
+				class_open(ses, node->left, "");
 
 				break;
 			}
 		}
 	}
-
 	return ses;
 }
 
 DO_CLASS(class_read)
 {
-	struct listnode *node = search_node_with_wild(ses->list[LIST_CLASS], arg);
+	class_open(ses, left, "");
 
-	DEL_BIT(node->data, NODE_FLAG_CLASS);
+	do_read(ses, right);
 
-	readfile(ses, node->pr, node);
+	class_close(ses, left, "");
 
 	return ses;
 }
@@ -184,21 +205,20 @@ DO_CLASS(class_read)
 DO_CLASS(class_write)
 {
 	FILE *file;
-	char temp[BUFFER_SIZE], filename[BUFFER_SIZE];
+	char temp[BUFFER_SIZE];
 	struct listnode *node, *class;
 	int cnt;
 
-	class = search_node_with_wild(ses->list[LIST_CLASS], arg);
+	class = search_node_with_wild(ses->list[LIST_CLASS], left);
 
-	get_arg_in_braces(class->pr, filename, TRUE);
-
-	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
+	if (*right == 0 || (file = fopen(right, "w")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #CLASS WRITE {%s} - COULDN'T OPEN FILE TO WRITE.", filename);
+		tintin_printf(ses, "#ERROR: #CLASS WRITE {%s} - COULDN'T OPEN FILE TO WRITE.", right);
+
 		return ses;
 	}
 
-	fprintf(file, "%cCLASS {%s} OPEN\n\n", gtd->tintin_char, arg);
+	fprintf(file, "%cCLASS {%s} OPEN\n\n", gtd->tintin_char, left);
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
@@ -213,11 +233,11 @@ DO_CLASS(class_write)
 		}
 	}
 
-	fprintf(file, "\n%cCLASS {%s} CLOSE\n", gtd->tintin_char, arg);
+	fprintf(file, "\n%cCLASS {%s} CLOSE\n", gtd->tintin_char, left);
 
 	fclose(file);
 
-	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN WRITTEN TO FILE.", class->left);
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN WRITTEN TO FILE.", left);
 
 	return ses;
 }
@@ -227,9 +247,9 @@ DO_CLASS(class_kill)
 	struct listnode *node, *class;
 	int cnt;
 
-	class = search_node_with_wild(ses->list[LIST_CLASS], arg);
+	class = search_node_with_wild(ses->list[LIST_CLASS], left);
 
-	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
 		if (cnt == LIST_CLASS)
 		{
@@ -246,77 +266,9 @@ DO_CLASS(class_kill)
 		}
 	}
 
-	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLEARED.", class->left);
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLEARED.", left);
 
 	deletenode_list(ses, class, LIST_CLASS);
 
 	return ses;
-}
-
-void parse_class(struct session *ses, char *input, struct listnode *class)
-{
-	char temp[BUFFER_SIZE], command[BUFFER_SIZE], arg[BUFFER_SIZE];
-	char *pti, *pta;
-	struct listnode *ln;
-	int i;
-
-	push_call("parse_class(%p,%p,%p)",ses,input,class);
-
-	pti = input;
-
-	while (*pti)
-	{
-		if (*pti == ';')
-		{
-			if (*++pti == 0)
-			{
-				break;
-			}
-		}
-		pti = (char *)get_arg_stop_spaces(pti, temp);
-		pti = (char *)get_arg_all(pti, arg);
-
-		substitute(ses, temp, command, SUB_VAR|SUB_FUN);
-
-		if (*command == gtd->tintin_char)
-		{
-			for (i = 0 ; *command_table[i].name != 0 ; i++)
-			{
-				if (is_abbrev(&command[1], command_table[i].name))
-				{
-					break;
-				}
-			}
-			if (strcmp(command_table[i].name, "class"))
-			{
-				continue;
-			}
-			get_arg_in_braces(temp, arg, TRUE);
-
-			if (!is_abbrev(class->left, temp))
-			{
-				continue;
-			}
-			(command_table[i].command) (ses, arg);
-		}
-		else if ((ln = searchnode_list_begin(ses->list[LIST_ALIAS], command, ALPHA)))
-		{
-			strcpy(gtd->vars[0], arg);
-
-			pta = arg;
-
-			for (i = 1 ; i < 10 ; i++)
-			{
-				pta = (char *) get_arg_in_braces(pta, gtd->vars[i], FALSE);
-			}
-			substitute(ses, ln->right, command, SUB_ARG);
-
-			if (!strcmp(ln->right, command) && *arg)
-			{
-				sprintf(command, "%s %s", ln->right, arg);
-			}
-			parse_class(ses, command, class);
-		}
-	}
-	return;
 }

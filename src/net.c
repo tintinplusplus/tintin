@@ -30,12 +30,11 @@
 
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <signal.h>
 #include <arpa/inet.h>
-
+#include <sys/socket.h>
 
 /**************************************************/
 /* try connect to the mud specified by the args   */

@@ -26,9 +26,56 @@
 /*                     coded by peter unold 1992                     */
 /*********************************************************************/
 
-/* note: a bunch of changes were made for readline support -- daw */
-
 #include "tintin.h"
+
+
+
+DO_COMMAND(do_all)
+{
+	char left[BUFFER_SIZE];
+	struct session *sesptr, *next_ses;
+
+	if (gts->next)
+	{
+		get_arg_in_braces(arg, left, TRUE);
+
+		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
+		{
+			next_ses = sesptr->next;
+			parse_input(left, sesptr);
+		}
+	}
+	else
+	{
+		tintin_puts2("#BUT THERE ISN'T ANY SESSION AT ALL!", ses);
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_bell)
+{
+	printf("\007");
+
+	return ses;
+}
+
+
+DO_COMMAND(do_boss)
+{
+	int i;
+
+	for (i = 0 ; i < 50 ; i++)
+	{
+		tintin_printf2(ses, "in-order traverse of tree starting from node %2d resulted in %2d red nodes\n", i, 50-i);
+	}
+	/*
+		stop screen from scrolling stuff
+	*/
+	getchar();
+
+	return ses;
+}
 
 
 DO_COMMAND(do_commands)
@@ -62,7 +109,6 @@ DO_COMMAND(do_commands)
 }
 
 
-
 DO_COMMAND(do_cr)
 {
 	write_line_mud("\r\n", ses);
@@ -71,81 +117,19 @@ DO_COMMAND(do_cr)
 }
 
 
-DO_COMMAND(do_nop)
+DO_COMMAND(do_echo)
 {
-	return ses;
-}
+	char temp[BUFFER_SIZE];
 
+	sprintf(temp, "result %s", arg);
 
-DO_COMMAND(do_suspend)
-{
-	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
+	do_internal_variable(ses, "result <#echo: error>");
 
-	fflush(stdout);
+	do_format(ses, temp);
 
-	kill(0, SIGSTOP);
+	substitute(ses, "$result", temp, SUB_VAR);
 
-	dirty_screen(gtd->ses);
-
-	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
-
-	return ses;
-}
-
-
-/********************/
-/* the #all command */
-/********************/
-
-DO_COMMAND(do_all)
-{
-	char left[BUFFER_SIZE];
-	struct session *sesptr, *next_ses;
-
-	if (gts->next)
-	{
-		get_arg_in_braces(arg, left, TRUE);
-
-		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
-		{
-			next_ses = sesptr->next;
-			parse_input(left, sesptr);
-		}
-	}
-	else
-	{
-		tintin_puts2("#BUT THERE ISN'T ANY SESSION AT ALL!", ses);
-	}
-	return ses;
-}
-
-/*********************/
-/* the #bell command */
-/*********************/
-
-DO_COMMAND(do_bell)
-{
-	printf("\007");
-
-	return ses;
-}
-
-/*********************/
-/* the #boss command */
-/*********************/
-
-DO_COMMAND(do_boss)
-{
-	int i;
-
-	for (i = 0 ; i < 50 ; i++)
-	{
-		tintin_printf2(ses, "in-order traverse of tree starting from node %2d resulted in %2d red nodes\n", i, 50-i);
-	}
-	/*
-		stop screen from scrolling stuff
-	*/
-	getchar();
+	do_showme(ses, temp);
 
 	return ses;
 }
@@ -165,19 +149,172 @@ DO_COMMAND(do_end)
 }
 
 
-DO_COMMAND(do_echo)
+DO_COMMAND(do_forall)
 {
-	char temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	sprintf(temp, "result %s", arg);
+	arg = get_arg_in_braces(arg, temp,  TRUE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
-	do_internal_variable(ses, "result <#echo: error>");
+	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
 
-	do_format(ses, temp);
+	if (*left == 0 || *right == 0)
+	{
+		tintin_printf2(ses, "#ERROR: #FORALL - PROVIDE 2 ARGUMENTS");
+	}
+	else
+	{
+		arg = left;
 
-	substitute(ses, "$result", temp, SUB_VAR);
+		while (*arg)
+		{
+			arg = get_arg_in_braces(arg, temp, FALSE);
+			sprintf(gtd->cmds[0], "%s", temp);
 
-	do_showme(ses, temp);
+			sprintf(temp, "forall %s", gtd->cmds[0]);
+			do_internal_variable(ses, temp);
+
+			substitute(ses, right, temp, SUB_CMD);
+
+			ses = parse_input(temp, ses);
+		}
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_gagline)
+{
+	SET_BIT(ses->flags, SES_FLAG_GAG);
+
+	return ses;
+}
+
+
+DO_COMMAND(do_info)
+{
+	int cnt;
+
+	tintin_header(ses, " INFORMATION ");
+
+	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	{
+		tintin_printf2(ses, "%-20s %3d  IGNORE %3s  MESSAGE %3s  DEBUG  %3s",
+			list_table[cnt].name_multi,
+			ses->list[cnt]->count,
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF",
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF",
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ? "ON" : "OFF");
+	}
+	tintin_header(ses, "");
+
+	return ses;
+}
+
+
+DO_COMMAND(do_loop)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+
+	int bound1, bound2, counter, step;
+
+	arg = get_arg_in_braces(arg, temp, 0);
+	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+
+	arg = get_arg_in_braces(arg, right, 1);
+
+	if (sscanf(left, "%d%c%d", &bound1, &temp[0], &bound2) != 3)
+	{
+		tintin_printf(ses, "#ERROR: #LOOP - NEED 2 ARGUMENTS, FOUND: %s", left);
+	}
+	else
+	{
+		if (bound1 <= bound2)
+		{
+			step = 1;
+			bound2++;
+		}
+		else
+		{
+			step = -1;
+			bound2--;
+		}
+
+		for (counter = bound1 ; counter != bound2 ; counter += step)
+		{
+			sprintf(gtd->cmds[0], "%d", counter);
+
+			sprintf(temp, "loop %d", counter);
+			do_internal_variable(ses, temp);
+
+			substitute(ses, right, temp, SUB_CMD);
+			ses = parse_input(temp, ses);
+		}
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_nop)
+{
+	return ses;
+}
+
+
+DO_COMMAND(do_parse)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	int cnt;
+
+	arg = get_arg_in_braces(arg, temp, 0);
+	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+
+	arg = get_arg_in_braces(arg, right, 1);
+
+	if (*left == 0 || *right == 0)
+	{
+		tintin_printf2(ses, "#ERROR: #PARSE - PROVIDE 2 ARGUMENTS");
+	}
+	else
+	{
+		for (cnt = 0 ; left[cnt] != 0 ; cnt++)
+		{
+			sprintf(gtd->cmds[0], "%c", left[cnt]);
+
+			sprintf(temp, "parse {%c}", left[cnt]);
+			do_internal_variable(ses, temp);
+
+			substitute(ses, right, temp, SUB_CMD);
+			ses = parse_input(temp, ses);
+		}
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_return)
+{
+	char result[BUFFER_SIZE];
+
+	SET_BIT(ses->flags, SES_FLAG_BREAK);
+
+	if (*arg)
+	{
+		sprintf(result, "%s %s", "result", arg);
+
+		do_internal_variable(ses, result);
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_send)
+{
+	char out[BUFFER_SIZE];
+
+	substitute(ses, arg, out, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
+
+	write_line_mud(out, ses);
 
 	return ses;
 }
@@ -237,130 +374,6 @@ DO_COMMAND(do_showme)
 	return ses;
 }
 
-
-DO_COMMAND(do_loop)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-
-	int bound1, bound2, counter, step;
-
-	arg = get_arg_in_braces(arg, temp, 0);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, right, 1);
-
-	if (sscanf(left, "%d%c%d", &bound1, &temp[0], &bound2) != 3)
-	{
-		tintin_printf(ses, "#ERROR: #LOOP - NEED 2 ARGUMENTS, FOUND: %s", left);
-	}
-	else
-	{
-		if (bound1 <= bound2)
-		{
-			step = 1;
-			bound2++;
-		}
-		else
-		{
-			step = -1;
-			bound2--;
-		}
-
-		for (counter = bound1 ; counter != bound2 ; counter += step)
-		{
-			sprintf(gtd->cmds[0], "%d", counter);
-
-			sprintf(temp, "loop %d", counter);
-			do_internal_variable(ses, temp);
-
-			substitute(ses, right, temp, SUB_CMD);
-			ses = parse_input(temp, ses);
-		}
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_parse)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-	int cnt;
-
-	arg = get_arg_in_braces(arg, temp, 0);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, right, 1);
-
-	if (*left == 0 || *right == 0)
-	{
-		tintin_printf2(ses, "#ERROR: #PARSE - PROVIDE 2 ARGUMENTS");
-	}
-	else
-	{
-		for (cnt = 0 ; left[cnt] != 0 ; cnt++)
-		{
-			sprintf(gtd->cmds[0], "%c", left[cnt]);
-
-			sprintf(temp, "parse {%c}", left[cnt]);
-			do_internal_variable(ses, temp);
-
-			substitute(ses, right, temp, SUB_CMD);
-			ses = parse_input(temp, ses);
-		}
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_forall)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-
-	arg = get_arg_in_braces(arg, temp,  TRUE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
-
-	if (*left == 0 || *right == 0)
-	{
-		tintin_printf2(ses, "#ERROR: #FORALL - PROVIDE 2 ARGUMENTS");
-	}
-	else
-	{
-		arg = left;
-
-		while (*arg)
-		{
-			arg = get_arg_in_braces(arg, temp, FALSE);
-			sprintf(gtd->cmds[0], "%s", temp);
-
-			sprintf(temp, "forall %s", gtd->cmds[0]);
-			do_internal_variable(ses, temp);
-
-			substitute(ses, right, temp, SUB_CMD);
-
-			ses = parse_input(temp, ses);
-		}
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_return)
-{
-	char result[BUFFER_SIZE];
-
-	SET_BIT(ses->flags, SES_FLAG_BREAK);
-
-	if (*arg)
-	{
-		sprintf(result, "%s %s", "result", arg);
-
-		do_internal_variable(ses, result);
-	}
-	return ses;
-}
-
 DO_COMMAND(do_snoop)
 {
 	struct session *sesptr = ses;
@@ -380,6 +393,8 @@ DO_COMMAND(do_snoop)
 		if (sesptr == NULL)
 		{
 			tintin_puts2("#NO SESSION WITH THAT NAME!", ses);
+
+			return ses;
 		}
 	}
 	else
@@ -400,6 +415,20 @@ DO_COMMAND(do_snoop)
 	return ses;
 }
 
+DO_COMMAND(do_suspend)
+{
+	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
+
+	fflush(stdout);
+
+	kill(0, SIGSTOP);
+
+	dirty_screen(gtd->ses);
+
+	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
+
+	return ses;
+}
 
 DO_COMMAND(do_system)
 {
@@ -446,29 +475,3 @@ DO_COMMAND(do_zap)
 	return gtd->ses;
 }
 
-DO_COMMAND(do_info)
-{
-	int cnt;
-
-	tintin_header(ses, " INFORMATION ");
-
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		tintin_printf2(ses, "%-20s %3d  IGNORE %3s  MESSAGE %3s  DEBUG  %3s",
-			list_table[cnt].name_multi,
-			ses->list[cnt]->count,
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ? "ON" : "OFF");
-	}
-	tintin_header(ses, "");
-
-	return ses;
-}
-
-DO_COMMAND(do_gagline)
-{
-	SET_BIT(ses->flags, SES_FLAG_GAG);
-
-	return ses;
-}

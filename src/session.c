@@ -205,7 +205,7 @@ struct session *new_session(const char *name, const char *address, struct sessio
 
 	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
 	{
-		copy_list(newsession, gts->list[cnt], cnt);
+		newsession->list[cnt] = copy_list(newsession, gts->list[cnt], cnt);
 	}
 
 	init_screen_size(newsession);

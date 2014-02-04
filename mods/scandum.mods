@@ -918,3 +918,53 @@ parse.c        Removed old code that allowed using " " instead of { } in
 llist.c        Can now use #unmacro by exactly matching the macro instead of
                having to use \\ for a single \.
 
+input.c        TinTin now enabled character mode with echo off and SGA enabled.
+
+
+               - 1.95.9
+
+input.c        Fixed some bugs in the character mode support.
+
+misc.c         Placed the functions in alphabetic order and added #SEND which
+               will send the given argument directly to the mud. Useful for
+               sending escape sequences because you cannot start a mud
+               command with an escape sequence.
+
+scrsize.c      If in character mode tintin depreps the terminal temporarily
+               when sending NAWS. Yet another annoying readline bug.
+
+chat.c         Added DND (do not disturb) feature. When enabled tintin will
+               no longer accept new chat connections.
+
+               Fixed a bug in the DNS lookup routine for addresses starting
+               with a number.
+
+               Can now chat to people by entering their ip address. Useful to
+               deal with auto ip bans.
+
+parse.c        Complex multi words aliasses are now possible.
+
+llist.c        Priority lists are now sorted alphabetically per priority level
+
+class.c        #class class read <file> no longer parses files for the given
+               class. The code was too messy to maintain. Instead it'll open
+               the class, read the file, and close the file.
+
+alias.c        Added support for complex multi word aliasses.
+
+chat.c         Added #chat public option, accepts the all argument.
+
+chat.c         Added #forward all which included session output
+
+chat.c         Added #color which sets the default color
+
+chat.c         Added a boost option for #chat accept to quadruple download
+               speeds, might cause file corruption on bad connections.
+
+class.c        Rewrote some code, #unclass should work now.
+
+llist.c        Issueing #tick {name} twice will now reset the ticker.
+
+math.c         Fixed invalid input handling.
+
+misc.c         Snooping a non existant session no longer crashes tintin.

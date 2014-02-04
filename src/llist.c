@@ -70,7 +70,7 @@ DO_COMMAND(do_killall)
 
 	push_call("kill_all(%p,%p)",ses,arg);
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
 	{
 		kill_list(ses, cnt);
 
@@ -134,8 +134,6 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 	if (ses->class && index != LIST_CLASS)
 	{
 		newnode->class = ses->class;
-
-		ses->class->data += NODE_FLAG_MAX;
 	}
 
 	ses->list[index]->count++;
@@ -145,7 +143,7 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 		case PRIORITY:
 			for (node = ses->list[index]->f_node ; node ; node = node->next)
 			{
-				if (atof(prtext) < atof(node->pr))
+				if (atof(prtext) < atof(node->pr) || (atof(prtext) == atof(node->pr) && strcmp(ltext, node->left) < 0))
 				{
 					INSERT_LEFT(newnode, node, ses->list[index]->f_node);
 					pop_call();
@@ -196,6 +194,8 @@ void updatenode_list(struct session *ses, const char *ltext, const char *rtext, 
 				free(node->right);
 				node->right = strdup(rtext);
 			}
+
+			node->data = 0;
 
 			switch (list_table[index].mode)
 			{
@@ -257,25 +257,17 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 			ses->list[index]->update = node->next;
 		}
 
-		if (index == LIST_CLASS)
+		if (index == LIST_CLASS && count_class(ses, node) != 0)
 		{
-			if (node->data >= NODE_FLAG_MAX)
-			{
-				class_kill(ses, node->left);
+			class_kill(ses, node->left, "");
 
-				pop_call();
-				return;
-			}
+			pop_call();
+			return;
 		}
 
 		if (ses->class == node)
 		{
 			ses->class = NULL;
-		}
-
-		if (node->class)
-		{
-			node->class->data -= NODE_FLAG_MAX;
 		}
 
 		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
@@ -438,6 +430,7 @@ void addnode_list(struct listroot *listhead, const char *ltext, const char *rtex
 
 	listhead->count++;
 }
+
 
 int count_list(struct listroot *listhead)
 {

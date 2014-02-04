@@ -76,9 +76,9 @@ void init_split(struct session *ses, int top, int bot)
 		bot = ses->rows;
 	}
 
-	SET_BIT(ses->flags, SES_FLAG_SPLIT);
-
 	scroll_region(ses, top, bot);
+
+	SET_BIT(ses->flags, SES_FLAG_SPLIT);
 
 	for (bot = 1 ; ses->rows - bot > ses->bot_row ; bot++)
 	{

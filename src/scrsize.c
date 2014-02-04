@@ -34,7 +34,16 @@ void init_screen_size(struct session *ses)
 	top = ses->top_row == 0 ? 1 : ses->top_row;
 	bot = ses->bot_row == 0 ? 0 : ses->rows - ses->bot_row;
 
-	rl_resize_terminal();
+	if (HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+	{
+		rl_deprep_terminal();
+		rl_resize_terminal();
+		rl_prep_terminal(0);
+	}
+	else
+	{
+		rl_resize_terminal();
+	}
 
 	rl_get_screen_size(&ses->rows, &ses->cols);
 

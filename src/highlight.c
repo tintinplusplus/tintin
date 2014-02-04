@@ -67,8 +67,8 @@ DO_COMMAND(do_highlight)
 	{
 		if (get_highlight_codes(right, temp) == FALSE)
 		{
-			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\n\r");
-			tintin_printf2(ses, "reset, light, faint, underscore, blink, reverse, dim, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
+			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\r\n");
+			tintin_printf2(ses, "reset, bold, faint, underscore, blink, reverse, dim, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 		}
 		else
 		{
