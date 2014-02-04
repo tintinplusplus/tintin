@@ -263,6 +263,9 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define TELOPT_FLAG_PROMPT            (1 <<  5)
 #define TELOPT_FLAG_IAC               (1 <<  6)
 #define TELOPT_FLAG_DEBUG             (1 <<  7)
+#define TELOPT_FLAG_INIT_TSPEED       (1 <<  8)
+#define TELOPT_FLAG_INIT_TTYPE        (1 <<  9)
+#define TELOPT_FLAG_INIT_NAWS         (1 << 10)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -795,7 +798,7 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 extern int regexp(const char *exp, const char *str);
 extern void substitute(struct session *ses, const char *string, char *result, int flags);
 extern int check_one_action(const char *line, const char *original, const char *action, struct session *ses);
-extern int action_regexp(const char *exp, const char *str);
+extern int action_regexp(const char *exp, const char *str, unsigned char arg);
 
 
 #endif
@@ -861,6 +864,7 @@ extern void buffer_d(void);
 extern void buffer_h(void);
 extern void buffer_e(void);
 extern void buffer_l(void);
+extern void buffer_f(const char *arg);
 
 #endif
 
@@ -1072,7 +1076,7 @@ extern void init_telnet_session(struct session *ses);
 #ifndef __PARSE_H__
 #define __PARSE_H__
 
-extern struct session *parse_input(char *input, struct session *ses);
+extern struct session *parse_input(const char *input, struct session *ses);
 extern int is_speedwalk_dirs(const char *cp);
 extern void process_speedwalk(const char *cp, struct session *ses);
 extern struct session *parse_tintin_command(const char *command, char *arg, struct session *ses);

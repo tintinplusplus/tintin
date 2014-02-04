@@ -34,7 +34,7 @@
 /* parse input, check for TINTIN commands and aliases and send to session */
 /**************************************************************************/
 
-struct session *parse_input(char *input, struct session *ses)
+struct session *parse_input(const char *input, struct session *ses)
 {
 	char command[BUFFER_SIZE], arg[BUFFER_SIZE];
 
@@ -83,11 +83,11 @@ struct session *parse_input(char *input, struct session *ses)
 				break;
 			}
 		}
-		input = (char *) get_arg_stop_spaces(input, arg);
+		input = get_arg_stop_spaces(input, arg);
 
 		substitute(ses, arg, command, SUB_VAR|SUB_FUN);
 
-		input = (char *) get_arg_all(input, arg);
+		input = get_arg_all(input, arg);
 
 		if (*command == gtd->tintin_char)
 		{
@@ -273,9 +273,8 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 }
 
 
-
 /*
-	get all arguments - don't remove "s and \s
+	get all arguments - only check for unescaped ';'
 */
 
 const char *get_arg_all(const char *s, char *arg)
@@ -286,71 +285,23 @@ const char *get_arg_all(const char *s, char *arg)
 
 	while (*s)
 	{
-		if (*s == '\\')
-		{
-			*arg++ = *s++;
-			if (*s)
-			{
-				*arg++ = *s++;
-			}
-		}
 #ifdef BIG5
-		else if (*s & 0x80)
+		if (*s & 0x80)
 		{
 			*arg++ = *s++;
 			if (*s)
 			{
 				*arg++ = *s++;
 			}
+			continue;
 		}
 #endif
-		else if (*s == ';' && nest < 1)
-		{
-			break;
-		}
-		else if (*s == DEFAULT_OPEN)
-		{
-			nest++;
-			*arg++ = *s++;
-		}
-		else if (*s == DEFAULT_CLOSE)
-		{
-			nest--;
-			*arg++ = *s++;
-		}
-		else
+
+		if (*s == '\\' && s[1] == ';')
 		{
 			*arg++ = *s++;
 		}
-	}
-	*arg = '\0';
-	return(s);
-}
-
-/**************************************/
-/* get all arguments - remove "s etc. */
-/* Example:                           */
-/* In: "this is it" way way hmmm;     */
-/* Out: this is it way way hmmm       */ 
-/**************************************/
-
-const char *get_arg_with_spaces(const char *s, char *arg)
-{
-	int nest = 0;
-
-	s = space_out(s);
-
-	while (*s)
-	{
-		if (*s == '\\')
-		{
-			*arg++ = *s++;
-			if (*s == 0)
-			{
-				break;
-			}
-		}
-		else if (*s == ';' && !nest)
+		else if (*s == ';' && nest == 0)
 		{
 			break;
 		}
@@ -362,29 +313,19 @@ const char *get_arg_with_spaces(const char *s, char *arg)
 		{
 			nest--;
 		}
-#ifdef BIG5
-		else if (*s & 0x80)
-		{
-			*arg++ = *s++;
-			if (*s == 0)
-			{
-				break;
-			}
-		}
-#endif
 		*arg++ = *s++;
 	}
-	*arg = '\0'; 
-	return(s);
+	*arg = '\0';
+	return s;
 }
 
 /*
-	my own routine
+	Braces are stripped in braced arguments leaving all else as is.
 */
 
 const char *get_arg_in_braces(const char *s, char *arg, int flag)
 {
-	int nest = 0;
+	int nest = 1;
 	const char *ptr;
 
 	s = space_out(s);
@@ -400,12 +341,24 @@ const char *get_arg_in_braces(const char *s, char *arg, int flag)
 		{
 			s = get_arg_with_spaces(ptr, arg);
 		}
-		return(s);
+		return s;
 	}
 	s++;
 
-	while (*s && !(*s == DEFAULT_CLOSE && !nest))
+	while (*s)
 	{
+#ifdef BIG5
+		if (*s & 0x80)
+		{
+			*arg++ = *s++;
+			if (*s == 0)
+			{
+				break;
+			}
+			continue;
+		}
+#endif
+
 		if (*s == DEFAULT_OPEN)
 		{
 			nest++;
@@ -413,23 +366,18 @@ const char *get_arg_in_braces(const char *s, char *arg, int flag)
 		else if (*s == DEFAULT_CLOSE)
 		{
 			nest--;
-		}
-#ifdef BIG5
-		else if (*s & 0x80)
-		{
-			*arg++ = *s++;
-			if (*s == 0)
+
+			if (nest == 0)
 			{
 				break;
 			}
 		}
-#endif
 		*arg++ = *s++;
 	}
 
-	if (!*s)
+	if (*s == 0)
 	{
-		tintin_puts2("#Unmatched braces error!", NULL);
+		tintin_printf2(NULL, "#Unmatched braces error!");
 	}
 	else
 	{
@@ -437,53 +385,111 @@ const char *get_arg_in_braces(const char *s, char *arg, int flag)
 	}
 	*arg = '\0';
 
-	return(s);
+	return s;
 }
 
-/*
-	get one arg, stop at spaces, remove quotes
-*/
+/**************************************/
+/* get all arguments                  */
+/**************************************/
 
-const char *get_arg_stop_spaces(const char *s, char *arg)
+const char *get_arg_with_spaces(const char *s, char *arg)
 {
-	int inside = FALSE;
-
-	s = space_out(s);
+	int nest = 0;
 
 	while (*s)
 	{
-		if (*s == '\\')
-		{
-			*arg++ = *s++;
-			if (*s)
-			{
-				*arg++ = *s++;
-			}
-		}
 #ifdef BIG5
-		else if(*s & 0x80)
+		if (*s & 0x80)
 		{
 			*arg++ = *s++;
-			if (*s)
-			{
-				*arg++ = *s++;
-			}
-		}
-#endif
-		else if (*s == ';')
-		{
-			if (inside)
-			{
-				*arg++ = *s++;
-			}
-			else
+			if (*s == 0)
 			{
 				break;
 			}
 		}
-		else if (!inside && *s == ' ')
+		continue;
+#endif
+
+		if (*s == '\\')
+		{
+			*arg++ = *s++;
+
+			if (*s)
+			{
+				*arg++ = *s++;
+			}
+		}
+		else if (*s == ';' && nest == 0)
 		{
 			break;
+		}
+		else if (*s == DEFAULT_OPEN)
+		{
+			*arg++ = *s++;
+			nest++;
+		}
+		else if (*s == DEFAULT_CLOSE)
+		{
+			*arg++ = *s++;
+			nest--;
+		}
+		else
+		{
+			*arg++ = *s++;
+		}
+	}
+	*arg = '\0'; 
+	return s;
+}
+
+/*
+	get one arg, stop at spaces
+*/
+
+const char *get_arg_stop_spaces(const char *s, char *arg)
+{
+	int nest = 0;
+
+	while (*s)
+	{
+#ifdef BIG5
+		if(*s & 0x80)
+		{
+			*arg++ = *s++;
+			if (*s)
+			{
+				*arg++ = *s++;
+			}
+			continue;
+		}
+#endif
+
+		if (*s == '\\')
+		{
+			*arg++ = *s++;
+
+			if (*s)
+			{
+				*arg++ = *s++;
+			}
+		}
+		else if (*s == ';' && nest == 0)
+		{
+			break;
+		}
+		else if (*s == ' ' && nest == 0)
+		{
+			break;
+		}
+		else if (*s == DEFAULT_OPEN)
+		{
+			*arg++ = *s++;
+			nest++;
+		}
+		else if (*s == DEFAULT_CLOSE)
+		{
+			*arg++ = *s++;
+			nest--;
 		}
 		else
 		{
@@ -492,7 +498,7 @@ const char *get_arg_stop_spaces(const char *s, char *arg)
 	}
 	*arg = '\0';
 
-	return(s);
+	return s;
 }
 
 /*

@@ -57,7 +57,7 @@ DO_COMMAND(do_list)
 
 		if (cnt == ARRAY_MAX)
 		{
-			show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {%s} {INS|DEL|GET|SET|LEN} {argument}", left);
+			show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {%s} {DEL|FND|INS|GET|SET|LEN} {argument}", left);
 		}
 		else
 		{
@@ -178,9 +178,10 @@ DO_ARRAY(array_fnd)
 	{
 		arg = get_arg_in_braces(arg, temp, FALSE);
 
-		if (!strcmp(temp, left))
+		if (regexp(left, temp))
 		{
 			sprintf(buf, "%d", cnt);
+			break;
 		}
 	}
 	strcpy(temp, buf);

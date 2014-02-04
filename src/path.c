@@ -191,9 +191,16 @@ DO_COMMAND(do_loadpath)
 				arg++;
 			}
 
-			arg = get_arg_with_spaces(arg, left);
+			arg = get_arg_in_braces(arg, left, TRUE);
 
-			addnode_list(root, left, "", "0");
+			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)))
+			{
+				addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+			}
+			else
+			{
+				addnode_list(root, left, left, "0");
+			}
 
 			if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 			{

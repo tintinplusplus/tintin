@@ -537,6 +537,10 @@ DO_COMMAND(do_buffer)
 			buffer_e();
 			break;
 
+		case 'f':
+			buffer_f(right);
+			break;
+
 		case 'w':
 			do_writebuffer(ses, right);
 			break;
@@ -734,4 +738,91 @@ void buffer_l(void)
 	{
 		buffer_e();
 	}
+}
+
+void buffer_f(const char *arg)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	int scroll_cnt, grep_cnt, grep_max;
+
+	grep_cnt = grep_max = scroll_cnt = 0;
+
+	get_arg_in_braces(arg, left,  FALSE);
+
+	if (gtd->ses->buffer == NULL)
+	{
+		tintin_puts2("#BUFFER, NO SCROLL BUFFER AVAILABLE.", NULL);
+	}
+	else if (*left == 0)
+	{
+		tintin_puts2("#BUFFER, FIND WHAT?", NULL);
+	}
+	else
+	{
+		if (is_number(left))
+		{
+			arg = get_arg_in_braces(arg, left,  FALSE);
+			arg = get_arg_in_braces(arg, right, TRUE);
+
+			if (*right == 0)
+			{
+				tintin_printf2(NULL, "#BUFFER, FIND WHAT OF OCCURANCE {%s} ?", left);
+
+				return;
+			}
+			grep_max = atoi(left);
+		}
+		else
+		{
+			arg = get_arg_in_braces(arg, right, TRUE);
+		}
+
+		sprintf(left, "*%s*", right);
+
+		scroll_cnt = gtd->ses->scroll_row;
+
+		do
+		{
+			if (scroll_cnt == gtd->ses->scroll_max -1)
+			{
+				scroll_cnt = 0;
+			}
+			else
+			{
+				scroll_cnt++;
+			}
+
+			if (gtd->ses->buffer[scroll_cnt] == NULL)
+			{
+				break;
+			}
+
+			if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
+			if (regexp(left, gtd->ses->buffer[scroll_cnt]))
+			{
+				if (grep_cnt == grep_max)
+				{
+					break;
+				}
+				grep_cnt++;
+			}
+		}
+		while (scroll_cnt != gtd->ses->scroll_row);
+
+		if (gtd->ses->buffer[scroll_cnt] == NULL || scroll_cnt == gtd->ses->scroll_row)
+		{
+			tintin_puts2("#BUFFER, NO MATCHES FOUND.", NULL);
+		}
+		else
+		{
+			gtd->ses->scroll_line = scroll_cnt;
+
+			show_buffer(gtd->ses);
+		}
+	}
+	return;
 }

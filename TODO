@@ -1,4 +1,8 @@
-* Stuff that isn't that hard to do, but somehow never ends up being fixed.
+* Stuff that needs to be done
+
+-------------------------------------------------------------------------------
+
+* Stuff that has been request but that I'm not entirely sure about
 
 - allow actions to use ! to repeat commands, possibly use #history 1, not as
   easy at it seems.
@@ -11,7 +15,7 @@
 
 - place #grep output in the buffer. This might not be desirable.
 
-
+-------------------------------------------------------------------------------
 
 * This is a list of new features/improvements that are planned.
 
@@ -21,9 +25,7 @@
 
 - event system to deal with various situations
 
-- Add (his|her|it) for triggers.
-
-
+-------------------------------------------------------------------------------
 
 * This is a list of new features/improvements the author of this version has
   no interest in.
@@ -47,10 +49,4 @@
   the #system command, write the scripts output to a file, and use #read to
   execute it. 
 
-
 --------------------------------------------------------------------------------
-
-If a line doesn't contain a ; do not modify it.
-
-If a line contains a ; place the bracket on a new line level alligned and
-tabbed depending on level.

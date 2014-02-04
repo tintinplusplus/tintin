@@ -68,6 +68,7 @@ const struct help_type help_table[] =
 		"         Have tintin search for a certain string of text from the mud, if the\n"
 		"         string is found it will execute the commands.  Variables %0 to %9\n"
 		"         are substituted from the input string, and can be used in the command.\n"
+		"         Brackets can be used for selective keywords\n"
 		"         The third parameter of the command will tell how important tintin\n"
 		"         should reguard this action, 0 most important, 9 least important.  If\n"
 		"         no priority is given, a default value of 5 is assigned.\n"
@@ -81,6 +82,8 @@ const struct help_type help_table[] =
 		"         fooled by someone saying 'You are hungry'.\n"
 		"Example: #act {%0 tells you 'hello'} {tell %0 Hello %0. How are you today?}\n"
 		"         This allows you to seem like a nice, attentive, fast typing gentleman.\n"
+		"Example: #act {A puppy barks at you, wagging [his|her|its] tail.} {slap puppy}\n"
+		"         This allows you to deal with annoy puppies regardless of their sex.\n"
 	},
 	{
 		"ALL",
@@ -101,7 +104,7 @@ const struct help_type help_table[] =
 	},
 	{
 		"BUFFER",
-		"Command: #buffer {home|up|down|end|write filename|info}\n"
+		"Command: #buffer {home|up|down|end|find|write filename|info}\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
 		"         the entire scrollback buffer to file.\n"
@@ -221,7 +224,7 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                             1992, 2006                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.96.2                           <068>#\n"
+		"<068>    #<078>                           Version 1.96.3                           <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<068>####################################################################<068>#<088>\n\n"
 	},
@@ -443,10 +446,10 @@ const struct help_type help_table[] =
 		"GREP",
 		"Command: #grep [page] {search string}\n"
 		"         This command allows you to search for matching lines in your scroll\n"
-		"         back buffer. The amount of matches shown equals your screen size. If you\n"
-		"         want to search back further use a page number. You can use wildcards\n"
-		"         for better search results. Default * *'s are placed around the search\n"
-		"         string to make life easier.\n"
+		"         back buffer. The amount of matches shown equals your screen size. If\n"
+		"         you want to search back further use a page number. You can use\n"
+		"         wildcards for better search results. Default * *'s are placed around\n"
+		"         the search string to make things a little easier.\n"
 	},
 	{
 		"INFO",
@@ -469,11 +472,12 @@ const struct help_type help_table[] =
 		"LIST",
 		"Command: #list {variable} {del|ins|get|set|len} {argument}\n"
 		"\n"
-		"#list {list} {del} {index}            Delete an item from the list\n"
-		"#list {list} {ins} {index} {string}   Insert {string} at given index\n"
-		"#list {list} {get} {index} {variable} Copy an item to {variable}\n"
-		"#list {list} {set} {index} {string}   Change an item at the given index\n"
-		"#list {list} {len} {variable}         Copy list length to {variable}\n"
+		"#list {list} {del} {index}             Delete an item from the list\n"
+		"#list {list} {ins} {index} {string}    Insert {string} at given index\n"
+		"#list {list} {fnd} {string} {variable} Return index if {string} is found\n"
+		"#list {list} {get} {index} {variable}  Copy an item to {variable}\n"
+		"#list {list} {set} {index} {string}    Change an item at the given index\n"
+		"#list {list} {len} {variable}          Copy list length to {variable}\n"
 		"\n"
 		"The index should be between 1 and the list's length. You can also give\n"
 		"a negative value, in which case -1 equals the last item in the list, -2\n"

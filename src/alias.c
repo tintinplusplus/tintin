@@ -124,7 +124,7 @@ int alias_regexp(const char *exp, const char *str)
 
 					for (cnt = 0 ; cnt < 1000 ; cnt++)
 					{
-						if (action_regexp(exp + 2, &str[cnt]))
+						if (alias_regexp(exp + 2, &str[cnt]))
 						{
 							memcpy(gtd->vars[exp[1] - '0'], str, cnt);
 							gtd->vars[exp[1] - '0'][cnt] = 0;

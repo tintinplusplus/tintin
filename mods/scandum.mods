@@ -1021,3 +1021,19 @@ chat.c         Now setting NONBLOCK on the chat port due to reports about
 config.c       Added #config {log level} {low|high} which is a hidden config
                option. Defaults to high, when set to low tintin will log the
                raw mud output.
+
+October 2006   - 1.96.3
+
+telopt.c       Updated telopts to login on globalvillage bbs.
+
+buffer.c       Added buffer find option, which works much like grep but instead
+               places the scrollback buffer at the given search string.
+
+tinexp.c       Can now add lists of keywords between square brackets divided
+               by seperators, for example [his|her|its] in actions. The actual
+               text is stored in the next %0-9. Cannot be used for highlights.
+
+array.c        array_fnd function allows searching for words in lists.
+
+path.c         can now save loaded paths backward.
+

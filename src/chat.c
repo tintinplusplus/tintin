@@ -42,7 +42,7 @@
 #define CALL_TIMEOUT 5
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.96.2"
+#define TINTIN_VERSION "TinTin++ 1.96.3"
 
 #define RESTRING(point, value)   \
 {                                \

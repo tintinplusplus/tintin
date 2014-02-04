@@ -36,10 +36,12 @@ char iac_do_tspeed[]          = { IAC, DO,    TELOPT_TSPEED          };
 char iac_do_xdisploc[]        = { IAC, DO,    TELOPT_XDISPLOC        };
 char iac_do_new_environ[]     = { IAC, DO,    TELOPT_NEW_ENVIRON     };
 char iac_do_naws[]            = { IAC, DO,    TELOPT_NAWS            };
+char iac_will_naws[]          = { IAC, WILL,  TELOPT_NAWS            };
 char iac_do_sga[]             = { IAC, DO,    TELOPT_SGA             };
 char iac_do_echo[]            = { IAC, DO,    TELOPT_ECHO            };
-char iac_sb_tspeed[]          = { IAC, SB,    TELOPT_TSPEED, IAC, SE };
-char iac_sb_ttype[]           = { IAC, SB,    TELOPT_TTYPE, IAC, SE  };
+char iac_will_tspeed[]        = { IAC, WILL,  TELOPT_TSPEED          };
+char iac_sb_tspeed[]          = { IAC, SB,    TELOPT_TSPEED, TELQUAL_SEND, IAC, SE };
+char iac_sb_ttype[]           = { IAC, SB,    TELOPT_TTYPE, TELQUAL_SEND, IAC, SE  };
 char iac_dont_status[]        = { IAC, DONT,  TELOPT_STATUS          };
 char iac_will_status[]        = { IAC, WILL,  TELOPT_STATUS          };
 char iac_will_sga[]           = { IAC, WILL,  TELOPT_SGA             };
@@ -74,16 +76,18 @@ struct iac_type
 const struct iac_type iac_table [] =
 {
 	{   3,  iac_do_sga,           &send_will_sga           },
-	{   3,  iac_do_ttype,         &send_sb_ttype           },
+	{   3,  iac_do_ttype,         &send_will_ttype         },
 	{   3,  iac_do_xdisploc,      &send_wont_xdisploc      },
 	{   3,  iac_do_new_environ,   &send_wont_new_environ   },
 	{   3,  iac_do_naws,          &send_sb_naws            },
-	{   3,  iac_do_lflow,         &send_wont_lflow       	},
-	{   3,  iac_sb_tspeed,        &send_sb_tspeed          },
-	{   3,  iac_sb_ttype,         &send_sb_ttype 		},
-	{   3,  iac_dont_status,      &send_wont_status      	},
+	{   3,  iac_will_naws,        &send_sb_naws            },
+	{   3,  iac_do_lflow,         &send_wont_lflow         },
+	{   3,  iac_do_tspeed,        &send_will_tspeed        },
+	{   6,  iac_sb_tspeed,        &send_sb_tspeed          },
+	{   6,  iac_sb_ttype,         &send_sb_ttype           },
+	{   3,  iac_dont_status,      &send_wont_status        },
 	{   3,  iac_will_sga,         &send_do_sga             },
-	{   3,  iac_will_status,      &send_dont_status      	},
+	{   3,  iac_will_status,      &send_dont_status        },
 	{   3,  iac_do_oldenviron,    &send_wont_oldenviron    },
 	{   3,  iac_do_echo,          &send_echo_will          },
 	{   3,  iac_will_echo,        &send_echo_off           },
@@ -505,28 +509,40 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_will_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TTYPE);
+	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_TTYPE))
+	{
+		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_TTYPE);
 
-	telopt_debug(ses, "SENT WILL TERMINAL TYPE");
+		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TTYPE);
 
+		telopt_debug(ses, "SENT WILL TERMINAL TYPE");
+	}
 	return 3;
 }
 
 int send_will_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TSPEED);
+	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_TSPEED))
+	{
+		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_TSPEED);
 
-	telopt_debug(ses, "SENT WILL TERMINAL SPEED");
+		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_TSPEED);
 
+		telopt_debug(ses, "SENT WILL TSPEED");
+	}
 	return 3;
 }
 
 int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
+	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS))
+	{
+		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS);
 
-	telopt_debug(ses, "SENT IAC WILL NAWS");
+		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
 
+		telopt_debug(ses, "SENT IAC WILL NAWS");
+	}
 	return 3;
 }
 
@@ -550,6 +566,13 @@ int send_wont_new_environ(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
+	if (atoi(ses->port) != TELNET_PORT)
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_NAWS);
+
+		telopt_debug(ses, "SENT IAC WILL NAWS");
+	}
+
 	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, 0, ses->cols % 255, 0, ses->rows % 255, IAC, SE);
 
 	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
@@ -575,7 +598,7 @@ int send_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	telopt_debug(ses, "SENT IAC SB TSPEED");
 
-	return 3;
+	return 6;
 }
 
 
@@ -594,7 +617,7 @@ int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 		telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
 	}
 
-	return 3;
+	return 6;
 }
 
 int send_wont_status(struct session *ses, int cplen, unsigned char *cpsrc)
@@ -682,6 +705,11 @@ int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 	}
 
 	return 3;
+}
+
+int ignore_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	return cplen;
 }
 
 int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)

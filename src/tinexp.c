@@ -482,17 +482,17 @@ int check_one_action(const char *line, const char *original, const char *action,
 	if (*ptr == '^')
 	{
 		ptr++;
-		return action_regexp(ptr, ptl);
+		return action_regexp(ptr, ptl, 255);
 	}
 
 	if (ptr[0] == '%' && isdigit(ptr[1]))
 	{
-		return action_regexp(ptr, ptl);
+		return action_regexp(ptr, ptl, 255);
 	}
 
 	while (*ptl)
 	{
-		if (*ptr == *ptl && action_regexp(ptr, ptl))
+		if ((*ptr == '[' || *ptr == *ptl) && action_regexp(ptr, ptl, 255))
 		{
 			return TRUE;
 		}
@@ -502,17 +502,21 @@ int check_one_action(const char *line, const char *original, const char *action,
 }
 
 
-int action_regexp(const char *exp, const char *str)
+int action_regexp(const char *exp, const char *str, unsigned char arg)
 {
-	short cnt;
+	short cnt, cnt2;
 
 	for (cnt = 0 ; cnt < 10 ; cnt++)
 	{
 		gtd->vars[cnt][0] = 0;
 	}
 
+	thestart:
+
 	while (*exp)
 	{
+
+
 #ifdef BIG5
 		if (*exp & 0x80 && *str & 0x80)
 		{
@@ -531,6 +535,8 @@ int action_regexp(const char *exp, const char *str)
 			case '%':
 				if (exp[1] >= '0' && exp[1] <= '9')
 				{
+					arg = exp[1] - '0';
+
 					if (exp[2] == 0)
 					{
 						strcpy(gtd->vars[exp[1] - '0'], str);
@@ -538,20 +544,17 @@ int action_regexp(const char *exp, const char *str)
 						return TRUE;
 					}
 
-					for (cnt = 0 ; cnt < 1000 ; cnt++)
+					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (action_regexp(exp + 2, &str[cnt]))
+						if (action_regexp(exp + 2, &str[cnt], arg))
 						{
 							memcpy(gtd->vars[exp[1] - '0'], str, cnt);
 							gtd->vars[exp[1] - '0'][cnt] = 0;
 
 							return TRUE;
 						}
-						if (str[cnt] == 0)
-						{
-							return FALSE;
-						}
 					}
+					return FALSE;
 				}
 				break;
 
@@ -559,6 +562,68 @@ int action_regexp(const char *exp, const char *str)
 				if (exp[1] == 0)
 				{
 					return (exp[1] == str[0]);
+				}
+				break;
+
+			case '[':
+				if (*str != '[' && regexp("[*|*]*", exp))
+				{
+					cnt  = 1;
+					cnt2 = 0;
+
+					while (TRUE)
+					{
+						if (exp[cnt] == '|' || exp[cnt] == ']')
+						{
+							arg = (arg == 9) ? arg : arg + 1;
+							cnt--;
+							cnt2 = 0;
+
+							while (exp[cnt] != '|' && exp[cnt] != '[')
+							{
+								cnt--;
+								gtd->vars[arg][cnt2++] = *str++;
+							}
+							gtd->vars[arg][cnt2] = 0;
+
+							while (*exp != ']')
+							{
+								exp++;
+							}
+							exp++;
+
+							goto thestart;
+						}
+
+						if (str[cnt2] == 0)
+						{
+							break;
+						}
+
+						if (exp[cnt] == str[cnt2])
+						{
+							cnt++;
+							cnt2++;
+							continue;
+						}
+						else
+						{
+							cnt2 = 0;
+
+							while (exp[cnt])
+							{
+								if (exp[cnt] == ']')
+								{
+									return FALSE;
+								}
+								if (exp[cnt++] == '|')
+								{
+									break;
+								}
+
+							}
+						}
+					}
 				}
 				break;
 		}

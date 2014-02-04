@@ -294,6 +294,8 @@ DO_COMMAND(do_send)
 {
 	char left[BUFFER_SIZE], out[BUFFER_SIZE];
 
+	printf("%s\n", arg);
+
 	get_arg_in_braces(arg, left, TRUE);
 
 	substitute(ses, left, out, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
