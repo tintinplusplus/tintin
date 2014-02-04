@@ -75,37 +75,48 @@ DO_COMMAND(do_unsubstitute)
 void check_all_substitutions(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
-	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *pt1, *pt2;
+	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *pt1, *pt2, *ptm;
 
 	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
 	{
 		if (check_one_regexp(ses, node, line, original, 0))
 		{
-			if (*gtd->vars[0] == 0)
-			{
-				continue;
-			}
-			strcpy(match, gtd->vars[0]);
+			pt1 = line;
+			pt2 = original;
 
 			*output = 0;
 
-			substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
-
-			pt1 = original;
-
-			while ((pt2 = strstr(pt1, match)) != NULL)
+			do
 			{
-				*pt2 = 0;
+				if (*gtd->vars[0] == 0)
+				{
+					break;
+				}
+				strcpy(match, gtd->vars[0]);
 
-				cat_sprintf(output, "%s%s", pt1, subst);
+				substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				pt1 = pt2 + strlen(match);
+				ptm = strstr(pt2, match);
+
+				if (ptm == NULL)
+				{
+					break;
+				}
+
+				*ptm = 0;
+
+				cat_sprintf(output, "%s%s", pt2, subst);
+
+				pt1 = pt1 + strip_vt102_strlen(pt2) + strip_vt102_strlen(match);
+				pt2 = ptm + strlen(match);
+
+				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
 			}
-			strcat(output, pt1);
+			while (check_one_regexp(ses, node, pt1, pt2, 0));
+
+			strcat(output, pt2);
 
 			strcpy(original, output);
-
-			show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
 		}
 	}
 }

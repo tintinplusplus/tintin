@@ -114,8 +114,6 @@ DO_COMMAND(do_delay)
 		}
 		else
 		{
-			sprintf(time, "%lld", utime());
-
 			updatenode_list(ses, arg1, arg2, arg3, LIST_DELAY);
 
 			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg3, arg2);

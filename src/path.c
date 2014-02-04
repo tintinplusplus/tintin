@@ -318,10 +318,11 @@ DO_PATH(path_run)
 
 			while (root->f_node)
 			{
-				sprintf(time, "%lld", utime() + wait);
-				sprintf(name, "%lld", gtd->time);
+				sprintf(name, "%lld", utime());
+				sprintf(time, "%lld", (long long) wait);
 
-				wait += (long long) (get_number(ses, left) * 1000000LL);
+
+				wait += (long long) get_number(ses, left);
 
 				updatenode_list(ses, name, root->f_node->left, time, LIST_DELAY);
 

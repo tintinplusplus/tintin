@@ -48,11 +48,11 @@ void printline(struct session *ses, char *str, int prompt)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
 	{
-		word_wrap(ses, str, wrapped_str, TRUE);
+		word_wrap(ses, str, wrapped_str, FALSE);
 	}
 	else
 	{
-		strcpy(wrapped_str, str);
+		word_wrap(ses, str, wrapped_str, TRUE);
 	}
 
 	if (prompt)
@@ -71,7 +71,7 @@ void printline(struct session *ses, char *str, int prompt)
 	Word wrapper, only wraps scrolling region, returns nr of lines - Igor
 */
 
-int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
+int word_wrap(struct session *ses, char *textin, char *textout, int convert)
 {
 	char *pti, *pto, *lis, *los;
 	int skip = 0, cnt = 0;
@@ -108,6 +108,11 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 			pti++;
 		}
 		*pto = 0;
+
+		if (convert)
+		{
+			return 0;
+		}
 
 		strcpy(textin, textout);
 

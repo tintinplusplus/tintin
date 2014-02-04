@@ -261,7 +261,7 @@ void init_tintin(void)
 	gts->telopts        = TELOPT_FLAG_ECHO;
 	gts->flags          = SES_FLAG_MCCP;
 	gts->socket         = 1;
-	gts->read_max       = 4096;
+	gts->read_max       = 16384;
 
 	gtd                 = (struct tintin_data *) calloc(1, sizeof(struct tintin_data));
 
@@ -272,7 +272,7 @@ void init_tintin(void)
 	gtd->mccp_len       = 4096;
 	gtd->mccp_buf       = (unsigned char *) calloc(1, gtd->mccp_len);
 
-	gtd->mud_output_max = 4096;
+	gtd->mud_output_max = 16384;
 	gtd->mud_output_buf = (char *) calloc(1, gtd->mud_output_max);
 
 	gtd->input_off      = 1;

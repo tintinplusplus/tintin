@@ -1,4 +1,0 @@
-aug 2004
-
-- telopt.c      Fuller telnet protocol negotiation, including the ability to
-                connect to both linux and hpux's telnet daemons.

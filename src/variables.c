@@ -128,7 +128,7 @@ void internal_variable(struct session *ses, char *format, ...)
 		updatenode_list(ses, left, right, "", LIST_VARIABLE);
 	}
 
-	show_debug(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", left, right);
+/*	show_debug(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", left, right); */
 }
 
 

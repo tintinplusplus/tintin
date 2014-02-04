@@ -92,9 +92,12 @@ AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select s
 AC_CHECK_LIB(z, inflate)
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(nsl, gethostbyname)
+AC_CHECK_LIB(socket, rresvport)
 AC_CHECK_LIB(util, forkpty)
 AC_CHECK_LIB(pcre, pcre_compile)
 AC_CHECK_PROGS(MAKE, gmake make)
+
+AC_CHECK_FILES([/dev/ptmx])
 
 AC_FUNC_GETMNTENT
 AC_HEADER_DIRENT 

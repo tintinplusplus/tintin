@@ -311,23 +311,32 @@ void connect_session(struct session *ses)
 	switch (ses->connect_error)
 	{
 		case EINTR:
-			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION TIMED OUT.");
+			tintin_puts(ses, "#COULD NOT CONNECT - CALL INTERUPTED.");
 			break;
 
 		case ECONNREFUSED:
-			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION REFUSED.");
+			tintin_puts(ses, "#COULD NOT CONNECT - REMOTE SERVER IS NOT REACHABLE.");
 			break;
 
 		case ENETUNREACH:
 			tintin_puts(ses, "#COULD NOT CONNECT - THE NETWORK IS NOT REACHABLE FROM THIS HOST.");
 			break;
 
+		case ETIMEDOUT:
+			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION TIMED OUT.");
+			break;
+
+		case EINPROGRESS:
+			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION TIMED OUT.");
+			break;
+
 		default:
-			tintin_puts(ses, "#COULD NOT CONNECT");
+			tintin_puts(ses, "#COULD NOT CONNECT.");
 			break;
 	}
 
 	cleanup_session(ses);
+
 }
 
 /*****************************************************************************/
@@ -401,6 +410,7 @@ void dispose_session(struct session *ses)
 	free(ses->port);
 	free(ses->group);
 	free(ses->read_buf);
+	free(ses->cmd_color);
 
 	free(ses);
 

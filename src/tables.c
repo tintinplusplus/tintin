@@ -135,6 +135,7 @@ struct list_type list_table[LIST_MAX] =
 	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TABCYCLE",          "TABCYCLE",           APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE },
 	{    "TICKER",            "TICKERS",            ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT }
 
@@ -441,13 +442,193 @@ struct map_type map_table[] =
 struct cursor_type cursor_table[] =
 {
 	{
+		"AUTO TAB BACKWARD",
+		"Tab completion from scrollback buffer, backward",
+		"",
+		cursor_auto_tab_backward
+	},
+	{
+		"AUTO TAB FORWARD",
+		"Tab completion from scrollback buffer, forward",
+		"",
+		cursor_auto_tab_forward
+	},
+	{
+		"BACKSPACE",
+		"Delete backward character",
+		"",
+		cursor_backspace
+	},
+	{
+		"BACKWARD",
+		"Move cursor backward",
+		"",
+		cursor_left
+	},
+	{
+		"CLEAR LEFT",
+		"Delete from cursor to start of input",
+		"",
+		cursor_clear_left
+	},
+	{
+		"CLEAR LINE",
+		"Delete the input line",
+		"",
+		cursor_clear_line
+	},
+	{
+		"CLEAR RIGHT",
+		"Delete from cursor to end of input",
+		"",
+		cursor_clear_right
+	},
+	{
+		"CONVERT META",
+		"Meta convert the next character",
+		"",
+		cursor_convert_meta
+	},
+	{
+		"CTRL DELETE",
+		"Delete one character, exit on an empty line",
+		"",
+		cursor_delete_exit
+	},
+	{
+		"DELETE",
+		"Delete character at cursor",
+		"[3~",
+		cursor_delete
+	},
+	{
+		"DELETE WORD",
+		"Delete next word backward",
+		"",
+		cursor_delete_word_left
+	},
+	{
+		"ECHO",
+		"Turn local echoing on or off",
+		"",
+		cursor_echo
+	},
+
+	{
+		"END",
+		"Move cursor to end of input",
+		"",
+		cursor_end
+	},
+	{
+		"ENTER",
+		"Process the input line",
+		"",
+		cursor_enter
+	},
+	{
+		"EXIT",
+		"Exit current session",
+		"",
+		cursor_exit
+	},
+	{
+		"FORWARD",
+		"Move cursor forward",
+		"",
+		cursor_right
+	},
+	{
+		"HISTORY NEXT",
+		"Select next command history entry",
+		"",
+		cursor_history_next
+	},
+	{
+		"HISTORY PREV",
+		"Select previous command history entry",
+		"",
+		cursor_history_prev
+	},
+	{
+		"HISTORY SEARCH",
+		"Search command history",
+		"",
+		cursor_history_search
+	},
+	{
+		"HOME",
+		"Move the cursor to start of input",
+		"",
+		cursor_home
+	},
+	{
+		"INSERT",
+		"Turn insert mode on or off",
+		"",
+		cursor_insert
+	},
+	{
+		"MIXED TAB BACKWARD",
+		"Tab completion on last word, search backward",
+		"[Z",
+		cursor_mixed_tab_backward
+	},
+	{
+		"MIXED TAB FORWARD",
+		"Tab completion on last word, search forward",
+		"\t",
+		cursor_mixed_tab_forward
+	},
+	{
+		"NEXT WORD",
+		"Move cursor to the next word",
+		"f",
+		cursor_right_word
+	},
+	{
+		"PASTE BUFFER",
+		"Paste the previously deleted input text",
+		"",
+		cursor_paste_buffer
+	},
+	{
+		"PREV WORD",
+		"Move cursor to the previous word",
+		"b",
+		cursor_left_word
+	},
+	{
+		"REDRAW INPUT",
+		"Redraw the input line",
+		"",
+		cursor_redraw_input
+	},
+	{
+		"SUSPEND",
+		"Suspend program, return with fg",
+		"",
+		cursor_suspend
+	},
+	{
+		"TAB BACKWARD",
+		"Tab completion from tab list, backward",
+		"",
+		cursor_tab_backward
+	},
+	{
+		"TAB FORWARD",
+		"Tab completion from tab list, forward",
+		"",
+		cursor_tab_forward
+	},
+	{
 		"",
 		"",
 		"[5~",
 		cursor_buffer_up
 	},
 	{
-
 		"",
 		"",
 		"[6~",
@@ -472,12 +653,6 @@ struct cursor_type cursor_table[] =
 		cursor_buffer_lock
 	},
 	{
-		"HOME",
-		"Move the cursor to start of input",
-		"",
-		cursor_home
-	},
-	{
 		"",
 		"",
 		"[7~",
@@ -495,38 +670,13 @@ struct cursor_type cursor_table[] =
 		"OH",
 		cursor_home
 	},
-
-	{
-		"BACKWARD",
-		"Move cursor backward",
-		"",
-		cursor_left
-	},
 	{
 		"",
 		"",
 		"OD",
 		cursor_left
 	},
-	{
-		"CLEAR LINE",
-		"Delete the input line",
-		"",
-		cursor_clear_line
-	},
-	{
-		"CTRL DELETE",
-		"Delete character at cursor, or exit on empty line",
-		"",
-		cursor_delete_exit
-	},
 
-	{
-		"END",
-		"Move cursor to end of input",
-		"",
-		cursor_end
-	},
 	{
 		"",
 		"",
@@ -546,22 +696,10 @@ struct cursor_type cursor_table[] =
 		cursor_end
 	},
 	{
-		"FORWARD",
-		"Move cursor forward",
-		"",
-		cursor_right
-	},
-	{
 		"",
 		"",
 		"OC",
 		cursor_right
-	},
-	{
-		"BACKSPACE",
-		"Delete backward character",
-		"",
-		cursor_backspace
 	},
 	{
 		"",
@@ -570,76 +708,16 @@ struct cursor_type cursor_table[] =
 		cursor_backspace
 	},
 	{
-		"TAB",
-		"Tab completion on last word",
-		"\t",
-		cursor_tab
-	},
-	{
-		"ENTER",
-		"Process the input line",
-		"",
-		cursor_enter
-	},
-	{
-		"CLEAR RIGHT",
-		"Delete from cursor to end of input",
-		"",
-		cursor_clear_right
-	},
-	{
-		"REDRAW INPUT",
-		"Redraw the input line",
-		"",
-		cursor_redraw_input
-	},
-	{
-		"HISTORY NEXT",
-		"Select next command history entry",
-		"",
-		cursor_history_next
-	},
-	{
 		"",
 		"",
 		"OB",
 		cursor_history_next
 	},
 	{
-		"HISTORY PREV",
-		"Select previous command history entry",
-		"",
-		cursor_history_prev
-	},
-	{
 		"",
 		"",
 		"OA",
 		cursor_history_prev
-	},
-	{
-		"HISTORY SEARCH",
-		"Search command history",
-		"",
-		cursor_history_search
-	},
-	{
-		"CLEAR LEFT",
-		"Delete from cursor to start of input",
-		"",
-		cursor_clear_left
-	},
-	{
-		"CONVERT META",
-		"Meta convert the next character",
-		"",
-		cursor_convert_meta
-	},
-	{
-		"DELETE WORD",
-		"Delete next word backward",
-		"",
-		cursor_delete_word_left
 	},
 	{
 		"",
@@ -652,60 +730,6 @@ struct cursor_type cursor_table[] =
 		"",
 		"d",
 		cursor_delete_word_right
-	},
-	{
-		"PASTE BUFFER",
-		"Paste the previously deleted input text",
-		"",
-		cursor_paste_buffer
-	},
-	{
-		"SUSPEND",
-		"Suspend program, return with fg",
-		"",
-		cursor_suspend
-	},
-	{
-		"AUTO TAB",
-		"Tab completion from scrollback buffer",
-		"",
-		cursor_auto_tab
-	},
-	{
-		"DELETE",
-		"Delete character at cursor",
-		"[3~",
-		cursor_delete
-	},
-	{
-		"EXIT",
-		"Exit current session",
-		"",
-		cursor_exit
-	},
-	{
-		"ECHO",
-		"Turn local echoing on or off",
-		"",
-		cursor_echo
-	},
-	{
-		"INSERT",
-		"Turn insert mode on or off",
-		"",
-		cursor_insert
-	},
-	{
-		"NEXT WORD",
-		"Move cursor to the next word",
-		"f",
-		cursor_right_word
-	},
-	{
-		"PREV WORD",
-		"Move cursor to the previous word",
-		"b",
-		cursor_left_word
 	},
 	{
 		"",

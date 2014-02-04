@@ -429,8 +429,8 @@ void get_color_codes(char *old, char *str, char *buf)
 	*pto = 0;
 
 	vtc =  0;
-	fgc = 39;
-	bgc = 49;
+	fgc = -1;
+	bgc = -1;
 
 	pti = tmp;
 
@@ -460,57 +460,87 @@ void get_color_codes(char *old, char *str, char *buf)
 						cnt = -1;
 						pti += 1 + strlen(col);
 
-						switch (atoi(col))
+						if (HAS_BIT(vtc, COL_256))
 						{
-							case 0:
-								vtc = 0;
-								fgc = 39;
-								bgc = 49;
-								break;
-							case 1:
-								SET_BIT(vtc, COL_BLD);
-								break;
-							case 4:
-								SET_BIT(vtc, COL_UND);
-								break;
-							case 5:
-								SET_BIT(vtc, COL_BLK);
-								break;
-							case 7:
-								SET_BIT(vtc, COL_REV);
-								break;
-							case  2:
-							case 21:
-							case 22:
-								DEL_BIT(vtc, COL_BLD);
-								break;
-							case 24:
-								DEL_BIT(vtc, COL_UND);
-								break;
-							case 25:
-								DEL_BIT(vtc, COL_UND);
-								break;
-							case 27:
-								DEL_BIT(vtc, COL_BLK);
-								break;
-							case 38:
-								SET_BIT(vtc, COL_UND);
-								fgc = 39;
-								break;
-							case 39:
-								DEL_BIT(vtc, COL_UND);
-								fgc = 39;
-								break;
-							default:
-								if (atoi(col) >= 40 && atoi(col) < 50)
-								{
-									bgc = atoi(col);
-								}
-								if (atoi(col) >= 30 && atoi(col) < 40)
-								{
-									fgc = atoi(col);
-								}
-								break;
+							if (HAS_BIT(vtc, COL_XTF))
+							{
+								fgc = URANGE(0, atoi(col), 255);
+							}
+
+							if (HAS_BIT(vtc, COL_XTB))
+							{
+								bgc = URANGE(0, atoi(col), 255);
+							}
+							DEL_BIT(vtc, COL_XTF|COL_XTB|COL_256);
+						}
+						else
+						{
+							switch (atoi(col))
+							{
+								case 0:
+									vtc = 0;
+									fgc = 39;
+									bgc = 49;
+									break;
+								case 1:
+									SET_BIT(vtc, COL_BLD);
+										break;
+								case 4:
+									SET_BIT(vtc, COL_UND);
+									break;
+								case 5:
+									if (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB))
+									{
+										SET_BIT(vtc, COL_256);
+									}
+									else
+									{
+										SET_BIT(vtc, COL_BLK);
+									}
+									break;
+								case 7:
+									SET_BIT(vtc, COL_REV);
+									break;
+								case  2:
+								case 21:
+								case 22:
+									DEL_BIT(vtc, COL_BLD);
+									break;
+								case 24:
+									DEL_BIT(vtc, COL_UND);
+									break;
+								case 25:
+									DEL_BIT(vtc, COL_UND);
+									break;
+								case 27:
+									DEL_BIT(vtc, COL_BLK);
+									break;
+								case 38:
+									DEL_BIT(vtc, COL_XTB);
+									SET_BIT(vtc, COL_XTF);
+									fgc = 39;
+									break;
+								case 39:
+									DEL_BIT(vtc, COL_UND);
+									fgc = 39;
+									break;
+								case 48:
+									DEL_BIT(vtc, COL_XTF);
+									SET_BIT(vtc, COL_XTB);
+									bgc = 49;
+									break;
+								default:
+									if (atoi(col) >= 40 && atoi(col) < 50)
+									{
+										bgc = atoi(col);
+									}
+
+									if (atoi(col) >= 30 && atoi(col) < 40)
+									{
+										fgc = atoi(col);
+									}
+									break;
+							}
 						}
 					}
 
@@ -545,13 +575,27 @@ void get_color_codes(char *old, char *str, char *buf)
 	{
 		strcat(buf, ";7");
 	}
-	if (fgc != 39)
+	if (fgc >= 0)
 	{
-		cat_sprintf(buf, ";%d", fgc);
+		if (HAS_BIT(vtc, COL_256))
+		{
+			cat_sprintf(buf, ";38;5;%d", fgc);
+		}
+		else
+		{
+			cat_sprintf(buf, ";%d", fgc);
+		}
 	}
-	if (bgc != 49)
+	if (bgc >= 0)
 	{
-		cat_sprintf(buf, ";%d", bgc);
+		if (HAS_BIT(vtc, COL_256))
+		{
+			cat_sprintf(buf, ";48;5;%d", bgc);
+		}
+		else
+		{
+			cat_sprintf(buf, ";%d", bgc);
+		}
 	}
 
 	strcat(buf, "m");

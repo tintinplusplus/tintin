@@ -377,18 +377,18 @@ DO_COMMAND(do_showme)
 	arg = get_arg_in_braces(arg, right, FALSE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-	if (*right)
-	{
-		do_one_prompt(ses, temp, atoi(right));
-
-		return ses;
-	}
-
 	do_one_line(temp, ses);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
+		return ses;
+	}
+
+	if (*right)
+	{
+		do_one_prompt(ses, temp, atoi(right));
 
 		return ses;
 	}

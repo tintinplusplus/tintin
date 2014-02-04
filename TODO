@@ -1,10 +1,10 @@
 * Stuff that needs to be done
 
+- look into convert meta #ses connect crash bug.
+
 -------------------------------------------------------------------------------
 
 GENERAL STUFF:
-
-- look into auto tabbing
 
 - Add a ARG_LEN / ARG_MAX setting.
 

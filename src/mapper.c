@@ -34,7 +34,7 @@
 void show_map(struct session *ses, char *left, char *right);
 void create_legend(struct session *ses, char *arg);
 
-#define MAX_MAP_X 201
+#define MAX_MAP_X 255
 #define MAX_MAP_Y 101
 
 int                 map_grid_x;
@@ -2039,6 +2039,17 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 	for (exit = room->f_exit ; exit ; exit = exit->next)
 	{
+		door = exit->dir;
+
+		switch (exit->dir)
+		{
+			case MAP_EXIT_N|MAP_EXIT_E:
+			case MAP_EXIT_N|MAP_EXIT_W:
+			case MAP_EXIT_S|MAP_EXIT_E:
+			case MAP_EXIT_S|MAP_EXIT_W:
+				continue;
+		}
+
 		if (exit->dir >= MAP_EXIT_N && exit->dir <= MAP_EXIT_W)
 		{
 			SET_BIT(exits, exit->dir);
@@ -2410,10 +2421,10 @@ void shortest_path(struct session *ses, int run, char *left, char *right)
 
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				sprintf(time, "%lld", utime() + wait);
-				sprintf(name, "%lld", gtd->time);
+				sprintf(name, "%lld", utime());
+				sprintf(time, "%lld", (long long) wait);
 
-				wait += (long long) (get_number(ses, right) * 1000000LL);
+				wait += (long long) get_number(ses, right);
 
 				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
 
@@ -2617,10 +2628,10 @@ void explore_path(struct session *ses, int run, char *left, char *right)
 
 			while (ses->list[LIST_PATH]->f_node)
 			{
-				sprintf(time, "%lld", utime() + wait);
-				sprintf(name, "%lld", gtd->time);
+				sprintf(name, "%lld", utime());
+				sprintf(time, "%lld", (long long) wait);
 
-				wait += (long long) (get_number(ses, right) * 1000000LL);
+				wait += (long long) get_number(ses, right);
 
 				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
 

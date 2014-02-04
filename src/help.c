@@ -1061,7 +1061,9 @@ struct help_type help_table[] =
 		"\n"
 		"         If there are multiple sessions active, this command allows you to see\n"
 		"         what is going on the the sessions that are not currently active.  The\n"
-		"         line of text from other sessions will be prefixed by 'session name%'.\n"
+		"         line of text from other sessions will be prefixed by the session's name.\n"
+		"\n"
+		"         You can toggle off snoop mode by executing #snoop a second time.\n"
 	},
 	{
 		"SPEEDWALK",

@@ -115,7 +115,7 @@
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.99.5"
+#define VERSION_NUM               "1.99.6"
 
 #define ESCAPE                          27
 
@@ -168,9 +168,10 @@
 #define LIST_PROMPT                     15
 #define LIST_SUBSTITUTE                 16
 #define LIST_TAB                        17
-#define LIST_TICKER                     18
-#define LIST_VARIABLE                   19
-#define LIST_MAX                        20
+#define LIST_TABCYCLE                   18
+#define LIST_TICKER                     19
+#define LIST_VARIABLE                   20
+#define LIST_MAX                        21
 
 /*
 	Command type
@@ -861,8 +862,12 @@ extern DO_CURSOR(cursor_redraw_line);
 extern DO_CURSOR(cursor_right);
 extern DO_CURSOR(cursor_right_word);
 extern DO_CURSOR(cursor_suspend);
-extern DO_CURSOR(cursor_tab);
-extern DO_CURSOR(cursor_auto_tab);
+extern DO_CURSOR(cursor_tab_backward);
+extern DO_CURSOR(cursor_tab_forward);
+extern DO_CURSOR(cursor_auto_tab_backward);
+extern DO_CURSOR(cursor_auto_tab_forward);
+extern DO_CURSOR(cursor_mixed_tab_backward);
+extern DO_CURSOR(cursor_mixed_tab_forward);
 
 
 #endif
@@ -1568,7 +1573,7 @@ extern struct telopt_type telopt_table[];
 #define __TEXT_H__
 
 extern void printline(struct session *ses, char *str, int isaprompt);
-int word_wrap(struct session *ses, char *textin, char *textout, int scroll);
+int word_wrap(struct session *ses, char *textin, char *textout, int convert);
 
 #endif
 

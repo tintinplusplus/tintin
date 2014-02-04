@@ -47,7 +47,7 @@ DO_COMMAND(do_cursor)
 			{
 				convert_meta(cursor_table[cnt].code, temp);
 
-				tintin_printf2(ses, "  [%-15s] [%-6s] %s", 
+				tintin_printf2(ses, "  [%-18s] [%-6s] %s", 
 					cursor_table[cnt].name,
 					temp,
 					cursor_table[cnt].desc);
@@ -395,6 +395,8 @@ DO_CURSOR(cursor_enter)
 	gtd->macro_buf[0] = 0;
 	gtd->input_tmp[0] = 0;
 
+	kill_list(gtd->ses, LIST_TABCYCLE);
+
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
 		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
@@ -642,7 +644,7 @@ DO_CURSOR(cursor_history_find)
 		}
 		else
 		{
-			input_printf("\033[%dC\033[0K]\033[3C%.*s\033%dG", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 1);
+			input_printf("\033[%dC\033[0K]\033[3C%.*s\033[%dG", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 1);
 		}
 	}
 	else
@@ -823,7 +825,7 @@ DO_CURSOR(cursor_fix_line)
 	}
 	else if (gtd->input_len - gtd->input_cur + gtd->input_pos == gtd->ses->cols)
 	{
-		input_printf("\033[%dG%.2s\033%dG",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2], gtd->input_pos+gtd->input_off);
+		input_printf("\033[%dG%.2s\033[%dG",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2], gtd->input_pos+gtd->input_off);
 	}
 }
 
@@ -872,93 +874,42 @@ DO_CURSOR(cursor_suspend)
 	do_suspend(gtd->ses, "");
 }
 
-DO_CURSOR(cursor_tab)
+/*
+	Improved tab handling by Ben Love
+*/
+
+int cursor_tab_add(int input_now, int stop_after_first)
 {
 	char tab[BUFFER_SIZE];
 	struct listnode *node;
-
-	int input_now;
-
-	if (gtd->input_len == 0)
-	{
-		return;
-	}
-
-	input_now = gtd->input_len - 1;
-
-	while (input_now && gtd->input_buf[input_now] != ' ')
-	{
-		input_now--;
-	}
-
-	if (input_now != 0 && input_now == gtd->input_len - 1)
-	{
-		return;
-	}
-
-	if (input_now)
-	{
-		input_now++;
-	}
-
-	if (gtd->ses->list[LIST_TAB]->f_node == NULL)
-	{
-		cursor_auto_tab(arg);
-
-		return;
-	}
 
 	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
 	{
 		substitute(gtd->ses, node->left, tab, SUB_VAR|SUB_FUN);
 
-		if (is_abbrev(&gtd->input_buf[input_now], tab))
+		if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 		{
-			if (gtd->input_cur == gtd->input_len)
+			if (searchnode_list(gtd->ses->list[LIST_TABCYCLE], tab))
 			{
-				input_printf("\033[%dD\033[%dP%s", gtd->input_len - input_now, gtd->input_len - input_now, tab);
+				continue;
 			}
-			else
+			addnode_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+
+			if (stop_after_first)
 			{
-				input_printf("\033[%dC\033[%dD\033[%dP%s", gtd->input_len - gtd->input_cur, gtd->input_len - input_now, gtd->input_len - input_now, tab);
+				return TRUE;
 			}
-			strcpy(&gtd->input_buf[input_now], tab);
-
-			gtd->input_len = input_now + strlen(tab);
-			gtd->input_cur = gtd->input_len;
-			gtd->input_pos = gtd->input_len;
-
-			break;
 		}
 	}
+	return FALSE;
 }
 
-DO_CURSOR(cursor_auto_tab)
+
+int cursor_auto_tab_add(int input_now, int stop_after_first)
 {
 	char tab[BUFFER_SIZE], buf[BUFFER_SIZE];
-	int input_now, scroll_cnt, line_cnt;
-
-	if (gtd->input_len == 0)
-	{
-		return;
-	}
-
-	input_now = gtd->input_len - 1;
-
-	while (input_now && gtd->input_buf[input_now] != ' ')
-	{
-		input_now--;
-	}
-
-	if (input_now != 0 && input_now == gtd->input_len - 1)
-	{
-		return;
-	}
-
-	if (input_now)
-	{
-		input_now++;
-	}
+	int scroll_cnt, line_cnt;
+	char *arg;
 
 	line_cnt = 0;
 
@@ -1000,21 +951,16 @@ DO_CURSOR(cursor_auto_tab)
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
-				if (gtd->input_cur == gtd->input_len)
+				if (searchnode_list(gtd->ses->list[LIST_TABCYCLE], tab))
 				{
-					input_printf("\033[%dD\033[%dP%s", gtd->input_len - input_now, gtd->input_len - input_now, tab);
+					continue;
 				}
-				else
+				addnode_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+
+				if (stop_after_first)
 				{
-					input_printf("\033[%dC\033[%dD\033[%dP%s", gtd->input_len - gtd->input_cur, gtd->input_len - input_now, gtd->input_len - input_now, tab);
+					return TRUE;
 				}
-				strcpy(&gtd->input_buf[input_now], tab);
-
-				gtd->input_len = input_now + strlen(tab);
-				gtd->input_cur = gtd->input_len;
-				gtd->input_pos = gtd->input_len;
-
-				return;
 			}
 
 			if (*arg == ';')
@@ -1024,4 +970,244 @@ DO_CURSOR(cursor_auto_tab)
 		}
 	}
 	while (scroll_cnt != gtd->ses->scroll_row);
+
+	return FALSE;
+}
+
+void cursor_hide_completion(int input_now)
+{
+	struct listnode *f_node;
+	struct listnode *l_node;
+	int len_change;
+
+	f_node = gtd->ses->list[LIST_TABCYCLE]->f_node;
+	l_node = gtd->ses->list[LIST_TABCYCLE]->l_node;
+
+	if (l_node && !strcmp(l_node->left, &gtd->input_buf[input_now]))
+	{
+		len_change = strlen(l_node->left) - strlen(f_node->left);
+
+		if (len_change > 0)
+		{
+			if (gtd->input_cur < gtd->input_len)
+			{
+				input_printf("\033[%dC", gtd->input_len - gtd->input_cur);
+			}
+			input_printf("\033[%dD\033[%dP", len_change, len_change);
+
+			gtd->input_len = gtd->input_len - len_change;
+			gtd->input_buf[gtd->input_len] = 0;
+			gtd->input_cur = gtd->input_len;
+			gtd->input_pos = gtd->input_pos;
+		}
+	}
+	return;
+}
+
+void cursor_show_completion(int input_now, int show_last_node)
+{
+	struct listnode *node;
+
+	node = show_last_node ? gtd->ses->list[LIST_TABCYCLE]->l_node : gtd->ses->list[LIST_TABCYCLE]->f_node;
+
+	if (!node)
+	{
+		return;
+	}
+
+	if (gtd->input_cur < gtd->input_len)
+	{
+		input_printf("\033[%dC", gtd->input_len - gtd->input_cur);
+	}
+	if (gtd->input_len > input_now)
+	{
+		input_printf("\033[%dD\033[%dP", gtd->input_len - input_now, gtd->input_len - input_now);
+	}
+	if (input_now + strlen(node->left) < gtd->ses->cols - 2)
+	{
+		input_printf("%s", node->left);
+	}
+	strcpy(&gtd->input_buf[input_now], node->left);
+
+	gtd->input_len = input_now + strlen(node->left);
+	gtd->input_cur = gtd->input_len;
+	gtd->input_pos = gtd->input_len;
+
+	cursor_check_line("");
+
+	if (node == gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		kill_list(gtd->ses, LIST_TABCYCLE);
+	}
+
+	return;
+}
+
+int cursor_calc_input_now(void)
+{
+	int input_now;
+
+	if (gtd->input_len == 0 || gtd->input_buf[gtd->input_len - 1] == ' ')
+	{
+		return -1;
+	}
+
+	for (input_now = gtd->input_len - 1 ; input_now ; input_now--)
+	{
+		if (gtd->input_buf[input_now] == ' ')
+		{
+			return input_now + 1;
+		}
+	}
+	return input_now;
+}
+
+DO_CURSOR(cursor_tab_forward)
+{
+	int input_now, tab_found;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+	}
+	tab_found = cursor_tab_add(input_now, TRUE);
+
+	cursor_show_completion(input_now, tab_found);
+}
+
+DO_CURSOR(cursor_tab_backward)
+{
+	int input_now;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (gtd->ses->list[LIST_TABCYCLE]->l_node)
+	{
+		deletenode_list(gtd->ses, gtd->ses->list[LIST_TABCYCLE]->l_node, LIST_TABCYCLE);
+	}
+
+	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+
+		cursor_tab_add(input_now, FALSE);
+	}
+	cursor_show_completion(input_now, TRUE);
+}
+
+DO_CURSOR(cursor_auto_tab_backward)
+{
+	int input_now;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (gtd->ses->list[LIST_TABCYCLE]->l_node)
+	{
+		deletenode_list(gtd->ses, gtd->ses->list[LIST_TABCYCLE]->l_node, LIST_TABCYCLE);
+	}
+
+	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+
+		cursor_auto_tab_add(input_now, FALSE);
+	}
+
+	cursor_show_completion(input_now, TRUE);
+}
+
+DO_CURSOR(cursor_auto_tab_forward)
+{
+	int input_now, tab_found;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+	}
+	tab_found = cursor_auto_tab_add(input_now, TRUE);
+
+	cursor_show_completion(input_now, FALSE);
+}
+
+DO_CURSOR(cursor_mixed_tab_backward)
+{
+	int input_now;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (gtd->ses->list[LIST_TABCYCLE]->l_node)
+	{
+		deletenode_list(gtd->ses, gtd->ses->list[LIST_TABCYCLE]->l_node, LIST_TABCYCLE);
+	}
+
+	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+
+		cursor_tab_add(input_now, FALSE);
+		cursor_auto_tab_add(input_now, FALSE);
+	}
+
+	cursor_show_completion(input_now, TRUE);
+}
+
+DO_CURSOR(cursor_mixed_tab_forward)
+{
+	int input_now, tab_found;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	{
+		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+	}
+	tab_found = cursor_tab_add(input_now, TRUE) || cursor_auto_tab_add(input_now, TRUE);
+
+	cursor_show_completion(input_now, tab_found);
 }

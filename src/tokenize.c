@@ -123,6 +123,8 @@ void tokenize_script(struct session *ses, struct scripttoken *root, int lvl, cha
 
 	while (*str)
 	{
+		str = space_out(str);
+
 		if (*str != gtd->tintin_char)
 		{
 			str = get_arg_all(str, line);
@@ -286,8 +288,6 @@ char *write_script(struct session *ses, struct scripttoken *root)
 
 	while (token)
 	{
-		printf("(%3d) (%2d) (%2d) %s\n", token->lvl, token->opr, token->cmd, token->str);
-
 		switch (token->opr)
 		{
 			case TOKEN_OPR_STRING:

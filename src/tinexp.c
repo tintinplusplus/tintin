@@ -538,7 +538,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					pti = get_arg_in_braces(&pti[i], temp, FALSE);
 
-					substitute(ses, temp, buf, SUB_VAR|SUB_FUN);
+					substitute(ses, temp, buf, flags_neol);
 
 					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->left);
 

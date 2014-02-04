@@ -321,3 +321,30 @@
 }
 
 hpbar 30 100
+
+--------------------------------------------------------------------------------
+015 Syntax: sleep <seconds to delay> {commands}
+
+If there is already a pending sleep the delay will be stacked.
+--------------------------------------------------------------------------------
+
+#var sleeptime 0
+#var sleepcurr 0
+
+#alias {sleep %1 %2}
+{
+        #format sleeptime %U;
+                             
+        #if {$sleeptime > $sleepcurr}
+        {                           
+                #math sleepcurr $sleeptime + (%1) * 1000000;
+                                                           
+                #delay {%1} %2;
+        }                       
+        {
+                #math sleepcurr $sleepcurr + (%1) * 1000000;
+                                                           
+                #delay {($sleepcurr - $sleeptime) / 1000000.000} %2
+        }                                                           
+}
+ 

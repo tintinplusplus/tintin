@@ -19,6 +19,9 @@
 /* Define to 1 if you have the `forkpty' function. */
 #undef HAVE_FORKPTY
 
+/* Define to 1 if your system has /dev/ptms (STREAMS pseudoterminal mux). */
+#undef HAVE__DEV_PTMX
+
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 

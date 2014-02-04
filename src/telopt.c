@@ -519,7 +519,7 @@ int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 		}
 		else
 		{
-			socket_printf(ses, 15, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
+			socket_printf(ses, 14, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
 
 			telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
 		}
@@ -739,9 +739,9 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 		}
 	}
 
-	telopt_debug(ses, "IAC SB MSDP IAC SE");
+	telopt_debug(ses, "IAC SB MSSP IAC SE");
 
-	check_all_events(ses, 0, 0, "IAC SB MSDP IAC SE");
+	check_all_events(ses, 0, 0, "IAC SB MSSP IAC SE");
 
 	return UMIN(i + 1, cplen);
 }

@@ -1,3 +1,10 @@
+May 2009       1.99.6
+
+cursor.c       Added forward and backward tab completion patch by Ben Love.
+
+forkpty.c      Added forkpty patch by David Champion. It allows tintin to
+               run on Solaris and other systems that lack forkpty().
+
 April 2009     1.99.5
 
 *.c            Made code c++ compatible.
@@ -1198,9 +1205,8 @@ August 2004    1.93.2
 
 mapper.c       added the redit command, for basic mapper manipulation, still
                needs a bit more work.
-telopts.c      Added a telnet patch from Julia Longtin, see MODS.juri making
-               a couple of modifications. Main one being instead of a
-               'telnet flag' tintin tries to initialize a telnet session when
+telopts.c      Added a telnet patch from Julia Longtin which adds the basic
+               telopt negotiations to initialize a telnet session when
                connecting to port 23.
 rl.c           Seeming the readline_echoing_p is reset to TRUE whenever
                something is written to the terminal, so I simply set it to
