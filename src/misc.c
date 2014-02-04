@@ -199,7 +199,7 @@ DO_COMMAND(do_showme)
 	}
 	do_one_line(left, ses);
 
-	substitute(ses, temp, left, SUB_COL|SUB_ESC|SUB_EOL);
+	substitute(ses, left, temp, SUB_COL|SUB_ESC|SUB_EOL);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
@@ -224,7 +224,7 @@ DO_COMMAND(do_showme)
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	sprintf(output, "\033[0m\033[0K%s\033[0m", left);
+	sprintf(output, "\033[0m\033[0K%s\033[0m", temp);
 
 	add_line_buffer(ses, output, FALSE);
 
@@ -317,7 +317,7 @@ DO_COMMAND(do_forall)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, temp,  TRUE);
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
 

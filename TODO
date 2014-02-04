@@ -1,14 +1,13 @@
 * Stuff that isn't that hard to do, but somehow never ends up being fixed.
 
-- add character mode with SGA and ECHO on
+- allow actions to use ! to repeat commands, possibly use #history 1
 
-- fix up macro usage in character mode SGA + LOCAL ECHO OFF.
+- fix up macro usage in character mode.
 
 - Add a FAQ to the website.
 
 - Add color bleeding for #split
 
-- Compatibility with gt.gamingmuseum.com 23 like muds.
 
 * This is a list of new features/improvements that are planned.
 
@@ -16,18 +15,18 @@
 
 - custom readline support (some progress has been made)
 
-- floating point calculations
+- floating point calculations (tricky)
 
 - code that deals with broken lines (beta, seems to work)
 
 - event system to deal with various situations
 
+- Add (his|her|it) for triggers.
+
 
 
 * This is a list of new features/improvements the author of this version has
   no interest in.
-
-- full telnet support: the default telnet program should be sufficient.
 
 - X window support: console is just fine.
 
@@ -36,8 +35,11 @@
 
   http://www.kmuddy.org/libmxp/
 
-  Tintin will also need a hypertext terminal, which is being developed here:
+  Tintin will also need a html terminal, which isn't available yet.
 
-  http://xmlterm.sourceforge.net/
+- msp support: I'm not aware of a good easy cross platform sound library.
 
-- msp support: my sound card does not work, and nobody asked yet.
+- plugins: Maybe sometime far in the future I'll add a plugin to add plugins.
+
+- external script support: Python, Ruby, etc is fun, but I'd rather develop
+  tintin's scripting language instead.

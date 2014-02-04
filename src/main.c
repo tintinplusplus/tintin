@@ -55,7 +55,7 @@ RETSIGTYPE winchhandler(int no_care)
 	{
 		init_screen_size(ses);
 
-		if (HAS_BIT(ses->flags, SES_FLAG_NAWS))
+		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
 		{
 			send_sb_naws(ses);
 		}
@@ -195,7 +195,7 @@ void init_tintin(void)
 	gts->name           = strdup("gts");
 	gts->host           = strdup("");
 	gts->port           = strdup("");
-	gts->flags          = SES_FLAG_LOCALECHO;
+	gts->telopts        = TELOPT_FLAG_ECHO;
 	gts->map_size       = 6;
 	gts->scroll_line    = -1;
 

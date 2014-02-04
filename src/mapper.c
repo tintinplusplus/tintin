@@ -131,7 +131,7 @@ DO_COMMAND(do_redit)
 				{
 					if (exit->vnum == room)
 					{
-						UNLINK(exit, ses->room_list[new_room]->f_exit, ses->room_list[new_room]->l_exit, next, prev);
+						UNLINK(exit, ses->room_list[new_room]->f_exit, ses->room_list[new_room]->l_exit);
 						break;
 					}
 				}
@@ -315,7 +315,7 @@ void create_exit(struct session *ses, const char *arg)
 	newexit->name = strdup(name);
 	newexit->cmd  = strdup(cmd);
 
-	LINK(newexit, ses->room_list[ses->in_room]->f_exit, ses->room_list[ses->in_room]->l_exit, next, prev);
+	LINK(newexit, ses->room_list[ses->in_room]->f_exit, ses->room_list[ses->in_room]->l_exit);
 
 	tintin_printf2(ses, "#READMAP E %5s {%s} {%s}", vnum, name, cmd);
 }

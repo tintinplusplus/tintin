@@ -1,7 +1,7 @@
 
                 I'll list my changes here, it's too much to put my name on
                 everything I alter since I'm the sort of person that fixes
-                stuff that isn't broken. I also removed quite some unusued
+                stuff that isn't broken. I also removed quite some unused
                 stuff. 
                 I'll keep it short and brief, hopefully still leaving a good
                 gist of what I've been doing.
@@ -889,5 +889,32 @@ telopt.c       IAC EOR and GA spams are dealt with better with {debug telnet}
 telopt.c       Dealing with packet fragmentation in the odd case an IAC EOR or
                GA code is split, not sure if it works since it's hard to test.
 
-vt102.c        Added 2 routines to support color bleeding in split mode.
+
+
+               - 1.95.8
+
+
+buffer.c       While the concept works the code should be more solid. Fixed
+               some bugs in the buffer code causing scrolling to crash
+               on long help files.
+
+buffer.c       Added a #buffer lock option which resembles scroll lock.
+
+log.c          Fixed a bug in #log append which caused it to not generate
+               html headers.
+
+chat.c         Modified the threaded chat functions to minimize accessing
+               global data.
+
+chat.c         Fixed formatting bug causing chat messages containing %s to
+               crash the client.
+
+chat.c         #chat who now shows user flags
+
+parse.c        Removed old code that allowed using " " instead of { } in
+               a couple of commands such as #format. While I used it in
+               some example scripts the code is causing problems.
+
+llist.c        Can now use #unmacro by exactly matching the macro instead of
+               having to use \\ for a single \.
 

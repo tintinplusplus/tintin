@@ -196,6 +196,11 @@ const struct help_type help_table[] =
 		"\n"
 		"          It's advised to make a configuration file to read on startup if you\n"
 		"          do not like the default settings.\n"
+		"\n"
+		"          Config options which aren't listed by default:\n"
+		"\n"
+		"          #CONFIG {CONVERT META} {ON|OFF} Shows color codes.\n"
+		"          #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations\n"
 	},
 	{
 		"CR",
@@ -218,7 +223,7 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.7                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.8                           <068>#\n"
 		"<068>    ######################################################################<088>\n\n"
 	},
 	{
@@ -361,7 +366,7 @@ const struct help_type help_table[] =
 		"\\[  will send the '{' character\n"
 		"\\]  will send the '}' character\n"
 		"\n"
-		"Ending a line with \\ will stop tintin from appending \\r\\n\n. To escape\n"
+		"Ending a line with \\ will stop tintin from appending \\r\\n. To escape\n"
 		"arguments in an alias use %%90 %%91 %%92 etc.\n"
 	},
 	{
@@ -701,8 +706,8 @@ const struct help_type help_table[] =
 		"\n"
 		"Command: #scan {filename}\n"
 		"\n"
-		"Reads in a filename and sends it to the screen as if it was send by a mud. This\n"
-		"is useful to convert ansi color files to html and viewing log files.\n"
+		"Reads in a file and sends it to the screen as if it was send by a mud. This is\n"
+		"useful to convert ansi color files to html or viewing log files.\n"
 	},
 	{
 		"SESSION",
@@ -758,7 +763,7 @@ const struct help_type help_table[] =
 	{
 		"SPLIT",
 		"\n"
-		"Command: #split {top line} {bottom line}\n"
+		"Command: #split {top lines} {bottom lines}\n"
 		"\n"
 		"This option only works with a vt102 emulator, this will allow you to set up a\n"
 		"screen.  The keyboard input will be displayed in the bottom window,\n"
@@ -828,7 +833,6 @@ const struct help_type help_table[] =
 		"\n"
 		"Adds a word to the tab completion list, alphabetically sorted.\n"
 	},
-
 	{
 		"TEXTIN",
 		"\n"
@@ -1101,7 +1105,7 @@ DO_COMMAND(do_help)
 	{
 		for (cnt = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if (is_abbrev(arg, help_table[cnt].name))
+			if (is_abbrev(arg, help_table[cnt].name) || atoi(arg) == cnt + 1)
 			{
 				substitute(ses, help_table[cnt].text, buf, SUB_COL);
 

@@ -145,3 +145,4 @@ void check_all_substitutions(char *original, char *line, struct session *ses)
 		}
 	}
 }
+

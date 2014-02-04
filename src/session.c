@@ -193,6 +193,7 @@ struct session *new_session(const char *name, const char *address, struct sessio
 
 	newsession->name          = strdup(name);
 	newsession->flags         = gts->flags;
+	newsession->telopts       = gts->telopts;
 	newsession->host          = strdup(host);
 	newsession->port          = strdup(port);
 	newsession->map_size      = gts->map_size;
@@ -200,7 +201,7 @@ struct session *new_session(const char *name, const char *address, struct sessio
 
 	gtd->ses                  = newsession;
 
-	LINK(newsession, gts->next, gts->prev, next, prev);
+	LINK(newsession, gts->next, gts->prev);
 
 	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
 	{
@@ -302,7 +303,7 @@ void cleanup_session(struct session *ses)
 		gtd->update = ses->next;
 	}
 
-	UNLINK(ses, gts->next, gts->prev, next, prev);
+	UNLINK(ses, gts->next, gts->prev);
 
 	if (ses->socket)
 	{
@@ -312,7 +313,9 @@ void cleanup_session(struct session *ses)
 		}
 	}
 
-	tintin_printf(ses, "\n\r#SESSION '%s' DIED.", ses->name);
+	tintin_printf(ses, "");
+
+	tintin_printf(ses, "#SESSION '%s' DIED.", ses->name);
 
 	if (ses == gtd->ses)
 	{

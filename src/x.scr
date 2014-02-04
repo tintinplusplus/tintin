@@ -12,7 +12,7 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
-#CONFIG           {VERBOSE}               {OFF}
+#CONFIG           {VERBOSE}               {ON}
 #alias {oops} {#showme <118>Problem with check %1}
 #class bla open
 #var bla 1
@@ -155,7 +155,7 @@ oops 5
     #if {$result < 10} {#format result 0%s $result}
 }
 
-#showme the year is @getyear{} 
+#nop #showme the year is @getyear{} 
 
 #function getName
 {
@@ -206,5 +206,44 @@ oops 5
                 #format oneword 1
             }
         }
+    }
+}
+
+/*
+
+#function {beer}
+{
+    #math {val} {&0};
+
+    #if {$val == 1}
+    {
+        #return $val bottle of beer
+    };
+    #if {$val == 0}
+    {
+        #return No more bottles of beer
+    };
+    #return $val bottles of beer
+}
+
+#loop {99 1}
+{
+     #showme @beer{&0} on the wall;
+     #showme @beer{&0}......;
+     #showme Take one down pass it around, @beer{&0-1} on the wall.\n
+}
+
+*/
+
+#sub {%1 pri%2 %3} {%1 @pri{%2} %3}
+
+#fun {pri}
+{
+    #if {" shel letel shla letela bejal bejala " == "* &0 *"}
+    {
+        #return ======> pri&0 <======
+    }
+    {
+        #return pri&0
     }
 }

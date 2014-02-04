@@ -64,6 +64,7 @@ void initrl(void)
 	rl_macro_bind("\033[H",  "[[#buffer h]]", gtd->keymap);
 	rl_macro_bind("\033[8~", "[[#buffer e]]", gtd->keymap);
 	rl_macro_bind("\033[F",  "[[#buffer e]]", gtd->keymap);
+	rl_macro_bind("\\C-t",   "[[#buffer l]]", gtd->keymap);
 
 }
 
@@ -168,7 +169,7 @@ void bait(void)
 			}
 		}
 	}
-	readline_echoing_p = HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO);
+	readline_echoing_p = HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
 }
 
 
@@ -183,73 +184,6 @@ void mainloop(void)
 	bait();
 }
 
-
-void commandloop(void)
-{
-	char *line, buffer[BUFFER_SIZE];
-
-	while (TRUE)
-	{
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
-		{
-			line = readkeyboard();
-		}
-		else
-		{
-			line = readline(NULL);
-		}
-
-		if (line == NULL)
-		{
-			continue;
-		}
-
-		if (gtd->chat && gtd->chat->paste_time)
-		{
-			chat_paste(line);
-
-			free(line);
-
-			continue;
-		}
-
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
-		{
-			if ((line = rlhist_expand(line)) == NULL)
-			{
-				continue;
-			}
-		}
-
-		sprintf(buffer, "%s", line);
-
-		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
-		{
-			memset(buffer, '*', strlen(line));
-		}
-
-		echo_command(gtd->ses, buffer, 0);
-
-		SET_BIT(gts->flags, SES_FLAG_USERCOMMAND);
-
-		if (gtd->ses->scroll_line != -1)
-		{
-			buffer_e();
-		}
-
-		parse_input(line, gtd->ses);
-
-		DEL_BIT(gts->flags, SES_FLAG_USERCOMMAND);
-
-		if (IS_SPLIT(gtd->ses))
-		{
-			erase_toeol();
-		}
-		free(line);
-
-		fflush(stdout);
-	}
-}
 
 /*
 	Read data, handle telopts, handle triggers, display data
@@ -281,7 +215,6 @@ void readmud(struct session *ses)
 	}
 	gtd->mud_output_len = 0;
 
-
 	/* separate into lines and print away */
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
@@ -309,7 +242,7 @@ void readmud(struct session *ses)
 
 		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
 		{
-			if (!HAS_BIT(gtd->ses->flags, SES_FLAG_GA))
+			if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
 			{
 				if (gts->check_output)
 				{
@@ -341,7 +274,7 @@ void readmud(struct session *ses)
 
 		process_mud_output(ses, linebuf, next_line == NULL);
 	}
-	DEL_BIT(gtd->ses->flags, SES_FLAG_GA);
+	DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
 
 	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
 
@@ -392,189 +325,6 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		tintin_printf2(gtd->ses, "[%s] %s", ses->name, linebuf);
 	}
-}
-
-
-char * readkeyboard(void)
-{
-	char ch, buf[10], *line;
-
-	while (TRUE)
-	{
-		ch = rl_read_key();
-
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
-		{
-			switch (ch)
-			{
-				case ESCAPE:
-					rl_insert_text("\\e");
-					break;			 
-
-				case '\n':
-				case '\r':
-					printf("\n");
-					line = strdup(rl_line_buffer);
-					rl_point = 0;
-					rl_delete_text(0, rl_end);
-					rl_redisplay();
-					return line;
-
-				case 127:
-					if (rl_point)
-					{
-						rl_point--;
-						rl_delete_text(rl_point, rl_point+1);
-					}
-					break;
-
-				default:
-					if (ch < 27)
-					{
-						sprintf(buf, "\\C-%c", 'a' + ch - 1);
-					}								 
-					else
-					{
-						sprintf(buf, "%c", ch);
-					}
-					rl_insert_text(&buf[0]);
-					break;
-			}
-			rl_redisplay();
-		}
-		else
-		{
-			switch (ch)
-			{
-				case '\n':
-				case '\r':
-					line = rl_line_buffer[0] == gtd->tintin_char ? strdup(rl_line_buffer) : NULL;
-	
-					rl_point = 0;
-					rl_delete_text(0, rl_end);
-
-					if (line == NULL)
-					{
-						echo_command(gtd->ses, "", FALSE);
-						socket_printf(gtd->ses, 2, "%c%c", '\r', '\0');
-					}
-					else
-					{
-						if (HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
-						{
-							printf("\n");
-						}
-						echo_command(gtd->ses, "", TRUE);
-						rl_redisplay();
-						return line;
-					}
-					break;
-
-				case 127:
-					if (rl_point)
-					{
-						rl_point--;
-						rl_delete_text(rl_point, rl_point+1);
-					}
-					if (rl_line_buffer[0] != gtd->tintin_char)
-					{
-						socket_printf(gtd->ses, 1, "%c", ch);
-					}
-					break;
-
-				default:
-					if (ch < 27)
-					{
-						sprintf(buf, "\\C-%c", 'a' + ch - 1);
-					}								 
-					else
-					{
-						sprintf(buf, "%c", ch);
-					}
-					rl_insert_text(&buf[0]);
-
-					if (rl_line_buffer[0] != gtd->tintin_char)
-					{
-						socket_printf(gtd->ses, 1, "%c", ch);
-					}
-					else
-					{
-						if (HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
-						{
-							printf("%s", buf);
-						}
-					}
-					break;
-			}
-			if (HAS_BIT(gtd->ses->flags, SES_FLAG_LOCALECHO))
-			{
-/*				rl_redisplay(); */
-			}
-		}
-	}
-	return NULL;
-}
-
-void echo_command(struct session *ses, char *line, int newline)
-{
-	char buffer[BUFFER_SIZE];
-
-	if (*line)
-	{
-		sprintf(buffer, "\033[0m%s", line);
-	}
-	else
-	{
-		buffer[0] = 0;
-	}
-
-	if (newline)
-	{
-		if (gtd->ses->more_output[0] == 0)
-		{
-			return;
-		}
-		gtd->ses->check_output = 0;
-
-		SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
-		{
-			tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
-		}
-		else
-		{
-			tintin_printf2(gtd->ses, "%s", buffer);
-		}
-
-		DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-
-		add_line_buffer(gtd->ses, buffer, FALSE);
-
-		return;
-	}
-
-	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
-	{
-		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND) || gtd->ses->more_output[0] == 0)
-		{
-			return;
-		}
-		SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-
-		if (gtd->ses->more_output[0])
-		{
-			gtd->ses->check_output = 0;
-
-			tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
-		}
-		else
-		{
-			tintin_printf2(gtd->ses, "%s", buffer);
-		}
-		DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-	}
-	add_line_buffer(gtd->ses, buffer, -1);
 }
 
 void show_message(struct session *ses, int index, const char *format, ...)
@@ -828,6 +578,10 @@ RETSIGTYPE myquitsig(int no_care)
 	if (gtd->ses->connect_retry > utime())
 	{
 		gtd->ses->connect_retry = 0;
+	}
+	else if (HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+	{
+		socket_printf(gtd->ses, 1, "%c", 3);
 	}
 	else
 	{

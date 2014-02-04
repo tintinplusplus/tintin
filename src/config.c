@@ -108,21 +108,10 @@ DO_CONFIG(config_verbatim)
 
 	if (!strcasecmp(arg, "ON"))
 	{
-/*		rl_initialize();
-		rl_prep_terminal(1);
-
-		SET_BIT(gts->flags, SES_FLAG_PREPPED);
-*/
 		SET_BIT(ses->flags, SES_FLAG_VERBATIM);
 	}
 	else if (!strcasecmp(arg, "OFF"))
 	{
-/*
-		rl_initialize();
-		rl_deprep_terminal();
-
-		DEL_BIT(gts->flags, SES_FLAG_PREPPED);
-*/
 		DEL_BIT(ses->flags, SES_FLAG_VERBATIM);
 	}
 	else
@@ -354,7 +343,7 @@ DO_CONFIG(config_packetpatch)
 
 	if (atoi(arg) < 0 || atoi(arg) > 10000)
 	{
-		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0 and 1000");
+		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0 and 10000");
 
 		return NULL;
 	}
@@ -441,11 +430,11 @@ DO_CONFIG(config_debugtelnet)
 
 	if (!strcasecmp(arg, "ON"))
 	{
-		SET_BIT(ses->flags, SES_FLAG_DEBUGTELNET);
+		SET_BIT(ses->telopts, TELOPT_FLAG_DEBUG);
 	}
 	else if (!strcasecmp(arg, "OFF"))
 	{
-		DEL_BIT(ses->flags, SES_FLAG_DEBUGTELNET);
+		DEL_BIT(ses->telopts, TELOPT_FLAG_DEBUG);
 	}
 	else
 	{
@@ -466,18 +455,10 @@ DO_CONFIG(config_convertmeta)
 
 	if (!strcasecmp(arg, "ON"))
 	{
-		rl_initialize();
-		rl_prep_terminal(1);
-
-		SET_BIT(gts->flags, SES_FLAG_PREPPED);
 		SET_BIT(ses->flags, SES_FLAG_CONVERTMETA);
 	}
 	else if (!strcasecmp(arg, "OFF"))
 	{
-		rl_initialize();
-		rl_deprep_terminal();
-
-		DEL_BIT(ses->flags, SES_FLAG_PREPPED);
 		DEL_BIT(ses->flags, SES_FLAG_CONVERTMETA);
 	}
 	else
@@ -489,6 +470,8 @@ DO_CONFIG(config_convertmeta)
 	sprintf(buf, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), buf, LIST_CONFIG);
+
+	check_character_mode(ses);
 
 	return ses;
 }

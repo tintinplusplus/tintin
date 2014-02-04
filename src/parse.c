@@ -103,8 +103,10 @@ struct session *parse_input(char *input, struct session *ses)
 		}
 		else if ((ln = searchnode_list_begin(ses->list[LIST_ALIAS], command, ALPHA)))
 		{
-			DEL_BIT(ses->flags, SES_FLAG_USERCOMMAND); 
-
+			if (!HAS_BIT(ses->list[LIST_ALIAS]->flags, LIST_FLAG_DEBUG))
+			{
+				DEL_BIT(ses->flags, SES_FLAG_USERCOMMAND); 
+			}
 			strcpy(gtd->vars[0], arg);
 
 			pta = arg;
@@ -485,11 +487,6 @@ const char *get_arg_stop_spaces(const char *s, char *arg)
 			}
 		}
 #endif
-		else if (*s == '"')
-		{
-			s++;
-			inside = !inside;
-		}
 		else if (*s == ';')
 		{
 			if (inside)

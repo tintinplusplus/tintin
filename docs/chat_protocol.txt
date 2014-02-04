@@ -220,22 +220,9 @@ Either side can send this command to abort a file transfer in progress.
 CHAT_PING_REQUEST
 Sender: <CHAT_PING_REQUEST><timing data><CHAT_END_OF_COMMAND>
 
-The timing data is really up to the ping requester.  MM uses the number of
-clocks ticks elapsed to determine the length of a ping.  Your timing data is
-sent right back to you from the side receiving the ping so you can use
-anything you want to indicate the length of a ping.  The reason for sending
-the ping data was to keep the code simple.  If rather than sending the data
-you keep track of it in your program, you'd have to build some sort of
-object that keeps track of all the pings you have sent and their start
-times.  This way you don't have to keep track of the start time, it's given
-right back to you when the ping is returned.
-
+The timing data is up to the ping requester. TinTin sentsa 64 bit time stamp.
 
 
 <CHAT_PING_RESPONSE><timing data><CHAT_END_OF_COMMAND>
 
-The timing data is just the data that was sent to you with the
-CHAT_PING_REQUEST.
-
-
-
+The timing data is the data that was sent with the CHAT_PING_REQUEST.

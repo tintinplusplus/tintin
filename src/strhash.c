@@ -69,7 +69,7 @@ char *str_hash(char *str, int lines)
 	hash_ptr->hash  = hash;
 	strcpy((char *) hash_ptr + gtd->str_hash_size, str);
 
-	LINK(hash_ptr, str_hash_index[hash].f_node, str_hash_index[hash].l_node, next, prev);
+	LINK(hash_ptr, str_hash_index[hash].f_node, str_hash_index[hash].l_node);
 
 	return (char *) hash_ptr + gtd->str_hash_size;
 }
@@ -83,7 +83,7 @@ char *str_unhash(char *str)
 
 	if (--(hash_ptr->count) == 0)
 	{
-		UNLINK(hash_ptr, str_hash_index[hash_ptr->hash].f_node, str_hash_index[hash_ptr->hash].l_node, next, prev);
+		UNLINK(hash_ptr, str_hash_index[hash_ptr->hash].f_node, str_hash_index[hash_ptr->hash].l_node);
 		free(hash_ptr);
 	}
 	return NULL;

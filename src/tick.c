@@ -151,12 +151,12 @@ void tick_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = gtd->time + atof(node->pr) * 1000000L;
+				node->data = gtd->time + get_number(ses, node->pr) * 1000000L;
 			}
 
 			if (node->data <= gtd->time)
 			{
-				node->data += atof(node->pr) * 1000000LL;
+				node->data += get_number(ses, node->pr) * 1000000LL;
 
 				strcpy(result, node->right);
 
@@ -181,7 +181,7 @@ void tick_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = gtd->time + atof(node->pr) * 1000000L;
+				node->data = gtd->time + get_number(ses, node->pr) * 1000000L;
 			}
 
 			if (node->data <= gtd->time)
@@ -238,7 +238,7 @@ void tick_update(void)
 			{
 				chat_socket_printf(buddy, "<CHAT> Connection timed out.");
 
-				close_chat(buddy);
+				close_chat(buddy, TRUE);
 			}
 		}
 

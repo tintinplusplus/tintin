@@ -43,7 +43,9 @@ void echo_off(struct session *ses)
 
 	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
 */
-	DEL_BIT(ses->flags, SES_FLAG_LOCALECHO);
+	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+
+	check_character_mode(ses);
 
 	readline_echoing_p = FALSE;
 }
@@ -59,8 +61,38 @@ void echo_on(struct session *ses)
 
 	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
 */
-	SET_BIT(ses->flags, SES_FLAG_LOCALECHO);
+	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+
+	check_character_mode(ses);
 
 	readline_echoing_p = TRUE;
 }
 
+void check_character_mode(struct session *ses)
+{
+	if ((HAS_BIT(ses->telopts, TELOPT_FLAG_SGA) && !HAS_BIT(ses->telopts, TELOPT_FLAG_ECHO))
+	||  (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA)))
+	{
+		if (!HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+		{
+			SET_BIT(gts->flags, SES_FLAG_PREPPED);
+
+			rl_initialize();
+			rl_prep_terminal(1);
+
+			commandloop();
+		}
+	}
+	else
+	{
+		if (HAS_BIT(gts->flags, SES_FLAG_PREPPED))
+		{
+			DEL_BIT(gts->flags, SES_FLAG_PREPPED);
+
+			rl_initialize();
+			rl_deprep_terminal();
+
+			commandloop();
+		}
+	}
+}

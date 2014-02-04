@@ -85,7 +85,7 @@ OFILES = action.o alias.o files.o help.o highlight.o strhash.o \
          text.o substitute.o tick.o math.o variables.o debug.o \
          tinexp.o mapper.o tables.o buffer.o prompt.o telopt.o \
          class.o  split.o  echo.o  utils.o   macro.o  config.o \
-         chat.o array.o
+         chat.o array.o input.o
 
 
 

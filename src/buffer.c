@@ -309,9 +309,13 @@ int show_buffer(struct session *ses)
 	}
 
 	scroll_size = get_scroll_size(ses);
-	scroll_add  = 0;
+	scroll_add  = 0 - ses->scroll_base;
 	scroll_tmp  = 0;
 	scroll_cnt  = ses->scroll_line;
+
+	/*
+		Find the upper limit of the buffer shown
+	*/
 
 	while (TRUE)
 	{
@@ -322,15 +326,15 @@ int show_buffer(struct session *ses)
 
 		scroll_tmp = str_hash_lines(ses->buffer[scroll_cnt]);
 
-		if (scroll_add + scroll_tmp > ses->scroll_base + scroll_size)
+		if (scroll_add + scroll_tmp > scroll_size)
 		{
-			if (scroll_add == ses->scroll_base + scroll_size)
+			if (scroll_add == scroll_size)
 			{
 				scroll_tmp = 0;
 			}
 			else
 			{
-				scroll_tmp -= ses->scroll_base + scroll_size - scroll_add;
+				scroll_tmp -= scroll_size - scroll_add;
 			}
 			break;
 		}
@@ -347,10 +351,6 @@ int show_buffer(struct session *ses)
 		}
 	}
 
-	if (scroll_cnt == ses->scroll_line)
-	{
-		return FALSE;
-	}
 
 	if (ses->buffer[scroll_cnt] == NULL)
 	{
@@ -364,7 +364,9 @@ int show_buffer(struct session *ses)
 		SET_BIT(ses->flags, SES_FLAG_READMUD);
 	}
 
-/*	tintin_header(ses, " LINE %d OF %d ", ses->scroll_line, ses->scroll_max); */
+	/*
+		If the top line exists of multiple lines split in the middle.
+	*/
 
 	if (ses->buffer[scroll_cnt] && scroll_tmp)
 	{
@@ -403,8 +405,28 @@ int show_buffer(struct session *ses)
 		}
 		*wrap_ptr = 0;
 
-		printf("%s%s\n\r", wrap, temp_ptr);
+		if (scroll_add >= 0)
+		{
+			printf("%s%s\n\r", wrap, temp_ptr);
+		}
+		else
+		{
+			wrap_ptr = temp_ptr;
+
+			for (wrap_ptr = temp_ptr ; scroll_tmp++ < scroll_size ; temp_ptr++)
+			{
+				temp_ptr = strchr(temp_ptr, '\r');
+			}
+			*temp_ptr = 0;
+			printf("%s", wrap_ptr);
+
+			goto eof;
+		}
 	}
+
+	/*
+		Print away
+	*/
 
 	while (TRUE)
 	{
@@ -424,9 +446,9 @@ int show_buffer(struct session *ses)
 
 		scroll_tmp = word_wrap(ses, ses->buffer[scroll_cnt], temp, FALSE);
 
-		if (scroll_add - scroll_tmp < ses->scroll_base)
+		if (scroll_add - scroll_tmp < 0)
 		{
-			scroll_tmp = scroll_add - ses->scroll_base;
+			scroll_tmp = scroll_add;
 			break;
 		}
 
@@ -435,22 +457,25 @@ int show_buffer(struct session *ses)
 		printf("%s\n\r", temp);
 	}
 
+	/*
+		If the bottom line exits of multiple lines split in the middle
+	*/
+
 	if (scroll_tmp && ses->buffer[scroll_cnt])
 	{
 		temp_ptr = temp;
 
-		while (scroll_tmp)
+		while (scroll_tmp--)
 		{
 			temp_ptr = strchr(temp_ptr, '\r');
 			temp_ptr++;
-			scroll_tmp--;
 		}
 		*temp_ptr = 0;
 
 		printf("%s", temp);
 	}
 
-/*	tintin_header(ses, ""); */
+	eof:
 
 	if (IS_SPLIT(ses))
 	{
@@ -494,6 +519,10 @@ DO_COMMAND(do_buffer)
 
 		case 'i':
 			do_hash(ses, right);
+			break;
+
+		case 'l':
+			buffer_l();
 			break;
 
 		default:
@@ -572,6 +601,14 @@ void buffer_d(void)
 	scroll_cnt  = gtd->ses->scroll_line;
 	buffer_add  = gtd->ses->scroll_base;
 
+	if (scroll_size <= buffer_add)
+	{
+		gtd->ses->scroll_base = buffer_add - scroll_size;
+
+		show_buffer(gtd->ses);
+		return;
+	}
+
 	if (scroll_cnt == 0)
 	{
 		scroll_cnt = gtd->ses->scroll_max - 1;
@@ -629,7 +666,7 @@ void buffer_h(void)
 	{
 		gtd->ses->scroll_line = gtd->ses->scroll_max - 1;
 	}
-	gtd->ses->scroll_base = 1;
+	gtd->ses->scroll_base = str_hash_lines(gtd->ses->buffer[gtd->ses->scroll_line]);
 
 	buffer_d();
 }
@@ -656,4 +693,21 @@ void buffer_e(void)
 
 	gtd->ses->scroll_line = -1;
 	gtd->ses->scroll_base =  0;
+}
+
+void buffer_l(void)
+{
+	if (gtd->ses->buffer == NULL)
+	{
+		return;
+	}
+
+	if (gtd->ses->scroll_line == -1)
+	{
+		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+	}
+	else
+	{
+		buffer_e();
+	}
 }

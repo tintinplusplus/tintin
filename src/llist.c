@@ -147,12 +147,12 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 			{
 				if (atof(prtext) < atof(node->pr))
 				{
-					INSERT_LEFT(newnode, node, ses->list[index]->f_node, next, prev);
+					INSERT_LEFT(newnode, node, ses->list[index]->f_node);
 					pop_call();
 					return;
 				}
 			}
-			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
+			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
 			break;
 
 		case ALPHA:
@@ -160,16 +160,16 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 			{
 				if (strcmp(ltext, node->left) < 0)
 				{
-					INSERT_LEFT(newnode, node, ses->list[index]->f_node, next, prev);
+					INSERT_LEFT(newnode, node, ses->list[index]->f_node);
 					pop_call();
 					return;
 				}
 			}
-			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
+			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
 			break;
 
 		case APPEND:
-			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
+			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
 			break;
 
 		default:
@@ -215,8 +215,8 @@ void updatenode_list(struct session *ses, const char *ltext, const char *rtext, 
 						free(node->pr);
 						node->pr = strdup(prtext);
 					}
-					UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
-					LINK(node, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
+					UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
+					LINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
 					break;
 
 				case ALPHA:
@@ -278,7 +278,7 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 			node->class->data -= NODE_FLAG_MAX;
 		}
 
-		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
+		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
 
 		free(node->left);
 		free(node->right);
@@ -403,7 +403,7 @@ struct listnode *search_node_with_wild(struct listroot *listhead, const char *cp
 
 	for (node = listhead->f_node ; node ; node = node->next)
 	{
-		if (regexp(cptr, node->left))
+		if (regexp(cptr, node->left) || !strcmp(cptr, node->left))
 		{
 			return node;
 		}
@@ -434,7 +434,7 @@ void addnode_list(struct listroot *listhead, const char *ltext, const char *rtex
 	sprintf(newnode->right, "%s", rtext);
 	sprintf(newnode->pr,    "%s", prtext);
 
-	LINK(newnode, listhead->f_node, listhead->l_node, next, prev);
+	LINK(newnode, listhead->f_node, listhead->l_node);
 
 	listhead->count++;
 }

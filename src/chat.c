@@ -42,7 +42,7 @@
 #define CALL_TIMEOUT 2
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.95.6"
+#define TINTIN_VERSION "TinTin++ 1.95.8"
 
 #define RESTRING(point, value)   \
 {                                \
@@ -202,8 +202,6 @@ int chat_new(int s)
 	int i, fd;
 	struct timeval to;
 
-	push_call("chat_new(%p)",s);
-
 	to.tv_sec  = 0;
 	to.tv_usec = 0;
 
@@ -215,7 +213,6 @@ int chat_new(int s)
 	{
 		perror("chat_new: accept");
 
-		pop_call();
 		return(-1);
 	}
 
@@ -229,11 +226,10 @@ int chat_new(int s)
 
 	new_buddy->timeout = CALL_TIMEOUT + time(NULL);
 
-	LINK(new_buddy, gtd->chat->next, gtd->chat->prev, next, prev);
+	LINK(new_buddy, gtd->chat->next, gtd->chat->prev);
 
 	chat_printf("<CHAT> New connection: %s D%d.", new_buddy->ip, new_buddy->fd);
 
-	pop_call();
 	return 0;
 }
 
@@ -249,8 +245,7 @@ void *threaded_chat_call(void *arg)
 	struct sockaddr_in dest_addr;
 	struct chat_data *new_buddy;
 	struct timeval to;
-	fd_set rds;
-	fd_set wds;
+	fd_set wds, rds;
 
 	chat_printf("<CHAT> Attempting to call %s ...\n", arg);
 
@@ -307,26 +302,13 @@ void *threaded_chat_call(void *arg)
 		return NULL;
 	}
 
-	chat_printf("<CHAT> Press ENTER to abort call.");
-
-
-	FD_ZERO(&rds);
 	FD_ZERO(&wds);
 
-	FD_SET(0, &rds);	  /* stdin */
 	FD_SET(sock, &wds); /* mother chat desc */
 
-	if (select(FD_SETSIZE, &rds, &wds, NULL, &to) == -1)
+	if (select(FD_SETSIZE, NULL, &wds, NULL, &to) == -1)
 	{
 		chat_printf("<CHAT> Failed to connect to %s %s", ip, pn);
-
-		return NULL;
-	}
-
-
-	if (FD_ISSET(0, &rds))
-	{
-		chat_printf("<CHAT> Call aborted.");
 
 		return NULL;
 	}
@@ -347,6 +329,8 @@ void *threaded_chat_call(void *arg)
 	new_buddy->ip   = strdup(ip);
 	new_buddy->port = atoi(pn);
 	new_buddy->fd   = sock;
+	new_buddy->name = strdup("");
+
 
 	chat_socket_printf(new_buddy, "CHAT:%s\n%s%-5u", gtd->chat->name, gtd->chat->ip, gtd->chat->port);
 
@@ -358,20 +342,27 @@ void *threaded_chat_call(void *arg)
 
 	if (select(FD_SETSIZE, &rds, NULL, NULL, &to) == -1)
 	{
-		close_chat(new_buddy);
+		close_chat(new_buddy, FALSE);
+
 		return NULL;
 	}
 
 	if (process_chat_input(new_buddy) == -1)
 	{
-		close_chat(new_buddy);
+		close_chat(new_buddy, FALSE);
 
 		return NULL;
 	}
 
-	chat_printf("<CHAT> Connection made to %s.", new_buddy->name);
-
-	LINK(new_buddy, gtd->chat->next, gtd->chat->prev, next, prev);
+	if (*new_buddy->name == 0)
+	{
+		close_chat(new_buddy, FALSE);
+	}
+	else
+	{
+		LINK(new_buddy, gtd->chat->next, gtd->chat->prev);
+		chat_printf("<CHAT> Connection made to %s.", new_buddy->name);
+	}
 
 	return NULL;
 }
@@ -388,13 +379,13 @@ void chat_call(const char *arg)
 	Clean up and close a chat conneciton.
 */
 
-void close_chat(struct chat_data *buddy)
+void close_chat(struct chat_data *buddy, int unlink)
 {
 	close(buddy->fd);
 
 	buddy->flags = 0;
 
-	if (buddy->name == NULL)
+	if (*buddy->name == 0)
 	{
 		chat_printf("<CHAT> Closing connection to %s D%d", buddy->ip, buddy->fd);
 	}
@@ -403,8 +394,10 @@ void close_chat(struct chat_data *buddy)
 		chat_printf("<CHAT> Closing connection to %s@%s.", buddy->name, buddy->ip);
 	}
 
-	UNLINK(buddy, gtd->chat->next, gtd->chat->prev, next, prev);
-
+	if (unlink)
+	{
+		UNLINK(buddy, gtd->chat->next, gtd->chat->prev);
+	}
 	STRFREE(buddy->name);
 	STRFREE(buddy->ip);
 	STRFREE(buddy->download);
@@ -490,7 +483,7 @@ void process_chat_connections(fd_set *input_set, fd_set *exc_set)
 		{
 			if (process_chat_input(buddy) < 0)
 			{
-				close_chat(buddy);
+				close_chat(buddy, TRUE);
 			}
 		}
 	}
@@ -510,7 +503,7 @@ void chat_socket_printf(struct chat_data *buddy, const char *format, ...)
 	if (write(buddy->fd, buf, strlen(buf)) < 0)
 	{
 		chat_printf("<CHAT> %s went link lost.", buddy->name);
-		close_chat(buddy);
+		close_chat(buddy, TRUE);
 	}
 }
 
@@ -556,6 +549,7 @@ int process_chat_input(struct chat_data *buddy)
 
 	if (size <= 0)
 	{
+		pop_call();
 		return -1;
 	}
 
@@ -583,11 +577,12 @@ int process_chat_input(struct chat_data *buddy)
 			{
 				if (node != buddy && !strcasecmp(name, node->name))
 				{
-/*					chat_socket_printf(buddy, "%c\n<CHAT> %s is already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND); */
+					chat_socket_printf(buddy, "%c\n<CHAT> %s is already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
 
 					chat_printf("<CHAT> Refusing connection from %s:%d, already connected to someone named %s.", buddy->ip, buddy->port, name);
 
-/*					return 1; */
+					pop_call();
+					return -1;
 				}
 			}
 		}
@@ -633,7 +628,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 	char txt[BUFFER_SIZE];
 	unsigned char *pto, *pti, ptc;
 
-	push_call("get_chat_commands(%p,%p)",buddy,buf);
+	push_call("get_chat_commands(%s,%s,%d)",buddy->name,buf,len);
 
 	pti = buf;
 	pto = txt;
@@ -796,11 +791,11 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 				break;
 
 			case CHAT_SNOOP_DATA:
-				chat_printf(txt);
+				chat_printf("%s", txt);
 				break;
 
 			default:
-				tintin_printf(NULL, "get_chat_commands: unknown option (%s)", txt);
+				tintin_printf(NULL, "get_chat_commands: unknown option [%d] (%s)", ptc, txt);
 				break;
 		}
 		pti++;
@@ -1174,13 +1169,19 @@ DO_CHAT(chat_name)
 {
 	struct chat_data *buddy;
 
+	if (!strcmp(gtd->chat->name, arg))
+	{
+		chat_printf("<CHAT> Your name is already set to %s.", gtd->chat->name);
+
+		return;
+	}
 	RESTRING(gtd->chat->name, arg);
 
 	for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
 	{
 		chat_socket_printf(buddy, "%c%s%c", CHAT_NAME_CHANGE, gtd->chat->name, CHAT_END_OF_COMMAND);
 	}
-	chat_printf("<CHAT> Name changed to %s", gtd->chat->name);
+	chat_printf("<CHAT> Name changed to %s.", gtd->chat->name);
 }
 
 
@@ -1366,13 +1367,24 @@ DO_CHAT(chat_who)
 	struct chat_data *buddy;
 	int cnt = 1;
 
-	tintin_printf(NULL, "     %-15s   %-15s   %-5s   %-15s", "Name", "Address", "Port", "Client");
-	tintin_printf(NULL, "     ===============   ===============   =====   ==================== ");
+	tintin_printf(NULL, "     %-15s   %-5s   %-15s   %-5s   %-15s", "Name", "Flags", "Address", "Port", "Client");
+	tintin_printf(NULL, "     ===============   =====   ===============   =====   ==================== ");
 
 	for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
 	{
-		tintin_printf(NULL, " %03d %-15s   %-15s   %-5u   %-20s", cnt++, buddy->name, buddy->ip, buddy->port, buddy->version);
+		tintin_printf(NULL, " %03d %-15s   %s%s%s%s%s   %-15s   %-5u   %-20s",
+			cnt++,
+			buddy->name,
+			HAS_BIT(buddy->flags, CHAT_FLAG_PRIVATE) ? "P" : " ",
+			HAS_BIT(buddy->flags, CHAT_FLAG_IGNORE)  ? "I" : " ",
+			HAS_BIT(buddy->flags, CHAT_FLAG_SERVE)   ? "S" : " ",
+			HAS_BIT(buddy->flags, CHAT_FLAG_FORWARD) ? "F" : " ",
+			" ",
+			buddy->ip,
+			buddy->port,
+			buddy->version);
 	}
+	tintin_printf(NULL, "     ===============   =====   ===============   =====   ==================== ");
 	return;
 }
 
@@ -1385,14 +1397,14 @@ DO_CHAT(chat_zap)
 	{
 		while (gtd->chat->next)
 		{
-			close_chat(gtd->chat->next);
+			close_chat(gtd->chat->next, TRUE);
 		}
 	}
 	else
 	{
 		if ((buddy = find_buddy(arg)))
 		{
-			close_chat(buddy);
+			close_chat(buddy, TRUE);
 		}
 		else
 		{
@@ -1768,7 +1780,7 @@ void deny_file(struct chat_data *ch, char *arg)
 
 void file_denied(struct chat_data *buddy, char *txt)
 {
-	chat_printf(txt);
+	chat_printf("%s", txt);
 
 	file_cleanup(buddy);
 }

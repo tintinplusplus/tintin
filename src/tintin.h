@@ -234,7 +234,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SES_FLAG_NAWS                 (1 <<  0)
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
-#define SES_FLAG_LOCALECHO            (1 <<  3)
+
 #define SES_FLAG_MAPPING              (1 <<  4)
 #define SES_FLAG_SPLIT                (1 <<  5)
 #define SES_FLAG_SPEEDWALK            (1 <<  6)
@@ -246,21 +246,29 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
 #define SES_FLAG_QUIET                (1 << 14)
-#define SES_FLAG_ANTISUB              (1 << 15)
+
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
 #define SES_FLAG_GAG                  (1 << 18)
-#define SES_FLAG_DEBUGTELNET          (1 << 19)
+
 #define SES_FLAG_USERCOMMAND          (1 << 20)
 #define SES_FLAG_SCROLLLOCK           (1 << 21)
 #define SES_FLAG_SCAN                 (1 << 22)
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_PREPPED              (1 << 25)
-#define SES_FLAG_EOR                  (1 << 26)
-#define SES_FLAG_GA                   (1 << 27)
+
+
 #define SES_FLAG_BREAK                (1 << 28)
-#define SES_FLAG_PATCHIAC             (1 << 29)
+
+#define TELOPT_FLAG_INIT_SGA          (1 <<  0)
+#define TELOPT_FLAG_SGA               (1 <<  1)
+#define TELOPT_FLAG_EOR               (1 <<  2)
+#define TELOPT_FLAG_ECHO              (1 <<  3)
+#define TELOPT_FLAG_NAWS              (1 <<  4)
+#define TELOPT_FLAG_PROMPT            (1 <<  5)
+#define TELOPT_FLAG_IAC               (1 <<  6)
+#define TELOPT_FLAG_DEBUG             (1 <<  7)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -284,7 +292,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 	Some macros to deal with double linked lists
 */
 
-#define LINK(link, head, tail, next, prev)                       \
+#define LINK(link, head, tail)                                   \
 {                                                                \
      if ((head) == NULL)                                         \
      {                                                           \
@@ -300,7 +308,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 }
 
 
-#define INSERT_LEFT(link, rght, head, next, prev)                \
+#define INSERT_LEFT(link, rght, head)                            \
 {                                                                \
      (link)->prev                  = (rght)->prev;               \
      (rght)->prev                  = (link);                     \
@@ -317,7 +325,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 }
 
 
-#define INSERT_RIGHT(link, left, tail, next, prev)               \
+#define INSERT_RIGHT(link, left, tail)                           \
 {                                                                \
      (link)->next                  = (left)->next;               \
      (left)->next                  = (link);                     \
@@ -333,8 +341,14 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
      }                                                           \
 }
 
-#define UNLINK(link, head, tail, next, prev)                     \
+#define UNLINK(link, head, tail)                                 \
 {                                                                \
+     if (((link)->prev == NULL && (link) != head)                \
+     ||  ((link)->next == NULL && (link) != tail))               \
+     {                                                           \
+          tintin_printf2(NULL, "#UNLINK ERROR in file %s on line %d", __FILE__, __LINE__); \
+          dump_stack();                                          \
+     }                                                           \
      if ((link)->prev == NULL)                                   \
      {                                                           \
           (head)                  = (link)->next;                \
@@ -438,6 +452,7 @@ struct session
 	int                     bgc;
 	int                     vtc;
 	int                     socket;
+	int                     telopts;
 	long long               flags;
 	char                  * host;
 	char                  * port;
@@ -591,6 +606,15 @@ extern int readline_echoing_p;
 	Function declarations
 */
 
+#ifndef __INPUT_H__
+#define __INPUT_H__
+
+extern void commandloop(void);
+extern char *readkeyboard(void);
+extern void echo_command(struct session *ses, char *line, int newline);
+
+#endif
+
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
@@ -636,7 +660,7 @@ extern DO_CHAT(chat_zap);
 
 extern  int chat_new(int s);
 extern void chat_call(const char *ip);
-extern void close_chat(struct chat_data *buddy);
+extern void close_chat(struct chat_data *buddy, int unlink);
 extern void nonblock(int s);
 extern void block(int s);
 extern void process_chat_connections(fd_set *input_set, fd_set *exc_set);
@@ -679,6 +703,7 @@ extern char *fix_file_name(char *name);
 
 extern void echo_on(struct session *ses);
 extern void echo_off(struct session *ses);
+extern void check_character_mode(struct session *ses);
 
 #endif
 
@@ -722,6 +747,7 @@ extern void search_coord(int vnum, short x, short y, short z);
 
 extern DO_COMMAND(do_math);
 extern DO_COMMAND(do_if);
+extern long long get_number(struct session *ses, const char *str);
 extern long long mathexp(struct session *ses, const char *str);
 extern int mathexp_tokenize(struct session *ses, const char *str);
 extern void mathexp_level(struct listnode *node);
@@ -818,6 +844,8 @@ extern void buffer_u(void);
 extern void buffer_d(void);
 extern void buffer_h(void);
 extern void buffer_e(void);
+extern void buffer_l(void);
+
 #endif
 
 #ifndef __DEBUG_H__
@@ -991,8 +1019,7 @@ extern void read_buffer_mud(struct session *ses);
 extern void translate_telopts(struct session *ses, unsigned char *src, int cplen);
 extern void send_will_sga(struct session *ses);
 extern void send_do_eor(struct session *ses);
-extern void set_ga(struct session *ses);
-extern void set_ga(struct session *ses);
+extern void mark_prompt(struct session *ses);
 extern void send_will_ttype(struct session *ses);
 extern void send_will_tspeed(struct session *ses);
 extern void send_will_naws(struct session *ses);
@@ -1057,13 +1084,10 @@ extern void check_insert_path(const char *command, struct session *ses);
 
 extern void printline(struct session *ses, const char *str, int isaprompt);
 extern void initrl(void);
-extern void commandloop(void);
 extern void mainloop(void);
 extern void readmud(struct session *ses);
 extern void bait(void);
 extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
-extern char *readkeyboard(void);
-extern void echo_command(struct session *ses, char *line, int force);
 extern void show_message(struct session *ses, int index, const char *format, ...);
 extern void tintin_header(struct session *ses, const char *format, ...);
 extern void socket_printf(struct session *ses, size_t length, const char *format, ...);

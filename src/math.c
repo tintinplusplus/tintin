@@ -103,6 +103,15 @@ DO_COMMAND(do_if)
 	return ses;
 }
 
+long long get_number(struct session *ses, const char *str)
+{
+	char number[BUFFER_SIZE];
+
+	substitute(ses, str, number, SUB_VAR|SUB_FUN);
+
+	return mathexp(ses, number);
+}
+
 /******************************************************************************
 * mathematical expression interpreter by Scandum                              *
 ******************************************************************************/
