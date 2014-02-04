@@ -99,11 +99,14 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 void do_one_prompt(struct session *ses, char *prompt, int row)
 {
 	char temp[BUFFER_SIZE];
+	int original_row, len;
 
 	if (ses != gtd->ses)
 	{
 		return;
 	}
+
+	original_row = row;
 
 	if (row < 0)
 	{
@@ -114,25 +117,35 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 		row = ses->rows - row;
 	}
 
-	if (row <= ses->top_row && row >= ses->bot_row)
+	if (row < 1 || row > ses->rows)
 	{
-		show_message(ses, LIST_PROMPT, "#ERROR: INVALID PROMPT ROW: {%s} {%d}.", prompt, row);
+		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS OUTSIDE THE SCREEN: {%s} {%d}.", prompt, original_row);
 
 		return;
 	}
+
+	if (row > ses->top_row && row < ses->bot_row)
+	{
+		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS INSIDE THE SCROLLING REGION: {%s} {%d}.", prompt, original_row);
+
+		return;
+	}
+
 	strip_vt102_codes(prompt, temp);
 
-	if (strlen(temp) == 0)
+	len = (int) strlen(temp);
+
+	if (len == 0)
 	{
 		sprintf(temp, "%.*s", ses->cols + 4, "\033[0m----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	}
-	else if ((int) strlen(temp) <= ses->cols)
+	else if (len <= ses->cols)
 	{
 		sprintf(temp, "%s", prompt);
 	}
 	else
 	{
-		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", (int) strlen(temp), ses->cols);
+		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", len, ses->cols);
 	}
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
@@ -140,11 +153,18 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 		save_pos(ses);
 	}
 
-	/*
-		goto row, erase to eol, print prompt, goto bot_row
-	*/
+	if (row == ses->rows)
+	{
+		gtd->input_off = len + 1;
 
-	printf("\033[%d;1H\033[%d;1H\033[K%s\033[%d;1H", row, row, temp, ses->bot_row);
+		printf("\033[%d;1H\033[%d;1H\033[K%s%s\033[%d;%dH\0337\033[%d;1H", row, row, temp, gtd->input_buf, row, gtd->input_off + gtd->input_cur, ses->bot_row);
+	}
+	else
+	{
+		// goto row, erase to eol, print prompt, goto bot_row
+
+		printf("\033[%d;1H\033[%d;1H\033[K%s\033[%d;1H", row, row, temp, ses->bot_row);
+	}
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{

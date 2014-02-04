@@ -158,11 +158,11 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 
 			string += strlen(color_table[cnt].name);
 		}
-		else if (isdigit(*string))
+		else if (isdigit((int) *string))
 		{
 			strcat(result, ";");
 
-			while (isdigit(*string))
+			while (isdigit((int) *string))
 			{
 				sprintf(&result[strlen(result)], "%c", *string++);
 			}

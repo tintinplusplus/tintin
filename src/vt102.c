@@ -46,7 +46,7 @@ void restore_pos(struct session *ses)
 
 void restore_cursor(struct session *ses)
 {
-	printf("\033[%d;%dH", ses->cols, gtd->input_pos+1);
+	printf("\033[%d;%dH", ses->rows, gtd->input_pos+1);
 }
 
 void goto_rowcol(struct session *ses, int row, int col)
@@ -682,7 +682,7 @@ int strip_color_strlen(char *str)
 
 	while (*pti)
 	{
-		if (pti[0] == '<' && isalnum(pti[1]) && isalnum(pti[2]) && isalnum(pti[3]) && pti[4] == '>')
+		if (pti[0] == '<' && isalnum((int) pti[1]) && isalnum((int) pti[2]) && isalnum((int) pti[3]) && pti[4] == '>')
 		{
 			pti += 5;
 		}
@@ -812,7 +812,7 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 
 			case 'H':
 			case 'f':
-				if (sscanf(data, "%d;%d", &ses->cur_row, &ses->cur_col) != 2)
+				if (sscanf(data, "%d;%d", &ses->cur_row, &ses->cur_col) == 2)
 				{
 					if (sscanf(data, "%d", &ses->cur_row) == 1)
 					{
@@ -836,6 +836,10 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 					if (sscanf(data, "%d", &ses->top_row) != 1)
 					{
 						ses->top_row = 1;
+						ses->bot_row = ses->rows;
+					}
+					else
+					{
 						ses->bot_row = ses->rows;
 					}
 				}
@@ -868,8 +872,7 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 
 			ses->top_row = URANGE(1, ses->top_row, ses->rows);
 
-			ses->bot_row = URANGE(1, ses->bot_row, ses->rows);
-
+			ses->bot_row = ses->bot_row ? URANGE(1, ses->bot_row, ses->rows) : ses->rows;
 			
 			return TRUE;
 		}

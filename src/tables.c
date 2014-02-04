@@ -429,12 +429,14 @@ struct array_type array_table[] =
 
 struct map_type map_table[] =
 {
+	{     "AT",               map_at,              1    },
 	{     "COLOR",            map_color,           1    },
 	{     "CREATE",           map_create,          0    },
 	{     "DELETE",           map_delete,          1    },
 	{     "DESTROY",          map_destroy,         1    },
 	{     "DIG",              map_dig,             2    },
 	{     "EXIT",             map_exit,            2    },
+	{     "EXITFLAG",         map_exitflag,        2    },
 	{     "EXPLORE",          map_explore,         2    },
 	{     "FIND",             map_find,            1    },
 	{     "FLAG",             map_flag,            1    },
@@ -457,6 +459,7 @@ struct map_type map_table[] =
 	{     "SET",              map_set,             2    },
 	{     "TRAVEL",           map_travel,          2    },
 	{     "UNDO",             map_undo,            2    },
+	{     "UNINSERT",         map_uninsert,        2    },
 	{     "UNLINK",           map_unlink,          2    },
 	{     "WRITE",            map_write,           1    },
 	{     "",                 NULL,                0    }

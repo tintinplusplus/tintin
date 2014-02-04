@@ -448,15 +448,40 @@ DO_COMMAND(do_test)
 
 DO_COMMAND(do_zap)
 {
-	tintin_puts(ses, "");
+	struct session *sesptr = ses;
+	char left[BUFFER_SIZE];
 
-	tintin_puts(ses, "#ZZZZZZZAAAAAAAAPPPP!!!!!!!!! LET'S GET OUTTA HERE!!!!!!!!");
+	sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (ses == gts)
+	sesptr = ses;
+
+	if (*left)
+	{
+		for (sesptr = gts->next ; sesptr ; sesptr = sesptr->next)
+  		{
+  			if (!strcmp(sesptr->name, left))
+  			{
+  				break;
+  			}
+  		}
+
+		if (sesptr == NULL)
+		{
+			tintin_puts2(ses, "#NO SESSION WITH THAT NAME!");
+
+			return ses;
+		}
+	}
+
+	tintin_puts(sesptr, "");
+
+	tintin_puts(sesptr, "#ZZZZZZZAAAAAAAAPPPP!!!!!!!!! LET'S GET OUTTA HERE!!!!!!!!");
+
+	if (sesptr == gts)
 	{
 		return do_end(NULL, "");
 	}
-	cleanup_session(ses);
+	cleanup_session(sesptr);
 
 	return gtd->ses;
 }

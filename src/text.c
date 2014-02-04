@@ -156,6 +156,24 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 		}
 		else
 		{
+#ifdef BIG5
+			if (*pti & 128 && pti[1] != 0)
+			{
+				*pto++ = *pti++;
+			}
+#endif
+
+#ifdef UTF8
+			if (*pti & 128 && *pti & 64)
+			{
+				skip = (*pti & 16) ? 3 : (*pti & 32) ? 2 : 1;
+
+				while (skip-- && pti[1] != 0)
+				{
+					*pto++ = *pti++;
+				}
+			}
+#endif
 			ses->cur_col++;
 
 			*pto++ = *pti++;

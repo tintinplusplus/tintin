@@ -46,7 +46,7 @@ DO_COMMAND(do_read)
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
-		show_message(ses, -1, "#READ {%s} - COULDN'T OPEN THAT FILE.", filename);
+		tintin_printf(ses, "#READ {%s} - FILE NOT FOUND.", filename);
 		return ses;
 	}
 

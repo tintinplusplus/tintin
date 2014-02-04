@@ -357,6 +357,8 @@ void init_tintin(int greeting)
 
 	printf("\033=\033[?1h");
 
+	gts->input_level++;
+
 	do_configure(gts, "{AUTO TAB}         {5000}");
 	do_configure(gts, "{BUFFER SIZE}     {20000}");
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
@@ -374,6 +376,8 @@ void init_tintin(int greeting)
 	do_configure(gts, "{VERBATIM CHAR}      {\\}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
+
+	gts->input_level--;
 
 	insert_node_list(gts->list[LIST_PATHDIR],  "n",  "s",  "1");
 	insert_node_list(gts->list[LIST_PATHDIR],  "e",  "w",  "2");

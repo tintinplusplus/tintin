@@ -297,9 +297,11 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					pti = get_arg_at_brackets(pti, temp + strlen(temp));
 
-					get_nest_node(ses->list[LIST_VARIABLE], temp, buf, def);
+					substitute(ses, temp, buf, flags_neol);
 
-					substitute(ses, buf, pto, flags_neol - SUB_VAR);
+					get_nest_node(ses->list[LIST_VARIABLE], buf, temp, def);
+
+					substitute(ses, temp, pto, flags_neol - SUB_VAR);
 
 					pto += strlen(pto);
 				}
@@ -657,9 +659,11 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					pti = get_arg_at_brackets(pti, temp + strlen(temp));
 
-					get_nest_index(ses->list[LIST_VARIABLE], temp, buf, def);
+					substitute(ses, temp, buf, flags_neol);
 
-					substitute(ses, buf, pto, flags_neol - SUB_VAR);
+					get_nest_index(ses->list[LIST_VARIABLE], buf, temp, def);
+
+					substitute(ses, temp, pto, flags_neol - SUB_VAR);
 
 					pto += strlen(pto);
 				}

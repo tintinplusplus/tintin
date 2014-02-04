@@ -134,8 +134,6 @@ int check_all_aliases(struct session *ses, char *input)
 
 			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s} {%s}", node->left, gtd->vars[0]);
 
-			DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
-
 			return TRUE;
 		}
 	}

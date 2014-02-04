@@ -27,8 +27,6 @@
 
 #include "tintin.h"
 
-int debug_level;
-
 struct scriptdata
 {
 	long long              min;
@@ -74,7 +72,7 @@ void debugtoken(struct session *ses, struct scriptnode *token)
 {
 	push_call("debugtoken(%p,%p,%d)",ses,token,token->type);
 
-	if (debug_level)
+	if (ses->debug_level)
 	{
 		switch (token->type)
 		{
@@ -419,14 +417,14 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 
 	while (*str)
 	{
-		if (!VERBATIM)
+		if (!VERBATIM(root->ses))
 		{
 			str = space_out(str);
 		}
 
 		if (*str != gtd->tintin_char)
 		{
-			str = get_arg_all(str, line);
+			str = get_arg_all(str, line, VERBATIM(root->ses) ? GET_VBT : GET_ALL);
 
 			addtoken(root, lvl, TOKEN_TYPE_STRING, -1, line);
 		}
@@ -438,7 +436,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 
 			if (cmd == -1)
 			{
-				str = get_arg_all(str, line);
+				str = get_arg_all(str, line, GET_ALL);
 				addtoken(root, lvl, TOKEN_TYPE_SESSION, -1, line+1);
 			}
 			else
@@ -1000,13 +998,15 @@ struct session *script_driver(struct session *ses, int list, char *str)
 
 	tokenize_script(root, 0, str);
 
-	level = list != -1 ? HAS_BIT(ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
+	level = list >= 0 ? HAS_BIT(ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
 
-	debug_level += level;
+	ses->debug_level += level;
+	ses->input_level += list >= 0 ? 1 : 0;
 
 	ses = (struct session *) parse_script(root, 0, root->next, root->prev);
 
-	debug_level -= level;
+	ses->debug_level -= level;
+	ses->input_level -= list >= 0 ? 1 : 0;
 
 	while (root->prev)
 	{

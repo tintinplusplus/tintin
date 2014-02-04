@@ -124,6 +124,23 @@ struct advertisement_type advertisement_table[] =
 		"<078>LPC and features a completely unique and original world.\n"
 		"\n"
 		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
+		"\n"
+	},
+
+	{
+		1275000000, /* 27 May 2010 */
+		1310000000, /* 06 Jul 2011 */
+		"\n"
+		"<138>                   Primordiax - http://www.primordiax.com\n"
+		"\n"
+		"<078>Primordiax is an in-character enforced MUD where roleplaying is heavily\n"
+		"<078>encouraged. The exclusive design of Primordiax makes it extremely\n"
+		"<078>accessible to new players without losing the intrigue and complexity that\n"
+		"<078>continues to attract veterans of the genre. Primordiax offers a classic\n"
+		"<078>gaming experience with a highly unique class system and an open skill tree.\n"
+		"\n"
+		"<178>To connect to Primordiax enter: #session prim primordiax.com 3000\n"
+		"\n"
 	},
 
 	{

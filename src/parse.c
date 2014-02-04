@@ -41,7 +41,7 @@ struct session *parse_input(struct session *ses, char *input)
 		return ses;
 	}
 
-	if (VERBATIM)
+	if (VERBATIM(ses))
 	{
 		line = (char *) malloc(BUFFER_SIZE);
 
@@ -76,7 +76,7 @@ struct session *parse_input(struct session *ses, char *input)
 	{
 		input = space_out(input);
 
-		input = get_arg_all(input, line);
+		input = get_arg_all(input, line, GET_ALL);
 
 		if (parse_command(ses, line))
 		{
@@ -187,7 +187,7 @@ void process_speedwalk(struct session *ses, char *input)
 
 	for (dir[1] = 0 ; *input ; input++)
 	{
-		if (isdigit(*input))
+		if (isdigit((int) *input))
 		{
 			sscanf(input, "%d%c", &cnt, dir);
 
@@ -269,7 +269,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 */
 
 
-char *get_arg_all(char *string, char *result)
+char *get_arg_all(char *string, char *result, int flag)
 {
 	char *pto, *pti;
 	int nest = 0;
@@ -307,7 +307,7 @@ char *get_arg_all(char *string, char *result)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !VERBATIM)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !HAS_BIT(flag, GET_VBT))
 		{
 			break;
 		}
@@ -492,7 +492,7 @@ char *get_arg_stop_spaces(char *string, char *result, int flag)
 		{
 			break;
 		}
-		else if (isspace(*pti) && nest == 0)
+		else if (isspace((int) *pti) && nest == 0)
 		{
 			pti++;
 			break;
@@ -526,7 +526,7 @@ char *get_arg_stop_spaces(char *string, char *result, int flag)
 
 char *space_out(char *string)
 {
-	while (isspace(*string))
+	while (isspace((int) *string))
 	{
 		string++;
 	}
@@ -705,7 +705,7 @@ void write_mud(struct session *ses, char *command, int flags)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{
-		if (ses->map->nofollow == 0)
+		if (ses->map == NULL || ses->map->nofollow == 0)
 		{
 			check_insert_path(command, ses);
 		}

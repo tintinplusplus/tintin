@@ -378,7 +378,7 @@ void timestring(struct session *ses, char *str)
 
 	if (*right)
 	{
-		timeval_t = (time_t) atoll(right);
+		timeval_t = (time_t) get_number(ses, right);
 	}
 	else
 	{

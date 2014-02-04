@@ -31,18 +31,14 @@
 
 DO_COMMAND(do_path)
 {
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 	int cnt;
 
-	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
-
-	arg = temp;
-
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|MAP|NEW|RUN|SAVE|WALK} {argument}.");
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|MAP|NEW|RUN|SAVE|WALK|ZIP} {argument}.");
 	}
 	else
 	{
@@ -136,8 +132,8 @@ DO_PATH(path_save)
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (!is_abbrev(left, "FORWARD") && !is_abbrev(left, "BACKWARD"))
 	{
@@ -186,44 +182,42 @@ DO_PATH(path_save)
 
 DO_PATH(path_load)
 {
-	char left[BUFFER_SIZE];
+	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
 	struct listnode *node;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if ((node = search_node_list(ses->list[LIST_VARIABLE], left)) == NULL)
 	{
-		show_message(ses, LIST_PATH, "#PATH LOAD: VARIABLE {%s} NOT FOUND.", left);
+		arg = left;
 	}
 	else
 	{
-		kill_list(ses->list[LIST_PATH]);
-
 		arg = node->right;
-
-		while (*arg)
-		{
-			if (*arg == ';')
-			{
-				arg++;
-			}
-
-			arg = get_arg_in_braces(arg, left, TRUE);
-
-			if ((node = search_node_list(ses->list[LIST_PATHDIR], left)))
-			{
-				insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
-			}
-			else
-			{
-				insert_node_list(ses->list[LIST_PATH], left, left, "0");
-			}
-		}
-		show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", ses->list[LIST_PATH]->used);
 	}
+
+	kill_list(ses->list[LIST_PATH]);
+
+	while (*arg)
+	{
+		if (*arg == ';')
+		{
+			arg++;
+		}
+
+		arg = get_arg_in_braces(arg, temp, TRUE);
+
+		if ((node = search_node_list(ses->list[LIST_PATHDIR], temp)))
+		{
+			insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+		}
+		else
+		{
+			insert_node_list(ses->list[LIST_PATH], temp, temp, "0");
+		}
+	}
+	show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", ses->list[LIST_PATH]->used);
 }
-
-
 
 DO_PATH(path_del)
 {
@@ -245,8 +239,8 @@ DO_PATH(path_ins)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 && *right == 0)
 	{
@@ -268,7 +262,7 @@ DO_PATH(path_run)
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (root->used == 0)
 	{
@@ -282,7 +276,7 @@ DO_PATH(path_run)
 		{
 			for (i = 0 ; i < root->used ; i++)
 			{
-				sprintf(name, "%lld", utime());
+				sprintf(name, "PATH %lld", utime());
 				sprintf(time, "%f", i * get_number(ses, left));
 
 				update_node_list(ses->list[LIST_DELAY], name, root->list[i]->left, time);
@@ -307,7 +301,7 @@ DO_PATH(path_walk)
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (root->used == 0)
 	{
@@ -345,7 +339,6 @@ DO_PATH(path_zip)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
-	struct listnode *node;
 	int i, cnt;
 
 	cnt   =  1;
@@ -355,17 +348,17 @@ DO_PATH(path_zip)
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->left) == NULL)
+		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->left) == NULL || strlen(root->list[i]->left) != 1)
 		{
-			if (i && search_node_list(ses->list[LIST_PATHDIR], root->list[i - 1]->left) != NULL)
+			if (i && search_node_list(ses->list[LIST_PATHDIR], root->list[i - 1]->left) != NULL && strlen(root->list[i - 1]->left) == 1)
 			{
-				cat_sprintf(left, ";");
+				cat_sprintf(left, "%c", COMMAND_SEPARATOR);
 			}
-			cat_sprintf(left, "%s", node->left);
+			cat_sprintf(left, "%s", root->list[i]->left);
 
 			if (i < root->used - 1)
 			{
-				cat_sprintf(left, ";");
+				cat_sprintf(left, "%c", COMMAND_SEPARATOR);
 			}
 			continue;
 		}
@@ -374,31 +367,33 @@ DO_PATH(path_zip)
 		{
 			cnt++;
 		}
-		else if (cnt > 1)
-		{
-			cat_sprintf(left, "%d%s", cnt, root->list[i]->left);
-
-			cnt = 1;
-		}
 		else
 		{
-			cat_sprintf(left, "%s", root->list[i]->left);
+			if (cnt > 1)
+			{
+				cat_sprintf(left, "%d%s", cnt, root->list[i]->left);
+			}
+			else
+			{
+				cat_sprintf(left, "%s", root->list[i]->left);
+			}
+			cnt = 1;
 		}
 	}
 
-	for (i = root->used - 1 ; i >= 0 ; i++)
+	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->right) == NULL)
+		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->right) == NULL || strlen(root->list[i]->right) != 1)
 		{
-			if (i != root->used - 1 && search_node_list(ses->list[LIST_PATHDIR], root->list[i + 1]->right) != NULL)
+			if (i != root->used - 1 && search_node_list(ses->list[LIST_PATHDIR], root->list[i + 1]->right) != NULL && strlen(root->list[i + 1]->right) == 1)
 			{
-				cat_sprintf(right, ";");
+				cat_sprintf(right, "%c", COMMAND_SEPARATOR);
 			}
-			cat_sprintf(right, "%s", node->right);
+			cat_sprintf(right, "%s", root->list[i]->right);
 
 			if (i > 0)
 			{
-				cat_sprintf(right, ";");
+				cat_sprintf(right, "%c", COMMAND_SEPARATOR);
 			}
 			continue;
 		}
@@ -407,15 +402,17 @@ DO_PATH(path_zip)
 		{
 			cnt++;
 		}
-		else if (cnt > 1)
-		{
-			cat_sprintf(right, "%d%s", cnt, root->list[i]->right);
-
-			cnt = 1;
-		}
 		else
 		{
-			cat_sprintf(right, "%s", root->list[i]->right);
+			if (cnt > 1)
+			{
+				cat_sprintf(right, "%d%s", cnt, root->list[i]->right);
+			}
+			else
+			{
+				cat_sprintf(right, "%s", root->list[i]->right);
+			}
+			cnt = 1;
 		}
 	}
 
@@ -443,9 +440,9 @@ DO_COMMAND(do_pathdir)
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 	struct listnode *node;
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg2, 0, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg3, 0, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0)
 	{

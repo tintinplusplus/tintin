@@ -1,6 +1,12 @@
 * Stuff that needs to be done
 
-- look into 20 nested if checks crashing the tokenizer.
+- Disable verbose input events.
+
+- Regex support for #replace
+
+- BIG5 issues. http://tintin.sourceforge.net/board/viewtopic.php?t=1313
+
+- #path crash: http://tintin.sourceforge.net/board/viewtopic.php?p=4911#4911
 
 - Check if Cygwin install info is still correct.
 
@@ -46,19 +52,15 @@ READLINE:
 
 MAPPING STUFF:
 
+- Create global exits, like recall, that can be used with #map run.
+
 - Add something to indicate a non standard exit on the ASCII mapper.
-
-- Add #map uninsert option. http://tintin.sourceforge.net/board/viewtopic.php?t=1225
-
-- Add #map at <vnum> <command> option.
 
 - Display hidden exits differently.
 
 - Synchronise drawn map with the link map.
 
 - Add support to set hiddenexit colors.
-
-- A method to highlight a route on the map
 
 - Better #map undo support.
 
@@ -96,6 +98,8 @@ ERROR: close in cleanup (9: Bad file descriptor)
 - Lua scripting
 
 - Look into using speech-dispatcher for text to speech.
+
+- A way to set specific speedwalk delays for exits.
 
 -------------------------------------------------------------------------------
 

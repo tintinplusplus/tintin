@@ -278,7 +278,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	
 	if (index == -1)
 	{
-		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+		if (ses->input_level == 0)
 		{
 			tintin_puts2(ses, buf);
 		}
@@ -298,7 +298,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
 	{
-		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+		if (ses->input_level == 0)
 		{
 			tintin_puts2(ses, buf);
 

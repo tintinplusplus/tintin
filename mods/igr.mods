@@ -1,4 +1,48 @@
+Aug 2010       2.00.4
+--------------------------------------------------------------------------------
+
+tokenize.c     Added a better verbatim and verbosity handler to more
+               generically deal with aliases and input triggered events.
+
+mapper.c       Several mapper messages are no longer displayed when used in
+               scripts.
+
+vt102.c        Added \e[0;0r handling.
+
+telopt.c       Added IAC DONT TTYPE handling, allowing servers to reset the
+               TTYPE negotiation state.
+
+misc.c         #zap now takes an optional argument to zap a specific session.
+
+text.c         When UTF8 is defined in tintin.h UTF8 characters should get
+               wordwrapped correctly.
+
+telopt.c       Added support for module like MSDP events.
+
+mapper.c       Added #map uninsert <direction> command which does the exact
+               opposite of the insert command.
+
+mapper.c       Added #map at <location> <command> command which executes the
+               given commands at the given location.
+
+variable.c     Allowing math in #format %t time seeds.
+
+path.c         Fixed #path zip command.
+
+prompt.c       Added better #prompt {line} {substitution} {0} support to print
+               a mud prompt and pending input on the 0 line.
+
+mapper.c       Added #map map 80x20 <filename> {a} option to log in append mode,
+               by default an overwrite is performed.
+
+path.c         Added the option to use #path load {n;e;s;w;u;d}
+
+path.c         When using #path run {delay} you can remove pending run commands
+               (fairly) safely using: #undelay PATH %d
+               This will also work for #map run {location} {delay}
+
 Jul 2010       2.00.3
+--------------------------------------------------------------------------------
 
 mapper.c       When path finding the path will be highlighted on the map.
 
@@ -47,7 +91,7 @@ telopt.c       Added MSDP_OPEN and MSDP_CLOSE support.
 telopt.c       MSDP arrays no longer generate an event for each item, instead
                a list is generated.
 
-tintin.h       Lowered BUFFER_SIZE to 25000 because of crash reports.
+tintin.h       Lowered BUFFER_SIZE to 20000 because of crash reports.
 
 files.c        #write now only saves triggers that do not belong to a class.
 
@@ -57,6 +101,7 @@ split.c        Redrawing the VTMAP whenever the split settings are reset,
                typically on session switch and screen resize.
 
 Apr 2010       2.00.2
+--------------------------------------------------------------------------------
 
 line.c         Added the #line substitute options which allows the
                substitution of variables, functions, colors, and

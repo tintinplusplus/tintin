@@ -29,8 +29,6 @@
 
 void process_input(void)
 {
-	int flags;
-
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
 		read_key();
@@ -73,13 +71,7 @@ void process_input(void)
 		buffer_end(gtd->ses, "");
 	}
 
-	flags = TINTIN_FLAG_USERCOMMAND | (HAS_BIT(gtd->ses->flags, SES_FLAG_VERBATIM) ? TINTIN_FLAG_VERBATIM : 0);
-
-	SET_BIT(gtd->flags, flags);
-
 	gtd->ses = script_driver(gtd->ses, -1, gtd->input_buf);
-
-	DEL_BIT(gtd->flags, flags);
 
 	check_all_events(gtd->ses, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 

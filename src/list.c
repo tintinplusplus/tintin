@@ -121,9 +121,13 @@ DO_ARRAY(array_clear)
 
 DO_ARRAY(array_create)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], buf[BUFFER_SIZE], *str;
 
 	int index = 1;
+
+	substitute(ses, arg, buf, SUB_VAR|SUB_FUN);
+
+	arg = buf;
 
 	if (list->root)
 	{
@@ -134,7 +138,7 @@ DO_ARRAY(array_create)
 
 	while (*arg)
 	{
-		arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+		arg = get_arg_in_braces(arg, arg1, GET_ONE);
 
 		str = arg1;
 
@@ -194,7 +198,7 @@ DO_ARRAY(array_delete)
 DO_ARRAY(array_find)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
-	int cnt, index;
+	int index;
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
@@ -207,15 +211,14 @@ DO_ARRAY(array_find)
 
 	if (list->root)
 	{
-		for (cnt = 0 ; cnt < list->root->used ; cnt++)
+		for (index = 0 ; index < list->root->used ; index++)
 		{
-			if (match(ses, list->root->list[cnt]->right, arg1))
+			if (match(ses, list->root->list[index]->right, arg1))
 			{
-				index = cnt;
 				break;
 			}
 		}
-		if (cnt < list->root->used)
+		if (index < list->root->used)
 		{
 			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%d", index + 1);
 		}

@@ -96,6 +96,7 @@
 #define GET_ONE                          0 /* stop at spaces */
 #define GET_ALL                          1 /* stop at semicolon */
 #define GET_NST                          2 /* nest square brackets */
+#define GET_VBT                          4 /* ignore semicolon for verbatim mode */
 
 #define TEL_N                            0
 #define TEL_Y                            1
@@ -121,7 +122,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION             "2.00.3"
+#define CLIENT_VERSION             "2.00.4"
 
 #define ESCAPE                          27
 
@@ -291,9 +292,9 @@ enum operators
 #define TINTIN_FLAG_HISTORYBROWSE     (1 <<  2)
 #define TINTIN_FLAG_HISTORYSEARCH     (1 <<  3)
 #define TINTIN_FLAG_PROCESSINPUT      (1 <<  4)
-#define TINTIN_FLAG_USERCOMMAND       (1 <<  5)
+#define TINTIN_FLAG_USERCOMMAND       (1 <<  5) /* Unused */
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  6)
-#define TINTIN_FLAG_VERBATIM          (1 <<  7)
+#define TINTIN_FLAG_VERBATIM          (1 <<  7) /* Unused */
 #define TINTIN_FLAG_TERMINATE         (1 <<  8)
 
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
@@ -354,6 +355,8 @@ enum operators
 #define ROOM_FLAG_STATIC              (1 <<  4)
 #define ROOM_FLAG_RIVER               (1 <<  5)
 #define ROOM_FLAG_PATH                (1 <<  6)
+
+#define EXIT_FLAG_HIDE                (1 <<  0)
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
@@ -488,7 +491,7 @@ enum operators
 
 #define SCROLL(ses)               ((ses)->cur_row == 0 || ((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
-#define VERBATIM                  (HAS_BIT(gtd->flags, TINTIN_FLAG_VERBATIM) && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
+#define VERBATIM(ses)             ((ses)->input_level == 0 && HAS_BIT((ses)->flags, SES_FLAG_VERBATIM))
 
 #define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg)
 #define DO_CHAT(chat) void chat (char *left, char *right)
@@ -589,6 +592,8 @@ struct session
 	unsigned char         * read_buf;
 	int                     read_len;
 	int                     read_max;
+	int                     debug_level;
+	int                     input_level;
 	long long               connect_retry;
 	int                     connect_error;
 	char                    more_output[BUFFER_SIZE];
@@ -1090,12 +1095,14 @@ extern void parse_class(struct session *ses, char *input, struct listnode *group
 
 extern DO_COMMAND(do_map);
 
+extern DO_MAP(map_at);
 extern DO_MAP(map_color);
 extern DO_MAP(map_create);
 extern DO_MAP(map_delete);
 extern DO_MAP(map_destroy);
 extern DO_MAP(map_dig);
 extern DO_MAP(map_exit);
+extern DO_MAP(map_exitflag);
 extern DO_MAP(map_explore);
 extern DO_MAP(map_find);
 extern DO_MAP(map_flag);
@@ -1118,6 +1125,7 @@ extern DO_MAP(map_run);
 extern DO_MAP(map_set);
 extern DO_MAP(map_travel);
 extern DO_MAP(map_undo);
+extern DO_MAP(map_uninsert);
 extern DO_MAP(map_unlink);
 extern DO_MAP(map_write);
 
@@ -1524,6 +1532,7 @@ extern int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_wont_status(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_status(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1565,7 +1574,7 @@ extern struct session *parse_command(struct session *ses, char *input);
 extern int is_speedwalk(struct session *ses, char *input);
 extern void process_speedwalk(struct session *ses, char *input);
 extern struct session *parse_tintin_command(struct session *ses, char *input);
-extern char *get_arg_all(char *string, char *result);
+extern char *get_arg_all(char *string, char *result, int flag);
 extern char *get_arg_in_braces(char *string, char *result, int flag);
 extern char *sub_arg_in_braces(struct session *ses, char *string, char *result, int flag, int sub);
 extern char *get_arg_with_spaces(char *string, char *result, int flag);

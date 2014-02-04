@@ -37,6 +37,8 @@ char iac_do_sga[]             = { IAC, DO,    TELOPT_SGA             };
 char iac_will_sga[]           = { IAC, WILL,  TELOPT_SGA             };
 
 char iac_sb_tspeed[]          = { IAC, SB,    TELOPT_TSPEED, ENV_SEND, IAC, SE };
+
+char iac_dont_ttype[]         = { IAC, DONT,  TELOPT_TTYPE           };
 char iac_sb_ttype[]           = { IAC, SB,    TELOPT_TTYPE,  ENV_SEND, IAC, SE  };
 
 
@@ -87,6 +89,7 @@ struct iac_type iac_table [] =
 	{   3,  iac_sb_gmcp,          &recv_sb_gmcp            },
 	{   3,  iac_sb_new_environ,   &recv_sb_new_environ     },
 	{   6,  iac_sb_tspeed,        &recv_sb_tspeed          },
+	{   3,  iac_dont_ttype,       &recv_dont_ttype         },
 	{   6,  iac_sb_ttype,         &recv_sb_ttype           },
 	{   3,  iac_sb_zmp,           &recv_sb_zmp             },
 	{   5,  iac_sb_mccp1,         &init_mccp               },
@@ -355,6 +358,8 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						if (cplen > 2)
 						{
 							check_all_events(ses, 2, 0, "IAC %s %s", TELCMD(cpsrc[1]), telopt_table[cpsrc[2]].name);
+
+							DEL_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
 						}
 						skip = 3;
 						break;
@@ -515,6 +520,17 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 /*
 	TTYPE
 */
+
+int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	if (!check_all_events(ses, 0, 0, "IAC DONT TERMINAL TYPE"))
+	{
+		DEL_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
+
+		DEL_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
+	}
+	return 3;
+}
 
 int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
@@ -916,7 +932,9 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 
 				*pto = 0;
 
-				telopt_debug(ses, "IAC SB MSDP VAR (%s) %*s VAL (%s)", var, 20 - strlen(var), "", val);
+				telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
+
+				check_all_events(ses, 1, 1, "IAC SB MSDP %s", var, val);
 
 				check_all_events(ses, 0, 2, "IAC SB MSDP", var, val);
 
