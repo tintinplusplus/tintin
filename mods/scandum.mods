@@ -792,3 +792,9 @@ telopt.c       Added negotiating of EOR (end of record)
 telopt.c       IAC GA and EOR will now be seen as prompt markers.
 
 files.c        Now skipping chinese characters in #read
+
+
+
+tinexp.c       Fixed some bugs in substitute that slipped in.
+
+tinexp.c       Added skipping of chinese characters in regexp functions.

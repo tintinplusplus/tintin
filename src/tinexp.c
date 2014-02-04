@@ -44,6 +44,17 @@ int regexp(const char *exp, const char *str)
 			str += cnt;
 		}
 
+#ifdef BIG5
+		if (*exp & 0x80 && *str & 0x80)
+		{
+			if (*++exp != *++str)
+			{
+				return FALSE;
+			}
+			continue;
+		}
+#endif
+
 		switch (*exp)
 		{
 			case '?':
@@ -100,6 +111,19 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 	while (TRUE)
 	{
+
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+			if (*pti)
+			{
+				*pto++ = *pti++;
+			}
+			continue;
+		}
+#endif
+
 		switch (*pti)
 		{
 			case '\0':
@@ -142,7 +166,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 					if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) != NULL)
 					{
-						substitute(ses, node->right, pto, flags - SUB_VAR);
+						substitute(ses, node->right, pto, flags & ~SUB_EOL);
 
 						if (pti[1] == DEFAULT_OPEN)
 						{
@@ -243,14 +267,13 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 					{
 						pte = get_arg_in_braces(pte, temp, FALSE);
 
-						substitute(ses, temp, gtd->cmds[i], HAS_BIT(flags, SUB_ARG) ? SUB_ARG|SUB_FUN : SUB_FUN);
+						substitute(ses, temp, gtd->cmds[i], flags & ~SUB_EOL);
 					}
 					substitute(ses, node->right, temp, SUB_CMD);
 
 					parse_input(temp, ses);
 
-					substitute(ses, "$result", temp, SUB_VAR);
-					substitute(ses, temp, pto, flags - SUB_FUN);
+					substitute(ses, "$result", pto, SUB_VAR);
 
 					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
 					{
@@ -444,6 +467,19 @@ int action_regexp(const char *exp, const char *str)
 
 	while (*exp)
 	{
+#ifdef BIG5
+		if (*exp & 0x80 && *str & 0x80)
+		{
+			exp++;
+			str++;
+			if (*exp++ != *str++)
+			{
+				return FALSE;
+			}
+			continue;
+		}
+#endif
+
 		switch (exp[0])
 		{
 			case '%':

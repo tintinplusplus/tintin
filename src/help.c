@@ -188,7 +188,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.2                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.3                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -215,7 +215,6 @@ const struct help_type help_table[81] =
 		"         Stores the current epoch value in the $time variable, and echoes\n"
 		"         the military date and time based on this value. As I write this it\n"
 		"         printed: The current time and date is: 10-03-2004 23:34\n"
-		"         You might want to escape the %'s when using echo in an action or alias\n"
 	},
 	{
 		"END",
@@ -315,6 +314,21 @@ const struct help_type help_table[81] =
 		"         whenever an action is triggered.\n"
 		"\n"
 		"         Not every list has debug support yet.\n"
+	},
+	{
+		"ESCAPE",
+		"You may use the escape character \\ for various special characters.\n"
+		"\n"
+		"\\a  will beep the terminal.\n"
+		"\\e  will start an escape sequence.\n"
+		"\\n  will send a new line.\n"
+		"\\r  will send a carriage return.\n"
+		"\\t  will send a tab.\n"
+		"\\[  will send the '{' character\n"
+		"\\]  will send the '}' character\n"
+		"\n"
+		"Ending a line with \\ will stop tintin from appending \\r\\n\n. To escape\n"
+		"arguments in an alias use %%90 %%91 %%92 etc.\n"
 	},
 	{
 		"FORALL",
@@ -964,7 +978,7 @@ const struct help_type help_table[81] =
 	{
 		"WILDCARD",
 		"\n"
-		"format:		#command {regexp}\n"
+		"format:		#trigger {regexp}\n"
 		"\n"
 		"You may use wildcards with certain commands such as #alias, #action,\n"
 		"#substitute, #unalias, etc.  In commands like #alias, wildcards are\n"
