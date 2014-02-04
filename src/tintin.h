@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.1"
+#define VERSION_NUM               "1.97.2"
 
 #define ESCAPE                          27
 
@@ -907,6 +907,7 @@ extern DO_MAP(map_delete);
 extern DO_MAP(map_destroy);
 extern DO_MAP(map_dig);
 extern DO_MAP(map_exit);
+extern DO_MAP(map_explore);
 extern DO_MAP(map_find);
 extern DO_MAP(map_flag);
 extern DO_MAP(map_get);
@@ -923,6 +924,7 @@ extern DO_MAP(map_name);
 extern DO_MAP(map_read);
 extern DO_MAP(map_roomflag);
 extern DO_MAP(map_set);
+extern DO_MAP(map_travel);
 extern DO_MAP(map_undo);
 extern DO_MAP(map_unlink);
 extern DO_MAP(map_walk);
@@ -945,13 +947,11 @@ extern void build_map_grid(short room, short x, short y, short z);
 extern void follow_map(struct session *ses, char *argument);
 extern void insert_undo(struct session *ses, char *format, ...);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
-
 extern void search_path(short room, short size);
 extern void shortest_path(struct session *ses, int walk, char *left, char *right);
-
+extern void explore_path(struct session *ses, int walk, char *left, char *right);
 extern int find_coord(struct session *ses, char *arg);
 extern void search_coord(int vnum, short x, short y, short z);
-
 extern void show_vtmap(struct session *ses);
 
 #endif

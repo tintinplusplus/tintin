@@ -8,13 +8,9 @@ GENERAL STUFF:
 
 - events for text and input and prompt lines
 
-- add BB log writing
-
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:
-
-- add a method to easily insert a (void) room.
 
 - a method to double check correct movement.
 

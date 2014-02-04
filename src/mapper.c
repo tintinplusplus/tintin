@@ -99,6 +99,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map destroy                           (destroys the map)");
 		tintin_printf2(ses, "#map dig      <direction>              (creates a new room)");
 		tintin_printf2(ses, "#map exit     <direction> <command>    (sets the exit command)");
+		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
 		tintin_printf2(ses, "#map insert   <direction>              (insert a new room)");
 		tintin_printf2(ses, "#map find     <room name>              (saves path to #path)");
@@ -113,6 +114,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map read     <filename>               (load your map from a file)");
 		tintin_printf2(ses, "#map roomflag <room flag>              (set room based flags)");
 		tintin_printf2(ses, "#map set      <option>     <value>     (set various values)");
+		tintin_printf2(ses, "#map travel   <direction>              (walk to explored direction)");
 		tintin_printf2(ses, "#map undo                              (undo last move)");
 		tintin_printf2(ses, "#map unlink   <direction>              (deletes an exit)");
 		tintin_printf2(ses, "#map walk     <room name>              (walk to given room)");
@@ -285,6 +287,17 @@ DO_MAP(map_exit)
 	create_exit(ses, ses->map->in_room, temp);
 
 	tintin_printf2(ses, "#MAP: Exit {%s} set to {%s}.", left, right);
+}
+
+DO_MAP(map_explore)
+{
+	char *left;
+
+	CHECK_INSIDE();
+
+	arg = get_arg_in_braces(arg, &left, TRUE);
+
+	explore_path(ses, FALSE, left, "");
 }
 
 DO_MAP(map_find)
@@ -816,6 +829,18 @@ DO_MAP(map_set)
 			show_message(ses, LIST_MAP, "#MAP SET: unknown option: %s.", left);
 		}
 	}
+}
+
+DO_MAP(map_travel)
+{
+	char *left, *right;
+
+	CHECK_INSIDE();
+
+	arg = get_arg_in_braces(arg, &left, TRUE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
+
+	explore_path(ses, TRUE, left, right);
 }
 
 DO_MAP(map_undo)
@@ -1941,6 +1966,83 @@ void search_coord(int vnum, short x, short y, short z)
 				zz = z + (HAS_BIT(coord, MAP_EXIT_U) ?  1 : HAS_BIT(coord, MAP_EXIT_D) ? -1 : 0);
 
 				search_coord(exit->vnum, xx, yy, zz);
+			}
+		}
+	}
+}
+
+void explore_path(struct session *ses, int walk, char *left, char *right)
+{
+	char time[BUFFER_SIZE], delay[BUFFER_SIZE];
+	struct exit_data *exit;
+	int room, vnum, wait;
+
+	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	{
+		tintin_printf2(ses, "#MAP EXPLORE: You have to stop #PATH TRACKING first.");
+
+		return;
+	}
+
+	kill_list(ses, LIST_PATH);
+
+	room = ses->map->in_room;
+
+	exit = find_exit(ses, room, left);
+
+	if (exit == NULL)
+	{
+		tintin_printf2(ses, "#MAP: There's no exit named '%s'.", left);
+		return;
+	}
+
+	vnum = exit->vnum;
+
+	addnode_list(ses->list[LIST_PATH], exit->cmd, "", "0");
+
+	while (get_map_exits(ses, vnum) == 2)
+	{
+		if (ses->map->room_list[vnum]->f_exit->vnum != room)
+		{
+			exit = ses->map->room_list[vnum]->f_exit;
+		}
+		else
+		{
+			exit = ses->map->room_list[vnum]->l_exit;
+		}
+
+		addnode_list(ses->list[LIST_PATH], exit->cmd, "", "0");
+
+		room = vnum;
+		vnum = exit->vnum;
+	}
+
+	if (walk)
+	{
+		if (*right)
+		{
+			wait = 0;
+
+			while (ses->list[LIST_PATH]->f_node)
+			{
+				sprintf(time, "%lld", utime());
+
+				wait += atoi(right);
+
+				sprintf(delay, "%d", wait);
+
+				updatenode_list(ses, time, ses->list[LIST_PATH]->f_node->left, delay, LIST_DELAY);
+
+				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
+			}
+		}
+		else
+		{
+			while (ses->list[LIST_PATH]->f_node)
+			{
+				parse_input(ses, ses->list[LIST_PATH]->f_node->left);
+
+				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
 			}
 		}
 	}

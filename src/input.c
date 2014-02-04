@@ -281,17 +281,18 @@ void read_key(char *line)
 					printf("\033[1@%c", gtd->macro_buf[cnt]);
 
 					gtd->input_buf[0] = gtd->tintin_char;
+					gtd->input_buf[1] = 0;
+					gtd->macro_buf[0] = 0;
 					gtd->input_len = 1;
 					gtd->input_cur = 1;
 					gtd->input_pos = 1;
-					gtd->macro_buf[0] = 0;
-					gtd->input_buf[1] = 0;
 				}
 				else
 				{
 					socket_printf(gtd->ses, 1, "%c", gtd->macro_buf[cnt]);
 					gtd->input_buf[0] = 127;
 					gtd->macro_buf[0] = 0;
+					gtd->input_len = 0;
 				}
 				break;
 		}

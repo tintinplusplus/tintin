@@ -189,6 +189,8 @@ void read_buffer_mud(struct session *ses)
 	unsigned char buf[STRING_SIZE];
 	int size;
 
+	push_call("read_buffer_mud(%p)",ses);
+
 	gtd->mud_output_len = 0;
 
 	size = read(ses->socket, buf, STRING_SIZE - 1);
@@ -196,6 +198,8 @@ void read_buffer_mud(struct session *ses)
 	if (size <= 0)
 	{
 		gtd->mud_output_len = -1;
+
+		pop_call();
 		return;
 	}
 
@@ -205,6 +209,7 @@ void read_buffer_mud(struct session *ses)
 
 	gtd->mud_output_buf[gtd->mud_output_len] = 0;
 
+	pop_call();
 	return;
 }
 

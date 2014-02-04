@@ -82,7 +82,7 @@ void init_buffer(struct session *ses, int size)
 void add_line_buffer(struct session *ses, char *line, int more_output)
 {
 	char linebuf[STRING_SIZE];
-	char *pti, *pto;
+	char *pti, *pto, *more_line;
 	int lines;
 	int sav_row, sav_col, cur_row, cur_col, top_row, bot_row;
 
@@ -98,7 +98,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		return;
 	}
 
-	line = stringf_alloc("%s%s", ses->more_output, line);
+	more_line = stringf_alloc("%s%s", ses->more_output, line);
 
 	if (more_output == TRUE)
 	{
@@ -117,7 +117,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		reset_hash_table();
 	}
 
-	pti = line;
+	pti = more_line;
 	pto = ses->more_output;
 
 	while (*pti != 0)
