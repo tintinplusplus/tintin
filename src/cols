@@ -1,0 +1,948 @@
+action.c:	root = ses->list[LIST_ACTION];
+action.c:	root = ses->list[LIST_ACTION];
+alias.c:	root = ses->list[LIST_ALIAS];
+alias.c:	root = ses->list[LIST_ALIAS];
+array.c:	root = ses->list[LIST_VARIABLE];
+buffer.c:	if (ses->scroll_max == size)
+buffer.c:	if (ses->buffer)
+buffer.c:		cnt = ses->scroll_row;
+buffer.c:			if (++cnt == ses->scroll_max)
+buffer.c:			if (ses->buffer[cnt] == NULL)
+buffer.c:			str_unhash(ses->buffer[cnt]);
+buffer.c:		while (cnt != ses->scroll_row);
+buffer.c:	if (ses->buffer)
+buffer.c:		free(ses->buffer);
+buffer.c:		ses->buffer = calloc(size, sizeof(char *));
+buffer.c:		ses->scroll_max  = size;
+buffer.c:		ses->scroll_row  = size - 1;
+buffer.c:		ses->scroll_line = - 1;
+buffer.c:	if (ses->buffer == NULL || HAS_BIT(ses->flags, SES_FLAG_SCROLLSTOP))
+buffer.c:	sav_row = ses->sav_row;
+buffer.c:	sav_col = ses->sav_col;
+buffer.c:	cur_row = ses->cur_row;
+buffer.c:	cur_col = ses->cur_col;
+buffer.c:	top_row = ses->top_row;
+buffer.c:	bot_row = ses->bot_row;
+buffer.c:		if (strlen(ses->more_output) < BUFFER_SIZE / 2)
+buffer.c:			strcat(ses->more_output, line);
+buffer.c:	strcat(ses->more_output, line);
+buffer.c:	pti = pto = ses->more_output;
+buffer.c:	lines = word_wrap(ses, ses->more_output, linebuf, FALSE);
+buffer.c:	ses->more_output[0] = 0;
+buffer.c:	ses->buffer[ses->scroll_row] = str_hash(linebuf, lines);
+buffer.c:		str_hash_grep(ses->buffer[ses->scroll_row], TRUE);
+buffer.c:	if (!HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL))
+buffer.c:		if (ses->logfile)
+buffer.c:			logit(ses, linebuf, ses->logfile);
+buffer.c:	if (ses->logline)
+buffer.c:		logit(ses, linebuf, ses->logline);
+buffer.c:		fclose(ses->logline);
+buffer.c:		ses->logline = NULL;
+buffer.c:	if (--ses->scroll_row < 0)
+buffer.c:		ses->scroll_row = ses->scroll_max -1;
+buffer.c:	if (ses->buffer[ses->scroll_row])
+buffer.c:		ses->buffer[ses->scroll_row] = str_unhash(ses->buffer[ses->scroll_row]);
+buffer.c:	ses->sav_row = sav_row;
+buffer.c:	ses->sav_col = sav_col;
+buffer.c:	ses->cur_row = cur_row;
+buffer.c:	ses->cur_col = cur_col;
+buffer.c:	ses->top_row = top_row;
+buffer.c:	ses->bot_row = bot_row;
+buffer.c:	grep_max = ses->bot_row - ses->top_row - 2;
+buffer.c:	if (ses->buffer == NULL)
+buffer.c:		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+buffer.c:		scroll_cnt = ses->scroll_row;
+buffer.c:			if (scroll_cnt == ses->scroll_max -1)
+buffer.c:			if (ses->buffer[scroll_cnt] == NULL)
+buffer.c:			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+buffer.c:			if (regexp(str, ses->buffer[scroll_cnt], TRUE))
+buffer.c:				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+buffer.c:		while (scroll_cnt != ses->scroll_row);
+buffer.c:				scroll_cnt = ses->scroll_max -1;
+buffer.c:			if (ses->buffer[scroll_cnt] == NULL)
+buffer.c:			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+buffer.c:			if (regexp(str, ses->buffer[scroll_cnt], TRUE))
+buffer.c:				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+buffer.c:				tintin_puts2(ses, ses->buffer[scroll_cnt]);
+buffer.c:		while (scroll_cnt != ses->scroll_row);
+buffer.c:		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+buffer.c:	scroll_add  = 0 - ses->scroll_base;
+buffer.c:	scroll_cnt  = ses->scroll_line;
+buffer.c:		if (ses->buffer[scroll_cnt] == NULL)
+buffer.c:		scroll_tmp = str_hash_lines(ses->buffer[scroll_cnt]);
+buffer.c:		if (scroll_cnt == ses->scroll_max - 1)
+buffer.c:	if (ses->buffer[scroll_cnt] == NULL)
+buffer.c:		goto_rowcol(ses, ses->bot_row, 1);
+buffer.c:		SET_BIT(ses->flags, SES_FLAG_READMUD);
+buffer.c:	if (ses->buffer[scroll_cnt] && scroll_tmp)
+buffer.c:		word_wrap(ses, ses->buffer[scroll_cnt], temp, FALSE);
+buffer.c:			scroll_cnt = ses->scroll_max - 1;
+buffer.c:		if (ses->buffer[scroll_cnt] == NULL)
+buffer.c:		scroll_tmp = word_wrap(ses, ses->buffer[scroll_cnt], temp, FALSE);
+buffer.c:	if (scroll_tmp && ses->buffer[scroll_cnt])
+buffer.c:		DEL_BIT(ses->flags, SES_FLAG_READMUD);
+buffer.c:	if (gtd->ses->buffer == NULL)
+buffer.c:	if (gtd->ses->scroll_line == -1)
+buffer.c:		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+buffer.c:	scroll_cnt  = gtd->ses->scroll_line;
+buffer.c:	buffer_add  = 0 - gtd->ses->scroll_base;
+buffer.c:		if (gtd->ses->buffer[scroll_cnt] == NULL)
+buffer.c:		buffer_tmp = str_hash_lines(gtd->ses->buffer[scroll_cnt]);
+buffer.c:			gtd->ses->scroll_line = scroll_cnt;
+buffer.c:			gtd->ses->scroll_base = scroll_size - buffer_add;
+buffer.c:		if (scroll_cnt == gtd->ses->scroll_max - 1)
+buffer.c:	if (gtd->ses->buffer == NULL)
+buffer.c:	if (gtd->ses->scroll_line == -1)
+buffer.c:	scroll_cnt  = gtd->ses->scroll_line;
+buffer.c:	buffer_add  = gtd->ses->scroll_base;
+buffer.c:		gtd->ses->scroll_base = buffer_add - scroll_size;
+buffer.c:		scroll_cnt = gtd->ses->scroll_max - 1;
+buffer.c:		if (gtd->ses->buffer[scroll_cnt] == NULL)
+buffer.c:		buffer_tmp = str_hash_lines(gtd->ses->buffer[scroll_cnt]);
+buffer.c:			gtd->ses->scroll_line = scroll_cnt;
+buffer.c:			gtd->ses->scroll_base = buffer_tmp - (scroll_size - buffer_add);
+buffer.c:			scroll_cnt = gtd->ses->scroll_max - 1;
+buffer.c:	if (gtd->ses->buffer == NULL)
+buffer.c:	if (gtd->ses->buffer[0])
+buffer.c:		gtd->ses->scroll_line = gtd->ses->scroll_row - 1;
+buffer.c:		gtd->ses->scroll_line = gtd->ses->scroll_max - 1;
+buffer.c:	gtd->ses->scroll_base = str_hash_lines(gtd->ses->buffer[gtd->ses->scroll_line]);
+buffer.c:	if (gtd->ses->buffer == NULL)
+buffer.c:	if (gtd->ses->scroll_row == gtd->ses->scroll_max - 1)
+buffer.c:		gtd->ses->scroll_line = 0;
+buffer.c:		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+buffer.c:	gtd->ses->scroll_base = 0;
+buffer.c:	gtd->ses->scroll_line = -1;
+buffer.c:	gtd->ses->scroll_base =  0;
+buffer.c:	if (gtd->ses->buffer == NULL)
+buffer.c:	if (gtd->ses->scroll_line == -1)
+buffer.c:		gtd->ses->scroll_line = gtd->ses->scroll_row + 1;
+buffer.c:	if (gtd->ses->buffer == NULL)
+buffer.c:			scroll_cnt = gtd->ses->scroll_row;
+buffer.c:				if (scroll_cnt == gtd->ses->scroll_max -1)
+buffer.c:				if (gtd->ses->buffer[scroll_cnt] == NULL)
+buffer.c:				if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+buffer.c:				if (regexp(str, gtd->ses->buffer[scroll_cnt], TRUE))
+buffer.c:			while (scroll_cnt != gtd->ses->scroll_row);
+buffer.c:			if (gtd->ses->buffer[0])
+buffer.c:				scroll_cnt = gtd->ses->scroll_row - 1;
+buffer.c:				scroll_cnt = gtd->ses->scroll_max - 1;
+buffer.c:					scroll_cnt = gtd->ses->scroll_max -1;
+buffer.c:				if (gtd->ses->buffer[scroll_cnt] == NULL)
+buffer.c:				if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+buffer.c:				if (regexp(str, gtd->ses->buffer[scroll_cnt], TRUE))
+buffer.c:			while (scroll_cnt != gtd->ses->scroll_row);
+buffer.c:		if (gtd->ses->buffer[scroll_cnt] == NULL || scroll_cnt == gtd->ses->scroll_row)
+buffer.c:			gtd->ses->scroll_line = scroll_cnt;
+class.c:	root = ses->list[LIST_CLASS];
+class.c:			tintin_printf2(ses, "%-20s %3d %s", node->left, count_class(ses, node), !strcmp(ses->class, node->left) ? "OPEN" : "CLOSED");
+class.c:				for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+class.c:		if (!HAS_BIT(ses->list[list]->flags, LIST_FLAG_CLASS))
+class.c:		for (node = ses->list[list]->f_node ; node ; node = node->next)
+class.c:	node = search_node_with_wild(ses->list[LIST_CLASS], left);
+class.c:	RESTRING(ses->class, left);
+class.c:	node = search_node_with_wild(ses->list[LIST_CLASS], left);
+class.c:	if (!strcmp(ses->class, left))
+class.c:		RESTRING(ses->class, "");
+class.c:		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_CLASS))
+class.c:		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+class.c:	class = search_node_with_wild(ses->list[LIST_CLASS], left);
+class.c:	if (!strcmp(ses->class, left))
+class.c:		RESTRING(ses->class, "");
+class.c:		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_CLASS))
+class.c:		for (node = ses->list[cnt]->f_node ; node ; node = node_next)
+config.c:	root = ses->list[LIST_CONFIG];
+config.c:		SET_BIT(ses->flags, SES_FLAG_SPEEDWALK);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_SPEEDWALK);
+config.c:		SET_BIT(ses->flags, SES_FLAG_VERBATIM);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_VERBATIM);
+config.c:		SET_BIT(ses->flags, SES_FLAG_REPEATENTER);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_REPEATENTER);
+config.c:		SET_BIT(ses->flags, SES_FLAG_ECHOCOMMAND);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_ECHOCOMMAND);
+config.c:		SET_BIT(ses->flags, SES_FLAG_VERBOSE);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_VERBOSE);
+config.c:		SET_BIT(ses->flags, SES_FLAG_WORDWRAP);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_WORDWRAP);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_LOGPLAIN);
+config.c:		SET_BIT(ses->flags, SES_FLAG_LOGHTML);
+config.c:		SET_BIT(ses->flags, SES_FLAG_LOGPLAIN);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_LOGHTML);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_LOGPLAIN);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_LOGHTML);
+config.c:		SET_BIT(ses->flags, SES_FLAG_SCROLLLOCK);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_SCROLLLOCK);
+config.c:		SET_BIT(ses->telopts, TELOPT_FLAG_DEBUG);
+config.c:		DEL_BIT(ses->telopts, TELOPT_FLAG_DEBUG);
+config.c:		SET_BIT(ses->flags, SES_FLAG_CONVERTMETA);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_CONVERTMETA);
+config.c:		SET_BIT(ses->flags, SES_FLAG_LOGLEVEL);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_LOGLEVEL);
+config.c:		SET_BIT(ses->flags, SES_FLAG_COLORPATCH);
+config.c:		DEL_BIT(ses->flags, SES_FLAG_COLORPATCH);
+cursor.c:		if (gtd->input_cur < gtd->ses->cols - 2)
+cursor.c:	if (gtd->input_pos > 2 && gtd->input_pos < gtd->ses->cols - 2)
+cursor.c:	if (gtd->input_pos >= gtd->ses->cols - 2)
+cursor.c:		TOG_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+cursor.c:		SET_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+cursor.c:		DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+cursor.c:			input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+cursor.c:			input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+cursor.c:		input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+cursor.c:		input_printf("\033[1G\033[0K%s%s\033[0K", gtd->ses->more_output, gtd->input_buf);
+cursor.c:		gtd->input_pos = gtd->input_len % gtd->ses->cols;
+cursor.c:		if (gtd->input_cur < gtd->ses->cols - 2)
+cursor.c:	if (gtd->input_pos >= gtd->ses->cols - 2)
+cursor.c:		while (gtd->input_pos >= gtd->ses->cols - 2)
+cursor.c:			gtd->input_pos -= gtd->ses->cols / 3;
+cursor.c:				gtd->input_pos += gtd->ses->cols * 2 / 3;
+cursor.c:		input_printf("<%.*s\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur - gtd->input_pos + 1]);
+cursor.c:		input_printf("%.*s\0338", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos]);
+cursor.c:	if (gtd->input_len - gtd->input_cur + gtd->input_pos > gtd->ses->cols)
+cursor.c:		input_printf("\0337\033[%dG%.1s>\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
+cursor.c:	else if (gtd->input_len - gtd->input_cur + gtd->input_pos == gtd->ses->cols)
+cursor.c:		input_printf("\0337\033[%dG%.2s\0338",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
+cursor.c:	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
+event.c:	root = ses->list[LIST_EVENT];
+event.c:			tintin_printf2(ses, "  [%-20s] [%s] %s", event_table[cnt].name, searchnode_list(ses->list[LIST_EVENT], event_table[cnt].name) ? "X" : " ", event_table[cnt].desc);
+event.c:	for (node = ses->list[LIST_EVENT]->f_node ; node ; node = node->next)
+files.c:			counter[cnt] = ses->list[cnt]->count;
+files.c:	if (!HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
+files.c:				switch (ses->list[cnt]->count - counter[cnt])
+files.c:						tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
+files.c:						tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
+files.c:		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_WRITE))
+files.c:		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+function.c:	root = ses->list[LIST_FUNCTION];
+gag.c:	root = ses->list[LIST_GAG];
+gag.c:	for (node = ses->list[LIST_GAG]->f_node ; node ; node = node->next)
+gag.c:			SET_BIT(ses->flags, SES_FLAG_GAG);
+help.c:			if (strlen(add) + 19 > ses->cols)
+highlight.c:	root = ses->list[LIST_HIGHLIGHT];
+highlight.c:	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
+highlight.c:	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
+history.c:	root = ses->list[LIST_HISTORY];
+history.c:		if (root->l_node && HAS_BIT(gtd->ses->flags, SES_FLAG_REPEATENTER))
+history.c:	root = ses->list[LIST_HISTORY];
+history.c:	for (node = ses->list[LIST_HISTORY]->f_node ; node ; node = node->next)
+input.c:	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)
+input.c:	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+input.c:	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+input.c:	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+input.c:	if (gtd->ses->scroll_line != -1)
+input.c:	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA) || HAS_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR))
+input.c:	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
+input.c:		root  = gtd->ses->list[LIST_MACRO];
+input.c:	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA) || HAS_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR))
+input.c:	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
+input.c:		root  = gtd->ses->list[LIST_MACRO];
+input.c:	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+input.c:		if (ses->more_output[0] == 0)
+input.c:		ses->check_output = 0;
+input.c:		if (HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
+input.c:			SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+input.c:			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+input.c:				tintin_printf2(ses, "%s%s", ses->more_output, buffer);
+input.c:			DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+input.c:	DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
+input.c:	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+input.c:		if (!HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
+input.c:			if (ses->more_output[0])
+input.c:				sprintf(result, "%s\033[0;37m%s", ses->more_output, line);
+input.c:		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+input.c:		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+input.c:		if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO) && gtd->input_buf[0] != gtd->tintin_char)
+llist.c:	while ((node = ses->list[index]->f_node))
+llist.c:	ses->list[index] = init_list(index);
+llist.c:			ses->list[index]->count++;
+llist.c:			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:	ses->list[index]->flags = sourcelist->flags;
+llist.c:	return ses->list[index];
+llist.c:	newnode->class = HAS_BIT(ses->list[index]->flags, LIST_FLAG_CLASS) ? strdup(ses->class) : strdup("");
+llist.c:	ses->list[index]->count++;
+llist.c:			for (node = ses->list[index]->f_node ; node ; node = node->next)
+llist.c:					INSERT_LEFT(newnode, node, ses->list[index]->f_node);
+llist.c:			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:			for (node = ses->list[index]->f_node ; node ; node = node->next)
+llist.c:					INSERT_LEFT(newnode, node, ses->list[index]->f_node);
+llist.c:			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:			LINK(newnode, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:	for (node = ses->list[index]->f_node ; node ; node = node->next)
+llist.c:					UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:					LINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:	if ((node->next == NULL && node != ses->list[index]->l_node)
+llist.c:	||  (node->prev == NULL && node != ses->list[index]->f_node))
+llist.c:		if (node == ses->list[index]->update)
+llist.c:			ses->list[index]->update = node->next;
+llist.c:		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
+llist.c:		if (index == LIST_CLASS && !strcmp(ses->class, node->left))
+llist.c:			RESTRING(ses->class, "");
+llist.c:		ses->list[index]->count--;
+llist.c:	for (node = ses->list[index]->f_node ; node ; node = node->next)
+llist.c:	while ((node = search_node_with_wild(ses->list[index], left)))
+llist.c:				free(ses->list[cnt]);
+llist.c:			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+llist.c:				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
+llist.c:				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
+llist.c:				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
+llist.c:			tintin_printf(ses, "#OK: #%s MESSAGES HAVE BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+llist.c:			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+llist.c:				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
+llist.c:				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
+llist.c:				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
+llist.c:			tintin_printf(ses, "#OK: #%s IGNORE STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+llist.c:			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+llist.c:				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
+llist.c:				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
+llist.c:				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
+llist.c:				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_LOG);
+llist.c:			tintin_printf(ses, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, is_abbrev(right, "LOG") ? "LOG" : HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+log.c:	if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
+log.c:	else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+log.c:	if (ses->logfile)
+log.c:		fclose(ses->logfile);
+log.c:		ses->logfile = NULL;
+log.c:			if ((ses->logfile = fopen(right, "a")))
+log.c:				fseek(ses->logfile, 0, SEEK_END);
+log.c:				if (ftell(ses->logfile) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+log.c:					write_html_header(ses->logfile);
+log.c:				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
+log.c:			if ((ses->logfile = fopen(right, "w")))
+log.c:				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+log.c:					write_html_header(ses->logfile);
+log.c:	if (ses->logline)
+log.c:	if ((ses->logline = fopen(left, "a")))
+log.c:		fseek(ses->logline, 0, SEEK_END);
+log.c:		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+log.c:			write_html_header(ses->logline);
+log.c:			logit(ses, right, ses->logline);
+log.c:			fclose(ses->logline);
+log.c:			ses->logline = NULL;
+log.c:			if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+log.c:			cnt = ses->scroll_row;
+log.c:					cnt = ses->scroll_max - 1;
+log.c:				if (ses->buffer[cnt] == NULL)
+log.c:				if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
+log.c:					strip_vt102_codes(ses->buffer[cnt], out);
+log.c:				else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+log.c:					vt102_to_html(ses, ses->buffer[cnt], out);
+log.c:					sprintf(out, "%s\n", ses->buffer[cnt]);
+log.c:			while (cnt != ses->scroll_row);
+log.c:	vtc = ses->vtc;
+log.c:	fgc = ses->fgc;
+log.c:	bgc = ses->bgc;
+log.c:				if (HAS_BIT(vtc, COL_UND) && !HAS_BIT(ses->vtc, COL_UND))
+log.c:				if (!HAS_BIT(vtc, COL_UND) && HAS_BIT(ses->vtc, COL_UND))
+log.c:				if (!HAS_BIT(vtc, COL_REV) && HAS_BIT(ses->vtc, COL_REV))
+log.c:					fgc = ses->fgc = bgc - 10;
+log.c:					bgc = ses->bgc = cnt + 10;
+log.c:				if (bgc != ses->bgc || fgc != ses->fgc || vtc != ses->vtc)
+log.c:					if (bgc != ses->bgc)
+log.c:				if (bgc != ses->bgc || fgc != ses->fgc || vtc != ses->vtc)
+log.c:					if (bgc != ses->bgc)
+log.c:				if (HAS_BIT(vtc, COL_REV) && !HAS_BIT(ses->vtc, COL_REV))
+log.c:					fgc = ses->fgc = bgc - 10;
+log.c:					bgc = ses->bgc = cnt + 10;
+log.c:				ses->vtc = vtc;
+log.c:				ses->fgc = fgc;
+log.c:				ses->bgc = bgc;
+macro.c:	root = ses->list[LIST_MACRO];
+main.c:	for (ses = gts ; ses ; ses = ses->next)
+main.c:		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
+main.c:	if (gtd->ses->connect_retry > utime())
+main.c:		gtd->ses->connect_retry = 0;
+main.c:	else if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA) && !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+main.c:	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
+mapper.c:	if (ses->map == NULL)                                                                                         \
+mapper.c:	if (ses->map == NULL)                                                                                         \
+mapper.c:	if (ses->map->room_list[ses->map->in_room] == NULL)                                                           \
+mapper.c:		if (ses->map && HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
+mapper.c:			SET_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
+mapper.c:	free(ses->map->room_list[ses->map->in_room]->color);
+mapper.c:	ses->map->room_list[ses->map->in_room]->color = strdup(left);
+mapper.c:	exit = find_exit(ses, ses->map->in_room, left);
+mapper.c:		if (ses->map->room_list[room] == NULL)
+mapper.c:	exit = find_exit(ses, ses->map->in_room, left);
+mapper.c:	create_exit(ses, ses->map->in_room, temp);
+mapper.c:	if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)) != NULL)
+mapper.c:			sprintf(temp, "{%d} {%s} {%s}", ses->map->in_room, node->right, node->right);
+mapper.c:	exit = find_exit(ses, ses->map->in_room, left);
+mapper.c:	delete_exit(ses, ses->map->in_room, exit);
+mapper.c:	create_exit(ses, ses->map->in_room, temp);
+mapper.c:			TOG_BIT(ses->map->flags, MAP_FLAG_STATIC);
+mapper.c:			tintin_printf2(ses, "#MAP: Static flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
+mapper.c:			TOG_BIT(ses->map->flags, MAP_FLAG_VTMAP);
+mapper.c:			tintin_printf2(ses, "#MAP: VTmap flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
+mapper.c:			TOG_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS);
+mapper.c:			tintin_printf2(ses, "#MAP: VTgraphics flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
+mapper.c:			TOG_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS);
+mapper.c:			tintin_printf2(ses, "#MAP: AsciiGraphics flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "#MAP: Static flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "#MAP: VTmap flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "#MAP: VTgraphics flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "#MAP: AsciiGraphics flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "#MAP: roomcolor is set to:  %s.", ses->map->room_list[ses->map->in_room]->color);
+mapper.c:		tintin_printf2(ses, "#MAP: roomflags is set to:  %d.", ses->map->room_list[ses->map->in_room]->flags);
+mapper.c:		tintin_printf2(ses, "#MAP: roomname is set to:   %s.", ses->map->room_list[ses->map->in_room]->name);
+mapper.c:		tintin_printf2(ses, "#MAP: roomsymbol is set to: %s.", ses->map->room_list[ses->map->in_room]->symbol);
+mapper.c:		tintin_printf2(ses, "#MAP: roomvnum is set to:   %d.", ses->map->room_list[ses->map->in_room]->vnum);
+mapper.c:			internal_variable(ses, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->color);
+mapper.c:			internal_variable(ses, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->flags);
+mapper.c:			internal_variable(ses, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->name);
+mapper.c:			internal_variable(ses, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->symbol);
+mapper.c:			internal_variable(ses, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->vnum);
+mapper.c:		insert_undo(ses, "%d %d %d", room, ses->map->in_room, 0);
+mapper.c:		show_message(ses, LIST_MAP, "#MAP: Location set to room {%s}.", ses->map->room_list[room]->name);
+mapper.c:		if (ses->map->room_list[room])
+mapper.c:	tintin_printf2(ses, "%-20s %s", "Vtmap:",          HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
+mapper.c:	tintin_printf2(ses, "%-20s %s", "Static:",         HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
+mapper.c:	if (ses->map->in_room)
+mapper.c:		tintin_printf2(ses, "%-20s %d", "Room vnum:",      ses->map->in_room);
+mapper.c:		tintin_printf2(ses, "%-20s %s", "Room name:",      ses->map->room_list[ses->map->in_room]->name);
+mapper.c:		tintin_printf2(ses, "%-20s %s", "Avoid:",          HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "%-20s %s", "Hide:",           HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE) ? "on" : "off");		
+mapper.c:		tintin_printf2(ses, "%-20s %s", "Leave:",          HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE) ? "on" : "off");
+mapper.c:		for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
+mapper.c:			tintin_printf2(ses, "%-20s %-3s (%s) to room: %-5d (%s).", "Exit:", exit->name, exit->cmd, exit->vnum, ses->map->room_list[exit->vnum]->name);
+mapper.c:		if (ses->map->room_list[room] == NULL)
+mapper.c:	exit = find_exit(ses, ses->map->in_room, left);
+mapper.c:	node = searchnode_list(ses->list[LIST_PATHDIR], left);
+mapper.c:	in_room = ses->map->in_room;
+mapper.c:	ses->map->in_room = 0;
+mapper.c:			ses->map->legenda[0],  ses->map->legenda[1],  ses->map->legenda[2],
+mapper.c:			ses->map->legenda[3],  ses->map->legenda[4],  ses->map->legenda[5],
+mapper.c:			ses->map->legenda[6],  ses->map->legenda[7],  ses->map->legenda[8],
+mapper.c:			ses->map->legenda[9],  ses->map->legenda[10], ses->map->legenda[11],
+mapper.c:			ses->map->legenda[12], ses->map->legenda[13], ses->map->legenda[14],
+mapper.c:			ses->map->legenda[15], ses->map->legenda[16]);
+mapper.c:	exit = find_exit(ses, ses->map->in_room, left);
+mapper.c:		delete_exit(ses, ses->map->in_room, exit);
+mapper.c:	create_exit(ses, ses->map->in_room, temp);
+mapper.c:	if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)) != NULL)
+mapper.c:			sprintf(temp, "{%d} {%s} {%s}", ses->map->in_room, node->right, node->right);
+mapper.c:	tintin_printf2(ses, "#MAP: Linked room {%s} to {%s}.", ses->map->room_list[ses->map->in_room]->name, ses->map->room_list[room]->name);
+mapper.c:		if (ses->map->room_list[room])
+mapper.c:			tintin_printf2(ses, "[%5d] %s", ses->map->room_list[room]->vnum, ses->map->room_list[room]->name);
+mapper.c:			for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:	free(ses->map->room_list[ses->map->in_room]->name);
+mapper.c:	ses->map->room_list[ses->map->in_room]->name = strdup(left);
+mapper.c:	if (ses->map == NULL)
+mapper.c:		ses->map = calloc(1, sizeof(struct map_data));
+mapper.c:				ses->map->flags = atoi(&buffer[2]);
+mapper.c:			TOG_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID);
+mapper.c:			tintin_printf2(ses, "#MAP: Avoid flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID) ? "on" : "off");
+mapper.c:			TOG_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE);
+mapper.c:			tintin_printf2(ses, "#MAP: Hide flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE) ? "on" : "off");
+mapper.c:			TOG_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE);
+mapper.c:			tintin_printf2(ses, "#MAP: Leave flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE) ? "on" : "off");
+mapper.c:			TOG_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID);
+mapper.c:			tintin_printf2(ses, "#MAP: Void flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID) ? "on" : "off");
+mapper.c:			tintin_printf2(ses, "#MAP: Avoid flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID) ? "on" : "off");
+mapper.c:			tintin_printf2(ses, "#MAP: Hide flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE) ? "on" : "off");
+mapper.c:			tintin_printf2(ses, "#MAP: Leave flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE) ? "on" : "off");		
+mapper.c:			tintin_printf2(ses, "#MAP: Void flag toggled to %s.", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID) ? "on" : "off");
+mapper.c:		tintin_printf2(ses, "#MAP: roomcolor is set to:  %s.", ses->map->room_list[ses->map->in_room]->color);
+mapper.c:		tintin_printf2(ses, "#MAP: roomflags is set to:  %d.", ses->map->room_list[ses->map->in_room]->flags);
+mapper.c:		tintin_printf2(ses, "#MAP: roomname is set to:   %s.", ses->map->room_list[ses->map->in_room]->name);
+mapper.c:		tintin_printf2(ses, "#MAP: roomsymbol is set to: %s.", ses->map->room_list[ses->map->in_room]->symbol);
+mapper.c:			RESTRING(ses->map->room_list[ses->map->in_room]->color, right);
+mapper.c:			ses->map->room_list[ses->map->in_room]->flags = (int) get_number(ses, right);
+mapper.c:			show_message(ses, LIST_MAP, "#MAP SET: roomflags set to: %d.", ses->map->room_list[ses->map->in_room]->flags);
+mapper.c:			RESTRING(ses->map->room_list[ses->map->in_room]->name, right);
+mapper.c:			show_message(ses, LIST_MAP, "#MAP SET: roomname set to: %s.", ses->map->room_list[ses->map->in_room]->name);
+mapper.c:			RESTRING(ses->map->room_list[ses->map->in_room]->symbol, right);
+mapper.c:			show_message(ses, LIST_MAP, "#MAP SET: roomsymbol set to: %s.", ses->map->room_list[ses->map->in_room]->symbol);
+mapper.c:	node = ses->list[LIST_MAP]->l_node;
+mapper.c:	if (ses->map->in_room != atoi(node->left))
+mapper.c:	exit = find_exit(ses, ses->map->in_room, left);
+mapper.c:	delete_exit(ses, ses->map->in_room, exit);
+mapper.c:	sprintf(temp, "F %d\n\n", ses->map->flags);
+mapper.c:		ses->map->legenda[0],  ses->map->legenda[1],  ses->map->legenda[2],
+mapper.c:		ses->map->legenda[3],  ses->map->legenda[4],  ses->map->legenda[5],
+mapper.c:		ses->map->legenda[6],  ses->map->legenda[7],  ses->map->legenda[8],
+mapper.c:		ses->map->legenda[9],  ses->map->legenda[10], ses->map->legenda[11],
+mapper.c:		ses->map->legenda[12], ses->map->legenda[13], ses->map->legenda[14],
+mapper.c:		ses->map->legenda[15], ses->map->legenda[16]);
+mapper.c:		if (ses->map->room_list[vnum])
+mapper.c:				ses->map->room_list[vnum]->vnum,
+mapper.c:				ses->map->room_list[vnum]->flags,
+mapper.c:				ses->map->room_list[vnum]->color,
+mapper.c:				ses->map->room_list[vnum]->name,
+mapper.c:				ses->map->room_list[vnum]->symbol);
+mapper.c:			for (exit = ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
+mapper.c:	if (ses->map)
+mapper.c:	ses->map = calloc(1, sizeof(struct map_data));
+mapper.c:		ses->map->legenda[index] = map_palet0[index];
+mapper.c:		if (ses->map->room_list[index])
+mapper.c:	free(ses->map);
+mapper.c:	ses->map = NULL;
+mapper.c:			ses->map->legenda[cnt] = atoi(buf);
+mapper.c:	ses->map->room_list[newroom->vnum] = newroom;
+mapper.c:	while (ses->map->room_list[room]->f_exit)
+mapper.c:		delete_exit(ses, room, ses->map->room_list[room]->f_exit);
+mapper.c:	free(ses->map->room_list[room]->name);
+mapper.c:	free(ses->map->room_list[room]->color);
+mapper.c:	free(ses->map->room_list[room]);
+mapper.c:	ses->map->room_list[room] = NULL;
+mapper.c:			if (ses->map->room_list[cnt])
+mapper.c:				for (exit = ses->map->room_list[cnt]->f_exit ; exit ; exit = exit_next)
+mapper.c:	LINK(newexit, ses->map->room_list[room]->f_exit, ses->map->room_list[room]->l_exit);
+mapper.c:	UNLINK(exit, ses->map->room_list[room]->f_exit, ses->map->room_list[room]->l_exit)
+mapper.c:	node = searchnode_list(ses->list[LIST_PATHDIR], arg);
+mapper.c:	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:	exit = find_exit(ses, ses->map->in_room, argument);
+mapper.c:		insert_undo(ses, "%d %d %d", exit->vnum, ses->map->in_room, 0);
+mapper.c:		if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE))
+mapper.c:			show_message(ses, LIST_MAP, "#MAP: LEAVE FLAG FOUND IN ROOM {%d}. LEAVING MAP.", ses->map->in_room);
+mapper.c:		else if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
+mapper.c:			node = searchnode_list(ses->list[LIST_PATHDIR], argument);
+mapper.c:				for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
+mapper.c:	if (!HAS_BIT(ses->map->flags, MAP_FLAG_STATIC))
+mapper.c:		if ((node = searchnode_list(ses->list[LIST_PATHDIR], argument)) == NULL)
+mapper.c:			if (ses->map->room_list[room] == NULL)
+mapper.c:			insert_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_LINK);
+mapper.c:			insert_undo(ses, "%d %d %d", room, ses->map->in_room, MAP_UNDO_CREATE|MAP_UNDO_LINK);
+mapper.c:		create_exit(ses, ses->map->in_room, temp);
+mapper.c:			sprintf(temp, "{%d} {%s} {%s}", ses->map->in_room, node->right, node->right);
+mapper.c:	addnode_list(ses->list[LIST_MAP], dir, rev, flag);
+mapper.c:	if (ses->list[LIST_MAP]->count > 100)
+mapper.c:		deletenode_list(ses, ses->list[LIST_MAP]->f_node, LIST_MAP);
+mapper.c:	map_search_ses->map->room_list[room]->size = TRUE;
+mapper.c:		map_grid[x][y] = map_search_ses->map->room_list[room];
+mapper.c:	for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:		if (map_search_ses->map->room_list[exit->vnum]->size)
+mapper.c:		if (HAS_BIT(map_search_ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_HIDE))
+mapper.c:		if (ses->map->room_list[vnum])
+mapper.c:			ses->map->room_list[vnum]->size = FALSE;
+mapper.c:	if (ses->map->room_list[room])
+mapper.c:	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
+mapper.c:		map_grid_x = (ses->cols / 6) - 1;
+mapper.c:		map_grid_x = ses->cols - 1;
+mapper.c:	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
+mapper.c:	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
+mapper.c:	if (ses->map == NULL || !HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
+mapper.c:	if (ses != gtd->ses || HAS_BIT(gtd->ses->flags, SES_FLAG_READMUD))
+mapper.c:	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
+mapper.c:		map_grid_y = (ses->top_row - 2) / 3 - 1;
+mapper.c:		map_grid_x = (ses->cols    - 0) / 6 - 1;
+mapper.c:		map_grid_y = (ses->top_row - 3);
+mapper.c:		map_grid_x = (ses->cols - 1);
+mapper.c:	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
+mapper.c:	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
+mapper.c:				if (room->vnum == ses->map->in_room)
+mapper.c:	if (room->vnum == ses->map->in_room)
+mapper.c:		if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
+mapper.c:			sprintf(buf, "<118>\033[12m%c\033[10m", ses->map->legenda[16]);
+mapper.c:			sprintf(buf, "<118>%c", ses->map->legenda[16]);
+mapper.c:	if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
+mapper.c:		sprintf(buf, "%s\033[12m%c\033[10m", room->color, ses->map->legenda[exits]);
+mapper.c:		sprintf(buf, "%s%c", room->color, ses->map->legenda[exits]);
+mapper.c:		if (ses->map->room_list[room])
+mapper.c:		if (ses->map->room_list[room] && regexp(ses->map->room_list[room]->name, arg, FALSE))
+mapper.c:	ses->map->in_room = room;
+mapper.c:	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:	if (map_search_ses->map->room_list[room]->f_exit->vnum != from)
+mapper.c:		map_search_exit_best = map_search_ses->map->room_list[room]->f_exit;
+mapper.c:		map_search_exit_best = map_search_ses->map->room_list[room]->l_exit;
+mapper.c:	if (HAS_BIT(map_search_ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
+mapper.c:	map_search_ses->map->room_list[room]->size = size;
+mapper.c:		if (HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_AVOID))
+mapper.c:		if (!HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID))
+mapper.c:		for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:			if (map_search_ses->map->room_list[exit->vnum] == NULL)
+mapper.c:			if (map_search_ses->map->room_list[exit->vnum]->size > size)
+mapper.c:	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+mapper.c:	if (room == ses->map->in_room)
+mapper.c:		if (ses->map->room_list[vnum])
+mapper.c:			ses->map->room_list[vnum]->size = map_search_max_size;
+mapper.c:	room = ses->map->in_room;
+mapper.c:	ses->map->room_list[room]->size = 0;
+mapper.c:	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:		if (ses->map->room_list[exit->vnum])
+mapper.c:		ses->map->room_list[room]->size = 0;
+mapper.c:		for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+mapper.c:			if (ses->map->room_list[exit->vnum])
+mapper.c:		if (HAS_BIT(ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
+mapper.c:		addnode_list(ses->list[LIST_PATH], map_search_exit_best->cmd, "", "0");
+mapper.c:			while (ses->list[LIST_PATH]->f_node)
+mapper.c:				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
+mapper.c:				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
+mapper.c:			while (ses->list[LIST_PATH]->f_node)
+mapper.c:				pre_parse_input(ses, ses->list[LIST_PATH]->f_node->left, SUB_NONE);
+mapper.c:				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
+mapper.c:		if (ses->map->room_list[vnum])
+mapper.c:			ses->map->room_list[vnum]->size = 0;
+mapper.c:	search_coord(ses->map->in_room, 0, 0, 0);
+mapper.c:	map_search_ses->map->room_list[vnum]->size = 1;
+mapper.c:		for (exit = map_search_ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
+mapper.c:			if (HAS_BIT(map_search_ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_HIDE))
+mapper.c:			if (map_search_ses->map->room_list[exit->vnum] && map_search_ses->map->room_list[exit->vnum]->size == 0)
+mapper.c:	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+mapper.c:	room = ses->map->in_room;
+mapper.c:	addnode_list(ses->list[LIST_PATH], exit->cmd, "", "0");
+mapper.c:		if (ses->map->room_list[vnum]->f_exit->vnum != room)
+mapper.c:			exit = ses->map->room_list[vnum]->f_exit;
+mapper.c:			exit = ses->map->room_list[vnum]->l_exit;
+mapper.c:		addnode_list(ses->list[LIST_PATH], exit->cmd, "", "0");
+mapper.c:			while (ses->list[LIST_PATH]->f_node)
+mapper.c:				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
+mapper.c:				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
+mapper.c:			while (ses->list[LIST_PATH]->f_node)
+mapper.c:				pre_parse_input(ses, ses->list[LIST_PATH]->f_node->left, SUB_NONE);
+mapper.c:				deletenode_list(ses, ses->list[LIST_PATH]->f_node, LIST_PATH);
+math.c:	root = ses->list[LIST_VARIABLE];
+math.c:	node = mathses->list[LIST_MATH]->f_node;
+math.c:			node = mathses->list[LIST_MATH]->f_node;
+misc.c:		if (strlen(buf) + 20 > ses->cols)
+misc.c:	SET_BIT(ses->flags, SES_FLAG_GAG);
+misc.c:		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_SHOW))
+misc.c:			ses->list[cnt]->count,
+misc.c:			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF",
+misc.c:			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF",
+misc.c:			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ? "ON" : "OFF");
+misc.c:	SET_BIT(ses->flags, SES_FLAG_BREAK);
+misc.c:	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
+misc.c:		DEL_BIT(ses->flags, SES_FLAG_GAG);
+misc.c:	if (strip_vt102_strlen(ses->more_output) != 0)
+misc.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+misc.c:		goto_rowcol(ses, ses->bot_row, 1);
+misc.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+net.c:	ses->connect_error = connect(sock, address->ai_addr, address->ai_addrlen);
+net.c:	if (ses->connect_error)
+net.c:	ses->connect_error = connect(sock, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
+net.c:	if (ses->connect_error)
+net.c:	if (!HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+net.c:	if (write(ses->socket, line, strlen(line)) == -1)
+net.c:	size = read(ses->socket, buf, STRING_SIZE - 1);
+net.c:	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+net.c:		goto_rowcol(gtd->ses, gtd->ses->bot_row, 1);
+net.c:	SET_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+net.c:		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
+net.c:			if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+net.c:					strcat(ses->more_output, line);
+net.c:					ses->check_output = utime() + gts->check_output;
+net.c:		if (*line && ses->more_output[0])
+net.c:			if (ses->check_output)
+net.c:				sprintf(linebuf, "%s%s", ses->more_output, line);
+net.c:				ses->more_output[0] = 0;
+net.c:			else if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+net.c:				sprintf(linebuf, "%s%s", ses->more_output, line);
+net.c:	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+net.c:	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
+net.c:	ses->check_output = 0;
+net.c:	if (HAS_BIT(ses->flags, SES_FLAG_COLORPATCH))
+net.c:		get_color_codes(ses->color, linebuf, ses->color);
+net.c:		sprintf(line, "%s%s", ses->color, linebuf);
+net.c:	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
+net.c:		strip_non_vt102_codes(linebuf, ses->more_output);
+net.c:		printf("%s", ses->more_output);
+net.c:		ses->more_output[0] = 0;
+net.c:		DEL_BIT(ses->flags, SES_FLAG_GAG);
+net.c:	else if (HAS_BIT(ses->flags, SES_FLAG_SNOOP))
+net.c:		tintin_printf2(gtd->ses, "[%s] %s", ses->name, linebuf);
+parse.c:	if (push_call("[%s] parse_input(%p,%s)",ses->name,ses,input))
+parse.c:	DEL_BIT(ses->flags, SES_FLAG_BREAK);
+parse.c:	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char)
+parse.c:		else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && is_speedwalk(line))
+parse.c:		if (HAS_BIT(ses->flags, SES_FLAG_BREAK))
+parse.c:	if (ses->map && ses->map->in_room)
+parse.c:	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+parse.c:	push_call("[%s] do_one_line(%p,%p)",ses->name,*line,ses);
+parse.c:	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
+parse.c:	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
+parse.c:		if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+parse.c:	if (!HAS_BIT(ses->list[LIST_GAG]->flags, LIST_FLAG_IGNORE))
+parse.c:	if (!HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
+parse.c:	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
+path.c:	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+path.c:		SET_BIT(ses->flags, SES_FLAG_MAPPING);
+path.c:	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+path.c:		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+path.c:	root = ses->list[LIST_PATH];
+path.c:			if (strlen(buf) + strlen(node->left) > ses->cols)
+path.c:	root = ses->list[LIST_PATH];
+path.c:	root = ses->list[LIST_PATH];
+path.c:	if ((node = searchnode_list(ses->list[LIST_ALIAS], left)) == NULL)
+path.c:			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)))
+path.c:				addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+path.c:	root = ses->list[LIST_PATH];
+path.c:	else if (*right == 0 && searchnode_list(ses->list[LIST_PATHDIR], left))
+path.c:		addnode_list(ses->list[LIST_PATH], left, right, "0");
+path.c:	root = ses->list[LIST_PATH];
+path.c:		flags = ses->flags;
+path.c:		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+path.c:		ses->flags = flags;
+path.c:	root = ses->list[LIST_PATH];
+path.c:		flags = ses->flags;
+path.c:		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+path.c:		ses->flags = flags;
+path.c:	if ((node = searchnode_list(ses->list[LIST_PATHDIR], command)))
+path.c:		addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+path.c:	root = ses->list[LIST_PATHDIR];
+prompt.c:	root = ses->list[LIST_PROMPT];
+prompt.c:	for (node = ses->list[LIST_PROMPT]->f_node ; node ; node = node->next)
+prompt.c:			SET_BIT(ses->flags, SES_FLAG_GAG);
+prompt.c:		row = ses->rows - row;
+prompt.c:	if (row <= ses->top_row && row >= ses->bot_row)
+prompt.c:		sprintf(temp, "%.*s", ses->cols + 4, "\033[0m----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+prompt.c:	else if ((int) strlen(temp) <= ses->cols)
+prompt.c:		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", (int) strlen(temp), ses->cols);
+prompt.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+prompt.c:	printf("\033[%d;1H\033[K%s\033[%d;1H", row, temp, ses->bot_row);
+prompt.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+session.c:			return activate_session(ses->next ? ses->next : gts->next ? gts->next : ses);
+session.c:			return activate_session(ses->prev ? ses->prev : gts->prev ? gts->prev : ses);
+session.c:	tintin_printf(ses, "#SESSION '%s' ACTIVATED.", ses->name);
+session.c:	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+session.c:		gtd->ses->socket = desc;
+session.c:	tintin_printf2(ses, "\n\r#Trying to connect to %s port %s.\n\r", ses->host, ses->port);
+session.c:	ses->connect_retry = utime() + gts->connect_retry;
+session.c:	sock = connect_mud(ses->host, ses->port, ses);
+session.c:		ses->socket = sock;
+session.c:		ses->connect_retry = 0;
+session.c:		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
+session.c:		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);
+session.c:		if (atoi(ses->port) == TELNET_PORT)
+session.c:	if (ses->connect_retry > utime())
+session.c:	switch (ses->connect_error)
+session.c:		gtd->update = ses->next;
+session.c:	if (ses->socket)
+session.c:		if (close(ses->socket) == -1)
+session.c:	tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
+session.c:	if (ses->map)
+session.c:	if (ses->logfile)
+session.c:		fclose(ses->logfile);
+session.c:	if (ses->logline)
+session.c:		fclose(ses->logline);
+session.c:	free(ses->name);
+session.c:	free(ses->host);
+session.c:	free(ses->port);
+session.c:	free(ses->class);
+split.c:		init_split(ses, 1, ses->rows - 2);
+split.c:		init_split(ses, 1 + atoi(left), ses->rows - 2);
+split.c:		init_split(ses, 1 + atoi(left), ses->rows - 1 - atoi(right));
+split.c:	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+split.c:		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
+split.c:		DEL_BIT(ses->flags, SES_FLAG_SPLIT);
+split.c:	if (bot > ses->rows)
+split.c:		bot = ses->rows;
+split.c:	SET_BIT(ses->flags, SES_FLAG_SPLIT);
+split.c:	for (bot = 1 ; ses->rows - bot > ses->bot_row ; bot++)
+split.c:	for (top = 1 ; top < ses->top_row ; top++)
+split.c:	goto_rowcol(ses, ses->rows, 1);
+split.c:	if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
+split.c:		goto_rowcol(ses, ses->rows, 1);
+split.c:	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+split.c:		init_split(ses, ses->top_row, ses->bot_row);
+split.c:		scroll_region(ses, ses->top_row, ses->bot_row);
+split.c:		goto_rowcol(ses, ses->rows, 1);
+substitute.c:	root = ses->list[LIST_SUBSTITUTE];
+substitute.c:	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
+substitute.c:				SET_BIT(ses->flags, SES_FLAG_GAG);
+system.c:	size.ws_col = ses->cols;
+system.c:	SET_BIT(ses->flags, SES_FLAG_SCAN);
+system.c:	DEL_BIT(ses->flags, SES_FLAG_SCAN);
+system.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+system.c:		goto_rowcol(ses, ses->bot_row, 1);
+system.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+tab.c:	root = ses->list[LIST_TAB];
+telopt.c:	if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+telopt.c:	if (ses->mccp)
+telopt.c:		ses->mccp->next_in   = src;
+telopt.c:		ses->mccp->avail_in  = cplen;
+telopt.c:		ses->mccp->next_out  = gtd->mccp_buf;
+telopt.c:		ses->mccp->avail_out = gtd->mccp_buf_max;
+telopt.c:		switch (inflate(ses->mccp, Z_SYNC_FLUSH))
+telopt.c:				if (ses->mccp->avail_out == 0)
+telopt.c:					ses->mccp->avail_out  = gtd->mccp_buf_max / 2;
+telopt.c:					ses->mccp->next_out   = gtd->mccp_buf + gtd->mccp_buf_max / 2;
+telopt.c:				cplen = gtd->mccp_buf_max - ses->mccp->avail_out;
+telopt.c:				cplen = ses->mccp->next_out - gtd->mccp_buf;
+telopt.c:				inflateEnd(ses->mccp);
+telopt.c:				free(ses->mccp);
+telopt.c:				ses->mccp = NULL;
+telopt.c:				inflateEnd(ses->mccp);
+telopt.c:				free(ses->mccp);
+telopt.c:				ses->mccp = NULL;
+telopt.c:	if (HAS_BIT(ses->flags, SES_FLAG_LOGLEVEL) && ses->logfile)
+telopt.c:		fwrite(cpsrc, 1, cplen, ses->logfile);
+telopt.c:		fflush(ses->logfile);
+telopt.c:		if (*cpsrc == IAC || HAS_BIT(ses->telopts, TELOPT_FLAG_IAC))
+telopt.c:			if (HAS_BIT(ses->telopts, TELOPT_FLAG_IAC))
+telopt.c:				DEL_BIT(ses->telopts, TELOPT_FLAG_IAC);
+telopt.c:			if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+telopt.c:							SET_BIT(ses->telopts, TELOPT_FLAG_IAC);
+telopt.c:					if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+telopt.c:						DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
+telopt.c:					if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+telopt.c:						DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_SGA))
+telopt.c:		SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
+telopt.c:	if (HAS_BIT(ses->telopts, TELOPT_FLAG_SGA))
+telopt.c:		DEL_BIT(ses->telopts, TELOPT_FLAG_SGA);
+telopt.c:	SET_BIT(ses->telopts, TELOPT_FLAG_INIT_SGA);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_SGA))
+telopt.c:	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_EOR))
+telopt.c:		SET_BIT(ses->telopts, TELOPT_FLAG_EOR);
+telopt.c:	SET_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_TTYPE))
+telopt.c:		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_TTYPE);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_TSPEED))
+telopt.c:		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_TSPEED);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS))
+telopt.c:		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS);
+telopt.c:	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS))
+telopt.c:		SET_BIT(ses->telopts, TELOPT_FLAG_INIT_NAWS);
+telopt.c:	rows = HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? ses->bot_row - ses->top_row + 1 : ses->rows;
+telopt.c:	socket_printf(ses, 9, "%c%c%c%c%c%c%c%c%c", IAC, SB, TELOPT_NAWS, 0, ses->cols % 255, 0, rows % 255, IAC, SE);
+telopt.c:	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
+telopt.c:	telopt_debug(ses, "SENT IAC SB NAWS 0 %d 0 %d", ses->cols % 255, ses->rows % 255);
+telopt.c:	if (atoi(ses->port) == TELNET_PORT && getenv("TERM"))
+telopt.c:	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+telopt.c:	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+telopt.c:	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+telopt.c:	if (ses->mccp)
+telopt.c:	ses->mccp = calloc(1, sizeof(z_stream));
+telopt.c:	ses->mccp->data_type = Z_ASCII;
+telopt.c:	ses->mccp->zalloc    = zlib_alloc;
+telopt.c:	ses->mccp->zfree     = zlib_free;
+telopt.c:	ses->mccp->opaque    = NULL;
+telopt.c:	if (inflateInit(ses->mccp) != Z_OK)
+telopt.c:		free(ses->mccp);
+telopt.c:		ses->mccp = NULL;
+terminal.c:	top = ses->top_row == 0 ? 1 : ses->top_row;
+terminal.c:	bot = ses->bot_row == 0 ? 0 : ses->rows - ses->bot_row;
+terminal.c:		ses->rows = SCREEN_HEIGHT;
+terminal.c:		ses->cols = SCREEN_WIDTH;
+terminal.c:		ses->rows = screen.ws_row;
+terminal.c:		ses->cols = screen.ws_col;
+terminal.c:	ses->top_row = top;
+terminal.c:	ses->bot_row = ses->rows - bot;
+terminal.c:	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+terminal.c:		init_split(ses, ses->top_row, ses->bot_row);
+terminal.c:	return (ses->bot_row - ses->top_row);
+text.c:	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
+text.c:	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
+text.c:	ses->cur_col = 1;
+text.c:	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
+text.c:			ses->cur_col = 1;
+text.c:		if (*pti == ' ' && HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
+text.c:		if (ses->cur_col > ses->cols)
+text.c:			ses->cur_col = 1;
+text.c:			if (!HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
+text.c:			ses->cur_col++;
+tick.c:	root = ses->list[LIST_TICKER];
+tick.c:	root = ses->list[LIST_DELAY];
+tinexp.c:					if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) != NULL)
+tinexp.c:					node = searchnode_list(ses->list[LIST_FUNCTION], temp);
+tinexp.c:					DEL_BIT(ses->flags, SES_FLAG_BREAK);
+update.c:			gtd->update = ses->next;
+update.c:			if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+update.c:					FD_SET(ses->socket, &readfds);
+update.c:					FD_SET(ses->socket, &excfds);
+update.c:					if (FD_ISSET(ses->socket, &readfds))
+update.c:					if (FD_ISSET(ses->socket, &excfds))
+update.c:						FD_CLR(ses->socket, &readfds);
+update.c:		gtd->update = ses->next;
+update.c:		root = ses->list[LIST_TICKER];
+update.c:		gtd->update = ses->next;
+update.c:		root = ses->list[LIST_DELAY];	
+update.c:		gtd->update = ses->next;
+update.c:		if (ses->check_output && gtd->time > ses->check_output)
+update.c:			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+update.c:				goto_rowcol(ses, ses->bot_row, 1);
+update.c:			SET_BIT(ses->flags, SES_FLAG_READMUD);
+update.c:			strcpy(result, ses->more_output);
+update.c:			ses->more_output[0] = 0;
+update.c:			DEL_BIT(ses->flags, SES_FLAG_READMUD);
+update.c:			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+update.c:	for (ses = gts ; ses ; ses = ses->next)
+update.c:		if (HAS_BIT(ses->flags, SES_FLAG_UPDATEVTMAP))
+update.c:			DEL_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
+utils.c:	root = ses->list[index];
+utils.c:		if (ses->logfile)
+utils.c:			logit(ses, buf, ses->logfile);
+utils.c:	root = ses->list[index];
+utils.c:		if (ses->logfile)
+utils.c:			logit(ses, buf, ses->logfile);
+utils.c:	if (strlen(arg) > gtd->ses->cols - 2)
+utils.c:		arg[gtd->ses->cols - 2] = 0;
+utils.c:	memset(buf, '#', gtd->ses->cols);
+utils.c:	memcpy(&buf[(gtd->ses->cols - strlen(arg)) / 2], arg, strlen(arg));
+utils.c:	buf[gtd->ses->cols] = 0;
+utils.c:	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+utils.c:		write(ses->socket, buf, length);
+utils.c:	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet)
+utils.c:	if (strip_vt102_strlen(ses->more_output) != 0)
+utils.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+utils.c:		goto_rowcol(ses, ses->bot_row, 1);
+utils.c:	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+utils.c:	if (!HAS_BIT(ses->flags, SES_FLAG_GAG))
+utils.c:		DEL_BIT(ses->flags, SES_FLAG_GAG);
+variables.c:	root = ses->list[LIST_VARIABLE];
+variables.c:		if ((node = searchnode_list(ses->list[LIST_VARIABLE], name)) == NULL)
+variables.c:			node = searchnode_list(ses->list[LIST_VARIABLE], name);
+variables.c:	root = ses->list[LIST_VARIABLE];
+variables.c:	if (strlen(str) > gtd->ses->cols - 2)
+variables.c:		str[gtd->ses->cols - 2] = 0;
+variables.c:	memset(buf, '#', gtd->ses->cols);
+variables.c:	memcpy(&buf[(gtd->ses->cols - strlen(str)) / 2], str, strlen(str));
+variables.c:	buf[gtd->ses->cols] = 0;
+variables.c:		if (col > ses->cols)
+variables.c:						sprintf(arglist[i], "%d", ses->cols);
+variables.c:						sprintf(arglist[i], "%d", ses->rows);
+vt102.c:	ses->sav_row = ses->cur_row;
+vt102.c:	ses->sav_col = ses->cur_col;
+vt102.c:	ses->cur_row = ses->sav_row;
+vt102.c:	ses->cur_col = ses->sav_col;
+vt102.c:	ses->cur_row = row;
+vt102.c:	printf("\0337\033[%d;1H\033[%dM\0338", ses->top_row, ses->bot_row - ses->top_row);
+vt102.c:	ses->sav_row = ses->cur_row;
+vt102.c:	ses->sav_col = ses->cur_col;
+vt102.c:	ses->top_row = top;
+vt102.c:	ses->bot_row = bot;
+vt102.c:	ses->top_row = 1;
+vt102.c:	ses->bot_row = ses->rows;
+vt102.c:			ses->cur_col = 1;
+vt102.c:			ses->sav_row = ses->cur_row;
+vt102.c:			ses->sav_col = ses->cur_col;
+vt102.c:			ses->cur_row = ses->sav_row;
+vt102.c:			ses->cur_col = ses->sav_col;
+vt102.c:			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
+vt102.c:			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
+vt102.c:			ses->cur_col = 1;
+vt102.c:			ses->cur_row = URANGE(1, ses->cur_row - 1, ses->rows);
+vt102.c:				ses->cur_row = 1;
+vt102.c:				ses->cur_col = 1;
+vt102.c:				ses->sav_row = ses->cur_row;
+vt102.c:				ses->sav_col = ses->cur_col;
+vt102.c:				ses->cur_row -= UMAX(1, atoi(data));
+vt102.c:				ses->cur_row += UMAX(1, atoi(data));
+vt102.c:				ses->cur_col += UMAX(1, atoi(data));
+vt102.c:				ses->cur_col -= UMAX(1, atoi(data));
+vt102.c:				ses->cur_row -= UMAX(1, atoi(data));
+vt102.c:				ses->cur_col = 1;
+vt102.c:				ses->cur_row -= UMAX(1, atoi(data));
+vt102.c:				ses->cur_col = 1;
+vt102.c:				ses->cur_col = UMAX(1, atoi(data));
+vt102.c:				if (sscanf(data, "%d;%d", &ses->cur_row, &ses->cur_col) != 2)
+vt102.c:					if (sscanf(data, "%d", &ses->cur_row) == 1)
+vt102.c:						ses->cur_col = 1;
+vt102.c:						ses->cur_row = 1;
+vt102.c:						ses->cur_col = 1;
+vt102.c:				ses->cur_row = atoi(data);
+vt102.c:				if (sscanf(data, "%d;%d", &ses->top_row, &ses->bot_row) != 2)
+vt102.c:					if (sscanf(data, "%d", &ses->top_row) != 1)
+vt102.c:						ses->top_row = 1;
+vt102.c:						ses->bot_row = ses->rows;
+vt102.c:				ses->cur_row = 1;
+vt102.c:				ses->cur_col = 1;
+vt102.c:				ses->sav_row = ses->cur_row;
+vt102.c:				ses->sav_col = ses->cur_col;
+vt102.c:				ses->cur_row = ses->sav_row;
+vt102.c:				ses->cur_col = ses->sav_col;
+vt102.c:			ses->cur_row = URANGE(1, ses->cur_row, ses->rows);
+vt102.c:			ses->cur_col = URANGE(1, ses->cur_col, ses->cols + 1);
+vt102.c:			ses->top_row = URANGE(1, ses->top_row, ses->rows);
+vt102.c:			ses->bot_row = URANGE(1, ses->bot_row, ses->rows);

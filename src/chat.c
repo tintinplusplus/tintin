@@ -743,7 +743,7 @@ int process_chat_input(struct chat_data *buddy)
 
 	push_call("process_chat_input(%p)",buddy);
 
-	size = read(buddy->fd, buf, BUFFER_SIZE - 1000);
+	size = read(buddy->fd, buf, BUFFER_SIZE / 3);
 
 	if (size <= 0)
 	{
@@ -819,25 +819,27 @@ int process_chat_input(struct chat_data *buddy)
 
 	if (!strncmp(buf, "YES:", 4))
 	{
-		if (sscanf(buf, "YES:%s\n", temp) == 1)
+		if ((sep = strchr(buf, '\n')) != NULL)
 		{
-			strip_vt102_codes(temp, name);
+			*sep++ = 0;
+
+			strcpy(temp, buf);
+
+			strip_vt102_codes(&temp[4], name);
 
 			RESTRING(buddy->name, name);
 
 			chat_socket_printf(buddy, "%c%s%s%c", CHAT_VERSION, "TinTin++ ", VERSION_NUM, CHAT_END_OF_COMMAND);
 
-			sep = strchr(buf, '\n');
-
-			*sep++ = 0;
-
-			get_chat_commands(buddy, sep, size - strlen(buf));
+			get_chat_commands(buddy, sep, size - strlen(temp) - 1);
 
 			pop_call();
 			return 0;
 		}
 		else
 		{
+			chat_printf("Error in processing connection negotation with %s@%s", buddy->name, buddy->ip);
+
 			pop_call();
 			return -1;
 		}
@@ -845,6 +847,8 @@ int process_chat_input(struct chat_data *buddy)
 
 	if (!strncmp(buf, "NO", 2))
 	{
+		chat_printf("Connection negotation refused by %s@%s", buddy->name, buddy->ip);
+
 		pop_call();
 		return -1;
 	}
@@ -1774,6 +1778,7 @@ DO_CHAT(chat_zap)
 DO_CHAT(chat_accept)
 {
 	struct chat_data *buddy;
+	char path[BUFFER_SIZE];
 
 	if ((buddy = find_buddy(left)) == NULL)
 	{
@@ -1782,7 +1787,7 @@ DO_CHAT(chat_accept)
 		return;
 	}
 
-	if (buddy->file_pt == NULL)
+	if (buddy->file_name == NULL)
 	{
 		chat_printf("ERROR: You don't have a file transfer in progress with %s.", buddy->name);
 
@@ -1792,6 +1797,19 @@ DO_CHAT(chat_accept)
 	if (buddy->file_start_time)
 	{
 		chat_printf("ERROR: You already have a file transfer in progress with %s.", buddy->name);
+
+		return;
+	}
+
+	sprintf(path, "%s%s", gtd->chat->download, buddy->file_name);
+
+	if ((buddy->file_pt = fopen(path, "w")) == NULL)
+	{
+		deny_file(buddy, "\nCould not create that file on receiver's end.\n");
+
+		chat_printf("ERROR: Could not create the file '%s' on your end.", buddy->file_name);
+
+		file_cleanup(buddy);
 
 		return;
 	}
@@ -1991,18 +2009,17 @@ void chat_receive_file(char *arg, struct chat_data *buddy)
 
 	sprintf(path, "%s%s", gtd->chat->download, buddy->file_name);
 
-	if ((buddy->file_pt = fopen(path, "w")) == NULL)
-	{
-		deny_file(buddy, "\nCould not create that file on receiver's end.\n");
-
-		file_cleanup(buddy);
-
-		pop_call();
-		return;
-	}
-
 	chat_printf("File transfer from %s, file: %s, size: %d.", buddy->name, buddy->file_name, buddy->file_size);
 	chat_printf("Use %cchat <accept|decline> %s to proceed.", gtd->tintin_char, buddy->name);
+
+	if ((buddy->file_pt = fopen(path, "r")) != NULL)
+	{
+		chat_printf("Warning, the file already exists on your end.");
+
+		fclose(buddy->file_pt);
+
+		buddy->file_pt = NULL;
+	}
 
 	buddy->file_start_time = 0;
 

@@ -368,7 +368,8 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 						sprintf(pto, "<span class=\"b%d\">", bgc);
 						pto += strlen(pto);
 					}
-					if (HAS_BIT(vtc, 1))
+
+					if (HAS_BIT(vtc, COL_BLD))
 					{
 						sprintf(pto, "<span class=\"l%d\">", fgc);
 						pto += strlen(pto);

@@ -113,11 +113,11 @@ typedef void            PATH    (struct session *ses, char *arg);
 
 #define HISTORY_FILE         ".tt_history"
 
-#define STRING_SIZE                  50000
-#define BUFFER_SIZE                  20000
+#define STRING_SIZE                  40000
+#define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.9"
+#define VERSION_NUM               "1.98.0"
 
 #define ESCAPE                          27
 
@@ -245,7 +245,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
 #define TINTIN_FLAG_CONVERTMETACHAR   (1 <<  1)
 #define TINTIN_FLAG_HISTORYSEARCH     (1 <<  2)
-
+#define TINTIN_FLAG_PROCESSINPUT      (1 <<  3)
 #define TINTIN_FLAG_USERCOMMAND       (1 <<  4)
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  5)
 
@@ -760,6 +760,7 @@ extern DO_CURSOR(cursor_delete);
 extern DO_CURSOR(cursor_delete_word);
 extern DO_CURSOR(cursor_echo);
 extern DO_CURSOR(cursor_end);
+extern DO_CURSOR(cursor_enter);
 extern DO_CURSOR(cursor_exit);
 extern DO_CURSOR(cursor_fix_line);
 extern DO_CURSOR(cursor_history_find);
@@ -784,8 +785,8 @@ extern DO_CURSOR(cursor_tab);
 #define __INPUT_H__
 
 extern void process_input(void);
-extern void read_line(char *line);
-extern void read_key(char *line);
+extern void read_line(void);
+extern void read_key(void);
 extern void convert_meta(char *input, char *output);
 extern void unconvert_meta(char *input, char *output);
 extern void echo_command(struct session *ses, char *line, int newline);

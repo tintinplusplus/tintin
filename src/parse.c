@@ -34,7 +34,7 @@
 
 struct session *pre_parse_input(struct session *ses, char *input, int flags)
 {
-	char buffer[STRING_SIZE];
+	char buffer[BUFFER_SIZE];
 
 	if (flags)
 	{
@@ -126,7 +126,7 @@ struct session *parse_input(struct session *ses, char *input)
 
 struct session *parse_command(struct session *ses, char *input)
 {
-	char cmd1[BUFFER_SIZE], cmd2[BUFFER_SIZE], *arg, argument[STRING_SIZE];
+	char cmd1[BUFFER_SIZE], cmd2[BUFFER_SIZE], *arg, argument[BUFFER_SIZE];
 
 	push_call("parse_command(%p,%p)",ses,input);
 
@@ -298,6 +298,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 			}
 		}
 	}
+
 	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", command);
 
 	pop_call();
@@ -551,7 +552,7 @@ char *space_out(char *string)
 
 void write_mud(struct session *ses, char *command, int flags)
 {
-	char output[STRING_SIZE];
+	char output[BUFFER_SIZE];
 
 	if (ses->map && ses->map->in_room)
 	{

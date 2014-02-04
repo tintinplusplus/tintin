@@ -29,40 +29,38 @@
 
 void process_input(void)
 {
-	char line[STRING_SIZE];
-
-	line[0] = 127;
-
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)
 	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
-		read_key(line);
+		read_key();
 	}
 	else
 	{
-		read_line(line);
+		read_line();
 	}
 
-	if (*line == 127)
+	if (!HAS_BIT(gtd->flags, TINTIN_FLAG_PROCESSINPUT))
 	{
 		return;
 	}
+
+	DEL_BIT(gtd->flags, TINTIN_FLAG_PROCESSINPUT);
 
 	if (gtd->chat && gtd->chat->paste_time)
 	{
-		chat_paste(line, NULL);
+		chat_paste(gtd->input_buf, NULL);
 
 		return;
 	}
 
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
-		add_line_history(gts, line);
+		add_line_history(gts, gtd->input_buf);
 	}
 
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
-		echo_command(gtd->ses, line, FALSE);
+		echo_command(gtd->ses, gtd->input_buf, FALSE);
 	}
 	else
 	{
@@ -76,7 +74,7 @@ void process_input(void)
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
-	pre_parse_input(gtd->ses, line, SUB_NONE);
+	pre_parse_input(gtd->ses, gtd->input_buf, SUB_NONE);
 
 	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
@@ -86,12 +84,14 @@ void process_input(void)
 	}
 }
 
-void read_line(char *line)
+void read_line(void)
 {
 	char buffer[STRING_SIZE];
 	struct listnode *node;
 	struct listroot *root;
 	int len, cnt, match;
+
+	gtd->input_buf[gtd->input_len] = 0;
 
 	len = read(0, buffer, 1);
 
@@ -129,7 +129,7 @@ void read_line(char *line)
 			}
 		}
 
-		for (cnt = 0 ; *cursor_table[cnt].code != 0 ; cnt++)
+		for (cnt = 0 ; *cursor_table[cnt].fun != NULL ; cnt++)
 		{
 			if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
 			{
@@ -162,29 +162,7 @@ void read_line(char *line)
 		switch (gtd->macro_buf[cnt])
 		{
 			case 10:
-				input_printf("\n");
-
-				gtd->input_buf[gtd->input_len] = 0;
-
-				strcpy(line, gtd->input_buf);
-
-				gtd->input_len    = 0;
-				gtd->input_cur    = 0;
-				gtd->input_pos    = 0;
-				gtd->input_buf[0] = 0;
-				gtd->macro_buf[0] = 0;
-				gtd->input_tmp[0] = 0;
-
-				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-				{
-					DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
-
-					if (gtd->input_his)
-					{
-						strcpy(line, gtd->input_his->left);
-					}
-				}
-				gtd->input_his = NULL;
+				cursor_enter("");
 				break;
 
 			default:
@@ -230,7 +208,7 @@ void read_line(char *line)
 	}
 }
 
-void read_key(char *line)
+void read_key(void)
 {
 	char buffer[BUFFER_SIZE];
 	struct listnode *node;
@@ -239,7 +217,7 @@ void read_key(char *line)
 
 	if (gtd->input_buf[0] == gtd->tintin_char)
 	{
-		read_line(line);
+		read_line();
 
 		return;
 	}
@@ -269,7 +247,7 @@ void read_key(char *line)
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
-				pre_parse_input(gtd->ses, buffer, SUB_NONE);
+				pre_parse_input(gtd->ses, node->right, SUB_NONE);
 
 				gtd->macro_buf[0] = 0;
 				return;

@@ -918,3 +918,21 @@ telopt.c       re-enabled GA prompt handling.
 
 main.c         Fixed a bug with the startup argument routine.
 
+February 2008  1.98.0
+
+cursor.c       Added the #cursor enter option
+
+input.c        Fixed #macro usage in character mode.
+
+chat.c         Fixed an exploit to erase files with #chat.
+
+chat.c         Fixed a crash bug in the negatiation routine, apparently
+               sscanf doesn't check line feeds.
+
+chat.c         Lowered the maximum read from socket size to half of
+               BUFFER_SIZE to prevent buffer overflows.
+
+log.c          Fixed a coloring bug with html logging.
+
+alias.c        Fixed a bug with alias parsing.
+

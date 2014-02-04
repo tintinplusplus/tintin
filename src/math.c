@@ -76,27 +76,31 @@ DO_COMMAND(do_math)
 
 DO_COMMAND(do_if)
 {
-	char left[BUFFER_SIZE], true[BUFFER_SIZE], false[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, true,  1);
-	arg = get_arg_in_braces(arg, false, 1);
+	arg = get_arg_in_braces(arg, right, 1);
 
-	if (*left == 0 || *true == 0)
+	if (*left == 0 || *right == 0)
 	{
 		tintin_printf2(ses, "#SYNTAX: #IF {expression} {true} {false}");
 	}
 	else
 	{
-		substitute(ses, left, temp, SUB_VAR|SUB_FUN);
+		substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-		if (mathexp(ses, temp))
+		if (mathexp(ses, left))
 		{
-			ses = pre_parse_input(ses, true, SUB_NONE);
+			ses = parse_input(ses, right);
 		}
-		else if (*false)
+		else
 		{
-			ses = pre_parse_input(ses, false, SUB_NONE);
+			arg = get_arg_in_braces(arg, right, 1);
+
+			if (*right)
+			{
+				ses = parse_input(ses, right);
+			}
 		}
 	}
 	return ses;

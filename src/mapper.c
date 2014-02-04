@@ -126,7 +126,7 @@ DO_COMMAND(do_map)
 	{
 		for (cnt = 0 ; *map_table[cnt].name ; cnt++)
 		{
-			if (is_abbrev(left, map_table[cnt].name))
+			if (is_abbrev(cmd, map_table[cnt].name))
 			{
 				arg = get_arg_in_braces(arg, left,  map_table[cnt].lval);
 				arg = get_arg_in_braces(arg, right, map_table[cnt].rval);

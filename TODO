@@ -4,15 +4,17 @@
 
 GENERAL STUFF:
 
-- add color compressor
-- fix overwriting of prompt in split mode.
-- fix incosequent command echo-ing in split mode.
+- fix web site compile info, check request in forum.
 
-- make sure the scrollback buffer becomes static when locking the buffer.
+- fix ctrl-r display stuff.
 
-- look into making input_buf pointer based.
+- add a #line gag/skip/log command.
 
 - events for text and input and prompt lines
+
+- tab completion based on scroll back history
+
+- global regexp switch with #config
 
 -------------------------------------------------------------------------------
 

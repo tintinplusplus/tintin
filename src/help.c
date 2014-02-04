@@ -303,7 +303,7 @@ struct help_type help_table[] =
 		"         \\x7D will send the '}' character.\n"
 		"\n"
 		"         Ending a line with \\ will stop tintin from appending \\r\\n. To escape\n"
-		"         arguments in an alias use %%90 %%91 %%92 etc.\n"
+		"         arguments in an alias use %%0 %%1 %%2 etc.\n"
 	},
 	{
 		"EVENT",
@@ -376,11 +376,11 @@ struct help_type help_table[] =
 		"         function name.\n"
 		"\n"
 		"         The function itself can use the provided arguments which are stored\n"
-		"         in &0 to &9\n"
+		"         in %1 to %9, with %0 holding all arguments.\n"
 		"\n"
 		"         Currently you can't use a function from within another function\n"
 		"\n"
-		"<178>Example<078>: #function {rnd} {#math {result} {1 d (&1 - &0 + 1) + &0 - 1}}\n"
+		"<178>Example<078>: #function {rnd} {#math {result} {1 d (%2 - %1 + 1) + %1 - 1}}\n"
 		"         #showme A random number between 100 and 200: @rnd{100 200}\n"
 		"\n"
 		"<178>Example<078>: #function gettime {#format temp %T;#format result %t $temp}\n"

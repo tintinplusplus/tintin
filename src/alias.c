@@ -169,9 +169,9 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			substitute(ses, node->right, right, SUB_ARG);
 
-			if (!strcmp(node->right, right) && *arg)
+			if (!strcmp(node->right, right) && *gtd->vars[0])
 			{
-				sprintf(input, "%s %s", right, arg);
+				sprintf(input, "%s %s", right, gtd->vars[0]);
 			}
 			else
 			{

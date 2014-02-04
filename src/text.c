@@ -189,4 +189,3 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 
 	return (cnt + 1);
 }
-

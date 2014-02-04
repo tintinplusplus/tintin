@@ -106,7 +106,7 @@ int regexp(char *exp, char *str, unsigned char cs)
 
 DO_COMMAND(do_regexp)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], true[BUFFER_SIZE], false[BUFFER_SIZE], str[BUFFER_SIZE], exp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], true[BUFFER_SIZE], false[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 0);
@@ -119,10 +119,10 @@ DO_COMMAND(do_regexp)
 	}
 	else
 	{
-		substitute(ses, left,  str, SUB_VAR|SUB_FUN);
-		substitute(ses, right, exp, SUB_VAR|SUB_FUN);
+		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
+		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-		if (regex(exp, str))
+		if (regex(right, left))
 		{
 			ses = pre_parse_input(ses, true, SUB_CMD);
 		}
@@ -176,7 +176,7 @@ int regex(char *exp, char *str)
 void substitute(struct session *ses, char *string, char *result, int flags)
 {
 	struct listnode *node;
-	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[STRING_SIZE], *pti, *pto, *ptt;
+	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt;
 	char *pte;
 	int i, cnt, flags_neol = flags;
 

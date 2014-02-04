@@ -287,6 +287,32 @@ DO_CURSOR(cursor_end)
 	cursor_redraw_line("");
 }
 
+DO_CURSOR(cursor_enter)
+{
+	input_printf("\n");
+
+	gtd->input_buf[gtd->input_len] = 0;
+
+	gtd->input_len    = 0;
+	gtd->input_cur    = 0;
+	gtd->input_pos    = 0;
+	gtd->macro_buf[0] = 0;
+	gtd->input_tmp[0] = 0;
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+
+		if (gtd->input_his)
+		{
+			strcpy(gtd->input_buf, gtd->input_his->left);
+		}
+	}
+	gtd->input_his = NULL;
+
+	SET_BIT(gtd->flags, TINTIN_FLAG_PROCESSINPUT);
+}
+
 DO_CURSOR(cursor_exit)
 {
 	do_zap(gtd->ses, "");
