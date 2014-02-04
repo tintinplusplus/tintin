@@ -244,13 +244,13 @@ int main(int argc, char **argv)
 
 void init_tintin(void)
 {
-	int ref, cnt;
+	int ref, index;
 
 	gts = (struct session *) calloc(1, sizeof(struct session));
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	for (index = 0 ; index < LIST_MAX ; index++)
 	{
-		gts->list[cnt] = init_list(cnt);
+		gts->list[index] = init_list(gts, index, 32);
 	}
 
 	gts->name           = strdup("gts");
@@ -277,19 +277,19 @@ void init_tintin(void)
 
 	gtd->input_off      = 1;
 
-	for (cnt = 0 ; cnt < 100 ; cnt++)
+	for (index = 0 ; index < 100 ; index++)
 	{
-		gtd->vars[cnt] = strdup("");
-		gtd->cmds[cnt] = strdup("");
+		gtd->vars[index] = strdup("");
+		gtd->cmds[index] = strdup("");
 	}
 
 	for (ref = 0 ; ref < 26 ; ref++)
 	{
-		for (cnt = 0 ; *command_table[cnt].name != 0 ; cnt++)
+		for (index = 0 ; *command_table[index].name != 0 ; index++)
 		{
-			if (*command_table[cnt].name == 'a' + ref)
+			if (*command_table[index].name == 'a' + ref)
 			{
-				gtd->command_ref[ref] = cnt;
+				gtd->command_ref[ref] = index;
 				break;
 			}
 		}
@@ -308,7 +308,7 @@ void init_tintin(void)
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
 	do_configure(gts, "{COMMAND ECHO}       {ON}");
 	do_configure(gts, "{CONNECT RETRY}      {15}");
-	do_configure(gts, "{HISTORY SIZE}     {2500}");
+	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
 	do_configure(gts, "{PACKET PATCH}        {0}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
@@ -321,34 +321,39 @@ void init_tintin(void)
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
 
-	insertnode_list(gts,  "n",  "s",  "1", LIST_PATHDIR);
-	insertnode_list(gts,  "e",  "w",  "2", LIST_PATHDIR);
-	insertnode_list(gts,  "s",  "n",  "4", LIST_PATHDIR);
-	insertnode_list(gts,  "w",  "e",  "8", LIST_PATHDIR);
-	insertnode_list(gts,  "u",  "d", "16", LIST_PATHDIR);
-	insertnode_list(gts,  "d",  "u", "32", LIST_PATHDIR);
+	insert_node_list(gts->list[LIST_PATHDIR],  "n",  "s",  "1");
+	insert_node_list(gts->list[LIST_PATHDIR],  "e",  "w",  "2");
+	insert_node_list(gts->list[LIST_PATHDIR],  "s",  "n",  "4");
+	insert_node_list(gts->list[LIST_PATHDIR],  "w",  "e",  "8");
+	insert_node_list(gts->list[LIST_PATHDIR],  "u",  "d", "16");
+	insert_node_list(gts->list[LIST_PATHDIR],  "d",  "u", "32");
 
-	insertnode_list(gts, "ne", "sw",  "3", LIST_PATHDIR);
-	insertnode_list(gts, "nw", "se",  "9", LIST_PATHDIR);
-	insertnode_list(gts, "se", "nw",  "6", LIST_PATHDIR);
-	insertnode_list(gts, "sw", "ne", "12", LIST_PATHDIR);
+	insert_node_list(gts->list[LIST_PATHDIR], "ne", "sw",  "3");
+	insert_node_list(gts->list[LIST_PATHDIR], "nw", "se",  "9");
+	insert_node_list(gts->list[LIST_PATHDIR], "se", "nw",  "6");
+	insert_node_list(gts->list[LIST_PATHDIR], "sw", "ne", "12");
 
 	init_terminal();
 
 	do_showme(gts, "");
 	do_showme(gts, "<068>      #<068>###################################################################<068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>                           T I N T I N + +                         <068>#");
+	do_showme(gts, "<068>      #<078>                     T I N T I N + +   "VERSION_NUM"                      <068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>            (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t           <068>#");
+	do_showme(gts, "<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>           #");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>                 Original TINTIN code by Peter Unold               <068>#");
-	do_showme(gts, "<068>      #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,     <068>#");
-	do_showme(gts, "<068>      #<078>                 Jeremy C. Jack, Igor van den Hoven                <068>#");
+	do_showme(gts, "<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,          <068>#");
+	do_showme(gts, "<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.       <068>#");
+	do_showme(gts, "<068>      #<078>                                                                   <068>#");
 	do_showme(gts, "<068>      #<078>                             1992, 2009                            <068>#");
+
+//	do_showme(gts, "<068>      #<078>                 Original TINTIN code by Peter Unold               <068>#");
+//	do_showme(gts, "<068>      #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,     <068>#");
+//	do_showme(gts, "<068>      #<078>                 Jeremy C. Jack, Igor van den Hoven                <068>#");
+//	do_showme(gts, "<068>      #<078>                             1992, 2009                            <068>#");
 	do_showme(gts, "<068>      #<078>                                                                   <068>#");
-	do_showme(gts, "<068>      #<078>                               "VERSION_NUM"                              <068>#");
-	do_showme(gts, "<068>      #<078>                                                                   <068>#");
+//	do_showme(gts, "<068>      #<078>                               "VERSION_NUM"                              <068>#");
+//	do_showme(gts, "<068>      #<078>                                                                   <068>#");
 	do_showme(gts, "<068>      #<068>###################################################################<068>#<088>");
 	do_showme(gts, "");
 }

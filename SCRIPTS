@@ -3,9 +3,9 @@
     static (16) flag.
 --------------------------------------------------------------------------------
 
-#loop {1 1000}
+#loop 1 1000 vnum
 {
-	#map goto &0;
+	#map goto $vnum;
 	#map get roomflags result;
 	#if {$result & 16}
 	{
@@ -42,9 +42,12 @@
 004 Automatically reconnect on disconnect.
 --------------------------------------------------------------------------------
 
-#event {SESSION DISCONNECTED}
+#event {SESSION CONNECTED}
 {
-	#gts #delay 5 {#session MyMUD 214.241.15.11 3000;loom;mypass}
+	#event {SESSION DISCONNECTED}
+	{
+		#gts #delay 5 {#session %0 %1 %3}
+	}
 }
 
 --------------------------------------------------------------------------------
@@ -53,15 +56,15 @@
 
 #tick {randomsocial}
 {
-    #delay {1d100}
-    {
-        #if {1d2 == 1}
-        {
-            #if {1d3 == 1} {cheer}
-            #if {1d2 == 1} {greet all}
-            #if {1d1 == 1} {smile}
-        }
-    }
+	#delay {1d200-5}
+	{
+		#switch {1d3}
+		{
+			#case {1} {cheer}
+			#case {2} {greet all}
+			#case {3} {smile}
+		}
+	}
 }
 {200}
 
@@ -69,30 +72,37 @@
 006 Maintain a friendlist.
 --------------------------------------------------------------------------------
 
-#variable friendlist {{bubba} {pamela} {cookie} {harry potter}}
+#variable {friendlist}
+{
+	{1} {bubba}
+	{2} {pamela}
+	{3} {cookie}
+	{4} {harry potter}
+}
 
 #function isfriend
 {
-    #format name %l {{%0}};
+	#format name %l {%0};
 
-    #list friendlist fnd {$name} result
+	#list friendlist fnd {$name} result
 }
 
 
 #act {%1 follows you.}
 {
-    #if {@isfriend{%1}}
-    {
-        group %1
-    }
-    {
-        unfollow %1
-    }
+	#if {@isfriend{%1}}
+	{
+		group %1
+	};
+	#else
+	{
+		unfollow %1
+	}
 }
 
 #alias {addfriend}
 {
-	#format name %l {{%0}};
+	#format name %l {%0};
 
 	#list friendlist ins -1 $name;
 
@@ -101,13 +111,14 @@
 
 #alias {delfriend}
 {
-	#format name %l {{%0}};
+	#format name %l {%0};
 
 	#if {@isfriend{$name}}
 	{
 		#list friendlist del @isfriend{$name};
 		#showme $name has been deleted from your friendlist.
-	}
+	};
+	#else
 	{
 		#showme $name is not on your friendlist.
 	}
@@ -119,9 +130,9 @@
 
 #alias {savemap}
 {
-        #map write %0;
-        #map get roomvnum room;
-        #system echo '#map goto $room' >> %0
+	#map write %0;
+	#map get roomvnum room;
+	#system echo '#map goto $room' >> %0
 }
 
 --------------------------------------------------------------------------------
@@ -137,8 +148,8 @@
 
 #event {RECEIVED LINE}
 {
-        #line log mylog.txt {<178>@timestamp{} \};
-        #line log mylog.txt
+	#line log mylog.txt {<178>@timestamp{} \};
+	#line log mylog.txt
 }
 
 --------------------------------------------------------------------------------
@@ -158,152 +169,92 @@
 
 #alias {.%0}
 {
-	#list cnt clr;
+	#var cnt {};
 
-	#parse {%0}
+	#parse {%0} {char}
 	{
-		#if {"&0" >= "0" && "&0" <= "9"}
+		#if {"$char" >= "0" && "$char" <= "9"}
 		{
-			#var cnt ${cnt}&0
-		}
-		#if {"$cnt" == ""}
+			#var cnt $cnt$char
+		};
+		#elseif {"$cnt" == ""}
 		{
-			#send &0
-		}
+			#send $char
+		};
+		#else
 		{
-			#loop {1 $cnt}
+			#loop $cnt 0 cnt
 			{
-				#send &0;
-			};
-			#list cnt clr
+				#send $char
+			}
 		}
-	}   
+	}
 }
 
 --------------------------------------------------------------------------------
 011 Targetting script
 --------------------------------------------------------------------------------
 
-#list targets clr
+#var targets {}
 
 #alias {target}
 {
 	#if {"%0" == ""}
 	{
-		#showme {Current targets: $targets}
-	}
-
-	#list {targets} {fnd} {%0} {result};
- 
-	#if {$result}
+		#showme {Current targets: $targets[]}
+	};
+	#elseif {$targets[%0]}
 	{
-		#list {targets} {del} {$result};
+		#unvar targets[%0];
 		#showme Target '%0' removed.
-	}
+	};
+	#else
 	{
-		#list {targets} {srt} {%0};
+		#var targets[%0] {};
 		#showme Target '%0' added.
 	}
 }
 
 #act {%1 arrives}
 {
-	#if {"$targets" == "*{%1}*"} {kill %0}
+	#if {$targets[%1]} {kill %1}
 }
 
 #act {%1 is standing here}
 {
-	#if {"$targets" == "*{%1}*"} {kill %0}
+	#if {$targets[%1]} {kill %1}
 }
 
 #action {%1 is dead! R.I.P.}
 {
-	#if {"$targets" == "*{%1}*"} {target %0}
+	#if {$targets[%1]} {target %1}
 }
-
---------------------------------------------------------------------------------
-012 Finding enemies in a list
---------------------------------------------------------------------------------
-
-#var enemies {{Bubba} {Bob} {Bilbo}}
-
-#function {listfnd}
-{
-	#list %1 fnd {%2} result
-}
-
-#alias {isenemy}
-{
-	#if {@listfnd{enemies %0}}
-	{
-		#showme %0 is an enemy
-	}
-	{
-		#showme %0 is not an enemy
-	}
-}
-
---------------------------------------------------------------------------------
-013 Show items unique to two lists.
---------------------------------------------------------------------------------
-
-#nop list comparing
-
-#var bla {{1}{2}{3}{4}{5}}                   
-#var bli {{1}{3}{5}{7}{9}}
-
-#function {listcompare}
-{
-	#list {result} {clr};
-
-	#forall {$%1}
-	{
-		#list %2 fnd {&0} found;
-
-		#if {$found == 0}
-		{
-			#list {result} {srt} {&0}
-		}
-	};
-	#forall {$%2}
-	{
-		#list %1 fnd {&0} found;
- 
-		#if {$found == 0}
-		{
-			#list {result} {srt} {&0}
-		}
-	}
-}	
-
-#showme @listcompare{bla bli}
 
 --------------------------------------------------------------------------------
 014 Show xterm 256 colors.
 --------------------------------------------------------------------------------
 
-#var bla {}
+#var temp {}
 
-#forall {a b c d e f}
+#foreach {a b c d e f} {var1}
 {
-	#forall {a b c d e f}
+	#foreach {a b c d e f} {var2}
 	{
-		#forall {a b c d e f}
+		#forall {a b c d e f} {var3}
 		{
-			#var bla {$bla <&0&&0&&&0>(&0&&0&&&0)}
+			#var temp {$temp <$var1$var2$var3><<888>$var1$var2$var3>}
 		};
-		#showme $bla;
-		#var bla {}
+		#showme $temp;
+		#var temp {}
 	}
 }
 
-#loop {0 23}
+#loop 0 23 cnt
 {
-	#format tmp {g%+02s} {{&0}};
-	#var bla $bla <$tmp>($tmp)
+	#format temp {$temp <g%+02s><<888>g%+02s} {$cnt} {$cnt};
 }
 
-#showme $bla
+#showme $temp
 
 --------------------------------------------------------------------------------
 015 Draw a health bar.
@@ -311,19 +262,22 @@
 
 #alias {hpbar}
 {
-        #math {hp_percent}{100 * %1 / %2};
-        #math {hpbars1}   {$hp_percent / 5};
-        #math {hpbars2}   {20 - $hpbars1};
-        
-        #format {hpbar} {<011>%+${hpbars1}s<099><000>%+${hpbars2}s<099> };
-        
-        #showme [$hpbar]
+	#math {hp_percent}{100 * %1 / %2};
+	#math {hpbars1}   {$hp_percent / 5};
+	#math {hpbars2}   {20 - $hpbars1};
+
+	#format {hpbar} {<011>%+${hpbars1}s<099><000>%+${hpbars2}s<099> };
+
+	#showme [$hpbar]
 }
 
-hpbar 30 100
+#alias {test}
+{
+	hpbar 30 100
+}
 
 --------------------------------------------------------------------------------
-015 Syntax: sleep <seconds to delay> {commands}
+016 Syntax: sleep <seconds to delay> {commands}
 
 If there is already a pending sleep the delay will be stacked.
 --------------------------------------------------------------------------------
@@ -333,18 +287,18 @@ If there is already a pending sleep the delay will be stacked.
 
 #alias {sleep %1 %2}
 {
-        #format sleeptime %U;
-                             
-        #if {$sleeptime > $sleepcurr}
-        {                           
-                #math sleepcurr $sleeptime + (%1) * 1000000;
-                                                           
-                #delay {%1} %2;
-        }                       
-        {
-                #math sleepcurr $sleepcurr + (%1) * 1000000;
-                                                           
-                #delay {($sleepcurr - $sleeptime) / 1000000.000} %2
-        }                                                           
+	#format sleeptime %U;
+
+	#if {$sleeptime > $sleepcurr}
+	{
+		#math sleepcurr $sleeptime + (%1) * 1000000;
+
+		#delay {%1} %2;
+	};
+	#else
+	{
+		#math sleepcurr $sleepcurr + (%1) * 1000000;
+	
+		#delay {($sleepcurr - $sleeptime) / 1000000.000} %2
+	}
 }
- 

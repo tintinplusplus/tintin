@@ -43,7 +43,10 @@ char *refstring(char *point, char *fmt, ...)
 	vsprintf(string, fmt, args);
 	va_end(args);
 
-	free(point);
+	if (point)
+	{
+		free(point);
+	}
 
 	return strdup(string);
 }

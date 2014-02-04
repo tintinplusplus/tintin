@@ -29,36 +29,33 @@
 
 DO_COMMAND(do_action)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	root = ses->list[LIST_ACTION];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-	arg = get_arg_in_braces(arg, rank,  1);
-
-	if (*rank == 0)
+	if (*arg3 == 0)
 	{
-		strcpy(rank, "5");
+		strcpy(arg3, "5");
 	}
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_ACTION);
+		show_list(ses->list[LIST_ACTION], 0);
 	}
-	else if (*left && *right == 0)
+	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_ACTION) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_ACTION) == FALSE)
 		{
-			show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, rank, LIST_ACTION);
+		update_node_list(ses->list[LIST_ACTION], arg1, arg2, arg3);
 
-		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", left, right, rank);
+		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -74,21 +71,16 @@ DO_COMMAND(do_unaction)
 
 void check_all_actions(struct session *ses, char *original, char *line)
 {
+	struct listroot *root = ses->list[LIST_ACTION];
 	char buf[BUFFER_SIZE];
-	struct listnode *node;
-	struct listroot *root;
 
-	root = ses->list[LIST_ACTION];
-
-	for (node = root->update = root->f_node ; node ; node = root->update)
+	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		root->update = node->next;
-
-		if (check_one_regexp(ses, node, line, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
-			show_debug(ses, LIST_ACTION, "#DEBUG ACTION {%s}", node->left);
+			show_debug(ses, LIST_ACTION, "#DEBUG ACTION {%s}", root->list[root->update]->left);
 
-			substitute(ses, node->right, buf, SUB_ARG|SUB_SEC);
+			substitute(ses, root->list[root->update]->right, buf, SUB_ARG|SUB_SEC);
 
 			script_driver(ses, LIST_ACTION, buf);
 

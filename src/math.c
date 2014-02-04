@@ -46,20 +46,23 @@
 #define EXP_PR_VAR          12
 #define EXP_PR_LVL          13
 
-struct listnode *mathnode_s;
-struct listnode *mathnode_e;
-struct session  *mathses;
+struct link_data *math_head;
+struct link_data *math_tail;
+struct link_data *mathnode_s;
+struct link_data *mathnode_e;
+
 int precision;
 
 DO_COMMAND(do_math)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
+	struct listnode *node;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, left,  GET_NST);
+	arg = get_arg_in_braces(arg, right, GET_ALL);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -67,92 +70,104 @@ DO_COMMAND(do_math)
 	}
 	else
 	{
-		internal_variable(ses, "{%s} {%.*f}", left, precision, mathexp(ses, right));
+		node = set_nest_node(ses->list[LIST_VARIABLE], left, "%.*f", precision, get_number(ses, right));
+
+		show_message(ses, LIST_VARIABLE, "#MATH: VARIABLE {%s} HAS BEEN SET TO {%s}.", left, node->right);
 	}
+
 	return ses;
 }
 
-
-DO_COMMAND(do_if)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-
-	if (*left == 0 || *right == 0)
-	{
-		tintin_printf2(ses, "#SYNTAX: #IF {expression} {true} {false}.");
-	}
-	else
-	{
-		if (mathexp(ses, left))
-		{
-			ses = script_driver(ses, -1, right);
-		}
-		else
-		{
-			arg = get_arg_in_braces(arg, right, 1);
-
-			if (*right)
-			{
-				ses = script_driver(ses, -1, right);
-			}
-		}
-	}
-	return ses;
-}
 
 double get_number(struct session *ses, char *str)
 {
-	return mathexp(ses, str);
+	char result[BUFFER_SIZE];
+
+	mathexp(ses, str, result);
+
+	return tintoi(result);
 }
 
 void get_number_string(struct session *ses, char *str, char *result)
 {
-	sprintf(result, "%.*f", precision, mathexp(ses, str));
+	sprintf(result, "%.*f", precision, get_number(ses, str));
+}
+
+char *get_alnum(struct session *ses, char *str)
+{
+	char buffer[BUFFER_SIZE];
+	static char result[BUFFER_SIZE];
+	int sign;
+
+	sign = *str == '-' || *str == '+' ? TRUE : FALSE;
+
+	mathexp(ses, str, buffer);
+
+	if (is_number(buffer))
+	{
+		if (sign)
+		{
+			sprintf(result, "%+.*f", precision, tintoi(buffer));
+		}
+		else
+		{
+			sprintf(result, "%.*f", precision, tintoi(buffer));
+		}
+	}
+	else
+	{
+		strcpy(result, buffer);
+	}
+	return result;
+}
+
+double mathswitch(struct session *ses, char *left, char *right)
+{
+	char shift[BUFFER_SIZE];
+
+	sprintf(shift, "%s == %s", left, right);
+
+	srand48(gtd->time);
+
+	return get_number(ses, shift);
 }
 
 /*
 	Flexible tokenized mathematical expression interpreter
 */
 
-double mathexp(struct session *ses, char *str)
+void mathexp(struct session *ses, char *str, char *result)
 {
-	char buf[BUFFER_SIZE];
-	struct listnode *node;
+	struct link_data *node;
 
-	substitute(ses, str, buf, SUB_VAR|SUB_FUN);
+	substitute(ses, str, result, SUB_VAR|SUB_FUN);
 
-	mathses = ses;
-
-	if (mathexp_tokenize(ses, buf) == FALSE)
+	if (mathexp_tokenize(ses, result) == FALSE)
 	{
-		tintin_printf2(ses, "#MATH EXP: INVALID INPUT {%s}.", buf);
-
-		return 0;
+		return;
 	}
 
-	node = mathses->list[LIST_MATH]->f_node;
+	node = math_head;
 
 	while (node->prev || node->next)
 	{
-		if (node->next == NULL || atoi(node->next->left) < atoi(node->left))
+		if (node->next == NULL || atoi(node->next->str1) < atoi(node->str1))
 		{
-			mathexp_level(node);
+			mathexp_level(ses, node);
 
-			node = mathses->list[LIST_MATH]->f_node;
+			node = math_head;
 		}
 		else
 		{
 			node = node->next;
 		}
 	}
-	return tintoi(node->pr);
+
+	strcpy(result, node->str3);
 }
 
-#define MATH_NODE(buffercheck, priority, newstatus)               \
-{                                                                 \
+#define MATH_NODE(buffercheck, priority, newstatus)                  \
+{                                                                    \
 	if (buffercheck && (pta == buf3 || valid == FALSE))          \
 	{                                                            \
 		return FALSE;                                        \
@@ -160,11 +175,35 @@ double mathexp(struct session *ses, char *str)
 	*pta = 0;                                                    \
 	sprintf(buf1, "%02d", level);                                \
 	sprintf(buf2, "%02d", priority);                             \
-	insertnode_list(mathses, buf1, buf2, buf3, LIST_MATH);       \
+	add_math_node(buf1, buf2, buf3);                             \
 	status = newstatus;                                          \
 	pta = buf3;                                                  \
 	valid = FALSE;                                               \
 	point = -1;                                                  \
+}
+
+void add_math_node(char *arg1, char *arg2, char *arg3)
+{
+	struct link_data *link;
+
+	link = (struct link_data *) calloc(1, sizeof(struct link_data));
+
+	link->str1 = strdup(arg1);
+	link->str2 = strdup(arg2);
+	link->str3 = strdup(arg3);
+
+	LINK(link, math_head, math_tail);
+}
+
+void del_math_node(struct link_data *node)
+{
+	UNLINK(node, math_head, math_tail);
+
+	free(node->str1);
+	free(node->str2);
+	free(node->str3);
+
+	free(node);
 }
 
 int mathexp_tokenize(struct session *ses, char *str)
@@ -181,7 +220,10 @@ int mathexp_tokenize(struct session *ses, char *str)
 	pta = buf3;
 	pti = str;
 
-	kill_list(ses, LIST_MATH);
+	while (math_head)
+	{
+		del_math_node(math_head);
+	}
 
 	while (*pti)
 	{
@@ -231,7 +273,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 					case '"':
 						if (pta != buf3)
 						{
-							tintin_printf2(NULL, "MATH EXP: \" FOUND INSIDE A NUMBER");
+							show_message(NULL, -1, "MATH EXP: \" FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -241,7 +283,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 					case '(':
 						if (pta != buf3)
 						{
-							tintin_printf2(NULL, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
+							show_message(NULL, -1, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -257,7 +299,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 						*pta++ = *pti++;
 						if (point >= 0)
 						{
-							tintin_printf2(NULL, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
+							show_message(NULL, -1, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						point++;
@@ -427,7 +469,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 						break;
 
 					default:
-						tintin_printf2(NULL, "#MATH EXP: UNKNOWN OPERATOR: %c", *pti);
+//						show_message(NULL, -1, "#MATH EXP: UNKNOWN OPERATOR: %c", *pti);
 						return FALSE;
 				}
 				break;
@@ -436,7 +478,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 
 	if (level != 0)
 	{
-		tintin_printf2(NULL, "#MATH EXP: UNMATCHED PARENTHESES, LEVEL: %d", level);
+		show_message(NULL, -1, "#MATH EXP: UNMATCHED PARENTHESES, LEVEL: %d", level);
 		return FALSE;
 	}
 
@@ -449,7 +491,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 }
 
 
-void mathexp_level(struct listnode *node)
+void mathexp_level(struct session *ses, struct link_data *node)
 {
 	int priority;
 
@@ -457,7 +499,7 @@ void mathexp_level(struct listnode *node)
 
 	while (node->prev)
 	{
-		if (atoi(node->prev->left) < atoi(node->left))
+		if (atoi(node->prev->str1) < atoi(node->str1))
 		{
 			break;
 		}
@@ -470,9 +512,9 @@ void mathexp_level(struct listnode *node)
 	{
 		for (node = mathnode_s ; node ; node = node->next)
 		{
-			if (atoi(node->right) == priority)
+			if (atoi(node->str2) == priority)
 			{
-				mathexp_compute(node);
+				mathexp_compute(ses, node);
 			}
 			if (node == mathnode_e)
 			{
@@ -485,13 +527,13 @@ void mathexp_level(struct listnode *node)
 
 	while (node->prev && node->next)
 	{
-		if (atoi(node->prev->right) == EXP_PR_LVL && atoi(node->next->right) == EXP_PR_LVL)
+		if (atoi(node->prev->str2) == EXP_PR_LVL && atoi(node->next->str2) == EXP_PR_LVL)
 		{
-			free(node->left);
-			node->left = strdup(node->next->left);
+			free(node->str1);
+			node->str1 = strdup(node->next->str1);
 
-			deletenode_list(mathses, node->next, LIST_MATH);
-			deletenode_list(mathses, node->prev, LIST_MATH);
+			del_math_node(node->next);
+			del_math_node(node->prev);
 		}
 		else
 		{
@@ -501,133 +543,133 @@ void mathexp_level(struct listnode *node)
 	return;
 }
 
-void mathexp_compute(struct listnode *node)
+void mathexp_compute(struct session *ses, struct link_data *node)
 {
 	char temp[BUFFER_SIZE];
 	double value;
 
-	switch (node->pr[0])
+	switch (node->str3[0])
 	{
 		case 'd':
-			if (tintoi(node->next->pr) <= 0)
+			if (tintoi(node->next->str3) <= 0)
 			{
-				tintin_printf2(NULL, "#MATHEXP: INVALID DICE: %s", node->next->pr);
+				show_message(NULL, -1, "#MATHEXP: INVALID DICE: %s", node->next->str3);
 				value = 0;
 			}
 			else
 			{
-				value = tindice(node->prev->pr, node->next->pr);
+				value = tindice(node->prev->str3, node->next->str3);
 			}
 			break;
 		case '*':
-			value = tintoi(node->prev->pr) * tintoi(node->next->pr);
+			value = tintoi(node->prev->str3) * tintoi(node->next->str3);
 			break;
 		case '/':
-			if (tintoi(node->next->pr) == 0)
+			if (tintoi(node->next->str3) == 0)
 			{
-				tintin_printf2(NULL, "#MATH ERROR: DIVISION ZERO.");
-				value = tintoi(node->prev->pr);
+				show_message(NULL, -1, "#MATH ERROR: DIVISION ZERO.");
+				value = tintoi(node->prev->str3);
 			}
 			else
 			{
 				if (precision)
 				{
-					value = tintoi(node->prev->pr) / tintoi(node->next->pr);
+					value = tintoi(node->prev->str3) / tintoi(node->next->str3);
 				}
 				else
 				{
-					value = (long long) tintoi(node->prev->pr) / (long long) tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->str3) / (long long) tintoi(node->next->str3);
 				}
 			}
 			break;
 		case '%':
-			if (tintoi(node->next->pr) == 0)
+			if (tintoi(node->next->str3) == 0)
 			{
-				tintin_printf2(NULL, "#MATH ERROR: MODULO ZERO.");
-				value = tintoi(node->prev->pr);
+				show_message(NULL, -1, "#MATH ERROR: MODULO ZERO.");
+				value = tintoi(node->prev->str3);
 			}
 			else
 			{
-				value = (long long) tintoi(node->prev->pr) % (long long) tintoi(node->next->pr);
+				value = (long long) tintoi(node->prev->str3) % (long long) tintoi(node->next->str3);
 			}
 			break;
 		case '+':
-			value = tintoi(node->prev->pr) + tintoi(node->next->pr);
+			value = tintoi(node->prev->str3) + tintoi(node->next->str3);
 			break;
 		case '-':
-			value = tintoi(node->prev->pr) - tintoi(node->next->pr);
+			value = tintoi(node->prev->str3) - tintoi(node->next->str3);
 			break;
 		case '<':
-			switch (node->pr[1])
+			switch (node->str3[1])
 			{
 				case '=':
-					value = tincmp(node->prev->pr, node->next->pr) <= 0;
+					value = tincmp(node->prev->str3, node->next->str3) <= 0;
 					break;
 				case '<':
-					value = (long long) tintoi(node->prev->pr) << (long long) tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->str3) << (long long) tintoi(node->next->str3);
 					break;
 				default:
-					value = tincmp(node->prev->pr, node->next->pr) < 0;
+					value = tincmp(node->prev->str3, node->next->str3) < 0;
 					break;
 			}
 			break;
 		case '>':
-			switch (node->pr[1])
+			switch (node->str3[1])
 			{
 				case '=':
-					value = tincmp(node->prev->pr, node->next->pr) >= 0;
+					value = tincmp(node->prev->str3, node->next->str3) >= 0;
 					break;
 				case '>':
-					value = (long long) tintoi(node->prev->pr) >> (long long) tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->str3) >> (long long) tintoi(node->next->str3);
 					break;
 				default:
-					value = tincmp(node->prev->pr, node->next->pr) > 0;
+					value = tincmp(node->prev->str3, node->next->str3) > 0;
 					break;
 			}
 			break;
 
 		case '&':
-			switch (node->pr[1])
+			switch (node->str3[1])
 			{
 				case '&':
-					value = tintoi(node->prev->pr) && tintoi(node->next->pr);
+					value = tintoi(node->prev->str3) && tintoi(node->next->str3);
 					break;
 				default:
-					value = (long long) tintoi(node->prev->pr) & (long long) tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->str3) & (long long) tintoi(node->next->str3);
 					break;
 			}
 			break;
 		case '^':
-			switch (node->pr[1])
+			switch (node->str3[1])
 			{
 				case '^':
-					value = ((tintoi(node->prev->pr) || tintoi(node->next->pr)) && (!tintoi(node->prev->pr) != !tintoi(node->next->pr)));
+					value = ((tintoi(node->prev->str3) || tintoi(node->next->str3)) && (!tintoi(node->prev->str3) != !tintoi(node->next->str3)));
 					break;
 
 				default:
-					value = (long long) tintoi(node->prev->pr) ^ (long long) tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->str3) ^ (long long) tintoi(node->next->str3);
 					break;
 			}
 			break;
 		case '|':
-			switch (node->pr[1])
+			switch (node->str3[1])
 			{
 				case '|':
-					value = tintoi(node->prev->pr) || tintoi(node->next->pr);
+					value = tintoi(node->prev->str3) || tintoi(node->next->str3);
 					break;
 				default:
-					value = (long long) tintoi(node->prev->pr) | (long long) tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->str3) | (long long) tintoi(node->next->str3);
 					break;
 			}
 			break;
 		case '=':
-			value = (tineval(node->prev->pr, node->next->pr) != 0);
+			value = (tineval(ses, node->prev->str3, node->next->str3) != 0);
 			break;
 		case '!':
-			value = (tineval(node->prev->pr, node->next->pr) == 0);
+			value = (tineval(ses, node->prev->str3, node->next->str3) == 0);
 			break;
 		default:
-			tintin_printf2(NULL, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->pr[0], node->pr[1]);
+			show_message(NULL, -1, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->str3[0], node->str3[1]);
 			value = 0;
 			break;
 	}
@@ -642,16 +684,16 @@ void mathexp_compute(struct listnode *node)
 		mathnode_e = node;
 	}
 
-	deletenode_list(mathses, node->next, LIST_MATH);
-	deletenode_list(mathses, node->prev, LIST_MATH);
+	del_math_node(node->next);
+	del_math_node(node->prev);
 
 	sprintf(temp, "%d", EXP_PR_VAR);
-	free(node->right);
-	node->right = strdup(temp);
+	free(node->str2);
+	node->str2 = strdup(temp);
 
 	sprintf(temp, "%f", value);
-	free(node->pr);
-	node->pr = strdup(temp);
+	free(node->str3);
+	node->str3 = strdup(temp);
 }
 
 double tintoi(char *str)
@@ -687,12 +729,12 @@ double tincmp(char *left, char *right)
 	}
 }
 
-double tineval(char *left, char *right)
+double tineval(struct session *ses, char *left, char *right)
 {
 	switch (left[0])
 	{
 		case '"':
-			return match(mathses, left, right);
+			return match(ses, left, right);
 
 		default:
 			return tintoi(left) == tintoi(right);
@@ -710,5 +752,6 @@ double tindice(char *left, char *right)
 	{
 		sum += lrand48() % sizedice + 1;
 	}
+
 	return (double) sum;
 }

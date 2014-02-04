@@ -113,47 +113,6 @@ DO_COMMAND(do_log)
 	return ses;
 }
 
-
-DO_COMMAND(do_logline)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-
-	tintin_printf2(ses, "#LOGLINE: Old command, use #LINE LOG instead.");
-
-	substitute(ses, right, right, SUB_ESC|SUB_COL);
-
-	if (ses->logline)
-	{
-		return ses;
-	}
-
-	if ((ses->logline = fopen(left, "a")))
-	{
-		fseek(ses->logline, 0, SEEK_END);
-
-		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
-		{
-			write_html_header(ses->logline);
-		}
-
-		if (*right)
-		{
-			logit(ses, right, ses->logline, TRUE);
-
-			fclose(ses->logline);
-			ses->logline = NULL;
-		}
-	}
-	else
-	{
-		tintin_printf(ses, "#ERROR: #LOGLINE {%s} - COULDN'T OPEN FILE.", left);
-	}
-	return ses;
-}
-
 void write_html_header(FILE *fp)
 {
 	char *header =
@@ -205,11 +164,6 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 		{
 			case 27:
 				pti += 2;
-
-				if (HAS_BIT(vtc, COL_XTB))
-				{
-					printf("has XTB\n");
-				}
 
 				for (cnt = 0 ; pti[cnt] ; cnt++)
 				{

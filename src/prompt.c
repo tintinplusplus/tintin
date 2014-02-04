@@ -30,36 +30,33 @@
 
 DO_COMMAND(do_prompt)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], line[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	root = ses->list[LIST_PROMPT];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-	arg = get_arg_in_braces(arg, line,  1);
-
-	if (*line == 0)
+	if (*arg3 == 0)
 	{
-		strcpy(line, "1");
+		strcpy(arg3, "1");
 	}
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_PROMPT);
+		show_list(ses->list[LIST_PROMPT], 0);
 	}
-	else if (*left && *right == 0)
+	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_PROMPT) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_PROMPT) == FALSE)
 		{
-			show_message(ses, LIST_PROMPT, "#PROMPT: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_PROMPT, "#PROMPT: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, line, LIST_PROMPT);
+		update_node_list(ses->list[LIST_PROMPT], arg1, arg2, arg3);
 
-		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s}.", left, right, line);
+		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -75,12 +72,15 @@ DO_COMMAND(do_unprompt)
 
 void check_all_prompts(struct session *ses, char *original, char *line)
 {
+	struct listroot *root = ses->list[LIST_PROMPT];
 	struct listnode *node;
 
-	for (node = ses->list[LIST_PROMPT]->f_node ; node ; node = node->next)
+	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, node, line, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
+			node = root->list[root->update];
+
 			if (*node->right)
 			{
 				substitute(ses, node->right, original, SUB_ARG);

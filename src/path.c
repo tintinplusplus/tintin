@@ -74,7 +74,7 @@ DO_PATH(path_new)
 	}
 	else
 	{
-		kill_list(ses, LIST_PATH);
+		kill_list(ses->list[LIST_PATH]);
 
 		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOW MAPPING A PATH.");
 
@@ -98,13 +98,11 @@ DO_PATH(path_end)
 
 DO_PATH(path_map)
 {
-	struct listroot *root;
-	struct listnode *node;
+	struct listroot *root = ses->list[LIST_PATH];
 	char buf[BUFFER_SIZE];
+	int i;
 
-	root = ses->list[LIST_PATH];
-
-	if (root->f_node == NULL)
+	if (root->used == 0)
 	{
 		show_message(ses, LIST_PATH, "#PATH MAP: EMPTY PATH.");
 	}
@@ -112,15 +110,15 @@ DO_PATH(path_map)
 	{
 		sprintf(buf, "%-8s", "#PATH:");
 
-		for (node = root->f_node ; node ; node = node->next)
+		for (i = 0 ; i < root->used ; i++)
 		{
-			if ((int) strlen(buf) + (int) strlen(node->left) > ses->cols)
+			if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > ses->cols)
 			{
 				tintin_puts2(ses, buf);
 
 				sprintf(buf, "%-8s", "");
 			}
-			cat_sprintf(buf, "%s ", node->left);
+			cat_sprintf(buf, "%s ", root->list[i]->left);
 		}
 
 		if (strlen(buf) > 8)
@@ -134,7 +132,7 @@ DO_PATH(path_save)
 {
 	char result[STRING_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
-	struct listnode *node;
+	int i;
 
 	root = ses->list[LIST_PATH];
 
@@ -145,7 +143,7 @@ DO_PATH(path_save)
 	{
 		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <ALIAS NAME>");
 	}
-	else if (root->f_node == NULL)
+	else if (root->used == 0)
 	{
 		tintin_puts2(ses, "#PATH SAVE: LOAD OR CREATE A PATH FIRST.");
 	}
@@ -159,41 +157,25 @@ DO_PATH(path_save)
 
 		if (is_abbrev(left, "FORWARD"))
 		{
-			for (node = root->f_node ; node ; node = node->next)
+			for (i = 0 ; i < root->used ; i++)
 			{
-				if (strlen(result) + strlen(node->left) < STRING_SIZE - 10)
-				{
-					strcat(result, node->left);
+				strcat(result, root->list[i]->left);
 
-					if (node->next)
-					{
-						cat_sprintf(result, "%c", COMMAND_SEPARATOR);
-					}
-				}
-				else
+				if (i != root->used - 1)
 				{
-					tintin_puts(ses, "#ERROR, PATH TOO LONG FOR BUFFER, PARTIAL SAVE.");
-					break;
+					cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 				}
 			}
 		}
 		else
 		{
-			for (node = root->l_node ; node ; node = node->prev)
+			for (i = root->used - 1 ; i >= 0 ; i--)
 			{
-				if (strlen(result) + strlen(node->left) < STRING_SIZE - 10)
-				{
-					strcat(result, node->right);
+				strcat(result, root->list[i]->left);
 
-					if (node->prev)
-					{
-						cat_sprintf(result, "%c", COMMAND_SEPARATOR);
-					}
-				}
-				else
+				if (i != 1)
 				{
-					tintin_puts(ses, "#ERROR, PATH TOO LONG FOR BUFFER, PARTIAL SAVE.");
-					break;
+					cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 				}
 			}
 		}
@@ -207,20 +189,17 @@ DO_PATH(path_save)
 DO_PATH(path_load)
 {
 	char left[BUFFER_SIZE];
-	struct listroot *root;
 	struct listnode *node;
-
-	root = ses->list[LIST_PATH];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
-	if ((node = searchnode_list(ses->list[LIST_ALIAS], left)) == NULL)
+	if ((node = search_node_list(ses->list[LIST_ALIAS], left)) == NULL)
 	{
 		show_message(ses, LIST_PATH, "#ALIAS {%s} NOT FOUND.", left);
 	}
 	else
 	{
-		kill_list(ses, LIST_PATH);
+		kill_list(ses->list[LIST_PATH]);
 
 		arg = node->right;
 
@@ -233,17 +212,16 @@ DO_PATH(path_load)
 
 			arg = get_arg_in_braces(arg, left, TRUE);
 
-			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)))
+			if ((node = search_node_list(ses->list[LIST_PATHDIR], left)))
 			{
-				addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+				insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
 			}
 			else
 			{
-				addnode_list(root, left, left, "0");
+				insert_node_list(ses->list[LIST_PATH], left, left, "0");
 			}
 		}
-
-		show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", root->count);
+		show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", ses->list[LIST_PATH]->used);
 	}
 }
 
@@ -251,16 +229,13 @@ DO_PATH(path_load)
 
 DO_PATH(path_del)
 {
-	struct listroot *root;
-	struct listnode *node;
+	struct listroot *root = ses->list[LIST_PATH];
 
-	root = ses->list[LIST_PATH];
-	node = root->l_node;
-
-	if (root->l_node)
+	if (root->used)
 	{
-		show_message(ses, LIST_PATH, "#PATH DEL: DELETED MOVE {%s}.", root->l_node->left);
-		deletenode_list(ses, root->l_node, LIST_PATH);
+		show_message(ses, LIST_PATH, "#PATH DEL: DELETED MOVE {%s}.", root->list[root->used - 1]->left);
+
+		delete_index_list(ses->list[LIST_PATH], root->used - 1);
 	}
 	else
 	{
@@ -279,13 +254,13 @@ DO_PATH(path_ins)
 	{
 		show_message(ses, LIST_PATH, "#PATH INS: YOU MUST GIVE A DIRECTION TO INSERT");
 	}
-	else if (*right == 0 && searchnode_list(ses->list[LIST_PATHDIR], left))
+	else if (*right == 0 && search_node_list(ses->list[LIST_PATHDIR], left))
 	{
 		check_insert_path(left, ses);
 	}
 	else
 	{
-		addnode_list(ses->list[LIST_PATH], left, right, "0");
+		insert_node_list(ses->list[LIST_PATH], left, right, "0");
 
 		show_message(ses, LIST_PATH, "#OK. #PATH - {%s} = {%s} ADDED.", left, right);
 	}
@@ -295,50 +270,38 @@ DO_PATH(path_run)
 {
 	char left[BUFFER_SIZE], time[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct listroot *root;
-	int wait;
-	long long flags;
+	int i;
 
 	root = ses->list[LIST_PATH];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
-	if (root->f_node == NULL)
+	if (root->used == 0)
 	{
 		tintin_puts(ses, "#END OF PATH.");
 	}
 	else
 	{
-		flags = ses->flags;
-
 		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
 
 		if (*left)
 		{
-			wait = 0;
-
-			while (root->f_node)
+			for (i = 0 ; i < root->used ; i++)
 			{
 				sprintf(name, "%lld", utime());
-				sprintf(time, "%lld", (long long) wait);
+				sprintf(time, "%f", i * get_number(ses, left));
 
-
-				wait += (long long) get_number(ses, left);
-
-				updatenode_list(ses, name, root->f_node->left, time, LIST_DELAY);
-
-				deletenode_list(ses, root->f_node, LIST_PATH);
+				update_node_list(ses->list[LIST_DELAY], name, root->list[i]->left, time);
 			}
 		}
 		else
 		{
-			while (root->f_node)
+			for (i = 0 ; i < root->used ; i++)
 			{
-				script_driver(ses, LIST_PATH, root->f_node->left);
-
-				deletenode_list(ses, root->f_node, LIST_PATH);
+				script_driver(ses, LIST_PATH, root->list[i]->left);
 			}
 		}
-		ses->flags = flags;
+		kill_list(ses->list[LIST_PATH]);
 	}
 }
 
@@ -347,44 +310,40 @@ DO_PATH(path_walk)
 {
 	char left[BUFFER_SIZE];
 	struct listroot *root;
-	long long flags;
 
 	root = ses->list[LIST_PATH];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
-	if (root->f_node == NULL)
+	if (root->used == 0)
 	{
 		tintin_puts(ses, "#END OF PATH.");
 	}
 	else
 	{
-		flags = ses->flags;
-
 		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
 
 		switch (tolower(*left))
 		{
 			case 'b':
-				script_driver(ses, LIST_PATH, root->l_node->right);
-				deletenode_list(ses, root->l_node, LIST_PATH);
+				script_driver(ses, LIST_PATH, root->list[root->used - 1]->right);
+				delete_index_list(ses->list[LIST_PATH], root->used - 1);
 				break;
 
 			case '\0':
 			case 'f':
-				script_driver(ses, LIST_PATH, root->f_node->left);
-				deletenode_list(ses, root->f_node, LIST_PATH);
+				script_driver(ses, LIST_PATH, root->list[0]->left);
+				delete_index_list(ses->list[LIST_PATH], 0);
 				break;
 
 			default:
 				tintin_printf(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}.");
 				break;
 		}
-		if (root->f_node == NULL)
+		if (root->used == 0)
 		{
 			check_all_events(ses, 0, 0, "END OF PATH");
 		}
-		ses->flags = flags;
 	}
 }
 
@@ -393,82 +352,82 @@ DO_PATH(path_zip)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int cnt;
+	int i, cnt;
 
 	cnt   =  1;
 	root  =  ses->list[LIST_PATH];
 	*left =  0;
 	*right = 0;
 
-	for (node = root->f_node ; node ; node = node->next)
+	for (i = 0 ; i < root->used ; i++)
 	{
-		if (searchnode_list(ses->list[LIST_PATHDIR], node->left) == NULL)
+		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->left) == NULL)
 		{
-			if (node->prev && searchnode_list(ses->list[LIST_PATHDIR], node->prev->left) != NULL)
+			if (i && search_node_list(ses->list[LIST_PATHDIR], root->list[i - 1]->left) != NULL)
 			{
 				cat_sprintf(left, ";");
 			}
 			cat_sprintf(left, "%s", node->left);
 
-			if (node->next)
+			if (i < root->used - 1)
 			{
 				cat_sprintf(left, ";");
 			}
 			continue;
 		}
 
-		if (node->next && !strcmp(node->left, node->next->left))
+		if (i < root->used - 1 && !strcmp(root->list[i]->left, root->list[i + 1]->left))
 		{
 			cnt++;
 		}
 		else if (cnt > 1)
 		{
-			cat_sprintf(left, "%d%s", cnt, node->left);
+			cat_sprintf(left, "%d%s", cnt, root->list[i]->left);
 
 			cnt = 1;
 		}
 		else
 		{
-			cat_sprintf(left, "%s", node->left);
+			cat_sprintf(left, "%s", root->list[i]->left);
 		}
 	}
 
-	for (node = root->l_node ; node ; node = node->prev)
+	for (i = root->used - 1 ; i >= 0 ; i++)
 	{
-		if (searchnode_list(ses->list[LIST_PATHDIR], node->right) == NULL)
+		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->right) == NULL)
 		{
-			if (node->next && searchnode_list(ses->list[LIST_PATHDIR], node->next->right) != NULL)
+			if (i != root->used - 1 && search_node_list(ses->list[LIST_PATHDIR], root->list[i + 1]->right) != NULL)
 			{
 				cat_sprintf(right, ";");
 			}
 			cat_sprintf(right, "%s", node->right);
 
-			if (node->prev)
+			if (i > 0)
 			{
 				cat_sprintf(right, ";");
 			}
 			continue;
 		}
 
-		if (node->prev && !strcmp(node->right, node->prev->right))
+		if (i > 0 && !strcmp(root->list[i]->right, root->list[i - 1]->right))
 		{
 			cnt++;
 		}
 		else if (cnt > 1)
 		{
-			cat_sprintf(right, "%d%s", cnt, node->right);
+			cat_sprintf(right, "%d%s", cnt, root->list[i]->right);
 
 			cnt = 1;
 		}
 		else
 		{
-			cat_sprintf(right, "%s", node->right);
+			cat_sprintf(right, "%s", root->list[i]->right);
 		}
 	}
 
-	kill_list(ses, LIST_PATH);
+	kill_list(ses->list[LIST_PATH]);
 
-	addnode_list(ses->list[LIST_PATH], left, right, "0");
+	insert_node_list(ses->list[LIST_PATH], left, right, "0");
 
 	show_message(ses, LIST_PATH, "#OK. THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", left, right);
 }
@@ -478,52 +437,49 @@ void check_insert_path(char *command, struct session *ses)
 {
 	struct listnode *node;
 
-	if ((node = searchnode_list(ses->list[LIST_PATHDIR], command)))
+	if ((node = search_node_list(ses->list[LIST_PATHDIR], command)))
 	{
-		addnode_list(ses->list[LIST_PATH], node->left, node->right, "0");
+		insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
 	}
 }
 
 
 DO_COMMAND(do_pathdir)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], coord[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 	struct listnode *node;
 
-	root = ses->list[LIST_PATHDIR];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, 0, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg3, 0, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
-	arg = get_arg_in_braces(arg, coord, FALSE);
-
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_PATHDIR);
+		show_list(ses->list[LIST_PATHDIR], 0);
 	}
-	else if (*right == 0)
+	else if (*arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_PATHDIR) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_PATHDIR) == FALSE)
 		{
-			show_message(ses, LIST_PATHDIR, "#NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_PATHDIR, "#NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		if (*coord == 0)
+		if (*arg3 == 0)
 		{
-			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)) != NULL)
+			if ((node = search_node_list(ses->list[LIST_PATHDIR], arg1)) != NULL)
 			{
-				strcpy(coord, node->pr);
+				strcpy(arg3, node->pr);
 			}
 			else
 			{
-				strcpy(coord, "0");
+				strcpy(arg3, "0");
 			}
 		}
-		updatenode_list(ses, left, right, coord, LIST_PATHDIR);
+		update_node_list(ses->list[LIST_PATHDIR], arg1, arg2, arg3);
 
-		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}.", left, right, coord);
+		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }

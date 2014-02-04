@@ -4,9 +4,11 @@ Installation is easy; cd to the src/ directory, then type this:
 
 make
 
+make install
+
 If this went without errors or serious warnings type this to start tintin:
 
-./tt++
+tt++
 
 You might need to compile and install the following libraries:
 

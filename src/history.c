@@ -71,20 +71,14 @@ DO_COMMAND(do_history)
 void add_line_history(struct session *ses, char *line)
 {
 	struct listroot *root;
-	struct listnode *node;
 
 	root = ses->list[LIST_HISTORY];
 
-	if (root->l_node && !strcmp(line, root->l_node->left))
-	{
-		return;
-	}
-
 	if (*line == 0)
 	{
-		if (root->l_node && HAS_BIT(gtd->ses->flags, SES_FLAG_REPEATENTER))
+		if (root->used && HAS_BIT(ses->flags, SES_FLAG_REPEATENTER))
 		{
-			strcpy(line, root->l_node->left);
+			strcpy(line, root->list[root->used - 1]->left);
 		}
 		return;
 	}
@@ -94,28 +88,11 @@ void add_line_history(struct session *ses, char *line)
 		search_line_history(ses, line);
 	}
 
-	for (node = root->f_node ; node ; node = node->next)
-	{
-		if (!strcmp(line, node->left))
-		{
-			if (node == gtd->input_his)
-			{
-				gtd->input_his = NULL;
-			}
-			deletenode_list(ses, node, LIST_HISTORY);
-			break;
-		}
-	}
+	update_node_list(ses->list[LIST_HISTORY], line, "", "");
 
-	insertnode_list(ses, line, "", "", LIST_HISTORY);
-
-	while (root->count > gtd->history_size)
+	while (root->used > gtd->history_size)
 	{
-		if (root->f_node == gtd->input_his)
-		{
-			gtd->input_his = NULL;
-		}
-		deletenode_list(ses, root->f_node, LIST_HISTORY);
+		delete_index_list(ses->list[LIST_HISTORY], 0);
 	}
 
 	return;
@@ -124,15 +101,15 @@ void add_line_history(struct session *ses, char *line)
 void search_line_history(struct session *ses, char *line)
 {
 	struct listroot *root;
-	struct listnode *node;
+	int i;
 
 	root = ses->list[LIST_HISTORY];
 
-	for (node = root->l_node; node ; node = node->prev)
+	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (is_abbrev(&line[1], node->left))
+		if (is_abbrev(&line[1], root->list[i]->left))
 		{
-			strcpy(line, node->left);
+			strcpy(line, root->list[i]->left);
 
 			return;
 		}
@@ -149,9 +126,9 @@ DO_HISTORY(history_character)
 
 DO_HISTORY(history_delete)
 {
-	if (gts->list[LIST_HISTORY]->l_node)
+	if (ses->list[LIST_HISTORY]->used)
 	{
-		deletenode_list(gts, gts->list[LIST_HISTORY]->l_node, LIST_HISTORY);
+		delete_index_list(ses->list[LIST_HISTORY], ses->list[LIST_HISTORY]->used - 1);
 	}
 
 	return;
@@ -159,54 +136,19 @@ DO_HISTORY(history_delete)
 
 DO_HISTORY(history_insert)
 {
-	struct listroot *root;
-	struct listnode *node;
-
-	root = ses->list[LIST_HISTORY];
-
-	if (root->l_node && !strcmp(arg, root->l_node->left))
-	{
-		return;
-	}
-
-	for (node = root->f_node ; node ; node = node->next)
-	{
-		if (!strcmp(arg, node->left))
-		{
-			if (node == gtd->input_his)
-			{
-				gtd->input_his = NULL;
-			}
-			deletenode_list(ses, node, LIST_HISTORY);
-			break;
-		}
-	}
-
-	insertnode_list(ses, arg, "", "", LIST_HISTORY);
-
-	while (root->count > gtd->history_size)
-	{
-		if (root->f_node == gtd->input_his)
-		{
-			gtd->input_his = NULL;
-		}
-		deletenode_list(ses, root->f_node, LIST_HISTORY);
-	}
-
-	return;
+	add_line_history(ses, arg);
 }
 
 DO_HISTORY(history_list)
 {
 	struct listroot *root;
-	struct listnode *node;
-	int cnt = 1;
+	int i, cnt = 1;
 
 	root = ses->list[LIST_HISTORY];
 
-	for (node = root->f_node; node ; node = node->next)
+	for (i = 0 ; i < root->used ; i++)
 	{
-		tintin_printf2(ses, "%6d - %s", cnt++, node->left);
+		tintin_printf2(ses, "%6d - %s", cnt++, root->list[i]->left);
 	}
 	return;
 }
@@ -214,10 +156,7 @@ DO_HISTORY(history_list)
 DO_HISTORY(history_read)
 {
 	FILE *file;
-	struct listroot *root;
 	char *cptr, buffer[BUFFER_SIZE];
-
-	root = ses->list[LIST_HISTORY];
 
 	file = fopen(arg, "r");
 
@@ -227,14 +166,7 @@ DO_HISTORY(history_read)
 		return;
 	}
 
-	while (root->f_node)
-	{
-		if (root->f_node == gtd->input_his)
-		{
-			gtd->input_his = NULL;
-		}
-		deletenode_list(ses, root->f_node, LIST_HISTORY);
-	}
+	kill_list(ses->list[LIST_HISTORY]);
 
 	while (fgets(buffer, BUFFER_SIZE-1, file))
 	{
@@ -246,11 +178,11 @@ DO_HISTORY(history_read)
 
 			if (*buffer)
 			{
-				insertnode_list(ses, buffer, "", "", LIST_HISTORY);
+				insert_node_list(ses->list[LIST_HISTORY], buffer, "", "");
 			}
 		}
 	}
-	insertnode_list(ses, "", "", "", LIST_HISTORY);
+	insert_node_list(ses->list[LIST_HISTORY], "", "", "");
 
 	fclose(file);
 
@@ -272,8 +204,9 @@ DO_HISTORY(history_size)
 
 DO_HISTORY(history_write)
 {
-	struct listnode *node;
+	struct listroot *root = ses->list[LIST_HISTORY];
 	FILE *file;
+	int i;
 
 	file = fopen(arg, "w");
 
@@ -284,9 +217,9 @@ DO_HISTORY(history_write)
 		return;
 	}
 
-	for (node = ses->list[LIST_HISTORY]->f_node ; node ; node = node->next)
+	for (i = 0 ; i < root->used ; i++)
 	{
-		fprintf(file, "%s\n", node->left);
+		fprintf(file, "%s\n", root->list[i]->left);
 	}
 
 	fclose(file);

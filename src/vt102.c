@@ -113,7 +113,7 @@ int skip_vt102_codes(char *str)
 		case   5:   /* ENQ */
 		case   7:   /* BEL */
 		case   8:   /* BS  */
-		case   9:   /* HT  */
+	/*	case   9: *//* HT  */
 	/*	case  10: *//* LF  */
 		case  11:   /* VT  */
 		case  12:   /* FF  */
@@ -385,6 +385,8 @@ void strip_non_vt102_codes(char *str, char *buf)
 	*pto = 0;
 }
 
+// mix old and str, then copy compressed color string to buf which can point to old.
+
 void get_color_codes(char *old, char *str, char *buf)
 {
 	char *pti, *pto, col[100], tmp[BUFFER_SIZE];
@@ -427,6 +429,12 @@ void get_color_codes(char *old, char *str, char *buf)
 	}
 
 	*pto = 0;
+
+	if (strlen(tmp) == 0)
+	{
+		buf[0] = 0;
+		return;
+	}
 
 	vtc =  0;
 	fgc = -1;

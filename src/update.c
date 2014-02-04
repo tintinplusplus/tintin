@@ -291,9 +291,9 @@ void tick_update(void)
 
 		root = ses->list[LIST_TICKER];
 
-		for (node = root->f_node ; node ; node = root->update)
+		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
-			root->update = node->next;
+			node = root->list[root->update];
 
 			if (node->data == 0)
 			{
@@ -327,9 +327,9 @@ void delay_update(void)
 
 		root = ses->list[LIST_DELAY];	
 
-		for (node = root->f_node ; node ; node = root->update)
+		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
-			root->update = node->next;
+			node = root->list[root->update];
 
 			if (node->data == 0)
 			{
@@ -342,7 +342,7 @@ void delay_update(void)
 
 				script_driver(ses, LIST_DELAY, node->right);
 
-				deletenode_list(ses, node, LIST_DELAY);
+				delete_node_list(ses, LIST_DELAY, node);
 			}
 		}
 	}

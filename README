@@ -1,143 +1,198 @@
-**** OLD TINTIN SCRIPTS ARE NOT 100% COMPATIBLE WITH THIS VERSION ****
+Due to continious improvements old tintin scripts aren't always compatible with
+new versions. This document tries to document all common issues.
 
 
-It's hard to stay compatible with older versions and at the same time
-improve the script parser. People who do not want to update their scripts
-and figure out the differences will simply have to use the old version.
+TINEXP 2.0 (tintin expressions) are as of now clearly defined:
+
+%0 - %99  The percentage sign followed by a number is used for arguments in
+          triggers.
+
+$         The dollar sign followed by an alphanumeric string is used for
+          variables.
+
+&         The and sign followed by an alphanumeric string is used for
+          retrieving the index of a variable.
+
+[ ]       Brackets are used for nested variables which function as an
+          associative array.
+
+@         The at sign followed by an alphanumeric string is used for functions.
+
+<000>     Three alphanumeric characters encapsulated by the less- and greater-
+          than signs are used for color codes.
+
+\         The back slash is used to escape a character
+
+{ }       Curly brackets are used for seperating multi word command arguments.
 
 
-TINEXP 1.0 (tintin expressions) are as of now more clearly defined:
 
-%0 - %9 are passed along with triggers. Actions, Aliasses, etc
-$       are used for variables
-@       are used for functions, the arguments are stored in %0 - %9
-<000>   are used for colors
-\       is used to escape a character, but doesn't always work.
-{ }     are used for seperating multi word command arguments.
-" "     are used for strings in #math
-* ? \   are used as wildcards for string matching.
+" "       Quote characters are used for strings in #math and #if arguments.
 
+&0- &99   The and sign followed by a number is used for arguments in the
+          regex command.
 
 
 If you want to convert your scripts take notice of the following changes:
 
-01) #LOOP and #FORALL now use &0 instead of %0.
 
-02) #HIGHLIGHT had to be changed because this tintin version is less flexible
-when it comes to the parsing of commands as the old tintin versions. Basicly
-the old #high {color} {string} is now parsed as: #high {string} {color} 
-You can load your old highlights, but they will not be added to the highlight
-list, because they'll generate a 'color code not found' error message. So
-you'll have to redo your highlights, or perhaps look into the #substite
-command combined with the new color codes, see #help colors
+01) #LOOP, #FORALL, and #PARSE take an additional argument which contains
+    the variable used for storing the intermediate values.
 
-Also the way highlight deals with colors has been changed. {b light green} is
-no longer valid, instead you would want to use {bold b green}, the highlights
-also only use the valid VT100 codes, italic has been replaced with underscore,
-since italic was never part of the protocol of VT100 terminals.
+
+02) #HIGHLIGHT is now parsed as: #HIGHLIGHT {string} {color}. The color
+    argument can be a color code. See #HELP COLORS.
+
 
 03) #FORMAT replaces many commands, I'd suggest checking it out.
 
+
 04) #MESSAGE, #CONFIG, #IGNORE, #DEBUG are all you need to configure
-   tintin, changes to #config are written to file with #write.
-
-05) The old walk code has been removed, instead you can use the #path command.
-
-06) #TICK has been changed quite a bit, new commands: #TICK #UNTICK, you can
-have as many tickers as you want. The old #tick commands are gone.
-Syntax: #tick {name} {commands} {seconds to tick}
-The name is added so you can delete it. You will no longer receive spam, but
-with a little bit of creativity you can rebuild the old tintin ticker spam.
-
-Can use #read to load this simulator, for the few muds that still have a
-non random tick:
-
-#tick {oldtick}
-{
-	#delay 50 #showme #10 SECONDS TO TICK!!;
-	#showme #TICK!!!
-}
-{60}
+    tintin, changes made with #CONFIG are written to file with #WRITE.
 
 
-07) #read now supports multiline triggers, it also checks the nesting level
-before doing anything so you don't end up with bogus, and trims leading 
-spaces/tabs. Make sure to remove non matching { }'s from #nop comments. Cause
-it'll error msg with the line number to look at otherwise.
+05) The old walk code has been removed, instead you can use the #PATH command.
 
 
-08) Can place ^ at the end of an action if you want a perfect match.
-#act {^The trail leads north^} {n} {5} will not trigger on:
-The trail leads northwest
+06) #TICK has been changed quite a bit, new commands: #TICK and #UNTICK, you
+    can have as many tickers as you want. The old #TICK command is gone.
 
-   In order to make a color trigger start a trigger with ~ In order to see
-   color codes the way tintin wants you to enter them type: #config CONVERT on
-   when done use: #config CONVERT off.
+    Syntax: #TICK {name} {commands} {seconds to tick}
 
-09) Added macros, see help file on macro and unmacro
+    The name is added so you can delete it. You will no longer receive spam,
+    but with a little bit of creativity you can rebuild the old tintin ticker
+    spam.
 
-10) Finished function code, $result is now a default variable that can be used
+    Use #READ to load the following ticker which emulates old behavior:
 
-#function dosomething {#math result 1 + 1}
+    #tick {oldtick}
+    {
+            #delay 50 #showme #10 SECONDS TO TICK!!;
+            #showme #TICK!!!
+    }
+    {60}
 
-say @dosomething{} will print 2, the #RESULT command has been removed.
+07) #READ now supports multiline triggers, it also checks the nesting level
+    before doing anything so you don't end up with bogus, and trims leading 
+    spaces/tabs. Make sure to remove non matching { }'s from #NOP comments,
+    cause it will (and should) create error messages with the line numbers
+    between which the error was found.
 
-You can still use the result variable as a normal variable, but it might get
-messy if you use it in combination with #echo or functions, or both.
 
-11) #forall and loop now use space seperation instead of comma seperation.
+08) You can place $ at the end of an action if you want a perfect match.
 
-13) Rewrote the mathematical expression interpreter used by #if and #math,
-it can now deal with both strings and numbers, strings must be enclosed in " ",
-and has more options, see help on math. T and F are not supported, use 0 and
-1 since I'm trying to comply to C standards.
+    #act {^The trail leads north$} {n} {5} will not trigger on:
 
-14) #pathdir is now specificly designed to hold a direction, and the opposite
-direction, there was some confusion by a help file writer about this who
-thought it was meant to hold a direction and the specific command to use with
-that direction. Pathdir now also needs a 3rd argument for the #map command,
-these values are set automatically.
+    The trail leads northwest.
 
-15) Defaults are no longer in a .rc file, if someone wants different defaults
-they can write a command file for it.
 
-16) Can now set the top and bottom row of the scrolling region with #split.
+09) Added #MACRO for macro support.
+
+10) $result is now a default variable that can be used in #FUNCTION.
+
+    #function dosomething {#math result 1 + 1}
+
+    say @dosomething{} will print 2, the #RESULT command has been removed.
+
+    You can still use $result as a normal variable.
+
+11) #FORALL and #LOOP use space separation instead of comma separation, and
+    braces can be used for multi-word arguments.
+
+13) #MATH and #IF support 64 floating point arithmatic expressions. They also
+    support strings, which must be enclosed in quotes. See #HELP MATH for more
+    information.
+
+14) #PATHDIR is now specificly designed to hold a direction, the opposite
+    direction, and the vector of said direction for the #MAP command.
+
+15) Defaults are no longer in a default .rc file.
+
+16) #SPLIT supports 2 arguments to set the top and bottomw row.
 
 17) Can now have multiple prompt triggers, the 2nd argument is the substitution
-string that works the same as #substitute. the 3rd argument is the row the
-line should be printed on, if left blank it picks the normal split line.
+    string that works the same as #SUBSTITUTE. the 3rd argument is the row the
+    line should be printed on, if left blank it picks the default split line.
 
-18) Fixed suspend for tintin sessions started using a linux script
+19) #SLEEP has been removed. The #DELAY command can be used instead.
 
-19) #sleep has been removed, use #delay.
+20) All settings are inherited from the startup session when creating a new
+    session.
 
-20) Tintin is now capable of wordwrapping, can be disabled with #config.
+21) In order to make a color trigger start a trigger with a tilda. In order to see
+    color codes the way tintin wants you to enter them type: #CONFIG convert on
+    when done use: #CONFIG convert off.
 
-21) Fixed color loss bug in split mode for muds that send wrapped lines.
+    #action {~\0;32m%0 says '%1'} {say I don't like green says.}
 
-22) #system can no longer be renamed, I fixed the %0-9 issue passing along ';'
-removing the $0-9 'bug fix' variable - which nobody seemed to use anyway.
+22) A scrollback buffer has been added, which can be browsed with page up,
+    page down, and the #GREP and #BUFFER command.
 
-23) Settings are now inherited from the startup session when creating a new
-session.
+23) !<argument> will repeat the last command starting with that argument.
+    score
+    who all
+    area
+    !          --> repeats area
+    !w         --> repeats who all
+    !s         --> repeats score
+    !ll        --> sends !ll as a command
 
-25) Added internal color codes, see help color
+24) As of version 1.99.0 tintin supports PCRE (Perl Compatible Regular
+    Expressions), see #HELP ACTION for details.
 
-26) MCCP and NAWS support added
+25) As of version 1.99.7 there are several differences in syntax:
 
-28) Scroll back buffer, with scrolling macros, home, pgup, pgdown, end, and
-    a #grep command to search through the buffer added
+    #LOOP {min} {max} {variable} {commands}
 
-29) cursor positioning for split mode has been fixed once and for all hopefully
+    #FOREACH {list} {variable} {commands}
 
-34 !<argument> will repeat the last command starting with that argument.
-   score
-   who all
-   area
-   !          --> repeats area
-   !w         --> repeats who all
-   !s         --> repeats score
-   !ll        --> sends !ll as a command
+    #PARSE {string} {variable} {commands}
 
-35 You can turn on repeat on enter with the #config command
+26) #FORALL has been replaced by #FOREACH and will eventually be removed.
 
+27) The argument lists of #echo and #format are no longer nested. So change:
+    #format {%t:%t} {{%H}{%M}} to #format {%t} {%H} {%M}
+
+28) #replacestring has been renamed to #replace
+
+29) All commands require embedded regular expressions to be used
+    instead of wildcards. See #HELP REGEX for details.
+
+30) Variables can be nested using brackets. Non existant nested variables
+    report 0 if the base variable exists and always report 0 when the name
+    is encapsulated in braces.
+
+    Using & instead of $ will report the index of a variable.
+
+    Using $variable[+1] will report the first nest, and $variable[-1] will
+    report the last nest, $variable[-2] the second last nest, etc.
+
+    To display all nests use $variable[]
+
+    To check if a variable exists use: #if {&{variable}} which will report
+    0 if non existent, and the numeric index of the variable is found.
+
+31) #LIST now works with nested variables. Read #HELP VARIABLE.
+
+32) The #SWITCH, #CASE, #DEFAULT, #FOREACH, #BREAK, #CONTINUE, #ELSE, and
+    #ELSEIF statements have been added and should work more or less as
+    expected.
+
+33) The #regex command now uses the same regular expression syntax as triggers.
+
+34) #if {"%0" == "?test*"} needs to be replaced with #if {"%0" == "%?test%*"}
+    as per the regex syntax documented in #HELP ACTION
+
+35) old lists need to be converted as following:
+    #var {friends} {{Alicia} {Bubba} {Cathie} {Kayla} {Zorro}}
+
+    to
+
+    #var {friends} {{1}{Alicia} {2}{Bubba} {3}{Cathie} {4}{Kayla} {5}{Zorro}}
+
+    or
+
+    #foreach {{Alicia}{Bubba}{Cathie}{Kayla}{Zorro}} {name}
+    {
+        #list friends ins -1 $name
+    }

@@ -9,6 +9,10 @@
  * dgc@uchicago.edu
  */
 
+#ifdef HAVE_SYS_IOCTL_H
+  #include <sys/ioctl.h>
+#endif
+
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>

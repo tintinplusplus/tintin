@@ -119,22 +119,20 @@ DO_COMMAND(do_scan)
 
 DO_COMMAND(do_script)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], *cptr, buffer[BUFFER_SIZE];
-	struct listnode *node;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *cptr, buffer[BUFFER_SIZE], var[BUFFER_SIZE];
 	FILE *script;
+	int index;
 
-	arg = get_arg_in_braces(arg, left, TRUE);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		show_message(ses, LIST_MESSAGE, "#SCRIPT: ONE ARGUMENT REQUIRED.");
 	}
-	else if (*right == 0)
+	else if (*arg2 == 0)
 	{
-		script = popen(left, "r");
+		script = popen(arg1, "r");
 
 		while (fgets(buffer, BUFFER_SIZE - 1, script))
 		{
@@ -152,11 +150,11 @@ DO_COMMAND(do_script)
 	}
 	else
 	{
-		script = popen(right, "r");
+		index = 1;
 
-		internal_variable(ses, "{%s}", left);
+		script = popen(arg2, "r");
 
-		node = searchnode_list(ses->list[LIST_VARIABLE], left);
+		var[0] = 0;
 
 		while (fgets(buffer, BUFFER_SIZE - 1, script))
 		{
@@ -166,8 +164,9 @@ DO_COMMAND(do_script)
 			{
 				*cptr = 0;
 			}
-			array_ins(ses, node, "-1", buffer);
+			cat_sprintf(var, "{%d}{%s}", index++, buffer);
 		}
+		set_nest_node(ses->list[LIST_VARIABLE], arg1, "%s", var);
 
 		pclose(script);
 	}

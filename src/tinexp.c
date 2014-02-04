@@ -32,107 +32,25 @@
 
 #include "tintin.h"
 
-/******************************************************************************
-* Simple regexp that skips vt102 codes and supports the * and ? wildcards     *
-******************************************************************************/
 
 int match(struct session *ses, char *str, char *exp)
 {
 	char expbuf[BUFFER_SIZE], tmpbuf[BUFFER_SIZE];
 
-	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
-	{
-		substitute(ses, exp, tmpbuf, SUB_VAR|SUB_FUN|SUB_ESC);
+	substitute(ses, exp, tmpbuf, SUB_VAR|SUB_FUN);
 
-		sprintf(expbuf, "^%s$", tmpbuf);
+	sprintf(expbuf, "^%s$", tmpbuf);
 
-		return regexp(str, expbuf);
-	}
-	else
-	{
-		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
-
-		return glob(str, expbuf);
-	}
+	return tintin_regexp(NULL, str, expbuf, 0, 0);
 }
 
 int find(struct session *ses, char *str, char *exp)
 {
-	char expbuf[BUFFER_SIZE], tmpbuf[BUFFER_SIZE];
+	char expbuf[BUFFER_SIZE];
 
-	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
-	{
-		strip_vt102_codes(str, tmpbuf);
+	substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
 
-		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN|SUB_ESC);
-
-		return regexp(tmpbuf, expbuf);
-	}
-	else
-	{
-		substitute(ses, exp, tmpbuf, SUB_VAR|SUB_FUN);
-
-		sprintf(expbuf, "*%s*", tmpbuf);
-
-		return glob(str, expbuf);
-	}
-}
-
-int glob(char *str, char *exp)
-{
-	short cnt;
-
-	while (*exp)
-	{
-		while ((cnt = skip_vt102_codes(str)) != 0)
-		{
-			str += cnt;
-		}
-
-#ifdef BIG5
-		if (*exp & 0x80 && *str & 0x80)
-		{
-			if (*++exp != *++str)
-			{
-				return FALSE;
-			}
-			continue;
-		}
-#endif
-
-		switch (*exp)
-		{
-			case '?':
-				if (*str == 0)
-				{
-					return FALSE;
-				}
-				exp++;
-				str++;
-				break;
-
-			case '*':
-				for (cnt = strlen(str) ; cnt >= 0 ; cnt--)
-				{
-					if (glob(&str[cnt], exp + 1))
-					{
-						return TRUE;
-					}
-				}
-				return FALSE;
-
-			case '\\':
-				exp++;
-
-			default:
-				if (*exp++ != *str++)
-				{
-					return FALSE;
-				}
-				break;
-		}
-	}
-	return (*exp == *str);
+	return tintin_regexp(NULL, str, expbuf, 0, 0);
 }
 
 DO_COMMAND(do_regexp)
@@ -144,7 +62,7 @@ DO_COMMAND(do_regexp)
 	arg = get_arg_in_braces(arg, is_true,  1);
 	arg = get_arg_in_braces(arg, is_false, 1);
 
-	if (*right == 0 || *is_true == 0)
+	if (*is_true == 0)
 	{
 		tintin_printf2(ses, "SYNTAX: #REGEXP {string} {expression} {true} {false}.");
 	}
@@ -153,7 +71,7 @@ DO_COMMAND(do_regexp)
 		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
 		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-		if (regexp_compare(NULL, left, right, 0, SUB_CMD))
+		if (tintin_regexp(NULL, left, right, 0, SUB_CMD))
 		{
 			substitute(ses, is_true, is_true, SUB_CMD);
 
@@ -207,7 +125,23 @@ int regexp_compare(pcre *nodepcre, char *str, char *exp, int option, int flag)
 			}
 			break;
 
+		case SUB_CMD + SUB_FIX:
+			for (i = 0 ; i < matches ; i++)
+			{
+				j = gtd->args[i];
+
+				gtd->cmds[j] = refstring(gtd->cmds[j], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+			}
+			break;
+
 		case SUB_ARG:
+			for (i = 0 ; i < matches ; i++)
+			{
+				gtd->vars[i] = refstring(gtd->vars[i], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+			}
+			break;
+
+		case SUB_ARG + SUB_FIX:
 			for (i = 0 ; i < matches ; i++)
 			{
 				j = gtd->args[i];
@@ -233,10 +167,6 @@ pcre *regexp_compile(char *exp, int option)
 	return pcre_compile(exp, option, &error, &i, NULL);
 }
 
-int regexp(char *str, char *exp)
-{
-	return regexp_compare(NULL, str, exp, 0, 0);
-}
 
 /******************************************************************************
 * copy *string into *result, but substitute the various expressions with the  *
@@ -255,7 +185,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 	pti = string;
 	pto = (string == result) ? buffer : result;
 
-	DEL_BIT(flags_neol, SUB_EOL);
+	DEL_BIT(flags_neol, SUB_EOL|SUB_LNF);
 
 	while (TRUE)
 	{
@@ -309,8 +239,10 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				}
 
 			case '$':
-				if (!VERBATIM && HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '$'))
+				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '$'))
 				{
+					int def = FALSE;
+
 					if (pti[1] == '$')
 					{
 						while (pti[1] == '$')
@@ -322,72 +254,34 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						continue;
 					}
 
-					if (pti[1] == DEFAULT_OPEN)
-					{
-						for (ptt = buf, i = 2 ; pti[i] && pti[i] != DEFAULT_CLOSE ; i++)
-						{
-							*ptt++ = pti[i];
-						}
+					pti++;
 
-						if (pti[i] == DEFAULT_CLOSE)
-						{
-							*ptt = 0;
-							substitute(ses, buf, temp, flags_neol);
-						}
-						else
-						{
-							strcpy(temp, "");
-						}
-						i++;
+					if (*pti == DEFAULT_OPEN)
+					{
+						def = TRUE;
+
+						pti = get_arg_in_braces(pti, buf, TRUE);
+
+						substitute(ses, buf, temp, flags_neol);
 					}
-
-					if (isalnum(pti[1]) || pti[1] == '_')
+					else
 					{
-						for (ptt = temp, i = 1 ; isalnum(pti[i]) || pti[i] == '_' ; i++)
+						ptt = temp;
+
+						while (isalnum(*pti) || *pti == '_')
 						{
-							*ptt++ = pti[i];
+							*ptt++ = *pti++;
 						}
 						*ptt = 0;
 					}
 
-					if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) != NULL)
-					{
-						substitute(ses, node->right, pto, flags_neol - SUB_VAR);
+					pti = get_arg_at_brackets(pti, temp + strlen(temp));
 
-						if (pti[1] == DEFAULT_OPEN)
-						{
-							pti += 3 + strlen(buf);
-						}
-						else
-						{
-							pti += 1 + strlen(temp);
-						}
+					get_nest_node(ses->list[LIST_VARIABLE], temp, buf, def);
 
-						if (*pti == '[')
-						{
-							for (ptt = temp, i = 1 ; pti[i] && pti[i] != ']' ; i++)
-							{
-								*ptt++ = pti[i];
-							}
-							*ptt = 0;
+					substitute(ses, buf, pto, flags_neol - SUB_VAR);
 
-							if (pti[i] == ']')
-							{
-								pti += 2 + strlen(temp);
-
-								substitute(ses, temp, temp, SUB_VAR|SUB_FUN);
-
-								get_list_item(ses, node, temp);
-
-								substitute(ses, temp, pto, flags_neol - SUB_VAR);
-							}
-						}
-						pto += strlen(pto);
-					}
-					else
-					{
-						*pto++ = *pti++;
-					}
+					pto += strlen(pto);
 				}
 				else
 				{
@@ -519,7 +413,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			case '@':
-				if (!VERBATIM && HAS_BIT(flags, SUB_FUN))
+				if (HAS_BIT(flags, SUB_FUN))
 				{
 					for (ptt = temp, i = 1 ; isalnum(pti[i]) || pti[i] == '_' ; i++)
 					{
@@ -527,7 +421,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					}
 					*ptt = 0;
 
-					node = searchnode_list(ses->list[LIST_FUNCTION], temp);
+					node = search_node_list(ses->list[LIST_FUNCTION], temp);
 
 					if (node == NULL || pti[i] != DEFAULT_OPEN)
 					{
@@ -679,6 +573,49 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						pti += isdigit(pti[2]) ? 3 : 2;
 					}
 				}
+				else if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '&'))
+				{
+					int def = 0;
+
+					if (pti[1] == '&')
+					{
+						while (pti[1] == '&')
+						{
+							*pto++ = *pti++;
+						}
+						pti++;
+
+						continue;
+					}
+
+
+					pti++;
+
+					if (*pti == DEFAULT_OPEN)
+					{
+						def = TRUE;
+
+						pti = get_arg_in_braces(pti, buf, TRUE);
+
+						substitute(ses, buf, temp, flags_neol);
+					}
+					else
+					{
+						for (ptt = temp ; isalnum(*pti) || *pti == '_' ; i++)
+						{
+							*ptt++ = *pti++;
+						}
+						*ptt = 0;
+					}
+
+					pti = get_arg_at_brackets(pti, temp + strlen(temp));
+
+					get_nest_index(ses->list[LIST_VARIABLE], temp, buf, def);
+
+					substitute(ses, buf, pto, flags_neol - SUB_VAR);
+
+					pto += strlen(pto);
+				}
 				else
 				{
 					*pto++ = *pti++;
@@ -686,7 +623,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			case '\\':
-				if (!VERBATIM && HAS_BIT(flags, SUB_ESC))
+				if (HAS_BIT(flags, SUB_ESC))
 				{
 					pti++;
 
@@ -789,26 +726,23 @@ int check_one_regexp(struct session *ses, struct listnode *node, char *line, cha
 		str = line;
 	}	
 
-	return tintin_regexp(node->regex, str, exp, option);
+	return tintin_regexp(node->regex, str, exp, option, SUB_ARG);
 }
 
 /*
 	Keep synched with tintin_regexp_compile
 */
 
-int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option)
+int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 {
 	char out[BUFFER_SIZE], *pti, *pto;
-	int arg, var;
-
-	arg = var = 1;
+	int arg = 1, var = 1, fix = 0;
 
 	pti = exp;
 	pto = out;
 
 	while (*pti)
 	{
-
 #ifdef BIG5
 		if (*pti & 0x80)
 		{
@@ -858,24 +792,11 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option)
 					case '7':
 					case '8':
 					case '9':
+						fix = SUB_FIX;
 						arg = isdigit(pti[2]) ? (pti[1] - '0') * 10 + (pti[2] - '0') : pti[1] - '0';
 						gtd->args[up(var)] = up(arg);
 						pti += isdigit(pti[2]) ? 3 : 2;
 						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
-						pto += strlen(pto);
-						break;
-
-					case 'w':
-						gtd->args[up(var)] = up(arg);
-						pti += 2;
-						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
-						pto += strlen(pto);
-						break;
-
-					case 'W':
-						gtd->args[up(var)] = up(arg);
-						pti += 2;
-						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 
@@ -893,6 +814,18 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option)
 						pto += strlen(pto);
 						break;
 
+					case 'i':
+						pti += 2;
+						strcpy(pto, "(?i)");
+						pto += strlen(pto);
+						break;
+
+					case 'I':
+						pti += 2;
+						strcpy(pto, "(?-i)");
+						pto += strlen(pto);
+						break;
+
 					case 's':
 						gtd->args[up(var)] = up(arg);
 						pti += 2;
@@ -904,6 +837,20 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option)
 						gtd->args[up(var)] = up(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(\\S*)" : "(\\S*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'w':
+						gtd->args[up(var)] = up(arg);
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'W':
+						gtd->args[up(var)] = up(arg);
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 
@@ -953,7 +900,7 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option)
 	}
 	*pto = 0;
 
-	return regexp_compare(nodepcre, str, out, option, SUB_ARG);
+	return regexp_compare(nodepcre, str, out, option, flag + fix);
 }
 
 pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
@@ -1004,6 +951,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 				*pto++ = ')';
 				break;
 
+			case '&':
 			case '$':
 			case '@':
 				if (pti[1])
@@ -1044,18 +992,6 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 						pto += strlen(pto);
 						break;
 
-					case 'w':
-						pti += 2;
-						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
-						pto += strlen(pto);
-						break;
-
-					case 'W':
-						pti += 2;
-						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
-						pto += strlen(pto);
-						break;
-
 					case 'd':
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "([0-9]*)" : "([0-9]*?)");
@@ -1068,6 +1004,18 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 						pto += strlen(pto);
 						break;
 
+					case 'i':
+						pti += 2;
+						strcpy(pto, "(?i)");
+						pto += strlen(pto);
+						break;
+
+					case 'I':
+						pti += 2;
+						strcpy(pto, "(?-i)");
+						pto += strlen(pto);
+						break;
+
 					case 's':
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(\\s*)" : "(\\s*?)");
@@ -1077,6 +1025,18 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 					case 'S':
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(\\S*)" : "(\\S*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'w':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'W':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 

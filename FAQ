@@ -1,8 +1,8 @@
 This document will hopefully answer most questions regarding tintin++ (tt++).
 
-I'll refer to this version as tintin++ 2.0. Due to heavy modifications, over
+I'll refer to this version as tintin++ 1.9. Due to heavy modifications, over
 50% of the source code, all questions and requests should be addressed on
-the forum at http://tintin.sf.net/bb since I doubt previous tintin++ authors
+the forum at http://tintin.sf.net/board since I doubt previous tintin++ authors
 would know how to go about this version without reading up on over 5000 lines
 of code.
 
@@ -25,17 +25,15 @@ A00) Quite easy, start tintin using ./tt++, to connect to a mud type:
 Q01) What machines does tintin work on?
 
 A01) Pretty much any UNIX machine with a modern compiler as well as Windows
-     and OS X.
+     and Mac OS X.
 
 
 Q02) What version should I use 1.50 or 1.86 or 1.90+ ?
 
-A02) 1.90+ but realise 1.90 is not 100% compatible with scripts from previous
+A02) 1.90+ but realize 1.90 is not 100% compatible with scripts from previous
      tintin versions. 1.86 uses readline which might give trouble installing.
-     1.50 should run on most unix machines.
-
-     Version 1.90 has many extra features and various bug fixes.
-
+     1.50 should run on most unix machines. 1.99 request the zlib and pcre
+     libraries to be installed.
 
 Q06) I can't get tintin compiled still.  Where can I get more help?
 
@@ -52,24 +50,23 @@ A06) You can get help from a couple of places.  The first place to start
 Q07) I can't get tintin compiled, can't you send me a binary of tintin?
 
 A07) There are precompiled versions for Slackware (works on various linux
-     distros), OS X and Win32 available on the website.
+     distros), Mac OS X and Win32 available on the website.
 
 Q08) I would like to help, how can I contribute to tintin?
 
 A08) You can assist people on the message board and give bug reports or
-     suggestions. If you can program you can add new features, though
+     suggestions. If you can program you can write snippets, though
      inclusion in the main branch isn't guaranteed.
 
 Q09) Tintin is so awesome, how can I thank you guys for spending all that time
      to write tintin for free?? :)
 
-A09) Fan mail is always welcomed :)
-
+A09) Fan mail is always welcome :)
 
 Q11) Can I use code from tintin?
 
 A11) Yes, provided that you follow the terms of the license.  The license
-     used for tintin 1.90 and higher is GPL. Older tintin versions are public
+     used for tintin 1.87 and higher is GPL. Older tintin versions are public
      domain which means there are no restrictions.
 
 Q12) I contributed code X, why isn't my name listed in the CREDITS file?
@@ -115,7 +112,7 @@ Q18) How to enable support for chinese muds?
 
 A18  Try: ./configure --enable-big5 to use the big5 encoding.
 
-Q19) I use OS X and ran tintin a few times, now every time I open a terminal
+Q19) I use Mac OS X and ran tintin a few times, now every time I open a terminal
      window, it runs tintin automatically.
 
 A19) You clicked "use settings as default" while running tintin. There's a few

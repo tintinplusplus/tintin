@@ -119,6 +119,8 @@ void reset_hash_table(void)
 	struct str_hash_data *hash_ptr;
 	int hash;
 
+	push_call("reset_hash_table()");
+
 	for (hash = 0 ; hash < MAX_STR_HASH ; hash++)
 	{
 		for (hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
@@ -126,6 +128,8 @@ void reset_hash_table(void)
 			hash_ptr->lines = word_wrap(gtd->ses, (char *) hash_ptr + gtd->str_hash_size, temp, FALSE);
 		}
 	}
+	pop_call();
+	return;
 }
 
 DO_BUFFER(buffer_info)

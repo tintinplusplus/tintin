@@ -31,36 +31,33 @@
 
 DO_COMMAND(do_alias)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	root = ses->list[LIST_ALIAS];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, rank,  FALSE);
-
-	if (*rank == 0)
+	if (*arg3 == 0)
 	{
-		strcpy(rank, "5");
+		strcpy(arg3, "5");
 	}
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_ALIAS);
+		show_list(ses->list[LIST_ALIAS], 0);
 	}
-	else if (*right == 0)
+	else if (*arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_ALIAS) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_ALIAS) == FALSE)
 		{
-			show_message(ses, LIST_ALIAS, "#ALIAS: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_ALIAS, "#ALIAS: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, rank, LIST_ALIAS);
+		update_node_list(ses->list[LIST_ALIAS], arg1, arg2, arg3);
 
-		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASES {%s} @ {%s}.", left, right, rank);
+		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASES {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -97,12 +94,12 @@ int check_all_aliases(struct session *ses, char *input)
 
 	substitute(ses, input, line, SUB_VAR|SUB_FUN);
 
-	for (node = root->update = root->f_node ; node ; node = root->update)
+	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		root->update = node->next;
-
-		if (check_one_regexp(ses, node, line, line, PCRE_ANCHORED))
+		if (check_one_regexp(ses, root->list[root->update], line, line, PCRE_ANCHORED))
 		{
+			node = root->list[root->update];
+
 			i = strlen(node->left);
 
 			if (!strncmp(node->left, line, i))
@@ -126,7 +123,7 @@ int check_all_aliases(struct session *ses, char *input)
 
 			substitute(ses, node->right, tmp, SUB_ARG);
 
-			if (!strncmp(node->left, line, i) && !strcmp(node->right, tmp) && *gtd->vars[0])
+			if (!strncmp(node->left, line, strlen(node->left)) && !strcmp(node->right, tmp) && *gtd->vars[0])
 			{
 				sprintf(input, "%s %s", tmp, gtd->vars[0]);
 			}
@@ -135,7 +132,7 @@ int check_all_aliases(struct session *ses, char *input)
 				sprintf(input, "%s", tmp);
 			}
 
-			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
+			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s} {%s}", node->left, gtd->vars[0]);
 
 			DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 

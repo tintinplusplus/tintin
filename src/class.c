@@ -31,72 +31,72 @@
 
 DO_COMMAND(do_class)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], third[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
 	struct listroot *root;
 	struct listnode *node;
-	int cnt;
+	int i, j;
 
 	root = ses->list[LIST_CLASS];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
-	arg = get_arg_in_braces(arg, third, FALSE);
-	substitute(ses, third, third, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, 0, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg3, 0, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " CLASSES ");
 
-		for (node = root->f_node ; node ; node = node->next)
+		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
+			node = root->list[root->update];
+
 			tintin_printf2(ses, "%-20s %3d %s", node->left, count_class(ses, node), !strcmp(ses->group, node->left) ? "OPEN" : "CLOSED");
 		}
 	}
-	else if (*right == 0)
+	else if (*arg2 == 0)
 	{
-		if (search_node_with_wild(ses, left, LIST_CLASS))
+		if (search_node_list(ses->list[LIST_CLASS], arg1))
 		{
-			tintin_header(ses, " %s ", left);
+			tintin_header(ses, " %s ", arg1);
 
-			for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+			for (i = 0 ; i < LIST_MAX ; i++)
 			{
-				for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+				for (j = 0 ; j < ses->list[i]->used ; j++)
 				{
-					if (!strcmp(node->group, left))
+					if (!strcmp(ses->list[i]->list[j]->group, arg1))
 					{
-						shownode_list(ses, node, cnt);
+						show_node(ses->list[i], node, 0);
 					}
 				}
 			}
 		}
 		else
 		{
-			tintin_printf2(ses, "#CLASS {%s} DOES NOT EXIST.", left);
+			tintin_printf2(ses, "#CLASS {%s} DOES NOT EXIST.", arg1);
 		}
 	}
 	else
 	{
-			
-		for (cnt = 0 ; *class_table[cnt].name ; cnt++)
+		for (i = 0 ; *class_table[i].name ; i++)
 		{
-			if (is_abbrev(right, class_table[cnt].name))
+			if (is_abbrev(arg2, class_table[i].name))
 			{
 				break;
 			}
 		}
 
-		if (*class_table[cnt].name == 0)
+		if (*class_table[i].name == 0)
 		{
-			tintin_printf2(ses, "#SYNTAX: CLASS {name} {OPEN|CLOSE|READ|WRITE|KILL}.", left, capitalize(right));
+			tintin_printf2(ses, "#SYNTAX: CLASS {name} {OPEN|CLOSE|READ|WRITE|KILL}.", arg1, capitalize(arg2));
 		}
 		else
 		{
-			if (!searchnode_list(root, left))
+			if (!search_node_list(ses->list[LIST_CLASS], arg1))
 			{
-				updatenode_list(ses, left, right, third, LIST_CLASS);
+				update_node_list(ses->list[LIST_CLASS], arg1, arg2, arg3);
 			}
-			class_table[cnt].group(ses, left, third);
+			class_table[i].group(ses, arg1, arg3);
 		}
 	}
 	return ses;
@@ -105,8 +105,7 @@ DO_COMMAND(do_class)
 
 int count_class(struct session *ses, struct listnode *group)
 {
-	struct listnode *node;
-	int list, cnt;
+	int list, cnt, index;
 
 	for (cnt = list = 0 ; list < LIST_MAX ; list++)
 	{
@@ -115,9 +114,9 @@ int count_class(struct session *ses, struct listnode *group)
 			continue;
 		}
 
-		for (node = ses->list[list]->f_node ; node ; node = node->next)
+		for (index = 0 ; index < ses->list[list]->used ; index++)
 		{
-			if (!strcmp(node->group, group->left))
+			if (!strcmp(ses->list[list]->list[index]->group, group->left))
 			{
 				cnt++;
 			}
@@ -129,24 +128,23 @@ int count_class(struct session *ses, struct listnode *group)
 
 DO_CLASS(class_open)
 {
-	struct listnode *node;
+	if (!strcmp(ses->group, left))
+	{
+		show_message(ses, LIST_CLASS, "#CLASS {%s} IS ALREADY OPENED.", left);
 
-	node = search_node_with_wild(ses, left, LIST_CLASS);
+	}
+	else
+	{
+		RESTRING(ses->group, left);
 
-	RESTRING(ses->group, left);
-
-	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", left);
-
+		show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", left);
+	}
 	return ses;
 }
 
 
 DO_CLASS(class_close)
 {
-	struct listnode *node;
-
-	node = search_node_with_wild(ses, left, LIST_CLASS);
-
 	if (!strcmp(ses->group, left))
 	{
 		RESTRING(ses->group, "");
@@ -176,9 +174,7 @@ DO_CLASS(class_read)
 DO_CLASS(class_write)
 {
 	FILE *file;
-	char temp[STRING_SIZE];
-	struct listnode *node;
-	int cnt;
+	int list, index;
 
 	if (*right == 0 || (file = fopen(right, "w")) == NULL)
 	{
@@ -189,20 +185,18 @@ DO_CLASS(class_write)
 
 	fprintf(file, "%cCLASS {%s} OPEN\n\n", gtd->tintin_char, left);
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	for (list = 0 ; list < LIST_MAX ; list++)
 	{
-		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_CLASS))
+		if (!HAS_BIT(ses->list[list]->flags, LIST_FLAG_CLASS))
 		{
 			continue;
 		}
 
-		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+		for (index = 0 ; index < ses->list[list]->used ; index++)
 		{
-			if (!strcmp(node->group, left))
+			if (!strcmp(ses->list[list]->list[index]->group, left))
 			{
-				prepare_for_write(cnt, node, temp);
-
-				fputs(temp, file);
+				write_node(ses, list, ses->list[list]->list[index], file);
 			}
 		}
 	}
@@ -218,36 +212,34 @@ DO_CLASS(class_write)
 
 DO_CLASS(class_kill)
 {
-	struct listnode *node, *node_next, *group;
-	int cnt;
+	int type, index, group;
 
-	group = search_node_with_wild(ses, left, LIST_CLASS);
+	group = search_index_list(ses->list[LIST_CLASS], left, NULL);
+
+	for (type = 0 ; type < LIST_MAX ; type++)
+	{
+		if (!HAS_BIT(ses->list[type]->flags, LIST_FLAG_CLASS))
+		{
+			continue;
+		}
+
+		for (index = 0 ; index < ses->list[type]->used ; index++)
+		{
+			if (!strcmp(ses->list[type]->list[index]->group, left))
+			{
+				delete_index_list(ses->list[type], index--);
+			}
+		}
+	}
+
+	delete_index_list(ses->list[LIST_CLASS], group);
 
 	if (!strcmp(ses->group, left))
 	{
 		RESTRING(ses->group, "");
 	}
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_CLASS))
-		{
-			continue;
-		}
-
-		for (node = ses->list[cnt]->f_node ; node ; node = node_next)
-		{
-			node_next = node->next;
-
-			if (!strcmp(node->group, left))
-			{
-				deletenode_list(ses, node, cnt);
-			}
-		}
-	}
-	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLEARED.", left);
-
-	deletenode_list(ses, group, LIST_CLASS);
+	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN KILLED.", left);
 
 	return ses;
 }

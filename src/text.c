@@ -46,13 +46,19 @@ void printline(struct session *ses, char *str, int prompt)
 		return;
 	}
 
+	if (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA))
+	{
+		convert_meta(str, wrapped_str);
+		strcpy(str, wrapped_str);
+	}
+
 	if (HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
 	{
-		word_wrap(ses, str, wrapped_str, FALSE);
+		word_wrap(ses, str, wrapped_str, TRUE);
 	}
 	else
 	{
-		word_wrap(ses, str, wrapped_str, TRUE);
+		strcpy(wrapped_str, str);
 	}
 
 	if (prompt)
@@ -71,60 +77,23 @@ void printline(struct session *ses, char *str, int prompt)
 	Word wrapper, only wraps scrolling region, returns nr of lines - Igor
 */
 
-int word_wrap(struct session *ses, char *textin, char *textout, int convert)
+int word_wrap(struct session *ses, char *textin, char *textout, int display)
 {
 	char *pti, *pto, *lis, *los;
 	int skip = 0, cnt = 0;
+
+	push_call("word_wrap(%s,%p,%p)",ses->name, textin,textout);
 
 	pti = lis = textin;
 	pto = los = textout;
 
 	ses->cur_col = 1;
 
-	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
-	{
-		while (*pti)
-		{
-			switch (*pti)
-			{
-				case ESCAPE:
-					*pto++ = '\\';
-					*pto++ = 'e';
-					break;
-
-				default:
-					if (*pti < 32)
-					{
-						*pto++ = '\\';
-						*pto++ = 'c';
-						*pto++ = 'a' + *pti - 1;
-					}
-					else
-					{
-						*pto++ = *pti;
-					}
-					break;
-			}
-			pti++;
-		}
-		*pto = 0;
-
-		if (convert)
-		{
-			return 0;
-		}
-
-		strcpy(textin, textout);
-
-		pti = lis = textin;
-		pto = los = textout;
-	}
-
 	while (*pti != 0)
 	{
 		if (skip_vt102_codes(pti))
 		{
-			if (interpret_vt102_codes(ses, pti, TRUE))
+			if (display == FALSE || interpret_vt102_codes(ses, pti, TRUE))
 			{
 				for (skip = skip_vt102_codes(pti) ; skip > 0 ; skip--)
 				{
@@ -161,18 +130,21 @@ int word_wrap(struct session *ses, char *textin, char *textout, int convert)
 			cnt++;
 			ses->cur_col = 1;
 
-			if (pto - los > 15 || !SCROLL(ses))
+			if (HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
 			{
-				*pto++ = '\n';
-				los = pto;
-				lis = pti;
-			}
-			else
-			{
-				pto = los;
-				*pto++ = '\n';
-				pti = lis;
-				pti++;
+				if (pto - los > 15 || !SCROLL(ses))
+				{
+					*pto++ = '\n';
+					los = pto;
+					lis = pti;
+				}
+				else
+				{
+					pto = los;
+					*pto++ = '\n';
+					pti = lis;
+					pti++;
+				}
 			}
 		}
 		else
@@ -184,5 +156,6 @@ int word_wrap(struct session *ses, char *textin, char *textout, int convert)
 	}
 	*pto = 0;
 
+	pop_call();
 	return (cnt + 1);
 }

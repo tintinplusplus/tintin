@@ -31,22 +31,19 @@
 
 DO_COMMAND(do_tab)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE];
 
-	root = ses->list[LIST_TAB];
+	sub_arg_in_braces(ses, arg, arg1, 1, SUB_VAR|SUB_FUN);
 
-	get_arg_in_braces(arg, left, TRUE);
-
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_TAB);
+		show_list(ses->list[LIST_TAB], 0);
 	}
 	else
 	{
-		updatenode_list(ses, left, "", "0", LIST_TAB);
+		update_node_list(ses->list[LIST_TAB], arg1, "", "0");
 
-		show_message(ses, LIST_TAB, "#OK. {%s} IS NOW A TAB.", left);
+		show_message(ses, LIST_TAB, "#OK. {%s} IS NOW A TAB.", arg1);
 	}
 	return ses;
 }

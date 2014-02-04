@@ -56,7 +56,7 @@ void process_input(void)
 
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
-		add_line_history(gts, gtd->input_buf);
+		add_line_history(gtd->ses, gtd->input_buf);
 	}
 
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
@@ -118,9 +118,9 @@ void read_line()
 		match = 0;
 		root  = gtd->ses->list[LIST_MACRO];
 
-		for (node = root->f_node ; node ; node = root->update)
+		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
-			root->update = node->next;
+			node = root->list[root->update];
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
@@ -206,6 +206,10 @@ void read_line()
 
 				cursor_check_line("");
 
+				DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
+
+				kill_list(gtd->ses->list[LIST_TABCYCLE]);
+
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 				{
 					cursor_history_find("");
@@ -248,9 +252,9 @@ void read_key(void)
 	
 		root  = gtd->ses->list[LIST_MACRO];
 
-		for (node = root->f_node ; node ; node = root->update)
+		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
-			root->update = node->next;
+			node = root->list[root->update];
 
 			if (!strcmp(gtd->macro_buf, node->pr))
 			{
@@ -349,11 +353,30 @@ void convert_meta(char *input, char *output)
 				pti++;
 				break;
 
+			case '\a':
+				*pto++ = '\\';
+				*pto++ = 'a';
+				pti++;
+				break;
+
+			case '\b':
+				*pto++ = '\\';
+				*pto++ = 'b';
+				pti++;
+				break;
+
+			case '\t':
+				*pto++ = '\\';
+				*pto++ = 't';
+				pti++;
+				break;
+
 			case '\r':
 				*pto++ = '\\';
 				*pto++ = 'r';
 				pti++;
 				break;
+
 			case '\n':
 				*pto++ = *pti++;
 				break;
@@ -363,7 +386,14 @@ void convert_meta(char *input, char *output)
 				{
 					*pto++ = '\\';
 					*pto++ = 'c';
-					*pto++ = 'a' + *pti - 1;
+					if (*pti <= 26)
+					{
+						*pto++ = 'a' + *pti - 1;
+					}
+					else
+					{
+						*pto++ = 'A' + *pti - 1;
+					}
 					pti++;
 					break;
 				}
@@ -406,6 +436,11 @@ void unconvert_meta(char *input, char *output)
 					case 'c':
 						*pto++ = pti[2] % 32;
 						pti += 3;
+						break;
+
+					case 'a':
+						*pto++  = '\a';
+						pti += 2;
 						break;
 
 					case 'b':
@@ -537,4 +572,20 @@ void input_printf(char *format, ...)
 	va_end(args);
 
 	printf("%s", buf);
+}
+
+void modified_input(void)
+{
+	kill_list(gtd->ses->list[LIST_TABCYCLE]);
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
+	}
+
 }

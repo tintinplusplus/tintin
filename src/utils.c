@@ -469,6 +469,8 @@ void tintin_puts2(struct session *ses, char *string)
 {
 	char output[STRING_SIZE];
 
+	push_call("tintin_puts2(%p,%p)",ses,string);
+
 	if (ses == NULL)
 	{
 		ses = gtd->ses;
@@ -476,6 +478,7 @@ void tintin_puts2(struct session *ses, char *string)
 
 	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet)
 	{
+		pop_call();
 		return;
 	}
 
@@ -492,6 +495,7 @@ void tintin_puts2(struct session *ses, char *string)
 
 	if (ses != gtd->ses)
 	{
+		pop_call();
 		return;
 	}
 
@@ -507,6 +511,8 @@ void tintin_puts2(struct session *ses, char *string)
 	{
 		restore_pos(ses);
 	}
+	pop_call();
+	return;
 }
 
 /*

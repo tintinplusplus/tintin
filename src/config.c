@@ -34,7 +34,7 @@ DO_COMMAND(do_configure)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
 	struct listnode *node;
-	int cnt;
+	int index;
 
 	root = ses->list[LIST_CONFIG];
 
@@ -46,27 +46,30 @@ DO_COMMAND(do_configure)
 	{
 		tintin_header(ses, " CONFIGURATIONS ");
 
-		node = root->f_node;
-
-		for (node = root->f_node ; node ; node = node->next)
+		for (index = 0 ; *config_table[index].name != 0 ; index++)
 		{
-			tintin_printf2(ses, "[%-13s] [%8s] %s", 
-				node->left,
-				node->right,
-				strcmp(node->right, "ON") == 0 ? config_table[atoi(node->pr)].msg_on : config_table[atoi(node->pr)].msg_off);
+			node = search_node_list(ses->list[LIST_CONFIG], config_table[index].name);
+
+			if (node)
+			{
+				tintin_printf2(ses, "[%-13s] [%8s] %s", 
+					node->left,
+					node->right,
+					strcmp(node->right, "ON") == 0 ? config_table[index].msg_on : config_table[index].msg_off);
+			}
 		}
 
 		tintin_header(ses, "");
 	}
 	else
 	{
-		for (cnt = 0 ; *config_table[cnt].name != 0 ; cnt++)
+		for (index = 0 ; *config_table[index].name != 0 ; index++)
 		{
-			if (is_abbrev(left, config_table[cnt].name))
+			if (is_abbrev(left, config_table[index].name))
 			{
-				if (config_table[cnt].config(ses, right, cnt) != NULL)
+				if (config_table[index].config(ses, right, index) != NULL)
 				{
-					show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[cnt].name, capitalize(right));
+					show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[index].name, capitalize(right));
 				}
 				return ses;
 			}
@@ -79,8 +82,6 @@ DO_COMMAND(do_configure)
 
 DO_CONFIG(config_speedwalk)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_SPEEDWALK);
@@ -95,9 +96,7 @@ DO_CONFIG(config_speedwalk)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
@@ -105,8 +104,6 @@ DO_CONFIG(config_speedwalk)
 
 DO_CONFIG(config_verbatim)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_VERBATIM);
@@ -121,17 +118,13 @@ DO_CONFIG(config_verbatim)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_repeatenter)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_REPEATENTER);
@@ -146,16 +139,14 @@ DO_CONFIG(config_repeatenter)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_commandcolor)
 {
-	char str[BUFFER_SIZE];
+	char buf[BUFFER_SIZE];
 
 	if (!is_color_code(arg))
 	{
@@ -163,21 +154,17 @@ DO_CONFIG(config_commandcolor)
 
 		return NULL;
 	}
-	substitute(ses, arg, str, SUB_COL);
+	substitute(ses, arg, buf, SUB_COL);
 
-	RESTRING(ses->cmd_color, str);
+	RESTRING(ses->cmd_color, buf);
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
 
 	return ses;
 }
 
 DO_CONFIG(config_commandecho)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_ECHOCOMMAND);
@@ -192,17 +179,13 @@ DO_CONFIG(config_commandecho)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_verbose)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_VERBOSE);
@@ -217,17 +200,13 @@ DO_CONFIG(config_verbose)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_wordwrap)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_WORDWRAP);
@@ -242,17 +221,13 @@ DO_CONFIG(config_wordwrap)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_log)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "HTML"))
 	{
 		DEL_BIT(ses->flags, SES_FLAG_LOGPLAIN);
@@ -274,17 +249,13 @@ DO_CONFIG(config_log)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_buffersize)
 {
-	char str[BUFFER_SIZE];
-
 	if (!is_number(arg))
 	{
 		tintin_printf(ses, "#SYNTAX: #CONFIG {BUFFER SIZE} <NUMBER>");
@@ -301,17 +272,13 @@ DO_CONFIG(config_buffersize)
 
 	init_buffer(ses, atoi(arg));
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_scrolllock)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_SCROLLLOCK);
@@ -326,17 +293,13 @@ DO_CONFIG(config_scrolllock)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_connectretry)
 {
-	char str[BUFFER_SIZE];
-
 	if (!is_number(arg))
 	{
 		tintin_printf(ses, "#SYNTAX: #CONFIG {CONNECT RETRY} <NUMBER>");
@@ -346,17 +309,13 @@ DO_CONFIG(config_connectretry)
 
 	gts->connect_retry = atoll(arg) * 1000000LL;
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_packetpatch)
 {
-	char str[BUFFER_SIZE];
-
 	if (!is_number(arg))
 	{
 		tintin_printf(ses, "#SYNTAX: #CONFIG {PACKET PATCH} <NUMBER>");
@@ -364,7 +323,7 @@ DO_CONFIG(config_packetpatch)
 		return NULL;
 	}
 
-	if (atof(arg) < 0 || atoi(arg) > 10)
+	if (atof(arg) < 0 || atof(arg) > 10)
 	{
 		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0.00 and 10.00");
 
@@ -373,9 +332,7 @@ DO_CONFIG(config_packetpatch)
 
 	gts->check_output = (long long) (get_number(ses, arg) * 1000000LL);
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
@@ -383,8 +340,6 @@ DO_CONFIG(config_packetpatch)
 
 DO_CONFIG(config_historysize)
 {
-	char str[BUFFER_SIZE];
-
 	if (!is_number(arg))
 	{
 		tintin_printf(ses, "#SYNTAX: #CONFIG {HISTORY SIZE} <NUMBER>");
@@ -399,56 +354,40 @@ DO_CONFIG(config_historysize)
 
 	gtd->history_size = atoi(arg);
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_tintinchar)
 {
-	char str[BUFFER_SIZE];
-
 	gtd->tintin_char = arg[0];
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
 
 	return ses;
 }
 
 DO_CONFIG(config_verbatimchar)
 {
-	char str[BUFFER_SIZE];
-
 	gtd->verbatim_char = arg[0];
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
 
 	return ses;
 }
 
 DO_CONFIG(config_repeatchar)
 {
-	char str[BUFFER_SIZE];
-
 	gtd->repeat_char = arg[0];
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
 
 	return ses;
 }
 
 DO_CONFIG(config_debugtelnet)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->telopts, TELOPT_FLAG_DEBUG);
@@ -463,17 +402,13 @@ DO_CONFIG(config_debugtelnet)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_convertmeta)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_CONVERTMETA);
@@ -488,17 +423,13 @@ DO_CONFIG(config_convertmeta)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_loglevel)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "LOW"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_LOGLEVEL);
@@ -513,17 +444,13 @@ DO_CONFIG(config_loglevel)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_colorpatch)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_COLORPATCH);
@@ -538,42 +465,13 @@ DO_CONFIG(config_colorpatch)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
-
-	return ses;
-}
-
-DO_CONFIG(config_regexp)
-{
-	char str[BUFFER_SIZE];
-
-	if (!strcasecmp(arg, "ON"))
-	{
-		SET_BIT(ses->flags, SES_FLAG_REGEXP);
-	}
-	else if (!strcasecmp(arg, "OFF"))
-	{
-		DEL_BIT(ses->flags, SES_FLAG_REGEXP);
-	}
-	else
-	{
-		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
-
-		return NULL;
-	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_mccp)
 {
-	char str[BUFFER_SIZE];
-
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_MCCP);
@@ -588,17 +486,13 @@ DO_CONFIG(config_mccp)
 
 		return NULL;
 	}
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }
 
 DO_CONFIG(config_autotab)
 {
-	char str[BUFFER_SIZE];
-
 	if (!is_number(arg))
 	{
 		tintin_printf(ses, "#SYNTAX: #CONFIG {AUTO TAB} <NUMBER>");
@@ -615,9 +509,7 @@ DO_CONFIG(config_autotab)
 
 	ses->auto_tab = atoi(arg);
 
-	sprintf(str, "%d", index);
-
-	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }

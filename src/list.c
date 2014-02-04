@@ -1,0 +1,374 @@
+/******************************************************************************
+*   TinTin++                                                                  *
+*   Copyright (C) 2005 (See CREDITS file)                                     *
+*                                                                             *
+*   This program is protected under the GNU GPL (See COPYING)                 *
+*                                                                             *
+*   This program is free software; you can redistribute it and/or modify      *
+*   it under the terms of the GNU General Public License as published by      *
+*   the Free Software Foundation; either version 2 of the License, or         *
+*   (at your option) any later version.                                       *
+*                                                                             *
+*   This program is distributed in the hope that it will be useful,           *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+*   GNU General Public License for more details.                              *
+*                                                                             *
+*   You should have received a copy of the GNU General Public License         *
+*   along with this program; if not, write to the Free Software               *
+*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*******************************************************************************/
+
+/******************************************************************************
+*   file: list.c - pseudo array support                                       *
+*                                                                             *
+*               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
+*                                                                             *
+*                     coded by Igor van den Hoven 2004                        *
+******************************************************************************/
+
+
+#include "tintin.h"
+
+
+DO_COMMAND(do_list)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	struct listroot *root;
+	struct listnode *node;
+	int cnt;
+
+	root = ses->list[LIST_VARIABLE];
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+
+	if (*arg1 == 0 || *arg2 == 0)
+	{
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} {ADD|CLE|CRE|DEL|FIN|GET|INS|SET|SIZ|SOR} {argument}");
+	}
+	else
+	{
+		for (cnt = 0 ; *array_table[cnt].name ; cnt++)
+		{
+			if (is_abbrev(arg2, array_table[cnt].name))
+			{
+				break;
+			}
+		}
+
+		if (*array_table[cnt].name == 0)
+		{
+			return do_list(ses, "");
+		}
+		else
+		{
+			if ((node = search_nest_node(root, arg1)) == NULL)
+			{
+				node = set_nest_node(root, arg1, "");
+			}
+			array_table[cnt].array(ses, node, arg);
+		}
+	}
+	return ses;
+}
+
+DO_ARRAY(array_add)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int index;
+
+	if (!list->root)
+	{
+		list->root = init_list(ses, LIST_VARIABLE, LIST_SIZE);
+	}
+
+	index = list->root->used + 1;
+
+	while (*arg)
+	{
+		sprintf(arg1, "%d", index++);
+
+		arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+
+		insert_node_list(list->root, arg1, arg2, "");
+	}
+	return ses;
+}
+
+DO_ARRAY(array_clear)
+{
+	if (list->root)
+	{
+		free_list(list->root);
+
+		list->root = NULL;
+	}
+	set_nest_node(ses->list[LIST_VARIABLE], list->left, "");
+
+	return ses;
+}
+
+DO_ARRAY(array_create)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int index = 1;
+
+	if (list->root)
+	{
+		free_list(list->root);
+	}
+
+	list->root = init_list(ses, LIST_VARIABLE, LIST_SIZE);
+
+	while (*arg)
+	{
+		sprintf(arg1, "%d", index++);
+
+		arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+
+		insert_node_list(list->root, arg1, arg2, "");
+	}
+	return ses;
+}
+
+DO_ARRAY(array_delete)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int index, cnt, loop;
+
+	if (list->root)
+	{
+		arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+		arg = get_arg_in_braces(arg, arg2, GET_ALL);
+
+		loop = *arg2 ? (int) get_number(ses, arg2) : 1;
+
+		while (loop--)
+		{
+			index = search_nest_index(list->root, arg1);
+
+			if (atoi(arg1) == 0 || index == -1)
+			{
+				tintin_printf2(ses, "#LIST DEL: Invalid index: %s", arg1);
+
+				return ses;
+			}
+
+			for (cnt = index + 1 ; cnt < list->root->used ; cnt++)
+			{
+				list->root->list[cnt]->left = refstring(list->root->list[cnt]->left, "%d", cnt);
+			}
+
+			delete_index_list(list->root, index);
+		}
+	}
+	else
+	{
+		show_message(ses, LIST_VARIABLE, "#LIST DEL: {%s} is not a list.", list->left);
+	}
+	return ses;
+}
+
+DO_ARRAY(array_find)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int cnt, index;
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (*arg2 == 0)
+	{
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST FIND {string} {variable}");
+		return ses;
+	}
+
+	if (list->root)
+	{
+		for (cnt = 0 ; cnt < list->root->used ; cnt++)
+		{
+			if (match(ses, list->root->list[cnt]->right, arg1))
+			{
+				index = cnt;
+				break;
+			}
+		}
+		if (cnt < list->root->used)
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%d", index + 1);
+		}
+		else
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "0");
+		}
+		return ses;
+	}
+	else
+	{
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "0");
+	}
+
+	return ses;
+}
+
+DO_ARRAY(array_get)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (*arg2 == 0)
+	{
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST GET {index} {variable}");
+		return ses;
+	}
+
+	if (list->root)
+	{
+		int index = search_nest_index(list->root, arg1);
+
+		if (atoi(arg1) == 0 || index == -1)
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "0");
+		}
+		else
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", list->root->list[index]->right);
+		}
+		return ses;
+	}
+	else
+	{
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "0");
+	}
+
+	return ses;
+}
+
+DO_ARRAY(array_insert)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int cnt, index;
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (!list->root)
+	{
+		list->root = init_list(ses, LIST_VARIABLE, LIST_SIZE);
+	}
+
+	index = search_nest_index(list->root, arg1);
+
+	if (atoi(arg1) == 0)
+	{
+		tintin_printf2(ses, "#LIST INS: Invalid index: %s", arg1);
+
+		return ses;
+	}
+
+	if (index == -1 || atoi(arg1) < 0)
+	{
+		index++;
+	}
+
+	for (cnt = index ; cnt < list->root->used ; cnt++)
+	{
+		list->root->list[cnt]->left = refstring(list->root->list[cnt]->left, "%d", cnt + 2);
+	}
+
+	sprintf(arg1, "%d", index + 1);
+
+	insert_node_list(list->root, arg1, arg2, "");
+
+	return ses;
+}
+
+DO_ARRAY(array_size)
+{
+	char arg1[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (*arg1 == 0)
+	{
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST SIZE {index} {variable}");
+		return ses;
+	}
+
+	if (list->root)
+	{
+		set_nest_node(ses->list[LIST_VARIABLE], arg1, "%d", list->root->used);
+
+		return ses;
+	}
+	set_nest_node(ses->list[LIST_VARIABLE], arg1, "0");
+
+	return ses;
+}
+
+DO_ARRAY(array_set)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (list->root)
+	{
+		int index = search_nest_index(list->root, arg1);
+
+		if (atoi(arg1) == 0 || index == -1)
+		{
+			tintin_printf2(ses, "#LIST SET: Invalid index: %s", arg1);
+
+			return ses;
+		}
+
+		RESTRING(list->root->list[index]->right, arg2);
+
+		return ses;
+	}
+
+	show_message(ses, LIST_VARIABLE, "#LIST SET: {%s} is not a list.", list->left);
+
+	return ses;
+}
+
+DO_ARRAY(array_sort)
+{
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int cnt;
+
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (!list->root)
+	{
+		list->root = init_list(ses, LIST_VARIABLE, LIST_SIZE);
+	}
+
+	for (cnt = 0 ; cnt < list->root->used ; cnt++)
+	{
+		if (strcmp(arg2, list->root->list[cnt]->right) <= 0)
+		{
+			break;
+		}
+	}
+
+	sprintf(arg1, "%d", cnt + 1);
+
+	if (cnt == list->root->used)
+	{
+		sprintf(arg1, "{%d} {%s}", -1, arg2);
+	}
+	else
+	{
+		sprintf(arg1, "{%d} {%s}", cnt + 1, arg2);
+	}
+
+	array_insert(ses, list, arg1);
+
+	return ses;
+}

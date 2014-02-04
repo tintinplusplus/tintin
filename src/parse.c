@@ -41,6 +41,27 @@ struct session *parse_input(struct session *ses, char *input)
 		return ses;
 	}
 
+	if (VERBATIM)
+	{
+		line = (char *) malloc(BUFFER_SIZE);
+
+		strcpy(line, input);
+
+		if (check_all_aliases(ses, line))
+		{
+			ses = script_driver(ses, LIST_ALIAS, line);
+		}
+		else
+		{
+			write_mud(ses, line, SUB_EOL);
+		}
+
+		free(line);
+
+		pop_call();
+		return ses;
+	}
+
 	if (*input == gtd->verbatim_char)
 	{
 		write_mud(ses, input+1, SUB_EOL);
@@ -53,6 +74,8 @@ struct session *parse_input(struct session *ses, char *input)
 
 	while (*input)
 	{
+		input = space_out(input);
+
 		input = get_arg_all(input, line);
 
 		if (parse_command(ses, line))
@@ -94,7 +117,7 @@ struct session *parse_command(struct session *ses, char *input)
 
 	push_call("parse_command(%p,%p)",ses,input);
 
-	arg = get_arg_stop_spaces(input, cmd1);
+	arg = get_arg_stop_spaces(input, cmd1, 0);
 
 	substitute(ses, cmd1, cmd2, SUB_VAR|SUB_FUN);
 
@@ -196,7 +219,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	char line[BUFFER_SIZE];
 	struct session *sesptr;
 
-	input = get_arg_stop_spaces(input, line);
+	input = get_arg_stop_spaces(input, line, 0);
 
 	substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
@@ -250,7 +273,7 @@ char *get_arg_all(char *string, char *result)
 	char *pto, *pti;
 	int nest = 0;
 
-	pti = space_out(string);
+	pti = string;
 	pto = result;
 
 	if (*pti == gtd->verbatim_char)
@@ -316,13 +339,13 @@ char *get_arg_in_braces(char *string, char *result, int flag)
 
 	if (*pti != DEFAULT_OPEN)
 	{
-		if (flag == FALSE)
+		if (!HAS_BIT(flag, GET_ALL))
 		{
-			pti = get_arg_stop_spaces(pti, result);
+			pti = get_arg_stop_spaces(pti, result, flag);
 		}
 		else
 		{
-			pti = get_arg_with_spaces(pti, result);
+			pti = get_arg_with_spaces(pti, result, flag);
 		}
 		return pti;
 	}
@@ -373,12 +396,22 @@ char *get_arg_in_braces(char *string, char *result, int flag)
 	return pti;
 }
 
+char *sub_arg_in_braces(struct session *ses, char *string, char *result, int flag, int sub)
+{
+	char buffer[BUFFER_SIZE];
+
+	string = get_arg_in_braces(string, buffer, flag);
+
+	substitute(ses, buffer, result, sub);
+
+	return string;
+}
 
 /*
 	get all arguments
 */
 
-char *get_arg_with_spaces(char *string, char *result)
+char *get_arg_with_spaces(char *string, char *result, int flag)
 {
 	char *pto, *pti;
 	int nest = 0;
@@ -404,7 +437,7 @@ char *get_arg_with_spaces(char *string, char *result)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !VERBATIM)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
 		{
 			break;
 		}
@@ -427,7 +460,7 @@ char *get_arg_with_spaces(char *string, char *result)
 	get one arg, stop at spaces
 */
 
-char *get_arg_stop_spaces(char *string, char *result)
+char *get_arg_stop_spaces(char *string, char *result, int flag)
 {
 	char *pto, *pti;
 	int nest = 0;
@@ -454,7 +487,7 @@ char *get_arg_stop_spaces(char *string, char *result)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !VERBATIM)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
 		{
 			break;
 		}
@@ -467,7 +500,15 @@ char *get_arg_stop_spaces(char *string, char *result)
 		{
 			nest++;
 		}
+		else if (*pti == '[' && HAS_BIT(flag, GET_NST))
+		{
+			nest++;
+		}
 		else if (*pti == DEFAULT_CLOSE)
+		{
+			nest--;
+		}
+		else if (*pti == ']' && HAS_BIT(flag, GET_NST))
 		{
 			nest--;
 		}
@@ -492,6 +533,165 @@ char *space_out(char *string)
 }
 
 /*
+	For list handling
+*/
+
+char *get_arg_to_brackets(char *string, char *result)
+{
+	char *pti, *pto;
+
+	pti = space_out(string);
+	pto = result;
+
+	while (*pti)
+	{
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+
+			if (*pti)
+			{
+				*pto++ = *pti++;
+			}
+			continue;
+		}
+#endif
+
+		if (*pti == '[')
+		{
+			break;
+		}
+		*pto++ = *pti++;
+	}
+	*pto = 0;
+
+	return pti;
+}
+
+char *get_arg_at_brackets(char *string, char *result)
+{
+	char *pti, *pto;
+	int nest = 0;
+
+	pti = string;
+	pto = result;
+
+	if (*pti != '[')
+	{
+		*pto = 0;
+
+		return pti;
+	}
+
+	while (*pti)
+	{
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+
+			if (*pti)
+			{
+				*pto++ = *pti++;
+			}
+			continue;
+		}
+#endif
+
+		if (*pti == '[')
+		{
+			nest++;
+		}
+		else if (*pti == ']')
+		{
+			if (nest)
+			{
+				nest--;
+			}
+			else
+			{
+				break;
+			}
+		}
+		else if (nest == 0)
+		{
+			break;
+		}
+		*pto++ = *pti++;
+	}
+
+	if (nest)
+	{
+		tintin_printf2(NULL, "#UNMATCHED AT BRACKETS ERROR.");
+	}
+	*pto = 0;
+
+	return pti;
+}
+
+char *get_arg_in_brackets(char *string, char *result)
+{
+	char *pti, *pto;
+	int nest = 1;
+
+	pti = string;
+	pto = result;
+
+	if (*pti != '[')
+	{
+		*pto = 0;
+
+		return pti;
+	}
+
+	pti++;
+
+	while (*pti)
+	{
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+
+			if (*pti)
+			{
+				*pto++ = *pti++;
+			}
+			continue;
+		}
+#endif
+
+		if (*pti == '[')
+		{
+			nest++;
+		}
+		else if (*pti == ']')
+		{
+			nest--;
+
+			if (nest == 0)
+			{
+				break;
+			}
+		}
+		*pto++ = *pti++;
+	}
+
+	if (*pti == 0)
+	{
+		tintin_printf2(NULL, "#UNMATCHED IN BRACKETS ERROR.");
+	}
+	else
+	{
+		pti++;
+	}
+	*pto = 0;
+
+	return pti;
+}
+
+/*
 	send command+argument to the mud
 */
 
@@ -499,6 +699,10 @@ void write_mud(struct session *ses, char *command, int flags)
 {
 	char output[BUFFER_SIZE];
 	int size;
+
+	size = substitute(ses, command, output, flags);
+
+	write_line_mud(ses, output, size);
 
 	if (ses->map && ses->map->in_room)
 	{
@@ -510,9 +714,6 @@ void write_mud(struct session *ses, char *command, int flags)
 		check_insert_path(command, ses);
 	}
 
-	size = substitute(ses, command, output, flags);
-
-	write_line_mud(ses, output, size);
 }
 
 

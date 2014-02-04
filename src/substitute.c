@@ -30,36 +30,33 @@
 
 DO_COMMAND(do_substitute)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE], *str;
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], *str;
 
-	root = ses->list[LIST_SUBSTITUTE];
+	str = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(str, arg2, 1);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
-	str = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(str, right, 1);
-	arg = get_arg_in_braces(arg, rank,  1);
-
-	if (*rank == 0)
+	if (*arg3 == 0)
 	{
-		strcpy(rank, "5");
+		strcpy(arg3, "5");
 	}
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_SUBSTITUTE);
+		show_list(ses->list[LIST_SUBSTITUTE], 0);
 	}
 	else if (*str == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_SUBSTITUTE) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_SUBSTITUTE) == FALSE)
 		{
-			show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, rank, LIST_SUBSTITUTE);
+		update_node_list(ses->list[LIST_SUBSTITUTE], arg1, arg2, arg3);
 
-		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", left, right, rank);
+		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -74,13 +71,16 @@ DO_COMMAND(do_unsubstitute)
 
 void check_all_substitutions(struct session *ses, char *original, char *line)
 {
-	struct listnode *node;
 	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *pt1, *pt2, *ptm;
+	struct listroot *root = ses->list[LIST_SUBSTITUTE];
+	struct listnode *node;
 
-	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
+	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, node, line, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
+			node = root->list[root->update];
+
 			pt1 = line;
 			pt2 = original;
 

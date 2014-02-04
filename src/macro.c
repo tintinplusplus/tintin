@@ -30,32 +30,29 @@
 
 DO_COMMAND(do_macro)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	root = ses->list[LIST_MACRO];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg2, 1);
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_MACRO);
+		show_list(ses->list[LIST_MACRO], 0);
 	}
-	else if (*left && *right == 0)
+	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_MACRO) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_MACRO) == FALSE)
 		{
-			show_message(ses, LIST_MACRO, "#MACRO: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_MACRO, "#MACRO: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		unconvert_meta(left, buf);
+		unconvert_meta(arg1, arg3);
 
-		updatenode_list(ses, left, right, buf, LIST_MACRO);
+		update_node_list(ses->list[LIST_MACRO], arg1, arg2, arg3);
 
-		show_message(ses, LIST_MACRO, "#OK. MACRO {%s} HAS BEEN SET TO {%s}.", left, right);
+		show_message(ses, LIST_MACRO, "#OK. MACRO {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
 	}
 	return ses;
 }

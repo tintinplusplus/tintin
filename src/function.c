@@ -31,39 +31,28 @@
 
 DO_COMMAND(do_function)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	char *pti;
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	root = ses->list[LIST_FUNCTION];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg2, 1);
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_FUNCTION);
+		show_list(ses->list[LIST_FUNCTION], 42);
 	}
 
-	else if (*left && !*right)
+	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_FUNCTION) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_FUNCTION) == FALSE)
 		{
-			show_message(ses, LIST_FUNCTION, "#FUNCTION: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_FUNCTION, "#FUNCTION: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		for (pti = left ; *pti ; pti++)
-		{
-			if (!isalnum(*pti) && *pti != '_')
-			{
-				tintin_printf2(ses, "#ERROR, {%s} IS NOT A VALID FUNCTION NAME.", left);
-			}
-		}
-		updatenode_list(ses, left, right, "0", LIST_FUNCTION);
+		update_node_list(ses->list[LIST_FUNCTION], arg1, arg2, "");
 
-		show_message(ses, LIST_FUNCTION, "#OK. FUNCTION {%s} HAS BEEN SET TO {%s}.", left, right);
+		show_message(ses, LIST_FUNCTION, "#OK. FUNCTION {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
 	}
 	return ses;
 }

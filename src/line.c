@@ -29,12 +29,10 @@
 
 DO_COMMAND(do_line)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char left[BUFFER_SIZE];
 	int cnt;
 
 	arg = get_arg_in_braces(arg, left, FALSE);
-
-	substitute(ses, arg, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -56,7 +54,7 @@ DO_COMMAND(do_line)
 		}
 		else
 		{
-			line_table[cnt].fun(ses, right);
+			line_table[cnt].fun(ses, arg);
 		}
 	}
 	return ses;
@@ -71,7 +69,9 @@ DO_LINE(line_log)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, left, 0);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+
 	arg = get_arg_in_braces(arg, right, 1);
 
 	if (ses->logline)
@@ -90,7 +90,7 @@ DO_LINE(line_log)
 
 		if (*right)
 		{
-			substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_LNF);
+			substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_VAR|SUB_FUN|SUB_LNF);
 
 			logit(ses, right, ses->logline, FALSE);
 
@@ -104,11 +104,13 @@ DO_LINE(line_log)
 	}
 }
 
-DO_LINE(line_lograw)
+DO_LINE(line_logverbatim)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left,  0);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+
 	arg = get_arg_in_braces(arg, right, 1);
 
 	if (ses->logline)
@@ -137,6 +139,7 @@ DO_LINE(line_lograw)
 	}
 	else
 	{
-		tintin_printf(ses, "#ERROR: #LINE LOGRAW {%s} - COULDN'T OPEN FILE.", left);
+		tintin_printf(ses, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
 	}
 }
+

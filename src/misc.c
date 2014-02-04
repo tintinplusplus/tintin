@@ -103,20 +103,32 @@ DO_COMMAND(do_cr)
 
 DO_COMMAND(do_echo)
 {
-	char temp[BUFFER_SIZE], output[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], output[BUFFER_SIZE], left[BUFFER_SIZE];
 	int lnf;
 
 	sprintf(temp, "result %s", arg);
 
-	internal_variable(ses, "{result}");
+	set_nest_node(ses->list[LIST_VARIABLE], "result", "");
 
 	do_format(ses, temp);
 
 	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN|SUB_COL);
 
-	lnf = !str_suffix(temp, "\\");
+	arg = temp;
 
-	substitute(ses, temp, temp, SUB_ESC);
+	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, temp, TRUE);
+
+	if (*temp)
+	{
+		do_one_prompt(ses, left, (int) get_number(ses, temp));
+
+		return ses;
+	}
+
+	lnf = !str_suffix(left, "\\");
+
+	substitute(ses, left, temp, SUB_ESC);
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
@@ -195,15 +207,6 @@ DO_COMMAND(do_forall)
 	return ses;
 }
 
-DO_COMMAND(do_gagline)
-{
-	tintin_printf2(ses, "#GAGLINE: Old command, please use #LINE GAG instead.");
-
-	SET_BIT(ses->flags, SES_FLAG_GAG);
-
-	return ses;
-}
-
 
 DO_COMMAND(do_info)
 {
@@ -233,7 +236,7 @@ DO_COMMAND(do_info)
 		}
 		tintin_printf2(ses, "%-20s  %5d  IGNORE %3s  MESSAGE %3s  DEBUG %3s",
 			list_table[cnt].name_multi,
-			ses->list[cnt]->count,
+			ses->list[cnt]->used,
 			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF",
 			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF",
 			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ? "ON" : "OFF");
@@ -242,54 +245,6 @@ DO_COMMAND(do_info)
 
 	return ses;
 }
-
-
-DO_COMMAND(do_loop)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], command[BUFFER_SIZE];
-
-	long long bound1, bound2, counter, step;
-
-	arg = get_arg_in_braces(arg, temp,    0);
-	arg = get_arg_in_braces(arg, command, 1);
-
-	arg = get_arg_in_braces(temp, left, 0);
-	arg = get_arg_in_braces(arg, right, 0);
-
-
-	if (*command == 0 || *right == 0)
-	{
-		show_message(ses, LIST_MATH, "#LOOP: INVALID ARGUMENTS.");
-
-		return ses;
-	}
-
-	bound1 = (long long) get_number(ses, left);
-	bound2 = (long long) get_number(ses, right);
-
-	if (bound1 <= bound2)
-	{
-		step = 1;
-		bound2++;
-	}
-	else
-	{
-		step = -1;
-		bound2--;
-	}
-
-	for (counter = bound1 ; counter != bound2 ; counter += step)
-	{
-		gtd->cmds[0] = refstring(gtd->cmds[0], "%lld", counter);
-
-		substitute(ses, command, temp, SUB_CMD);
-
-		ses = script_driver(ses, -1, temp);
-	}
-
-	return ses;
-}
-
 
 
 DO_COMMAND(do_nop)
@@ -342,15 +297,6 @@ DO_COMMAND(do_parse)
 }
 
 
-DO_COMMAND(do_return)
-{
-	if (*arg)
-	{
-		internal_variable(ses, "{result} %s", arg);
-	}
-	return ses;
-}
-
 DO_COMMAND(do_send)
 {
 	char left[BUFFER_SIZE];
@@ -371,7 +317,9 @@ DO_COMMAND(do_showme)
 	int lnf;
 
 	arg = get_arg_in_braces(arg, left, TRUE);
+
 	lnf = !str_suffix(left, "\\");
+
 	substitute(ses, left, temp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
 	arg = get_arg_in_braces(arg, right, FALSE);
@@ -388,7 +336,7 @@ DO_COMMAND(do_showme)
 
 	if (*right)
 	{
-		do_one_prompt(ses, temp, atoi(right));
+		do_one_prompt(ses, temp, (int) get_number(ses, right));
 
 		return ses;
 	}
@@ -475,24 +423,16 @@ DO_COMMAND(do_suspend)
 }
 
 
-DO_COMMAND(do_while)
+DO_COMMAND(do_test)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char buf[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	strcpy(buf, get_alnum(ses, arg));
 
-	if (*left == 0 || *right == 0)
-	{
-		show_message(ses, LIST_MATH, "#SYNTAX: WHILE {CONDITION} {COMMANDS}");
+	tintin_printf2(ses, "is_number: %d", is_number(buf));
 
-		return ses;
-	}
+	tintin_printf2(ses, "%s", get_alnum(ses, buf));
 
-	while (get_number(ses, left))
-	{
-		ses = script_driver(ses, -1, right);
-	}
 	return ses;
 }
 

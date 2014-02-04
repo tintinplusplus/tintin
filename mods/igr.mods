@@ -1,3 +1,99 @@
+Jul 2009       1.99.7
+
+mapper.c       Added #map color <rooms|exits> <color> option.
+
+mapper.c       #map list uses all location fields now, displays distance, and
+               no longer displays exits.
+
+mapper.c       Added desc, area, and note field to rooms.
+
+mapper.c       Added checking for exits as well as desc, area, and note for
+               the map goto and map find commands.
+
+tokenize.c     Substituting the arguments of #return.
+
+nest.c         $variable[] returns "" if the variable exists but has no nests
+
+*.c            Updated triggers to substitute variables.
+
+tinexp.c       Added %i and %I to toggle case in-sensitive matching.
+
+misc.c         Added #echo {{spam}{row}} support.
+
+parse.c        Yet another attempt to get verbatim mode working properly.
+
+variable.c     Renamed #replacestring to #replace
+
+tinexp.c       All commands now use tintin regular expressions. Instead of
+               * and ? use %* and %? - for perfect matches uses ^string$.
+
+               This change affects the #regexp and #if commands.
+
+tokenize.c     Added #write support for #loop and #foreach.
+
+tokenize.c     Added #foreach {list} {variable} {commands}
+
+tokenize.c     #loop syntax is now: #loop {min} {max} {variable} {commands}
+
+variables.c    The argument list of #format and #echo are no longer nested,
+               this probably requires many scripts to be updated.
+
+nest.c         Now only showing non existing nested variables as 0, unnested
+               variables will be shown as $variable if they do not exist.
+
+files.c        Added support for saving nested variables.
+
+list.c         Updated list support for nested variables.
+
+data.c         The kill command now takes a 2nd argument allowing to kill
+               specific items in the chosen list.
+
+nest.c         Added support for math within brackets.
+
+math.c         Added get_alnum routine.
+
+nest.c         Added support for $variable[] showing all indices.
+
+nest.c         Added support for $variable showing all nested variables.
+
+nest.c         Can now assign nested variables directly nested pairs of braces.
+
+nest.c         Added support for &variable reporting the variable's index.
+
+tokenize.c     Added #else command.
+
+parse.c        brackets now provide nesting so #var bla[bli bli] x will
+               execute as #var {bla[bli bli]} instead of #var {bla[bli}
+
+data.c         Accessing an variable index now requires +1 instead of 1.
+
+map.c          Added MAP EXIT ROOM event.
+
+tokenize.c     Added #switch #case and #default commands.
+
+math.c         Fixed crash bug with #math.
+
+list.c         Added list srt and ins support for nested list variables.
+
+data.c         Sorting numeric variables as integers instead of as strings.
+
+text.c         Fixed crash bug in wordwrap code.
+
+net.c          Fixed double action triggering on prompts in split mode.
+
+variables.c    $1 now references the first variable, $2 the second, etc.
+
+variable.c     Uninitialized variables now return 0.
+
+data.c         Added nested variables. As in #var $bla[this][that] 1
+
+data.c         Changing from linked lists to sorted arrays.
+
+cursor.c       Replaced #cursor echo with 'echo on' and 'echo off'
+
+cursor.c       Modifying the input buffer while tabbing will reset the
+               tab finder.
+
 May 2009       1.99.6
 
 cursor.c       Added forward and backward tab completion patch by Ben Love.
@@ -31,7 +127,7 @@ terminal.c     Disabled default ctrl-s and ctrl-q behavior.
 
 March 2009     1.99.3
 
-llist.c        Now properly inheriting triggers from the startup session.
+data.c         Now properly inheriting triggers from the startup session.
 
 net.c          Now fetching IP address when connecting to a server.
 
@@ -226,7 +322,7 @@ August 2008    1.98.5
 mapper.c       Added #map jump <x> <y> to goto rooms using coordinates
                relative to the user's current room.
 
-array.c        Added #script {var} {command} option.
+list.c         Added #script {var} {command} option.
 
 input.c        Fixed bug with the first input character being ignored in
                character mode.
@@ -517,9 +613,9 @@ cursor.c       Added the option to paste deleted input with ctrl-y
 March 2007     1.96.9
 --------------------------------------------------------------------------------
 
-array.c        Added #list {list} clr option to empty a list.
+list.c         Added #list {list} clr option to empty a list.
 
-array.c        Added #list {list} srt option to insert in alphabetic order.
+list.c         Added #list {list} srt option to insert in alphabetic order.
 
 parse.c        Defined a COMMAND_SEPARATOR variable instead of ';' checks.
 
@@ -712,7 +808,7 @@ buffer.c       Added buffer find option, which works much like grep but instead
 tinexp.c       Can now add lists of keywords between square brackets divided
                by seperators, for example [his|her|its] in actions. The actual
                text is stored in the next %0-9. Cannot be used for highlights.
-array.c        array_fnd function allows searching for words in lists.
+list.c         array_fnd function allows searching for words in lists.
 path.c         can now save loaded paths backward.
 
 
@@ -745,7 +841,7 @@ main.c         Added -h and -e as startup options.
 June 2006      1.96.0
 --------------------------------------------------------------------------------
 
-llist.c        Rewrote #killall to accept arguments to kill specific lists.
+data.c         Rewrote #killall to accept arguments to kill specific lists.
 chat.c         Added #chat unitialize.
 chat.c         Added basic support for group chats.
 chat.c         Added support for colored names.
@@ -772,7 +868,7 @@ chat.c         Added DND (do not disturb) feature. When enabled tintin will
                Can now chat to people by entering their ip address. Useful to
                deal with auto ip bans.
 parse.c        Complex multi words aliasses are now possible.
-llist.c        Priority lists are now sorted alphabetically per priority level
+data.c         Priority lists are now sorted alphabetically per priority level
 class.c        #class class read <file> no longer parses files for the given
                class. The code was too messy to maintain. Instead it'll open
                the class, read the file, and close the file.
@@ -783,7 +879,7 @@ chat.c         Added #color which sets the default color
 chat.c         Added a boost option for #chat accept to quadruple download
                speeds, might cause file corruption on bad connections.
 class.c        Rewrote some code, #unclass should work now.
-llist.c        Issueing #tick {name} twice will now reset the ticker.
+data.c         Issueing #tick {name} twice will now reset the ticker.
 math.c         Fixed invalid input handling.
 misc.c         Snooping a non existant session no longer crashes tintin.
 
@@ -805,7 +901,7 @@ chat.c         #chat who now shows user flags
 parse.c        Removed old code that allowed using " " instead of { } in
                a couple of commands such as #format. While I used it in
                some example scripts the code is causing problems.
-llist.c        Can now use #unmacro by exactly matching the macro instead of
+data.c         Can now use #unmacro by exactly matching the macro instead of
                having to use \\ for a single \.
 input.c        TinTin now enables character mode with echo off and SGA enabled.
 
@@ -853,7 +949,7 @@ August 2005    1.95.5
 chat.c         Added some extra chat functionality: paste, serve, forward,
                ignore and peek.
 tinexp.c       Fixed parsing of function arguments some more.
-array.c        Added #list command with basic list support.
+list.c         Added #list command with basic list support.
 
 
 August 2005    1.95.4
@@ -861,7 +957,7 @@ August 2005    1.95.4
 
 tinexp.c       Fixed some bugs in substitute that slipped in.
 tinexp.c       Added skipping of chinese characters in regexp functions.
-llist.c        Fixed crash bug with killing classes
+data.c         Fixed crash bug with killing classes
 function.c     Fixed an issue with #return in fuctions stopping the execution
                of multiple commands.
 rl.c           pressing control-c while connecting will abort the connection
@@ -887,7 +983,7 @@ files.c        Now skipping chinese characters in #read
 July 2005      1.95.2
 --------------------------------------------------------------------------------
 
-llist.c        Added option to use 'all' in #message, #ignore, and #debug to
+data.c         Added option to use 'all' in #message, #ignore, and #debug to
                toggle everything at once.
 files.c        Removed the #writesession command, it's obsolete with the new
                #class command.
@@ -943,7 +1039,7 @@ files.c        Added #scan {filename} which will read in a file and send it to
                format, as well as adding gags and other text filters to make
                things more readable. I set the default logging mode to raw
                since ansi log files can now be converted to html ones.
-llist.c        updatenode_list was acting odd, fiddled with it till it stopped
+data.c         updatenode_list was acting odd, fiddled with it till it stopped
                crashing. Not sure what the problem was.
 
 
@@ -958,7 +1054,7 @@ May 2005       1.94.7
 
 main.c         Fixed #split mode being handled correctly when suspending a
                session.
-llist.c        Removed excessive color usage when displaying triggers which was
+data.c         Removed excessive color usage when displaying triggers which was
                resulting in crashes.
 rl.c           No longer clearing the screen when exiting tintin++.
 table.c        Added flags for commands, so far only automatically substituting
@@ -1071,7 +1167,7 @@ misc.c         Removed the #sleep command, never worked well and should be
                obsolete with the #delay command.
 misc.c         #gagline, when called within an action it will gag the line.
 rl.c           The #snoop code wasn't working, fixed it up.
-llist.c        Increased the buffer of show_list a little to avoid an overflow
+data.c         Increased the buffer of show_list a little to avoid an overflow
 macro.h        Changed how macros work, fixing problems like needing a \n at
                the end, needing an empty line, macros being added to the
                command history. Still can't find a way to have rl erase macros.
@@ -1113,7 +1209,7 @@ math.c         Fixed bug with #if returning the wrong session pointer.
 log.c          Added #logline command for actions to log 1 line of text
 rlhist.c       If no repeat match is found an error message is printed.
 parse.c        Added a check to ingore a trailing ';'.
-llist.c        Increased buffer size for displaying aliasses.
+data.c         Increased buffer size for displaying aliasses.
 config.c       Changed packet patch config option from micro to milli seconds.
 files.c        Changed calls to isblank() (GNU only) with isspace()
 files.c        Only stripping leading spaces now, so #var bla { } will work
@@ -1256,7 +1352,7 @@ parse.c        made sure $variables are substituted in the parsing command,
                as well as $vars being substituted as session A passes a
                command to session B. Otherwise variables remain variable
                untill the final execution stage.
-llist.c        Added nesting syntax highlighting for lists.
+data.c         Added nesting syntax highlighting for lists.
 math.c         Added support for "T" and "F" (feature was lost in rewrite)
 math.c         Added the 'd' operator for a random dice roll
 config.c       rewrote some basic stuff in the configuration routines,
@@ -1339,7 +1435,7 @@ March 2004     1.89.0
                variables.c only leaving #ifexits. And then it occured to me
                that #if {"$variable" != "$*"} {true} {false} would
                very well replace the 'ifexits' check. So ivars.c is no more.
-- llist.c      deletenode_list now properly keeps track of a global update
+- data.c       deletenode_list now properly keeps track of a global update
                node. Can only use one noderoot->update per program state.
 - session.c    cleanup_session now properly keeps track of a global update
                node. Can only use one gtd->update per program state.

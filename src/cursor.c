@@ -81,6 +81,8 @@ DO_CURSOR(cursor_backspace)
 
 	cursor_left("");
 	cursor_delete("");
+
+	modified_input();
 }
 
 
@@ -171,10 +173,7 @@ DO_CURSOR(cursor_clear_left)
 		gtd->input_pos  = 0;
 	}
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-	{
-		cursor_history_find("");
-	}
+	modified_input();
 }
 
 DO_CURSOR(cursor_clear_line)
@@ -198,10 +197,7 @@ DO_CURSOR(cursor_clear_line)
 	gtd->input_pos = 0;
 	gtd->input_buf[0] = 0;
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-	{
-		cursor_history_find("");
-	}
+	modified_input();
 }
 
 DO_CURSOR(cursor_clear_right)
@@ -219,17 +215,13 @@ DO_CURSOR(cursor_clear_right)
 
 	gtd->input_len = gtd->input_cur;
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-	{
-		cursor_history_find("");
-	}
+	modified_input();
 }
 
 DO_CURSOR(cursor_convert_meta)
 {
 	SET_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR);
 }
-
 
 DO_CURSOR(cursor_delete_exit)
 {
@@ -263,10 +255,7 @@ DO_CURSOR(cursor_delete)
 
 	cursor_fix_line("");
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-	{
-		cursor_history_find("");
-	}
+	modified_input();
 }
 
 DO_CURSOR(cursor_delete_word_left)
@@ -302,10 +291,7 @@ DO_CURSOR(cursor_delete_word_left)
 
 	cursor_check_line("");
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-	{
-		cursor_history_find("");
-	}
+	modified_input();
 }
 
 
@@ -346,30 +332,17 @@ DO_CURSOR(cursor_delete_word_right)
 
 	cursor_fix_line("");
 
-	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
-	{
-		cursor_history_find("");
-	}
+	modified_input();
 }
 
-DO_CURSOR(cursor_echo)
+DO_CURSOR(cursor_echo_on)
 {
-	if (*arg == 0)
-	{
-		TOG_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
-	}
-	else if (!strcasecmp(arg, "ON"))
-	{
-		SET_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
-	}
-	else if (!strcasecmp(arg, "OFF"))
-	{
-		DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
-	}
-	else
-	{
-		tintin_printf(NULL, "#SYNTAX: #CURSOR {ECHO} {ON|OFF}.");
-	}
+	SET_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+}
+
+DO_CURSOR(cursor_echo_off)
+{
+	DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
 }
 
 DO_CURSOR(cursor_end)
@@ -395,22 +368,23 @@ DO_CURSOR(cursor_enter)
 	gtd->macro_buf[0] = 0;
 	gtd->input_tmp[0] = 0;
 
-	kill_list(gtd->ses, LIST_TABCYCLE);
-
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+		struct listroot *root = gtd->ses->list[LIST_HISTORY];
 
-		if (gtd->input_his)
+		if (root->update >= 0 && root->update < root->used)
 		{
-			strcpy(gtd->input_buf, gtd->input_his->left);
+			strcpy(gtd->input_buf, root->list[root->update]->left);
 		}
+
+		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
 		gtd->input_off = 1;
 	}
-	gtd->input_his = NULL;
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_PROCESSINPUT);
+
+	modified_input();
 }
 
 DO_CURSOR(cursor_exit)
@@ -427,55 +401,59 @@ DO_CURSOR(cursor_exit)
 
 DO_CURSOR(cursor_history_next)
 {
-	struct listnode *node;
+	struct listroot *root = gtd->ses->list[LIST_HISTORY];
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		if (gtd->input_his == NULL)
+		if (root->update == root->used)
 		{
 			return;
 		}
 
-		for (node = gtd->input_his->next ; node ; node = node->next)
+		for (root->update++ ; root->update < root->used ; root->update++)
 		{
-			if (*gtd->input_buf && find(gtd->ses, node->left, gtd->input_buf))
+			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf))
 			{
 				break;
 			}
 		}
 
-		if (node)
+		if (root->update < root->used)
 		{
-			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 11);
-
-			gtd->input_his = node;
+			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 11);
 		}
 		return;
 	}
 
-	if (gtd->input_his == NULL)
+	if (root->list[0] == NULL)
 	{
 		return;
 	}
 
-	node = gtd->input_his->next;
-
-	while (node && strncmp(gtd->input_tmp, node->left, strlen(gtd->input_tmp)))
+	if (!HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE))
 	{
-		node = node->next;
+		return;
+	}
+	else if (root->update < root->used)
+	{
+		for (root->update++ ; root->update < root->used ; root->update++)
+		{
+			if (!strncmp(gtd->input_tmp, root->list[root->update]->left, strlen(gtd->input_tmp)))
+			{
+				break;
+			}
+		}
 	}
 
 	cursor_clear_line("");
 
-	gtd->input_his = node;
-
-	if (gtd->input_his == NULL)
+	if (root->update == root->used)
 	{
 		strcpy(gtd->input_buf, gtd->input_tmp);
 	}
 	else
 	{
-		strcpy(gtd->input_buf, gtd->input_his->left);
+		strcpy(gtd->input_buf, root->list[root->update]->left);
 	}
 
 	gtd->input_len = strlen(gtd->input_buf);
@@ -483,83 +461,89 @@ DO_CURSOR(cursor_history_next)
 	gtd->input_pos = 0;
 
 	cursor_redraw_line("");
+
+	SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 }
 
 DO_CURSOR(cursor_history_prev)
 {
-	struct listnode *node;
+	struct listroot *root = gtd->ses->list[LIST_HISTORY];
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
-		if (gtd->input_his == NULL || *gtd->input_buf == 0)
+		if (root->update <= 0)
 		{
 			return;
 		}
 
-		for (node = gtd->input_his->prev ; node ; node = node->prev)
+		for (root->update-- ; root->update >= 0 ; root->update--)
 		{
-			if (find(gtd->ses, node->left, gtd->input_buf))
+			if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf))
 			{
 				break;
 			}
 		}
 
-		if (node)
+		if (root->update >= 0)
 		{
-			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 11);
-
-			gtd->input_his = node;
+			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 11);
 		}
 		return;
 	}
 
-	if (gts->list[LIST_HISTORY]->l_node == NULL)
+	if (root->list[0] == NULL)
 	{
 		return;
 	}
 
-	if (gtd->input_his == NULL)
+	if (!HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE))
 	{
 		strcpy(gtd->input_tmp, gtd->input_buf);
 
-		node = gts->list[LIST_HISTORY]->l_node;
-
-		while (node && strncmp(gtd->input_tmp, node->left, strlen(gtd->input_tmp)))
+		for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 		{
-			node = node->prev;
+			if (!strncmp(gtd->input_tmp, root->list[root->update]->left, strlen(gtd->input_tmp)))
+			{
+				break;
+			}
 		}
 	}
-	else
+	else if (root->update >= 0)
 	{
-		node = gtd->input_his->prev;
-
-		while (node && strncmp(gtd->input_tmp, node->left, strlen(gtd->input_tmp)))
+		for (root->update-- ; root->update >= 0 ; root->update--)
 		{
-			node = node->prev;
+			if (!strncmp(gtd->input_tmp, root->list[root->update]->left, strlen(gtd->input_tmp)))
+			{
+				break;
+			}
 		}
 	}
-
-	if (node == NULL)
-	{
-		return;
-	}
-
-	gtd->input_his = node;
 
 	cursor_clear_line("");
 
-	strcpy(gtd->input_buf, gtd->input_his->left);
+	if (root->update == -1)
+	{
+		strcpy(gtd->input_buf, gtd->input_tmp);
+	}
+	else
+	{
+		strcpy(gtd->input_buf, root->list[root->update]->left);
+	}
 
-	gtd->input_len = strlen(gtd->input_his->left);
+	gtd->input_len = strlen(gtd->input_buf);
 	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = 0;
 
 	cursor_redraw_line("");
+
+	SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 }
 
 DO_CURSOR(cursor_history_search)
 {
-	if (gts->list[LIST_HISTORY]->l_node == NULL)
+	struct listroot *root = gtd->ses->list[LIST_HISTORY];
+
+	if (root->list[0] == NULL)
 	{
 		return;
 	}
@@ -574,77 +558,55 @@ DO_CURSOR(cursor_history_search)
 
 		gtd->input_off = 11;
 
+		root->update = root->used - 1;
+
 		input_printf("(search) [ ] \033[3D");
 	}
 	else
 	{
-		if (gtd->input_his)
+		if (root->update >= 0 && root->update < root->used)
 		{
-			strcpy(gtd->input_buf, gtd->input_his->left);
-
-			input_printf("\033[1G\033[0K");
-
-			gtd->input_len = strlen(gtd->input_buf);
-			gtd->input_cur = gtd->input_len;
-			gtd->input_pos = gtd->input_len;
-
-			gtd->input_his = NULL;
-
-			DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
-
-			gtd->input_off = 1;
-
-			cursor_redraw_line("");
+			strcpy(gtd->input_buf, root->list[root->update]->left);
 		}
-		else
-		{
-			strcpy(gtd->input_buf, gtd->input_tmp);
+		input_printf("\033[1G\033[0K");
 
-			input_printf("\033[1G\033[0K");
+		gtd->input_len = strlen(gtd->input_buf);
+		gtd->input_cur = gtd->input_len;
+		gtd->input_pos = gtd->input_len;
 
-			gtd->input_len = strlen(gtd->input_buf);
-			gtd->input_cur = gtd->input_len;
-			gtd->input_pos = gtd->input_len;
+		root->update = -1;
 
-			gtd->input_his = NULL;
+		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
-			DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+		gtd->input_off = 1;
 
-			gtd->input_off = 1;
-
-			cursor_redraw_line("");
-		}
+		cursor_redraw_line("");
 	}
 }
 
 DO_CURSOR(cursor_history_find)
 {
-	struct listnode *node;
-	struct listroot *root;
+	struct listroot *root = gtd->ses->list[LIST_HISTORY];
 
 	push_call("cursor_history_find(%s)", gtd->input_buf);
 
-	root = gts->list[LIST_HISTORY];
-
-	for (node = root->l_node ; node ; node = node->prev)
+	for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 	{
-		if (*gtd->input_buf && find(gtd->ses, node->left, gtd->input_buf))
+		if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf))
 		{
 			break;
 		}
 	}
 
-	gtd->input_his = node;
-
-	if (node)
+	if (root->update >= 0)
 	{
 		if (gtd->input_len == gtd->input_cur)
 		{
-			input_printf("\033[0K]   %.*s\033[%dG", gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 11);
+			input_printf("\033[0K]   %.*s\033[%dG", gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 11);
 		}
 		else
 		{
-			input_printf("\033[%dC\033[0K]\033[3C%.*s\033[%dG", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, node->left, gtd->input_pos + 1);
+			input_printf("\033[%dC\033[0K]\033[3C%.*s\033[%dG", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 1);
 		}
 	}
 	else
@@ -659,6 +621,7 @@ DO_CURSOR(cursor_history_find)
 		}
 	}
 	pop_call();
+	return;
 }
 
 DO_CURSOR(cursor_home)
@@ -748,12 +711,19 @@ DO_CURSOR(cursor_left_word)
 
 DO_CURSOR(cursor_paste_buffer)
 {
+	if (*gtd->paste_buf == 0)
+	{
+		return;
+	}
+
 	ins_sprintf(&gtd->input_buf[gtd->input_cur], "%s", gtd->paste_buf);
 
 	gtd->input_len += strlen(gtd->paste_buf);
 	gtd->input_cur += strlen(gtd->paste_buf);
 
 	cursor_redraw_line("");
+
+	modified_input();
 }
 
 
@@ -880,20 +850,20 @@ DO_CURSOR(cursor_suspend)
 
 int cursor_tab_add(int input_now, int stop_after_first)
 {
+	struct listroot *root = gtd->ses->list[LIST_TAB];
 	char tab[BUFFER_SIZE];
-	struct listnode *node;
 
-	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
+	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		substitute(gtd->ses, node->left, tab, SUB_VAR|SUB_FUN);
+		substitute(gtd->ses, root->list[root->update]->left, tab, SUB_VAR|SUB_FUN);
 
 		if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 		{
-			if (searchnode_list(gtd->ses->list[LIST_TABCYCLE], tab))
+			if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
 			{
 				continue;
 			}
-			addnode_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+			insert_node_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
 
 			if (stop_after_first)
 			{
@@ -947,15 +917,15 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 		while (*arg)
 		{
-			arg = get_arg_stop_spaces(arg, tab);
+			arg = get_arg_stop_spaces(arg, tab, 0);
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
-				if (searchnode_list(gtd->ses->list[LIST_TABCYCLE], tab))
+				if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
 				{
 					continue;
 				}
-				addnode_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+				insert_node_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
 
 				if (stop_after_first)
 				{
@@ -976,14 +946,15 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 void cursor_hide_completion(int input_now)
 {
+	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
 	struct listnode *f_node;
 	struct listnode *l_node;
 	int len_change;
 
-	f_node = gtd->ses->list[LIST_TABCYCLE]->f_node;
-	l_node = gtd->ses->list[LIST_TABCYCLE]->l_node;
+	f_node = root->list[0];
+	l_node = root->list[root->used - 1];
 
-	if (l_node && !strcmp(l_node->left, &gtd->input_buf[input_now]))
+	if (root->used && !strcmp(l_node->left, gtd->input_buf + input_now))
 	{
 		len_change = strlen(l_node->left) - strlen(f_node->left);
 
@@ -1006,14 +977,15 @@ void cursor_hide_completion(int input_now)
 
 void cursor_show_completion(int input_now, int show_last_node)
 {
+	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
 	struct listnode *node;
 
-	node = show_last_node ? gtd->ses->list[LIST_TABCYCLE]->l_node : gtd->ses->list[LIST_TABCYCLE]->f_node;
-
-	if (!node)
+	if (!root->used)
 	{
 		return;
 	}
+
+	node = show_last_node ? root->list[root->used - 1] : root->list[0];
 
 	if (gtd->input_cur < gtd->input_len)
 	{
@@ -1023,7 +995,7 @@ void cursor_show_completion(int input_now, int show_last_node)
 	{
 		input_printf("\033[%dD\033[%dP", gtd->input_len - input_now, gtd->input_len - input_now);
 	}
-	if (input_now + strlen(node->left) < gtd->ses->cols - 2)
+	if (input_now + (int) strlen(node->left) < gtd->ses->cols - 2)
 	{
 		input_printf("%s", node->left);
 	}
@@ -1035,9 +1007,9 @@ void cursor_show_completion(int input_now, int show_last_node)
 
 	cursor_check_line("");
 
-	if (node == gtd->ses->list[LIST_TABCYCLE]->f_node)
+	if (node == root->list[0])
 	{
-		kill_list(gtd->ses, LIST_TABCYCLE);
+		kill_list(gtd->ses->list[LIST_TABCYCLE]);
 	}
 
 	return;
@@ -1075,9 +1047,9 @@ DO_CURSOR(cursor_tab_forward)
 
 	cursor_hide_completion(input_now);
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	if (!gtd->ses->list[LIST_TABCYCLE]->list[0])
 	{
-		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 	}
 	tab_found = cursor_tab_add(input_now, TRUE);
 
@@ -1086,6 +1058,7 @@ DO_CURSOR(cursor_tab_forward)
 
 DO_CURSOR(cursor_tab_backward)
 {
+	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
 	int input_now;
 
 	input_now = cursor_calc_input_now();
@@ -1097,45 +1070,17 @@ DO_CURSOR(cursor_tab_backward)
 
 	cursor_hide_completion(input_now);
 
-	if (gtd->ses->list[LIST_TABCYCLE]->l_node)
+	if (root->used)
 	{
-		deletenode_list(gtd->ses, gtd->ses->list[LIST_TABCYCLE]->l_node, LIST_TABCYCLE);
+		delete_index_list(gtd->ses->list[LIST_TABCYCLE], root->used - 1);
 	}
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	if (!root->list[0])
 	{
-		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 
 		cursor_tab_add(input_now, FALSE);
 	}
-	cursor_show_completion(input_now, TRUE);
-}
-
-DO_CURSOR(cursor_auto_tab_backward)
-{
-	int input_now;
-
-	input_now = cursor_calc_input_now();
-
-	if (input_now == -1)
-	{
-		return;
-	}
-
-	cursor_hide_completion(input_now);
-
-	if (gtd->ses->list[LIST_TABCYCLE]->l_node)
-	{
-		deletenode_list(gtd->ses, gtd->ses->list[LIST_TABCYCLE]->l_node, LIST_TABCYCLE);
-	}
-
-	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
-	{
-		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
-
-		cursor_auto_tab_add(input_now, FALSE);
-	}
-
 	cursor_show_completion(input_now, TRUE);
 }
 
@@ -1152,17 +1097,18 @@ DO_CURSOR(cursor_auto_tab_forward)
 
 	cursor_hide_completion(input_now);
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	if (!gtd->ses->list[LIST_TABCYCLE]->list[0])
 	{
-		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 	}
 	tab_found = cursor_auto_tab_add(input_now, TRUE);
 
 	cursor_show_completion(input_now, FALSE);
 }
 
-DO_CURSOR(cursor_mixed_tab_backward)
+DO_CURSOR(cursor_auto_tab_backward)
 {
+	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
 	int input_now;
 
 	input_now = cursor_calc_input_now();
@@ -1174,21 +1120,21 @@ DO_CURSOR(cursor_mixed_tab_backward)
 
 	cursor_hide_completion(input_now);
 
-	if (gtd->ses->list[LIST_TABCYCLE]->l_node)
+	if (root->used)
 	{
-		deletenode_list(gtd->ses, gtd->ses->list[LIST_TABCYCLE]->l_node, LIST_TABCYCLE);
+		delete_index_list(gtd->ses->list[LIST_TABCYCLE], root->used - 1);
 	}
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	if (!root->list[0])
 	{
-		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 
-		cursor_tab_add(input_now, FALSE);
 		cursor_auto_tab_add(input_now, FALSE);
 	}
 
 	cursor_show_completion(input_now, TRUE);
 }
+
 
 DO_CURSOR(cursor_mixed_tab_forward)
 {
@@ -1203,11 +1149,41 @@ DO_CURSOR(cursor_mixed_tab_forward)
 
 	cursor_hide_completion(input_now);
 
-	if (!gtd->ses->list[LIST_TABCYCLE]->f_node)
+	if (!gtd->ses->list[LIST_TABCYCLE]->list[0])
 	{
-		addnode_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
 	}
 	tab_found = cursor_tab_add(input_now, TRUE) || cursor_auto_tab_add(input_now, TRUE);
 
 	cursor_show_completion(input_now, tab_found);
+}
+
+DO_CURSOR(cursor_mixed_tab_backward)
+{
+	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
+	int input_now;
+
+	input_now = cursor_calc_input_now();
+
+	if (input_now == -1)
+	{
+		return;
+	}
+
+	cursor_hide_completion(input_now);
+
+	if (root->used)
+	{
+		delete_index_list(gtd->ses->list[LIST_TABCYCLE], root->used - 1);
+	}
+
+	if (!root->list[0])
+	{
+		insert_node_list(gtd->ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+
+		cursor_tab_add(input_now, FALSE);
+		cursor_auto_tab_add(input_now, FALSE);
+	}
+
+	cursor_show_completion(input_now, TRUE);
 }

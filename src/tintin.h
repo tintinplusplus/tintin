@@ -93,6 +93,10 @@
 #define FALSE                            0
 #define TRUE                             1
 
+#define GET_ONE                          0 /* stop at spaces */
+#define GET_ALL                          1 /* stop at semicolon */
+#define GET_NST                          2 /* nest square brackets */
+
 #define TEL_N                            0
 #define TEL_Y                            1
 #define TEL_I                            2
@@ -114,8 +118,9 @@
 #define STRING_SIZE                  40000
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
+#define LIST_SIZE                        2
 
-#define VERSION_NUM               "1.99.6"
+#define VERSION_NUM               "1.99.7"
 
 #define ESCAPE                          27
 
@@ -161,30 +166,45 @@
 #define LIST_HIGHLIGHT                   8
 #define LIST_HISTORY                     9
 #define LIST_MACRO                      10
-#define LIST_MAP                        11
-#define LIST_MATH                       12
-#define LIST_PATH                       13
-#define LIST_PATHDIR                    14
-#define LIST_PROMPT                     15
-#define LIST_SUBSTITUTE                 16
-#define LIST_TAB                        17
-#define LIST_TABCYCLE                   18
-#define LIST_TICKER                     19
-#define LIST_VARIABLE                   20
-#define LIST_MAX                        21
+#define LIST_PATH                       11
+#define LIST_PATHDIR                    12
+#define LIST_PROMPT                     13
+#define LIST_SUBSTITUTE                 14
+#define LIST_TAB                        15
+#define LIST_TABCYCLE                   16
+#define LIST_TICKER                     17
+#define LIST_VARIABLE                   18
+#define LIST_MAX                        19
 
 /*
 	Command type
 */
 
-#define TOKEN_OPR_UNKNOWN               -1
-#define TOKEN_OPR_STRING                 1
-#define TOKEN_OPR_CMD                    2
-#define TOKEN_OPR_IF                     3
-#define TOKEN_OPR_ELSE                   4
-#define TOKEN_OPR_ENDIF                  5
-#define TOKEN_OPR_RETURN                 6
-#define TOKEN_OPR_SESSION                7
+enum operators
+{
+	TOKEN_TYP_BREAK,
+	TOKEN_TYP_CASE,
+	TOKEN_TYP_COMMAND,
+	TOKEN_TYP_CONTINUE,
+	TOKEN_TYP_DEFAULT,
+	TOKEN_TYP_END,
+	TOKEN_TYP_ELSE,
+	TOKEN_TYP_ELSEIF,
+	TOKEN_TYP_FOREACH,
+	TOKEN_TYP_BROKEN_FOREACH,
+	TOKEN_TYP_IF,
+	TOKEN_TYP_LOOP,
+	TOKEN_TYP_BROKEN_LOOP,
+	TOKEN_TYP_PARSE,
+	TOKEN_TYP_BROKEN_PARSE,
+	TOKEN_TYP_RETURN,
+	TOKEN_TYP_SESSION,
+	TOKEN_TYP_STRING,
+	TOKEN_TYP_SWITCH,
+	TOKEN_TYP_WHILE,
+	TOKEN_TYP_BROKEN_WHILE
+};
+
 
 /*
 	generic define for show_message
@@ -262,15 +282,16 @@
 #define SUB_SEC                       (1 <<  6)
 #define SUB_EOL                       (1 <<  7)
 #define SUB_LNF                       (1 <<  8)
-
+#define SUB_FIX                       (1 <<  9)
 
 #define TINTIN_FLAG_RESETBUFFER       (1 <<  0)
 #define TINTIN_FLAG_CONVERTMETACHAR   (1 <<  1)
-#define TINTIN_FLAG_HISTORYSEARCH     (1 <<  2)
-#define TINTIN_FLAG_PROCESSINPUT      (1 <<  3)
-#define TINTIN_FLAG_USERCOMMAND       (1 <<  4)
-#define TINTIN_FLAG_INSERTINPUT       (1 <<  5)
-#define TINTIN_FLAG_VERBATIM          (1 <<  6)
+#define TINTIN_FLAG_HISTORYBROWSE     (1 <<  2)
+#define TINTIN_FLAG_HISTORYSEARCH     (1 <<  3)
+#define TINTIN_FLAG_PROCESSINPUT      (1 <<  4)
+#define TINTIN_FLAG_USERCOMMAND       (1 <<  5)
+#define TINTIN_FLAG_INSERTINPUT       (1 <<  6)
+#define TINTIN_FLAG_VERBATIM          (1 <<  7)
 
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
 #define SES_FLAG_SNOOP                (1 <<  2)
@@ -284,7 +305,7 @@
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
-#define SES_FLAG_REGEXP               (1 << 14)
+#define SES_FLAG_REGEXP               (1 << 14) /* Unused */
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
@@ -314,6 +335,7 @@
 #define LIST_FLAG_WRITE               (1 <<  6)
 #define LIST_FLAG_SHOW                (1 <<  7)
 #define LIST_FLAG_INHERIT             (1 <<  8)
+#define LIST_FLAG_NEST                (1 <<  9)
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
 #define NODE_FLAG_META                (1 <<  0)
@@ -460,12 +482,12 @@
 
 #define VERBATIM                  (HAS_BIT(gtd->flags, TINTIN_FLAG_VERBATIM) && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 
-#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *left, char *right)
+#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg)
 #define DO_CHAT(chat) void chat (char *left, char *right)
 #define DO_CLASS(class) struct session *class (struct session *ses, char *left, char *right)
 #define DO_COMMAND(command) struct session  *command (struct session *ses, char *arg)
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
-#define DO_MAP(map) void map (struct session *ses, char *left, char *right)
+#define DO_MAP(map) void map (struct session *ses, char *arg, char *arg1, char *arg2)
 #define DO_PATH(path) void path (struct session *ses, char *arg)
 #define DO_LINE(line) void line (struct session *ses, char *arg)
 #define DO_CURSOR(cursor) void cursor (char *arg)
@@ -496,17 +518,19 @@
 
 struct listroot
 {
-	struct listnode   * f_node;
-	struct listnode   * l_node;
-	struct listnode   * update;
-	int                 count;
+	struct listnode  ** list;
+	struct session    * ses;
+	int                 size;
+	int                 used;
+	int                 type;
+	int                 update;
 	int                 flags;
 };
 
+
 struct listnode
 {
-	struct listnode   * next;
-	struct listnode   * prev;
+	struct listroot   * root;
 	char              * left;
 	char              * right;
 	char              * pr;
@@ -515,7 +539,6 @@ struct listnode
 	long long           data;
 	short               flags;
 };
-
 
 
 struct session
@@ -565,6 +588,7 @@ struct session
 	int                     auto_tab;
 };
 
+
 struct tintin_data
 {
 	struct session        * ses;
@@ -587,7 +611,6 @@ struct tintin_data
 	int                     input_cur;
 	int                     input_pos;
 	int                     input_off;
-	struct listnode       * input_his;
 	long long               time;
 	long long               timer[TIMER_CPU][5];
 	long long               total_io_ticks;
@@ -632,16 +655,25 @@ struct chat_data
 	long long               file_start_time;
 };
 
+struct link_data
+{
+	struct link_data     * next;
+	struct link_data     * prev;
+	char                 * str1;
+	char                 * str2;
+	char                 * str3;
+};
+
 /*
 	Typedefs
 */
 
-typedef struct session *ARRAY   (struct session *ses, struct listnode *list, char *left, char *right);
+typedef struct session *ARRAY   (struct session *ses, struct listnode *list, char *arg);
 typedef void            CHAT    (char *left, char *right);
 typedef struct session *CLASS   (struct session *ses, char *left, char *right);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *COMMAND (struct session *ses, char *arg);
-typedef void            MAP     (struct session *ses, char *left, char *right);
+typedef void            MAP     (struct session *ses, char *arg, char *arg1, char *arg2);
 typedef void            CURSOR  (char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
 typedef void            LINE    (struct session *ses, char *arg);
@@ -716,8 +748,7 @@ struct map_type
 {
 	char                  * name;
 	MAP                   * map;
-	int                     lval;
-	int                     rval;
+	int                     check;
 };
 
 struct cursor_type
@@ -786,6 +817,11 @@ struct map_data
 {
 	struct room_data     ** room_list;
 	FILE                  * logfile;
+	struct link_data      * undo_head;
+	struct link_data      * undo_tail;
+	char                  * room_color;
+	char                  * exit_color;
+	int                     undo_size;
 	int                     size;
 	int                     flags;
 	int                     in_room;
@@ -803,6 +839,9 @@ struct room_data
 	char                    * color;
 	char                    * name;
 	char                    * symbol;
+	char                    * desc;
+	char                    * area;
+	char                    * note;
 };
 
 struct exit_data
@@ -822,6 +861,16 @@ struct exit_data
 /*
 	Function declarations
 */
+
+#ifndef __ACTION_H__
+#define __ACTION_H__
+
+extern struct session *do_action(struct session *ses, char *arg);
+extern struct session *do_unaction(struct session *ses, char *arg);
+
+extern void check_all_actions(struct session *ses, char *original, char *line);
+
+#endif
 
 #ifndef __CURSOR_H__
 #define __CURSOR_H__
@@ -843,7 +892,8 @@ extern DO_CURSOR(cursor_delete);
 extern DO_CURSOR(cursor_delete_exit);
 extern DO_CURSOR(cursor_delete_word_left);
 extern DO_CURSOR(cursor_delete_word_right);
-extern DO_CURSOR(cursor_echo);
+extern DO_CURSOR(cursor_echo_on);
+extern DO_CURSOR(cursor_echo_off);
 extern DO_CURSOR(cursor_end);
 extern DO_CURSOR(cursor_enter);
 extern DO_CURSOR(cursor_exit);
@@ -882,23 +932,24 @@ extern void convert_meta(char *input, char *output);
 extern void unconvert_meta(char *input, char *output);
 extern void echo_command(struct session *ses, char *line, int newline);
 extern void input_printf(char *format, ...);
+extern void modified_input(void);
+
 #endif
 
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
 extern DO_COMMAND(do_list);
-extern DO_ARRAY(array_clr);
-extern DO_ARRAY(array_ins);
-extern DO_ARRAY(array_del);
-extern DO_ARRAY(array_fnd);
+extern DO_ARRAY(array_add);
+extern DO_ARRAY(array_clear);
+extern DO_ARRAY(array_create);
+extern DO_ARRAY(array_insert);
+extern DO_ARRAY(array_delete);
+extern DO_ARRAY(array_find);
 extern DO_ARRAY(array_get);
-extern DO_ARRAY(array_len);
+extern DO_ARRAY(array_size);
 extern DO_ARRAY(array_set);
-extern DO_ARRAY(array_srt);
-
-extern void get_list_item(struct session *ses, struct listnode *node, char *arg);
-extern void set_list_item(struct session *ses, struct listnode *node, char *left, char *right);
+extern DO_ARRAY(array_sort);
 
 #endif
 
@@ -1050,6 +1101,7 @@ extern void delete_room(struct session *ses, int room, int exits);
 extern void create_exit(struct session *ses, int room, char *arg);
 extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
 extern void create_legend(struct session *ses, char *arg);
+extern int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3, char *arg4, char *arg5);
 extern int  find_room(struct session *ses, char *arg);
 extern void goto_room(struct session *ses, int room);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
@@ -1058,11 +1110,12 @@ extern int  get_map_exits(struct session *ses, int room);
 extern void create_map_grid(struct session *ses, short room, short x, short y);
 extern void build_map_grid(short room, short x, short y, short z);
 extern void follow_map(struct session *ses, char *argument);
-extern void insert_undo(struct session *ses, char *format, ...);
+extern void add_undo(struct session *ses, char *format, ...);
+extern void del_undo(struct session *ses, struct link_data *link);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
 extern void search_path(short room, short size, short dir);
 extern void fill_map(struct session *ses);
-extern void shortest_path(struct session *ses, int run, char *left, char *right);
+extern void shortest_path(struct session *ses, int run, char *delay, char *arg);
 extern void explore_path(struct session *ses, int run, char *left, char *right);
 extern int find_coord(struct session *ses, char *arg);
 extern void search_coord_bf(int vnum);
@@ -1074,16 +1127,17 @@ extern void show_vtmap(struct session *ses);
 #define __MATH_H__
 
 extern DO_COMMAND(do_math);
-extern DO_COMMAND(do_if);
 extern double get_number(struct session *ses, char *str);
+extern char *get_alnum(struct session *ses, char *str);
 extern void get_number_string(struct session *ses, char *str, char *result);
-extern double mathexp(struct session *ses, char *str);
+extern double mathswitch(struct session *ses, char *left, char *right);
+extern void mathexp(struct session *ses, char *str, char *result);
 extern int mathexp_tokenize(struct session *ses, char *str);
-extern void mathexp_level(struct listnode *node);
-extern void mathexp_compute(struct listnode *node);
+extern void mathexp_level(struct session *ses, struct link_data *node);
+extern void mathexp_compute(struct session *ses, struct link_data *node);
 extern double tintoi(char *str);
 extern double tincmp(char *left, char *right);
-extern double tineval(char *left, char *right);
+extern double tineval(struct session *ses, char *left, char *right);
 extern double tindice(char *left, char *right);
 
 #endif
@@ -1109,12 +1163,10 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 
 extern int match(struct session *ses, char *str, char *exp);
 extern int find(struct session *ses, char *str, char *exp);
-extern int glob(char *str, char *exp);
 DO_COMMAND(do_regexp);
-extern int regexp(char *str, char *exp);
 extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int flag);
 extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
-extern int tintin_regexp(pcre *pcre, char *str, char *exp, int option);
+extern int tintin_regexp(pcre *pcre, char *str, char *exp, int option, int flag);
 
 extern int substitute(struct session *ses, char *string, char *result, int flags);
 
@@ -1148,7 +1200,6 @@ extern DO_CONFIG(config_debugtelnet);
 extern DO_CONFIG(config_convertmeta);
 extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
-extern DO_CONFIG(config_regexp);
 extern DO_CONFIG(config_mccp);
 extern DO_CONFIG(config_autotab);
 
@@ -1196,6 +1247,43 @@ extern DO_BUFFER(buffer_write);
 
 #endif
 
+#ifndef __DATA_H__
+#define __DATA_H__
+
+extern struct listroot *init_list(struct session *ses, int type, int size);
+extern void kill_list(struct listroot *root);
+extern void free_list(struct listroot *root);
+extern struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int type);
+
+extern struct listnode *insert_node_list(struct listroot *root, char *ltext, char *rtext, char *prtext);
+extern struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtext, char *prtext);
+extern struct listnode *insert_index_list(struct listroot *root, struct listnode *node, int index);
+
+extern  int show_node_with_wild(struct session *ses, char *cptr, int type);
+extern void show_node(struct listroot *root, struct listnode *node, int level);
+extern void show_nest(struct listnode *node, char *result);
+extern void show_list(struct listroot *root, int level);
+
+extern struct listnode *search_node_list(struct listroot *root, char *text);
+
+extern void delete_node_list(struct session *ses, int type, struct listnode *node);
+extern void delete_node_with_wild(struct session *ses, int index, char *string);
+
+extern void delete_index_list(struct listroot *root, int index);
+extern  int search_index_list(struct listroot *root, char *text, char *priority);
+extern  int locate_index_list(struct listroot *root, char *text, char *priority);
+
+
+extern int bsearch_alpha_list(struct listroot *root, char *text, int seek);
+extern int bsearch_priority_list(struct listroot *root, char *text, char *priority, int seek);
+extern int nsearch_list(struct listroot *root, char *text);
+
+extern DO_COMMAND(do_kill);
+extern DO_COMMAND(do_message);
+extern DO_COMMAND(do_ignore);
+extern DO_COMMAND(do_debug);
+#endif
+
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
@@ -1215,16 +1303,6 @@ extern int check_all_events(struct session *ses, int args, int vars, char *fmt, 
 
 #endif
 
-#ifndef __ACTION_H__
-#define __ACTION_H__
-
-extern struct session *do_action(struct session *ses, char *arg);
-extern struct session *do_unaction(struct session *ses, char *arg);
-
-extern void check_all_actions(struct session *ses, char *original, char *line);
-
-#endif
-
 #ifndef __ALIAS_H__
 #define __ALIAS_H__
 
@@ -1241,7 +1319,7 @@ int                    check_all_aliases(struct session *ses, char *input);
 extern DO_COMMAND(do_read);
 extern DO_COMMAND(do_write);
 
-extern void prepare_for_write(int mode, struct listnode *node, char *result);
+extern void write_node(struct session *ses, int mode, struct listnode *node, FILE *file);
 
 #endif 
 
@@ -1310,35 +1388,9 @@ DO_HISTORY(history_write);
 extern DO_COMMAND(do_line);
 extern DO_LINE(line_gag);
 extern DO_LINE(line_log);
-extern DO_LINE(line_lograw);
+extern DO_LINE(line_logverbatim);
 extern DO_LINE(line_skipgags);
 
-#endif
-
-
-#ifndef __LLIST_H__
-#define __LLIST_H__
-
-extern struct listroot *init_list(int index);
-extern void kill_list(struct session *ses, int index);
-extern DO_COMMAND(do_killall);
-extern struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int index);
-extern void insertnode_list(struct session *ses, char *ltext, char *rtext, char *prtext, int ondex);
-extern void updatenode_list(struct session *ses, char *ltext, char *rtext, char *prtext, int index);
-extern void deletenode_list(struct session *ses, struct listnode *node, int index);
-extern struct listnode *searchnode_list(struct listroot *listhead, char *cptr);
-extern struct listnode *searchnode_list_begin(struct listroot *listhead, char *cptr, int mode);
-extern void shownode_list(struct session *ses, struct listnode *node, int index);
-extern void show_list(struct session *ses, struct listroot *listhead, int index);
-extern int show_node_with_wild(struct session *ses, char *cptr, int index);
-extern struct listnode *search_node_with_wild(struct session *ses, char *cptr, int index);
-extern void delete_node_with_wild(struct session *ses, int index, char *string);
-
-extern void addnode_list(struct listroot *listhead, char *ltext, char *rtext, char *prtext);
-extern int count_list(struct listroot *listhead);
-extern DO_COMMAND(do_message);
-extern DO_COMMAND(do_ignore);
-extern DO_COMMAND(do_debug);
 #endif
 
 
@@ -1347,7 +1399,6 @@ extern DO_COMMAND(do_debug);
 
 extern void logit(struct session *ses, char *txt, FILE *file, int newline);
 extern DO_COMMAND(do_log);
-extern DO_COMMAND(do_logline);
 extern void write_html_header(FILE *fp);
 extern void vt102_to_html(struct session *ses, char *txt, char *out);
 #endif
@@ -1392,21 +1443,34 @@ extern DO_COMMAND(do_echo);
 extern DO_COMMAND(do_end);
 extern DO_COMMAND(do_forall);
 extern DO_COMMAND(do_info);
-extern DO_COMMAND(do_loop);
 extern DO_COMMAND(do_nop);
-extern DO_COMMAND(do_parse);
-extern DO_COMMAND(do_return);
 extern DO_COMMAND(do_run);extern DO_COMMAND(do_send);
 extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_snoop);
 extern DO_COMMAND(do_suspend);
-extern DO_COMMAND(do_while);
+extern DO_COMMAND(do_test);
 extern DO_COMMAND(do_zap);
-
-extern DO_COMMAND(do_gagline);
 
 #endif
 
+#ifndef __NEST_H__
+#define __NEST_H__
+
+extern struct listroot *search_nest_root(struct listroot *root, char *arg);
+extern struct listnode *search_base_node(struct listroot *root, char *variable);
+extern struct listnode *search_nest_node(struct listroot *root, char *variable);
+extern int search_nest_index(struct listroot *root, char *variable);
+extern struct listroot *update_nest_root(struct listroot *root, char *arg);
+extern void update_nest_node(struct listroot *root, char *arg);
+extern int delete_nest_node(struct listroot *root, char *variable);
+extern int get_nest_size(struct listroot *root, char *variable, char *result);
+extern struct listnode *get_nest_node(struct listroot *root, char *variable, char *result, int def);
+extern int get_nest_index(struct listroot *root, char *variable, char *result, int def);
+extern struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, ...);
+extern void show_nest_node(struct listnode *node, char *result, int initialize);
+extern void copy_nest_node(struct listroot *dst_root, struct listnode *dst, struct listnode *src);
+
+#endif
 
 #ifndef __NET_H__
 #define __NET_H__
@@ -1471,9 +1535,13 @@ extern void process_speedwalk(struct session *ses, char *input);
 extern struct session *parse_tintin_command(struct session *ses, char *input);
 extern char *get_arg_all(char *string, char *result);
 extern char *get_arg_in_braces(char *string, char *result, int flag);
-extern char *get_arg_with_spaces(char *string, char *result);
-extern char *get_arg_stop_spaces(char *string, char *result);
+extern char *sub_arg_in_braces(struct session *ses, char *string, char *result, int flag, int sub);
+extern char *get_arg_with_spaces(char *string, char *result, int flag);
+extern char *get_arg_stop_spaces(char *string, char *result, int flag);
 extern char *space_out(char *string);
+extern char *get_arg_to_brackets(char *string, char *result);
+extern char *get_arg_at_brackets(char *string, char *result);
+extern char *get_arg_in_brackets(char *string, char *result);
 extern void write_mud(struct session *ses, char *command, int flags);
 extern void do_one_line(char *line, struct session *ses);
 
@@ -1573,7 +1641,7 @@ extern struct telopt_type telopt_table[];
 #define __TEXT_H__
 
 extern void printline(struct session *ses, char *str, int isaprompt);
-int word_wrap(struct session *ses, char *textin, char *textout, int convert);
+int word_wrap(struct session *ses, char *textin, char *textout, int display);
 
 #endif
 
@@ -1647,13 +1715,19 @@ extern void close_timer(int timer);
 #endif
 
 
-#ifndef __VARIABLES_H__
-#define __VARIABLES_H__
+#ifndef __VARIABLE_H__
+#define __VARIABLE_H__
 
 extern DO_COMMAND(do_variable);
 extern DO_COMMAND(do_unvariable);
 
-extern void internal_variable(struct session *ses, char *format, ...);
+extern int delete_variable(struct session *ses, char *variable);
+extern struct listnode *search_variable(struct session *ses, char *variable);
+
+extern struct listnode *get_variable(struct session *ses, char *variable, char *result);
+extern struct listnode *set_variable(struct session *ses, char *variable, char *format, ...);
+
+extern int get_variable_index(struct session *ses, char *variable, char *result);
 
 extern DO_COMMAND(do_format);
 extern DO_COMMAND(do_tolower);

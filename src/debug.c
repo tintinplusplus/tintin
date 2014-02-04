@@ -75,13 +75,10 @@ void dump_stack(void)
 {
 	unsigned char i;
 
-	tintin_header(gtd->ses, " DEBUG STACK ");
-
 	for (i = 0 ; i < debug_index && i < MAX_STACK_SIZE ; i++)
 	{
-		tintin_printf2(gtd->ses, "\033[1;31mDEBUG_STACK[%03d] = %s", i, debug_stack[i]);
+		printf("\033[1;32mDEBUG_STACK[\033[1;31m%03d\033[1;32m] = \033[1;31m%s\n", i, debug_stack[i]);
 	}
-	tintin_header(gtd->ses, "");
 }
 
 void dump_full_stack(void)

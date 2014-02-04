@@ -32,41 +32,37 @@
 
 DO_COMMAND(do_tick)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], delay[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	root = ses->list[LIST_TICKER];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
-	arg = get_arg_in_braces(arg, left,  0);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, right, 1);
-	arg = get_arg_in_braces(arg, delay, 1);
-
-	if (*delay == 0)
+	if (*arg3 == 0)
 	{
-		strcpy(delay, "60");
+		strcpy(arg3, "60");
 	}
 	else
 	{
-		get_number_string(ses, delay, delay);
+		get_number_string(ses, arg3, arg3);
 	}
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_TICKER);
+		show_list(ses->list[LIST_TICKER], 0);
 	}
-	else if (*left && *right == 0)
+	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_TICKER) == FALSE) 
+		if (show_node_with_wild(ses, arg1, LIST_TICKER) == FALSE) 
 		{
-			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, delay, LIST_TICKER);
+		update_node_list(ses->list[LIST_TICKER], arg1, arg2, arg3);
 
-		show_message(ses, LIST_TICKER, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", left, right, delay);
+		show_message(ses, LIST_TICKER, "#OK {%s} NOW EXECUTES {%s} EVERY {%s} SECONDS.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -82,10 +78,7 @@ DO_COMMAND(do_untick)
 
 DO_COMMAND(do_delay)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], time[BUFFER_SIZE];
-	struct listroot *root;
-
-	root = ses->list[LIST_DELAY];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, arg1, 0);
 	arg = get_arg_in_braces(arg, arg2, 1);
@@ -93,7 +86,7 @@ DO_COMMAND(do_delay)
 
 	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_DELAY);
+		show_list(ses->list[LIST_DELAY], 0);
 	}
 	else if (*arg2 == 0)
 	{
@@ -106,15 +99,17 @@ DO_COMMAND(do_delay)
 	{
 		if (*arg3 == 0)
 		{
-			sprintf(time, "%lld", utime());
+			sprintf(arg3, "%lld", utime());
 
-			updatenode_list(ses, time, arg2, arg1, LIST_DELAY);
+			update_node_list(ses->list[LIST_DELAY], arg3, arg2, arg1);
 
 			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg1, arg2);
 		}
 		else
 		{
-			updatenode_list(ses, arg1, arg2, arg3, LIST_DELAY);
+			substitute(ses, arg1, arg1, SUB_VAR|SUB_FUN);
+
+			update_node_list(ses->list[LIST_DELAY], arg1, arg2, arg3);
 
 			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg3, arg2);
 		}

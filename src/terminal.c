@@ -28,7 +28,9 @@
 
 #include "tintin.h"
 
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+  #include <sys/ioctl.h>
+#endif
 #include <termios.h>
 #include <errno.h>
 
@@ -120,15 +122,24 @@ void init_screen_size(struct session *ses)
 	top = ses->top_row == 0 ? 1 : ses->top_row;
 	bot = ses->bot_row == 0 ? 0 : ses->rows - ses->bot_row;
 
-	if (ioctl(1, TIOCGWINSZ, &screen))
+	if (ses == gts)
 	{
-		ses->rows = SCREEN_HEIGHT;
-		ses->cols = SCREEN_WIDTH;
+		if (ioctl(0, TIOCGWINSZ, &screen) == -1)
+		{
+			ses->rows = SCREEN_HEIGHT;
+			ses->cols = SCREEN_WIDTH;
+		}
+		else
+		{
+			ses->rows = screen.ws_row;
+			ses->cols = screen.ws_col;
+		}
+		SET_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
 	}
 	else
 	{
-		ses->rows = screen.ws_row;
-		ses->cols = screen.ws_col;
+		ses->rows = gts->rows;
+		ses->cols = gts->cols;
 	}
 
 	ses->top_row = top;
@@ -138,7 +149,7 @@ void init_screen_size(struct session *ses)
 	{
 		init_split(ses, ses->top_row, ses->bot_row);
 	}
-	SET_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
+
 }
 
 int get_scroll_size(struct session *ses)

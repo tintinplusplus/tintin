@@ -37,7 +37,7 @@ DO_COMMAND(do_read)
 {
 	FILE *fp;
 	struct stat filedata;
-	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
+	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto, last;
 	int lvl, cnt, com, lnc, fix, ok;
 	int counter[LIST_MAX];
 
@@ -67,7 +67,7 @@ DO_COMMAND(do_read)
 	{
 		if (HAS_BIT(list_table[cnt].flags, LIST_FLAG_READ))
 		{
-			counter[cnt] = ses->list[cnt]->count;
+			counter[cnt] = ses->list[cnt]->used;
 		}
 	}
 
@@ -109,11 +109,22 @@ DO_COMMAND(do_read)
 				case DEFAULT_OPEN:
 					*pto++ = *pti++;
 					lvl++;
+					last = DEFAULT_OPEN;
 					break;
 
 				case DEFAULT_CLOSE:
 					*pto++ = *pti++;
 					lvl--;
+					last = DEFAULT_CLOSE;
+					break;
+
+				case COMMAND_SEPARATOR:
+					*pto++ = *pti++;
+					last = COMMAND_SEPARATOR;
+					break;
+
+				case ' ':
+					*pto++ = *pti++;
 					break;
 
 				case '/':
@@ -126,6 +137,10 @@ DO_COMMAND(do_read)
 					{
 						*pto++ = *pti++;
 					}
+					break;
+
+				case '\t':
+					*pto++ = *pti++;
 					break;
 
 				case '\r':
@@ -154,8 +169,8 @@ DO_COMMAND(do_read)
 						{
 							fix = lnc;
 						}
-
 					}
+
 					if (lvl)
 					{
 						pti++;
@@ -172,6 +187,12 @@ DO_COMMAND(do_read)
 								}
 							}
 							pti++;
+
+						}
+
+						if (*pti != DEFAULT_CLOSE && last == 0)
+						{
+							*pto++ = ' ';
 						}
 					}
 					else for (cnt = 1 ; ; cnt++)
@@ -182,7 +203,7 @@ DO_COMMAND(do_read)
 							break;
 						}
 
-						if (pti[cnt] == DEFAULT_OPEN || pti[cnt] == DEFAULT_CLOSE)
+						if (pti[cnt] == DEFAULT_OPEN)
 						{
 							pti++;
 							while (isspace(*pti))
@@ -203,6 +224,7 @@ DO_COMMAND(do_read)
 
 				default:
 					*pto++ = *pti++;
+					last = 0;
 					break;
 			}
 		}
@@ -323,17 +345,17 @@ DO_COMMAND(do_read)
 		{
 			if (HAS_BIT(list_table[cnt].flags, LIST_FLAG_READ))
 			{
-				switch (ses->list[cnt]->count - counter[cnt])
+				switch (ses->list[cnt]->used - counter[cnt])
 				{
 					case 0:
 						break;
 
 					case 1:
-						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
+						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->used - counter[cnt], list_table[cnt].name);
 						break;
 
 					default:
-						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
+						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->used - counter[cnt], list_table[cnt].name_multi);
 						break;
 				}
 			}
@@ -351,9 +373,9 @@ DO_COMMAND(do_read)
 DO_COMMAND(do_write)
 {
 	FILE *file;
-	char temp[STRING_SIZE], filename[BUFFER_SIZE];
-	struct listnode *node;
-	int cnt;
+	char filename[BUFFER_SIZE];
+	struct listroot *root;
+	int i, j;
 
 	get_arg_in_braces(arg, filename, TRUE);
 
@@ -363,18 +385,18 @@ DO_COMMAND(do_write)
 		return ses;
 	}
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	for (i = 0 ; i < LIST_MAX ; i++)
 	{
-		if (!HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_WRITE))
+		root = ses->list[i];
+
+		if (!HAS_BIT(root->flags, LIST_FLAG_WRITE))
 		{
 			continue;
 		}
 
-		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
+		for (j = 0 ; j < root->used ; j++)
 		{
-			prepare_for_write(cnt, node, temp);
-
-			fputs(temp, file);
+			write_node(ses, i, root->list[j], file);
 		}
 	}
 
@@ -386,38 +408,55 @@ DO_COMMAND(do_write)
 }
 
 
-void prepare_for_write(int list, struct listnode *node, char *result)
+void write_node(struct session *ses, int list, struct listnode *node, FILE *file)
 {
-	int llen = strlen(node->left)  > 20 ? 20 : strlen(node->left);
-	int rlen = strlen(node->right) > 25 ? 25 : strlen(node->right);
+	char result[STRING_SIZE], buffer[BUFFER_SIZE];
+
+	push_call("write_node(%d,%p,%p)",list,node,file);
+
+	int llen = UMAX(20, strlen(node->left));
+	int rlen = UMAX(25, strlen(node->right));
 
 	switch (list)
 	{
-		case LIST_ALIAS:
 		case LIST_EVENT:
 		case LIST_FUNCTION:
 		case LIST_MACRO:
-			sprintf(result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(NULL, node->right));
-			return;
-		case LIST_ACTION:
-			sprintf(result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(NULL, node->right), node->pr);
-			return;
-	}
+			sprintf(result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right));
+			break;
 
-	switch (list_table[list].args)
-	{
-		case 0:
-			result[0] = 0;
+		case LIST_ACTION:
+		case LIST_ALIAS:
+			sprintf(result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right), node->pr);
 			break;
-		case 1:
-			sprintf(result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
+
+		case LIST_VARIABLE:
+			show_nest_node(node, buffer, 1);
+			sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", buffer);
 			break;
-		case 2:
-			sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
-			break;
-		case 3:
-			sprintf(result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
+
+		default:
+
+			switch (list_table[list].args)
+			{
+				case 0:
+					result[0] = 0;
+					break;
+				case 1:
+					sprintf(result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
+					break;
+				case 2:
+					sprintf(result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
+					break;
+				case 3:
+					sprintf(result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
+					break;
+			}
 			break;
 	}
+	fputs(result, file);
+
+	pop_call();
+	return;
 }
 

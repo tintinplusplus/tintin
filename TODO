@@ -1,6 +1,10 @@
 * Stuff that needs to be done
 
-- look into convert meta #ses connect crash bug.
+- look into getting rid of node->data
+
+- look into \c[OA default binding for keypad.
+
+- garbage collection for deleted nodes.
 
 -------------------------------------------------------------------------------
 
@@ -9,8 +13,6 @@ GENERAL STUFF:
 - Add a ARG_LEN / ARG_MAX setting.
 
 - Add a #line skip option.
-
-- Add a #line sub option.
 
 -------------------------------------------------------------------------------
 
@@ -26,15 +28,11 @@ MAPPING STUFF:
 
 - Synchronise drawn map with the link map.
 
-- Add support to set exit and hiddenexit colors.
+- Add support to set hiddenexit colors.
 
 - A method to double check correct movement.
 
 - A method to highlight a route on the map
-
-- A method to add a note for a room.
-
-- A method to find a generic room more precisely by giving exits and other identifying information.,
 
 - Better #map undo support.
 
@@ -43,8 +41,6 @@ MAPPING STUFF:
 -------------------------------------------------------------------------------
 
 * This is a list of improvements that are planned for a rainy day.
-
-- auto create coord flag for pathdirs.
 
 - Buffer safe strings.
 

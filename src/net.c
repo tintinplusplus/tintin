@@ -192,6 +192,9 @@ void write_line_mud(struct session *ses, char *line, int size)
 	{
 		syserr("write in write_line_mud");
 	}
+
+	check_all_events(ses, 0, 1, "SEND OUTPUT", line);
+
 	pop_call();
 	return;
 }
@@ -268,12 +271,6 @@ void readmud(struct session *ses)
 		if (ses->more_output[0])
 		{
 			if (ses->check_output)
-			{
-				sprintf(linebuf, "%s%s", ses->more_output, line);
-
-				ses->more_output[0] = 0;
-			}
-			else if (*line && HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 			{
 				sprintf(linebuf, "%s%s", ses->more_output, line);
 

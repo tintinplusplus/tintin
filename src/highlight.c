@@ -19,7 +19,6 @@
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
 ******************************************************************************/
 
-
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
@@ -31,53 +30,42 @@
 #include "tintin.h"
 
 
-/*
-	Now follows the standard tintin syntax because #read is not as flexible
-	as it used to be - Igor
-*/
-
 DO_COMMAND(do_highlight)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE], buf[BUFFER_SIZE];
-	struct listroot *root;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	root = ses->list[LIST_HIGHLIGHT];
+	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, 1, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, arg3, 1);
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(arg, rank,  TRUE);
-
-	if (*rank == 0)
+	if (*arg3 == 0)
 	{
-		strcpy(rank, "5");
+		strcpy(arg3, "5");
 	}
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		show_list(ses, root, LIST_HIGHLIGHT);
+		show_list(ses->list[LIST_HIGHLIGHT], 0);
 	}
-	else if (*left && *right == 0)
+	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_HIGHLIGHT) == FALSE)
+		if (show_node_with_wild(ses, arg1, LIST_HIGHLIGHT) == FALSE)
 		{
-			show_message(ses, LIST_HIGHLIGHT, "#HIGHLIGHT: NO MATCH(ES) FOUND FOR {%s}.", left);
+			show_message(ses, LIST_HIGHLIGHT, "#HIGHLIGHT: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
 	}
 	else
 	{
-		if (get_highlight_codes(ses, right, buf) == FALSE)
+		if (get_highlight_codes(ses, arg2, temp) == FALSE)
 		{
 			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\n");
 			tintin_printf2(ses, "reset, bold, light, faint, dim, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 		}
 		else
 		{
-			updatenode_list(ses, left, right, rank, LIST_HIGHLIGHT);
+			update_node_list(ses->list[LIST_HIGHLIGHT], arg1, arg2, arg3);
 
-			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}.", left, right, rank);
+			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}.", arg1, arg2, arg3);
 		}
 	}
 	return ses;
@@ -93,14 +81,17 @@ DO_COMMAND(do_unhighlight)
 
 void check_all_highlights(struct session *ses, char *original, char *line)
 {
+	struct listroot *root = ses->list[LIST_HIGHLIGHT];
 	struct listnode *node;
 	char *pt1, *pt2;
 	char match[BUFFER_SIZE], color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], plain[BUFFER_SIZE];
 
-	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
+	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, node, line, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
+			node = root->list[root->update];
+
 			if (*gtd->vars[0] == 0)
 			{
 				continue;

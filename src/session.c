@@ -222,8 +222,6 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 	newsession->read_max      = gts->read_max;
 	newsession->read_buf      = (unsigned char *) calloc(1, gts->read_max);
 
-	gtd->ses                  = newsession;
-
 	LINK(newsession, gts->next, gts->prev);
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
@@ -233,15 +231,13 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 
 	init_screen_size(newsession);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
-	{
-		init_split(newsession, gts->top_row, gts->bot_row);
-	}
 	init_buffer(newsession, gts->scroll_max);
 
 	dirty_screen(newsession);
 
 	tintin_printf2(ses, "#Trying to connect to %s port %s.", newsession->host, newsession->port);
+
+	gtd->ses = newsession;
 
 	if (desc == 0)
 	{
@@ -391,11 +387,16 @@ void cleanup_session(struct session *ses)
 
 void dispose_session(struct session *ses)
 {
+	int index;
+
 	push_call("dispose_session(%p)", ses);
 
 	UNLINK(ses, gtd->dispose_next, gtd->dispose_prev);
 
-	do_killall(ses, NULL);
+	for (index = 0 ; index < LIST_MAX ; index++)
+	{
+		free_list(ses->list[index]);
+	}
 
 	if (ses->map)
 	{
