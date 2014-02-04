@@ -1,0 +1,633 @@
+
+                I'll list my changes here, it's too much to put my name on
+                everything I alter (I'm the sort of person that fixes stuff
+                that isn't broken) as well as I remove unused stuff (there
+                was almost a thousand lines of code that likely wouldn't ever
+                be used either. Removed non constructive comments as well.
+                You know, like: end_session(); /* end the session */
+                Will keep it short and brief, hopefully still leaving a good
+                gist of what I've been doing.
+
+
+
+feb 2004
+
+
+
+- net.c         added telopt negotiations in net.c for naws, terminal type,
+                and mccp (version 2)
+
+- tintin.h      added the zlib library and a session buffer for mccp
+
+- tintin.h      added a 16 bit output buffer, I'll just asume that the mud
+                output contains a linefeed before BUFFER_SIZE is reached. This
+                should make output processing a bit smoother, and saves me
+                from fiddling too much with chopped up data.
+
+- rl.c          added the tintin_printf and tintin_printf2 functions which
+                format the argument list and pass the data on to tintin_puts
+                or tintin_puts2
+
+- tintin.h      changed the node list struct to work with a head/tail pointer,
+                and turned it into a double linked list, updated all .c files
+                affected by this change.
+
+- *.c           cleaned up the code, using tabs instead of spaces and aligning
+                the brackets.
+
+- main.c        switched from rand to rand48, it's seeded once upon startup
+
+- main.c        added a global tintin session (gts) the idea is to get rid of
+                most global variables.
+
+- tintin.h      added a bitvector to the session structure which will contain
+                all session flags, various changes throughout the code changing
+                global variables into flags.
+
+- rl.c          fixed up the cursor positioning for split mode and fixed the
+                linewrap routine which was off by 1 character, resulting in
+                extra lines on a perfect match.
+
+                added a special flag for mud output for split mode, to avoid
+                color loss when restoring the cursor (which also restores the
+                cursor color, hence the color loss)
+
+- tables.c      new c file, which will contain some tables, the current setup
+                is a bit tedious.
+
+- tintin.h      moved all header files into tintin.h cause the old setup with
+                40 different headerfiles was giving me a headache (not kidding)
+                grouped it into typedefs, globals, constants, macros,
+                structures and functions
+
+- misc.c        changed #cr to print " \n" instead of "\n" because most muds
+                strip trailing crs, #4 #cr should work now.
+
+- tintin.h      changed all commands to use the COMMAND typedef, as well as
+                all commands now use universal arguments and naming, this to
+                make a command table.
+
+- *.c           There's always a session now, with a few checks for gts (global
+                tintin session) which cannot send or receive data. Passing
+                session data along with a couple of functions which should
+                make background sessions less spammy.
+
+- strhash.c     Added a simple string hash routines which I'll be using for a
+                scroll back buffer. It uses a bit of memory, but should save a
+                lot more for big scroll back buffers.
+
+- main.c        changed tstphandler to call kill with a null pid, otherwise it
+                wouldn't work when tintin was started from a script
+
+- ivars.c       removed backwards compatibility for fixedmath
+
+- buffer.c      scroll back buffer and a grep command added
+
+- rl.c          made the init_readline function actually initilize readline,
+                added 4 default keybind for the scrollback buffer.
+
+- tintin.h      added a keymap to the tintin_data structure, which will be
+                used for keybinding.
+
+- text.c        got rid of the linewrapper in rl.c and added a word wrap
+                routine instead.
+
+- log.c         all vt102 codes cept the linefeed are stripped for logged data,
+                the lowlog thingie can still be used.
+
+- chat.c        Removed this entirely, it's a mess and there are many stand
+                alone p2p chat programs available.
+
+- *.c           moved some more global data to the session and data structures
+
+- rltick.c      removed entirely
+
+- ticks.c       removed entirely
+
+- tick.c        wrote a new ticker from scratch, uses alarm(1) to sleep 1
+                second, the user can now define a list of tickers, pretty much
+                like aliasses, they'll trigger when the timer expires. Added
+                the 'tick' and 'untick' command for manipulation.
+
+- macro.c       added 'macro' and 'unmacro' commands for keybinding, I couldn't
+                figure out how to actually undo the real macro's though
+                without using a messy hack, so I just skipped that till later
+                for now.
+
+- session.c     Got rid of the zombi code, will try to add a better connection
+                handler at a later data, but the zombi code is not the answer.
+
+- tintin.h      Changed architecture further turning the lists from individual
+                lists into an array of lists. Added an array in tables.c for
+                additional data.
+
+- substitute.c  Changed the default #gag char from '.' to 'ÿ' this to prevent
+                weird behavior when a dot is displayed on an empty line for
+                any kind of reason.
+
+- config.c      Added a configuration menu, defaults are loaded upon startup.
+
+- walk.c        Removed, didn't really look into it deeply, but I adjusted
+                path.c to allow user progged walking using a ticker.
+
+- parse.c       Added 2 action checkers, first one checks priority 0 to 4,
+                after that substitutions are checked, priority 5 to 9 is
+                checked after substitutions.
+
+- parse.c       do_one_line now strips colors per default before passing the
+                text on to check_one_action
+
+- action.c      rewrote the %0 - %9 check_one_action regexp routine, it's
+                a bit clean and slightly faster now.
+
+- action.c      rewrote substitute_vars, ';' is changed to : per default
+
+- variable.c    rewrote subsitute_myvariables, no longer supporting $number
+                variables. ';' is stripped per default. This also easily 
+                allows a change so variables to contain numbers.
+
+- variable.c    #format {variable} {format} {arguments}
+                This allows string formatting, numbers are not supported.
+                Added a format parser for further functionality, for now %l
+                will lowercase, %u will upper, and %r will reverse the
+                argument given. There's a maximum of 10 arguments.
+
+- variable.c    Due to the format command, prepad, postpad, tolower, and
+                toupper are no longer required, so I removed the commands.
+                I realise this generates a backward compatibility issue, but
+                it's easier to find the new commands without 70 old commands
+                spamming the help files and command lists.
+
+- split.c       moved the split screen stuff from rl.c to this new file, and
+                placed the prompt commands/routines there as well.
+
+
+
+mar 2004
+
+
+
+- math.c        Added a close to complete mathematical expression routine.
+                Needs some work still but it works. Also allows for comparing
+                strings <= >= == != if you enclose the strings in " ". It's
+                quite a bit better than the old one, though it's not supporting
+                T, F, and '!' since it's string based, shouldn't be too hard
+                adding some better string support.
+
+- ivars.c       stripped all the stuff that is now covered by math.c or
+                variables.c only leaving #ifexits. And then it occured to me
+                that #if {"$variable" != "\$variable"} {true} {false} would
+                very well replace the 'ifexits' check. So ivars.c is no more.
+
+- llist.c       deletenode_list now properly keeps track of a global update
+                node. Can only use one noderoot->update per program state.
+
+- session.c     cleanup_session now properly keeps track of a global update
+                node. Can only use one gtd->update per program state.
+
+- rl.c          fixed up the split screen behavior, should be a stable prompt
+  tick.c        and correct text presentation in split mode now.
+
+
+-misc.c         added a higher precision to the #sleep command, you can now
+                enter #sleep 0.5 to sleep for half a second, precision is in
+                miliseconds. Also using nanosleep now, with additional support
+                to continue sleeping
+
+-variables.c    added %t to #format, which will print the epoch time.
+                added %T to #format, which will print the military time
+                of the provided number as: hours:minuts
+                added %d to #format, which will print the military data of the
+                provided number as: day:month:year (if there's no such thing
+                as a military date I hope you still know what I mean)
+
+-rl.c           set tintin to 100 loops per second, might seem too much, but
+                it doesn't matter cpu wise, and it's always fun when tintin's
+                triggers beat those of most other client.
+
+-math.c         added + - ! and ~ to the mathexp interpreter.
+
+-regexp.c       added color support. codes are entered as <abc> and is pretty
+                much translated as : \e[a;b+30;c+40m with '8' counting as
+                a skipped color code. People can write their own functions to
+                make tintin display colors of their own choice.
+
+-variables.c    added %R to #format, which will print a number between 1 and
+                the given number in the argument. Removed #random command.
+                added %m to #format, which will do the same as #math
+
+-regexp.c       added option for end of line terminator ^ so adding ^ to the
+                end of the line will make tintin return false if the regexp
+                returns with an unfinished match string.
+
+-main.c         I update the credit screen, figured it would appropriate to
+                put my own name on it after all this work. I turned it into
+                a helpfile while at it, #help credits should show it.
+
+-regexp.c       made the substitute recursively double check variables and
+                functions if they hold a variable of a different kind, useful
+                for variables or functions holding color codes.
+
+-misc.c         added ignore and debug commands, debug won't do an aweful lot
+                as of yet though.
+
+-variable.c     figured I should add some more color support, so added a way
+                to format tintin color names, using #format %c {name}
+
+-variable.c     #format again, %h will create a tintin header line
+
+-variable.c     fixed how variable assignment was being dealt with in triggers,
+                can now change and display variables correctly on the fly.
+
+-rlhist.c       changed command repeation behavior, works as follows:
+                who
+                where
+                score
+
+                !    -> repeats the last command.
+                !w   -> repeats last command starting with "w"
+                !who -> repeats last command starting with "who"
+
+                removed the history command, no longer needed to look up the
+                index, just a working short memory.
+
+                added repeat on enter option in config
+
+-parse.c        the command part of a line received by parse input
+                has vars and functions substituted right away.
+
+                If passing a command to another session the functions and
+                variables are substituted as well, setting the values of
+                the controlling session.
+
+-math.c         Added the tintoi and tincmp functions, which are enhanced
+                versions of atoi and strcmp.
+
+net.c           Added some code to stop enters being written to the scrollback
+                buffer, useful for people using #cr to bust a prompt.
+
+rl.c            Got rid of the prompt saving stuff, now using brute force,
+                refresh the prompt everytime the screen is updated. This to
+                work around a bug in readline that gives odd behavior with
+                cursor movement.
+
+parse.c         made sure $variables are substituted in the parsing command,
+                as well as $vars being substituted as session A passes a
+                command to session B. Otherwise variables remain variable
+                untill the final execution stage.
+
+llist.c         Added nesting syntax highlighting for lists.
+
+math.c          Added support for "T" and "F" (feature was lost in rewrite)
+
+math.c          Added the 'd' operator for a random dice roll
+
+config.c        rewrote some basic stuff in the configuration routines,
+                the original setup was a bit dodgy.
+
+highlight.c     Added priorities to highlighting
+
+substitute.c    Added priorities to substitutions
+
+split.c         Added check so a prompt isn't shown for background sessions.
+
+variable.c      Added %R and %C to #format for nr of rows and columns
+
+
+
+apr 2004
+
+
+
+misc.c          removed speedwalk command, it's a config option anyways.
+
+
+
+jun 2004
+
+
+
+log.c           added variable substitution to *arg
+
+misc.c          added variable substitution to *arg
+
+parse.c         changed escape character behavior, #format will need %+4s
+                instead of %4s if used in an argument or action. Used to
+                be possible to use \%4s but that's no good.
+
+tinexp.c        \a \e \n \r \t are now translated to the according characters.
+                (\a equals what #bell does, \r\n would equal #cr, \e is ESC)
+
+parse.c        removed premature stripping of '\' character in the parsing
+               routines. Escaped characters are dealt with when data is send
+               to the mud or screen.
+
+
+
+jul 2004
+
+
+
+tintin.h       added a room and exit structure for an auto mapper
+
+mapper.c       added a creation functions for rooms and exits
+
+files.c        added the #readmap function to read in a map
+
+mapper.c       added a routine to display an ascii map
+
+mapper.c       added an algorithm to calculate the shortest path between two
+               rooms
+
+main.c         the verbatimchar is set as \\ instead of \ as default, this to
+               allow escaping braces at a later date with this config option
+               causing trouble.
+
+
+
+aug 2004
+
+
+
+mapper.c       added the redit command, for basic mapper manipulation, still
+               needs a bit more work.
+
+telopts.c      Added a telnet patch from Julia Longtin, see MODS.juri making
+               a couple of modifications. Main one being instead of a
+               'telnet flag' tintin tries to initialize a telnet session when
+               connecting to port 23.
+
+rl.c           Seeming the readline_echoing_p is reset to TRUE whenever
+               something is written to the terminal, so I simply set it to
+               whatever it should be several times a second now in the main
+               loop.
+
+
+
+sep 2004
+
+
+
+log.c          Fixed a typo that broke the log command, as well as adding
+               newlines to plain logging.
+
+rlhist.c       one letter commands are no longer added to the history.
+
+
+
+oct 2004
+
+
+
+math.c         Fixed a crash bug that slipped in
+
+tinexp.c       Set \[ to escape as { and \] to escape as }
+
+main.c         Now setting application keypad mode and ESC 0 prefix on startup
+
+telopt.c       Changed dont_oldenviron response to wont_oldenviron response,
+               reported to fix the ability to login on some server types.
+
+files.c        Added the option to comment using /* comment */ in script files.
+
+math.c         Upgraded to do 64 bit instead of 32 bit operations.
+
+variables.c    Added the replacestring command.
+
+mapper.c       Added the function find_coord, which tries to find a room at the
+               given coordinate, starting room being 0,0,0
+
+
+
+dec 2004
+
+
+
+net.c          Fixed a crash bug that slipped in with hiding passwords.
+
+net.c          Commands are now added to the buffer/log files while in split
+               mode.
+
+highlight.c    Fixed bug with variables and functions not being used.
+               Finished highlight code, it no longer messes up old colors.
+
+tinexp.c       Now only converting ; to : for actions, not for aliasses etc.
+
+path.c         Made END OF PATH message triggerable.
+
+variable.c     added the do_internal_variable command, which does the same
+               as do_variable, but allows to set a blank variable. Used by
+               do_format and do_replacestring.
+
+rl.c           added the show_message function which only shows messages from
+               setting aliasses, variables, etc when called from the command
+               line, unless debug is enabled.
+
+rl.c           Now using the more_output buffer previously only used by the
+               scrollback buffer to double check actions.
+
+
+feb 2005
+
+
+tick.c         Took care of uninitalized tickers firing prematurely.
+
+session.c      Added option to make a trigger on session termination.
+
+files.c        Added a check for #read being used on a directory.
+
+rl.c           Fixed home/end keys being bound correctly
+
+split.c        Allowing multiple prompt triggers to fire on the same line
+
+               Fixed split line being 4 '-' short
+
+
+split.c        Fixed infinite loop in do_unprompt
+
+rl.c           Added the option to call show_message() with a NULL argument
+               for more generic usage.
+
+tintin.h       Set BUFFER_SIZE to 10000 OUTPUT_SIZE to 65000
+               and FILE_SIZE to 150000
+
+files.c        Added option to #read and #write using a variable
+
+buffer.c       Fixed some dodgy behavior of the scroll back buffer, it should
+               scroll ultra fast as well now.
+
+               The buffer command now only prints the last screen worth of
+               text, too lazy to re-code floating screen indexes atm.
+
+               Added scroll lock to the config menu, to freeze the screen
+               while scrolling.
+
+
+
+march 2005
+
+
+
+rl.c           mainloop now uses a threaded call for the old mainloop. This
+               because the readline() function is blocking and I'm too lazy
+               to code the stuff readline takes care of.
+
+               The new mainloop tries to go at 100 loops per second.
+
+session.c      Got rid of connect_delay for connecting sessions. Now using
+               1 timer.
+
+tick.c         Changed #ticker to use floating point precision.
+
+               Added delay command: #delay {seconds delay} {command}
+
+variable.c     #format, added %L to print the argument's string length, and
+               %U to print the number of micro seconds since epoch, increased
+               the number of arguments from 10 to 20.
+
+misc.c         Removed the #sleep command, never worked well and should be
+               obsolete with the #delay command.
+
+misc.c         #gagline, when called within an action it will gag the line.
+
+rl.c           The #snoop code wasn't working, fixed it up.
+
+llist.c        Increased the buffer of show_list a little to avoid an overflow
+
+macro.h        Changed how macros work, fixing problems like needing a \n at
+               the end, needing an empty line, macros being added to the
+               command history. Still can't find a way to have rl erase macros.
+
+               Players can enter a command within a line of text using
+               [[ command ]].
+               Example: tell bubba (long line) [[chat hi bibbi]] (more text)
+
+rl.c           Added the option to delay displaying and parsing possibly broken
+               packets. Delay in micro seconds can be set with the PACKET PATCH
+               config option. By default it's set to 0 (disabled).
+
+variables.c    Fixed #replacestring which got messed up while I added variable
+               substitution to it.
+
+rl.c           Fixed echoing of commands in split mode.
+
+Makefile.in    Adding -lncurses per default now, someone reported this to cause
+               cursor problems if not included by the auto config.
+
+split.c        Changes split and prompt to work more logical, people might
+               have to change their scripts, new syntax:
+               #split {number of top lines} {number of bottom lines}
+               default equals: #split {0} {1}
+
+               Fixed possible color bleeding in the split line, this for noobs
+               who don't know how to use tintin's color codes.
+
+files.c        /* and */ now only work when used outside braces.
+
+rl.c           No more threading, made tintin crashy as well.
+
+variable.c     Added %n (name) to #format, which capitalizes the first letter
+               of the given string.
+
+buffer.c       No longer resetting the buffer if the new scrollback size 
+               is the same as the old one.
+
+rl.c           prompts automatically get a newline added in split mode.
+
+session.c      Fixed problem with aliasses changing focus.
+
+rl.c           Made #snoop output non triggerable.
+
+misc.c         Added the $loop and $forall variables set in the #loop and
+               #forall commands. Avoids dodgy &0 behavior in #functions.
+
+telopt.c       Added dynamic allocation of buffer space for mccp and the
+               normal output buffer.
+
+rlhist.c       1 character long commands are once again added to the command
+               history.
+
+files.c        If a bracket is missing TinTin gives a hint at what line the
+               error might be.
+
+tinexp.c       Added option to surround a variable with brackets.
+
+variables.c    Removed restrictions on variable names.
+
+math.c         Fixed bug with #if returning the wrong session pointer.
+
+log.c          Added #logline command for actions to log 1 line of text
+
+rlhist.c       If no repeat match is found an error message is printed.
+
+parse.c        Added a check to ingore a trailing ';'.
+
+llist.c        Increased buffer size for displaying aliasses.
+
+config.c       Changed packet patch config option from micro to milli seconds.
+
+files.c        Changed calls to isblank() (GNU only) with isspace()
+
+files.c        Only stripping leading spaces now, so #var bla { } will work
+               once again.
+
+files.c        I got tired of confusing readnew and readold, so I removed
+               readold.
+
+
+
+april 2005
+
+
+
+log.c          Added the option for a second argument to the #logline command.
+               If second argument is used it will instead print the given line
+               to file.
+
+variable.c     Added %G thousandgroupingstring function to format to change
+               for example 1000 into 1,000.
+
+
+rl.c           Internal messages are now printed to both the logfile and
+               scrollback buffer.
+
+rl.c           Fixed internal messages bumping the screen while scrolling in
+               locked mode.
+
+rl.c           Fixed a bug with displaying text that slipped in.
+
+buffer.c       Added the option to use #buffer h/u/d/e for scrolling.
+
+
+tintin.h       Removed unused macro DEFAULT_FILE_DIR
+
+utils.c        utime() function doesn't work correctly on cygwin, changed it's
+               behavior to guarantee unique time stamps.
+
+buffer.c       No longer writing #grep output the the scrollback buffer
+
+main.c         Now clearing last command (often quit) when starting up tintin++
+
+
+config.c       Turned #debugtelnet command into a hidden config option.
+
+               Added a hidden config option named CONVERT META, which turns key
+               presses into macro readable keyboard input.
+
+class.c        Added basic support for classes, which is grouping for real.
+
+tables.c       Set substitute priority to save correctly.
+
+
+log.c          Now flushing the log stream after every call so tailing a log
+               file is an option.
+
+class.c        Finished the #class command.
+
+split.c        placed #prompt stuff in prompt.c
+
+tinexp.c       Added option to start a trigger with ~ in which case colors
+               are included in string comparisons and substitutions.
+
+buffer.c       Removed the #writebuffer command, must now use:
+               #buffer {write} {filename}

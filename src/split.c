@@ -1,0 +1,127 @@
+/******************************************************************************
+*   TinTin++                                                                  *
+*   Copyright (C) 2004 (See CREDITS file)                                     *
+*                                                                             *
+*   This program is protected under the GNU GPL (See COPYING)                 *
+*                                                                             *
+*   This program is free software; you can redistribute it and/or modify      *
+*   it under the terms of the GNU General Public License as published by      *
+*   the Free Software Foundation; either version 2 of the License, or         *
+*   (at your option) any later version.                                       *
+*                                                                             *
+*   This program is distributed in the hope that it will be useful,           *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+*   GNU General Public License for more details.                              *
+*                                                                             *
+*   You should have received a copy of the GNU General Public License         *
+*   along with this program; if not, write to the Free Software               *
+*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*******************************************************************************/
+
+/*********************************************************************/
+/* file: split.c - functions related to the split screen command     */
+/*                             TINTIN III                            */
+/*          (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t             */
+/*                     coded by peter unold 1992                     */
+/*********************************************************************/
+
+#include "tintin.h"
+
+
+DO_COMMAND(do_split)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
+
+	if (*left == 0 && *right == 0)
+	{
+		init_split(ses, 1, ses->rows - 2);
+	}
+	else if (*right == 0)
+	{
+		init_split(ses, 1 + atoi(left), ses->rows - 2);
+	}
+	else
+	{
+		init_split(ses, 1 + atoi(left), ses->rows - 1 - atoi(right));
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_unsplit)
+{
+	clean_screen(ses);
+	DEL_BIT(ses->flags, SES_FLAG_SPLIT);
+
+	return ses;
+}
+
+/*
+	turn on split mode
+*/
+
+void init_split(struct session *ses, int top, int bot)
+{
+	if (top < 1)
+	{
+		top = 1;
+	}
+
+	if (bot > ses->rows - 2)
+	{
+		bot = ses->rows - 2;
+	}
+
+	SET_BIT(ses->flags, SES_FLAG_SPLIT);
+
+	init_screen_size(ses);
+
+	clean_screen(ses);
+
+	scroll_region(ses, top, bot);
+
+	do_one_prompt(ses, "", 1);
+
+	if (ses->top_row > 1)
+	{
+		do_one_prompt(ses, "", -1);
+	}
+
+	goto_rowcol(ses, ses->rows, 1);
+
+	fflush(stdout);
+}
+
+
+/*
+	get a clean screen, useful for ^Z, quitting, etc
+*/
+
+void clean_screen(struct session *ses)
+{
+	reset_scroll_region(ses);
+
+	if (ses == gtd->ses)
+	{
+		goto_rowcol(ses, ses->rows, 1);
+	}
+	fflush(stdout);
+}
+
+
+/*
+	undo clean_screen(); useful after ^Z
+*/
+
+void dirty_screen(struct session *ses)
+{
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	{
+		init_split(ses, ses->top_row, ses->bot_row);
+	}
+}
+

@@ -1,0 +1,172 @@
+This document will hopefully answer most questions regarding tintin++ (tt++).
+
+I'll refer to this version as tintin++ 2.0. Due to heavy modifications, over
+50% of the source code, all questions and requests should be addressed to
+Igor van den Hoven, my email is scandum@hotmail.com, I doubt previous tintin++
+authors would know how to go about this version without reading up on 5000 lines
+of code.
+
+Last updated: 03/10/2004
+
+Q00) I'm new to tintin, how do I get started?
+
+A00) Quite easy, start tintin using ./tt++, to connect to a mud type:
+
+     #session <name> <mud address> <mud port>
+
+     The name can be whatever you want it to be. If you start up 2 or more
+     sessions you can switch between the sessions using #<name> or use
+     #<name> [command] to have that session execute a command keeping the
+     session in the background.
+
+     Type #help for a list of help subjects, #help <subject> for more
+     information.
+
+Q01) What machines does tintin work on?
+
+A01) Tintin should compile on almost any UNIX machine.  The following
+     distributions are known to work:
+
+     SuSe 8.0
+     Slackware 8.0
+     Cygwin 1.5 (needs readline to be installed)
+     OS X (needs readline to be installed)
+
+     Pretty much any UNIX machine with a (modern) compiler and the "readline"
+     library available should work.
+
+
+Q02) What version should I use 1.50 or 1.86 or 1.90+ ?
+
+A02) 1.90+ but realise 1.90 is not 100% compatible with scripts from previous
+     tintin versions. 1.86 and 1.90 use readline which might give trouble
+     installing, 1.50 should run on most unix machines. 1.86 has a build in
+     chat client, but it's not confirmed it actually works. Version 1.90 has
+     many extra features and bug fixes, and has more in common with version
+     1.50 than 1.86
+
+
+Q03) Where can I get the readline library?
+
+A03) You can get the readline library from many ftp sites.  The main ftp
+     site for the readline library is ftp.gnu.org.  The most recent version
+     should be available there.  Tintin has been tested with readline 4.0,
+     4.1 and 4.3
+     It has been reported that readline 2.0 does not work, so make sure you
+     get a recent version of readline.
+
+Q04) When I do a ./configure, it complains that it can't find the readline
+     library.  How do I fix that?
+
+A04) Configure normally only checks the standard default directories for
+     the readline library and the readline header files.  If you don't have
+     them there, you need to tell configure where to find them.  You can
+     (as if tintin version 1.82) do a 
+
+     "./configure --includedir=<directory name> --libdir=<directory name>"
+
+     to tell ./configure where to find them.  
+
+     If you put readline in /tmp/readline-4.1 then you would need to do the 
+     following:
+
+  1) rename it to be called readline (mv readline-4.1 readline)
+
+  2) tell configure to look there (./configure --includedir=/tmp --libdir=tmp)
+
+  3) You must use the full path when specifying the directory.
+
+
+Q06) I can't get tintin compiled still.  Where can I get more help?
+
+A06) You can get help from a couple of places.  The first place to start
+     is to take a look at the message board, there should be a link to this
+     message board on the tintin++ website.
+
+     Check to see if your problem has been asked before and if there is a
+     solution.  If you don't see anything that looks like your problem, post
+     a note and ask.  Please provide as much information as possible (such as
+     the OS, compiler, error messages, etc).
+
+
+Q07) I can't get tintin compiled, can't you send me a binary of tintin?
+
+A07) There may be precompiled versions of tintin avail by other tintin users,
+     but they may or may not work. Try to find them with google, or ask on
+     the web board.
+
+Q08) I would like to help, how can I contribute to tintin?
+
+A08) There is a need for people willing to write documents and to write sample
+     tintin script files.  You can submit those on the tintin message board,
+     make sure to include the version it was written for. Another way to help
+     is assisting people on the message board. And give bug reports or
+     suggestions.
+
+     Currently there is no development team, just a few individuals
+     working on seperate versions of tintin++, if you feel the urge to write
+     code for tintin++ try to get in touch with one of these individuals or
+     write your own version.
+
+Q09) Tintin is so awesome, how can I thank you guys for spending all that time
+     to write tintin for free?? :)
+
+A09) Fan mail is always welcomed :)
+
+
+Q11) Can I use code from tintin?
+
+A11) Yes, provided that you follow the terms of the license.  The license
+     used for tintin is GPL.  Any questions/requests regarding the license,
+     please contact me (Davin Chan).
+
+Q12) I contributed code X, why isn't my name listed in the CREDITS file?
+
+A12) Most likely your name slipped by before Davin Chan started
+     maintaining tintin and adding people to the CREDITS file. If you
+     believe you have contributed code to tintin, please email me and
+     let me know. Make sure to see if your code is still existant in this
+     version. I'll make an attempt sometime to get the credits sorted
+     out as good as I can.
+
+
+Q13) I would like to put all of my tintin files in a common directory,
+     how can I do that?
+
+A13) You can set enviroment variables for the history file with the
+     TINTIN_HISTORY variable.  The syntax  depends on your shell, but for csh
+     it's TINTIN_HISTORY <path to help file> and for bash it's 
+     TINTIN_HELP=<path to help file>;export TINTIN_HELP.
+
+     The #read and #write command allow you to specify a path beside the
+     filename. So just set your scripts/aliasses to write to specific dirs
+
+Q14) I've seen some nifty code and would like to use it in a different program.
+
+A14) If you read the COPYING file you will see you are allowed to modify and
+     redistribute this version as long as you make it clear you made changes,
+     and what those changes are. If you want to use tintin code in another
+     program not licensed under GPL you need to get permission from the author.
+     Make sure to see if the exact code you want to use isn't existant in older
+     tintin++ versions before contacting me, because I obviously cannot give
+     permission for code I didn't write :) Also notice that older tintin++
+     versions are not licensed under GPL.
+
+Q15) My old script files do not work, is this a bug?
+
+A15) Possible, more likely your old script files do not work because a lot has
+     changed in this version. Try reading #help <command> about the subject.
+     Also the new script parser resembles the working of common scripting
+     languages. Also try to look through the examples, they are supposed to
+     work, and you might find out what you are doing wrong. Feel free to
+     report bugs though, or make suggestions about the best possible way
+     tintin should parse a script.
+
+Q16) #prompt {string} does not work
+
+A16) That's because the new syntax is: #prompt {search string} {substitution}
+     Read the help for the substitute command for more information.
+
+     Please let me know, if you think there is a common question that isn't
+     answered by this FAQ, but should be.
+

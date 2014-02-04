@@ -1,0 +1,25 @@
+* This is a list of new features/improvements that are planned.
+
+- auto mapper
+
+- custom readline support
+
+- floating point calculations
+
+- code that deals with broken lines
+
+
+
+* This is a list of new features/improvements the author of this version has
+  no interest in.
+
+- full telnet support: the default telnet program should be sufficient.
+
+- X window support: console is just fine.
+
+- mxp support, will be tricky with tintin++ being a console client, a good
+  starting point might be libmxp provided by the creator of kmuddy.
+
+  http://www.kmuddy.org/libmxp/
+
+- msp support: my sound card does not work, and nobody asked yet.
