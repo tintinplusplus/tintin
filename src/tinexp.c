@@ -33,7 +33,7 @@
 * Simple regexp that skips vt102 codes and supports the * and ? wildcards     *
 ******************************************************************************/
 
-int regexp(const char *exp, const char *str, unsigned char cs)
+int regexp(char *exp, char *str, unsigned char cs)
 {
 	short cnt;
 
@@ -107,15 +107,15 @@ int regexp(const char *exp, const char *str, unsigned char cs)
 * values they stand for.                                                      *
 ******************************************************************************/
 
-void substitute(struct session *ses, const char *string, char *result, int flags)
+void substitute(struct session *ses, char *string, char *result, int flags)
 {
 	struct listnode *node;
 	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], *pti, *pto, *ptt;
-	const char *pte;
+	char *pte;
 	int i, cnt, flags_neol = flags;
 
-	pti = (char *) string;
-	pto = (char *) result;
+	pti = string;
+	pto = result;
 
 	DEL_BIT(flags_neol, SUB_EOL);
 
@@ -164,6 +164,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						{
 							temp[0] = 0;
 						}
+						i++;
 					}
 
 					if (isalnum(pti[1]) || pti[1] == '_')
@@ -181,14 +182,31 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 						if (pti[1] == DEFAULT_OPEN)
 						{
-							pto += strlen(pto);
 							pti += 3 + strlen(buf);
 						}
 						else
 						{
-							pto += strlen(pto);
 							pti += 1 + strlen(temp);
 						}
+
+						if (*pti == '[')
+						{
+							for (ptt = temp, i = 1 ; pti[i] && pti[i] != ']' ; i++)
+							{
+								*ptt++ = pti[i];
+							}
+							*ptt = 0;
+
+							if (pti[i] == ']')
+							{
+								pti += 2 + strlen(temp);
+
+								substitute(ses, temp, buf, SUB_VAR|SUB_FUN);
+
+								strcpy(pto, get_list_item(ses, node, buf));
+							}
+						}
+						pto += strlen(pto);
 					}
 					else
 					{
@@ -310,16 +328,14 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						continue;
 					}
 
-					pti = (char *) get_arg_in_braces(&pti[i], temp, FALSE);
+					pti = get_arg_in_braces(&pti[i], temp, FALSE);
 
 					substitute(ses, temp, buf, flags_neol);
 
 					pte = buf;
 
-					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
-					{
-						tintin_printf2(ses, "#FUNCTION DEBUG: (%s) (%s)", node->left, temp);
-					}
+					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, temp);
+
 					for (i = 0 ; i < 10 ; i++)
 					{
 						pte = get_arg_in_braces(pte, gtd->cmds[i], FALSE);
@@ -332,10 +348,8 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 					substitute(ses, "$result", pto, SUB_VAR);
 
-					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
-					{
-						tintin_printf2(ses, "#FUNCTION DEBUG: (%s) (%s)", node->left, pto);
-					}
+					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, pto);
+
 					pto += strlen(pto);
 				}
 				else
@@ -507,10 +521,10 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 * string is compared unless it starts or ends with the ^ character.           *
 ******************************************************************************/
 
-int check_one_action(const char *line, const char *original, const char *action, struct session *ses)
+int check_one_action(char *line, char *original, char *action, struct session *ses)
 {
 	char result[BUFFER_SIZE], *ptr;
-	const char *ptl;
+	char *ptl;
 
 	substitute(ses, action, result, SUB_VAR|SUB_FUN|SUB_ESC);
 
@@ -549,7 +563,7 @@ int check_one_action(const char *line, const char *original, const char *action,
 }
 
 
-int action_regexp(const char *exp, const char *str, unsigned char arg)
+int action_regexp(char *exp, char *str, unsigned char arg)
 {
 	short cnt, cnt2;
 

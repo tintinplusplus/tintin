@@ -35,7 +35,7 @@
 /* return: TRUE if s1 is an abbrevation of s2 */
 /**********************************************/
 
-int is_abbrev(const char *s1, const char *s2)
+int is_abbrev(char *s1, char *s2)
 {
 	if (strlen(s2) < strlen(s1))
 	{
@@ -44,7 +44,7 @@ int is_abbrev(const char *s1, const char *s2)
 	return(!strncasecmp(s2, s1, strlen(s1)));
 }
 
-int is_suffix(const char *s1, const char *s2)
+int is_suffix(char *s1, char *s2)
 {
 	int sl1, sl2;
 
@@ -57,7 +57,7 @@ int is_suffix(const char *s1, const char *s2)
 	return TRUE if the string is a number
 */
 
-int is_number(const char *str)
+int is_number(char *str)
 {
 	int i;
 
@@ -76,7 +76,7 @@ int is_number(const char *str)
 	return TRUE;
 }
 
-int hex_number(const char *str)
+int hex_number(char *str)
 {
 	int value = '?';
 
@@ -127,7 +127,7 @@ long long utime()
 }
 
 
-char *capitalize(const char *str)
+char *capitalize(char *str)
 {
 	static char outbuf[BUFFER_SIZE];
 	int cnt;
@@ -141,7 +141,7 @@ char *capitalize(const char *str)
 	return outbuf;
 }
 
-void cat_sprintf(char *dest, const char *fmt, ...)
+void cat_sprintf(char *dest, char *fmt, ...)
 {
 	char buf[BUFFER_SIZE];
 
@@ -154,7 +154,7 @@ void cat_sprintf(char *dest, const char *fmt, ...)
 	strcat(dest, buf);
 }
 
-void ins_sprintf(char *dest, const char *fmt, ...)
+void ins_sprintf(char *dest, char *fmt, ...)
 {
 	char buf[BUFFER_SIZE], tmp[BUFFER_SIZE];
 
@@ -172,7 +172,7 @@ void ins_sprintf(char *dest, const char *fmt, ...)
 	strcat(dest, tmp);
 }
 
-void show_message(struct session *ses, int index, const char *format, ...)
+void show_message(struct session *ses, int index, char *format, ...)
 {
 	struct listroot *root;
 	char buf[BUFFER_SIZE];
@@ -228,7 +228,47 @@ void show_message(struct session *ses, int index, const char *format, ...)
 	return;
 }
 
-void tintin_header(struct session *ses, const char *format, ...)
+void show_debug(struct session *ses, int index, char *format, ...)
+{
+	struct listroot *root;
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	root = ses->list[index];
+
+	if (!HAS_BIT(root->flags, LIST_FLAG_DEBUG) && !HAS_BIT(root->flags, LIST_FLAG_LOG))
+	{
+		return;
+	}
+
+	push_call("show_debug(%p,%p,%p)",ses,index,format);		
+
+	va_start(args, format);
+
+	vsprintf(buf, format, args);
+
+	va_end(args);
+
+	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
+	{
+		tintin_puts2(buf, ses);
+
+		pop_call();
+		return;
+	}
+
+	if (HAS_BIT(root->flags, LIST_FLAG_LOG))
+	{
+		if (ses->logfile)
+		{
+			logit(ses, buf, ses->logfile);
+		}
+	}
+	pop_call();
+	return;
+}
+
+void tintin_header(struct session *ses, char *format, ...)
 {
 	char arg[BUFFER_SIZE], buf[BUFFER_SIZE];
 	va_list args;
@@ -252,7 +292,7 @@ void tintin_header(struct session *ses, const char *format, ...)
 }
 
 
-void socket_printf(struct session *ses, size_t length, const char *format, ...)
+void socket_printf(struct session *ses, size_t length, char *format, ...)
 {
 	char buf[BUFFER_SIZE];
 	va_list args;
@@ -267,7 +307,7 @@ void socket_printf(struct session *ses, size_t length, const char *format, ...)
 	}
 }
 
-void tintin_printf2(struct session *ses, const char *format, ...)
+void tintin_printf2(struct session *ses, char *format, ...)
 {
 	char buf[BUFFER_SIZE];
 	va_list args;
@@ -279,7 +319,7 @@ void tintin_printf2(struct session *ses, const char *format, ...)
 	tintin_puts2(buf, ses);
 }
 
-void tintin_printf(struct session *ses, const char *format, ...)
+void tintin_printf(struct session *ses, char *format, ...)
 {
 	char buf[BUFFER_SIZE];
 	va_list args;
@@ -296,7 +336,7 @@ void tintin_printf(struct session *ses, const char *format, ...)
 	the output is NOT checked for actions or anything
 */
 
-void tintin_puts2(const char *cptr, struct session *ses)
+void tintin_puts2(char *cptr, struct session *ses)
 {
 	char output[BUFFER_SIZE];
 
@@ -338,7 +378,7 @@ void tintin_puts2(const char *cptr, struct session *ses)
 	the output IS treated as though it came from the mud
 */
 
-void tintin_puts(const char *cptr, struct session *ses)
+void tintin_puts(char *cptr, struct session *ses)
 {
 	char buf[BUFFER_SIZE];
 
@@ -366,7 +406,7 @@ void tintin_puts(const char *cptr, struct session *ses)
 /* print system call error message and terminate */
 /*************************************************/
 
-void syserr(const char *msg)
+void syserr(char *msg)
 {
 	extern int errno;
 
@@ -473,7 +513,7 @@ void close_timer(int timer)
 #if !defined(HAVE_STRCASECMP)
 #define UPPER(c) (islower(c) ? toupper(c) : c)
 
-int strcasecmp(const char *string1, const char *string2)
+int strcasecmp(char *string1, char *string2)
 {
 	for ( ; UPPER(*string1) == UPPER(*string2) ; string1++, string2++)
 		if (!*string1)
@@ -481,7 +521,7 @@ int strcasecmp(const char *string1, const char *string2)
 	return(UPPER(*string1) - UPPER(*string2));
 }
 
-int strncasecmp(const char *string1, const char *string2, size_t count)
+int strncasecmp(char *string1, char *string2, size_t count)
 {
 	if (count)
 		do

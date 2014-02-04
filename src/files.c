@@ -137,6 +137,15 @@ DO_COMMAND(do_read)
 				case '\n':
 					lnc++;
 
+					pto--;
+
+					while (isspace(*pto))
+					{
+						pto--;
+					}
+
+					pto++;
+
 					if (fix == 0 && pti[1] == gtd->tintin_char)
 					{
 						if (lvl == 0)

@@ -239,11 +239,6 @@ DO_PATH(path_load)
 			{
 				addnode_list(root, left, left, "0");
 			}
-
-			if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
-			{
-				tintin_printf2(ses, "#DEBUG #LOADPATH: %3d %s", root->count, left);
-			}
 		}
 
 		show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", root->count);
@@ -338,7 +333,7 @@ DO_PATH(path_walk)
 }
 
 
-void check_insert_path(const char *command, struct session *ses)
+void check_insert_path(char *command, struct session *ses)
 {
 	struct listnode *node;
 

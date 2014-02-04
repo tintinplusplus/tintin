@@ -296,10 +296,8 @@ void tick_update(void)
 
 				strcpy(result, node->right);
 
-				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
-				{
-					show_message(ses, LIST_TICKER, "#TICKER DEBUG: %s", result);
-				}
+				show_debug(ses, LIST_TICKER, "#TICKER DEBUG: %s", result);
+
 				parse_input(ses, result);
 			}
 		}
@@ -337,10 +335,8 @@ void delay_update(void)
 
 				deletenode_list(ses, node, LIST_DELAY);
 
-				if (HAS_BIT(ses->list[LIST_TICKER]->flags, LIST_FLAG_DEBUG))
-				{
-					tintin_printf2(ses, "#DELAY DEBUG: %s", result);
-				}
+				show_debug(ses, LIST_DELAY, "#DELAY DEBUG: %s", result);
+
 				parse_input(ses, result);
 			}
 		}

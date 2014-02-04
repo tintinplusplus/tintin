@@ -77,7 +77,7 @@ DO_COMMAND(do_list)
 
 int get_list_length(struct listnode *node)
 {
-	const char *arg;
+	char *arg;
 	char temp[BUFFER_SIZE];
 	int cnt = 0;
 
@@ -120,7 +120,79 @@ int get_list_index(struct session *ses, struct listnode *node, char *arg)
 	return index;
 }
 
+char *get_list_item(struct session *ses, struct listnode *node, char *arg)
+{
+	static char result[BUFFER_SIZE];
+	int cnt, index;
 
+	index = get_list_index(ses, node, arg);
+
+	if (index <= 0)
+	{
+		return "";
+	}
+
+	arg = node->right;
+
+	for (cnt = 1 ; cnt <= index ; cnt++)
+	{
+		arg = get_arg_in_braces(arg, result, FALSE);
+	}
+
+	return result;
+}
+
+void set_list_item(struct session *ses, struct listnode *node, char *left, char *right)
+{
+	char buf[BUFFER_SIZE], temp[BUFFER_SIZE];
+	int cnt, index, length;
+
+	index  = (int) get_number(ses, left);
+	length = get_list_length(node);
+
+	if (index > length)
+	{
+		strcpy(buf, node->right);
+
+		while (index > length++)
+		{
+			cat_sprintf(buf, "%s{}", buf[0] ? " " : "");
+		}
+		updatenode_list(ses, node->left, buf, "0", LIST_VARIABLE);		
+	}
+
+	index = get_list_index(ses, node, left);
+
+	if (index <= 0)
+	{
+		return;
+	}
+
+	left = node->right;
+
+	buf[0] = 0;
+
+	for (cnt = 1 ; cnt < index ; cnt++)
+	{
+		left = get_arg_in_braces(left, temp, FALSE);
+
+		cat_sprintf(buf, "%s{%s}", buf[0] ? " " : "", temp);
+	}
+
+	left = get_arg_in_braces(left, temp, FALSE);
+
+	cat_sprintf(buf, "%s{%s}", buf[0] ? " " : "", right);
+
+	while (*left)
+	{
+		left = get_arg_in_braces(left, temp, FALSE);
+
+		cat_sprintf(buf, "%s{%s}", buf[0] ? " " : "", temp);
+	}
+
+	updatenode_list(ses, node->left, buf, "0", LIST_VARIABLE);
+}
+	
 DO_ARRAY(array_del)
 {
 	char left[BUFFER_SIZE], buf[BUFFER_SIZE], temp[BUFFER_SIZE];
@@ -161,7 +233,6 @@ DO_ARRAY(array_del)
 	return ses;
 }
 
-
 DO_ARRAY(array_fnd)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE], temp[BUFFER_SIZE];
@@ -197,36 +268,17 @@ DO_ARRAY(array_fnd)
 
 DO_ARRAY(array_get)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE], temp[BUFFER_SIZE];
-	int cnt, index;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, FALSE);
 
-	index = get_list_index(ses, list, left);
-
-	if (index <= 0)
-	{
-		show_message(ses, LIST_VARIABLE, "#LIST GET: Invalid index: %s", left);
-
-		return ses;
-	}
-
-	buf[0] = 0;
-	arg = list->right;
-
-	for (cnt = 1 ; cnt <= index ; cnt++)
-	{
-		arg = get_arg_in_braces(arg, temp, FALSE);
-	}
-
-	sprintf(buf, "{%s} {%s}", right, temp);
+	sprintf(buf, "{%s} {%s}", right, get_list_item(ses, list, left));
 
 	do_internal_variable(ses, buf);
 
 	return ses;
 }
-
 
 DO_ARRAY(array_ins)
 {
@@ -295,46 +347,14 @@ DO_ARRAY(array_len)
 	return ses;
 }
 
-
 DO_ARRAY(array_set)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], buf[BUFFER_SIZE], temp[BUFFER_SIZE];
-	int cnt, index;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
-	index = get_list_index(ses, list, left);
-
-	if (index <= 0)
-	{
-		show_message(ses, LIST_VARIABLE, "#LIST SET: Invalid index: %s", left);
-
-		return ses;
-	}
-
-	buf[0] = 0;
-	arg = list->right;
-
-	for (cnt = 1 ; cnt < index ; cnt++)
-	{
-		arg = get_arg_in_braces(arg, temp, FALSE);
-
-		cat_sprintf(buf, "%s{%s}", buf[0] ? " " : "", temp);
-	}
-
-	arg = get_arg_in_braces(arg, temp, FALSE);
-
-	cat_sprintf(buf, "%s{%s}", buf[0] ? " " : "", right);
-
-	while (*arg)
-	{
-		arg = get_arg_in_braces(arg, temp, FALSE);
-
-		cat_sprintf(buf, "%s{%s}", buf[0] ? " " : "", temp);
-	}
-
-	updatenode_list(ses, list->left, buf, "0", LIST_VARIABLE);
+	set_list_item(ses, list, left, right);
 
 	return ses;
 }

@@ -4,17 +4,13 @@
 
 GENERAL STUFF:
 
-Add changable command seperator.
+Get rid of the const crap
 
-Add insert toggle
+Add changable command seperator.
 
 Look into prompt handling in #split with #showme and macros.
 
-Add #cursor option to write to the input line.
-
-Add a show_debug message
-
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 MAPPING STUFF:
 
@@ -49,7 +45,7 @@ MAPPING STUFF:
 
 - improved #system command
 
-- ipv6
+- fix up ipv6 support in chat.c
 
 -------------------------------------------------------------------------------
 

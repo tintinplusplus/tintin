@@ -105,6 +105,8 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 				substitute(ses, node->right, original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL);
 			}
 
+			show_debug(ses, LIST_PROMPT, "#PROMPT DEBUG: %s", original);
+
 			do_one_prompt(ses, original, atoi(node->pr));
 
 			SET_BIT(ses->flags, SES_FLAG_GAG);
@@ -132,10 +134,8 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 
 	if (row <= ses->top_row && row >= ses->bot_row)
 	{
-		if (HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_DEBUG))
-		{
-			tintin_printf2(ses, "#PROMPT ERROR, INVALID ROW: {%s}", prompt);
-		}
+		show_message(ses, LIST_PROMPT, "#ERROR: INVALID PROMPT ROW: {%s} {%d}", prompt, row);
+
 		return;
 	}
 	strip_vt102_codes(prompt, temp);

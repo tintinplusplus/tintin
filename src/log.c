@@ -28,7 +28,7 @@
 #include "tintin.h"
 
 
-void logit(struct session *ses, const char *txt, FILE *file)
+void logit(struct session *ses, char *txt, FILE *file)
 {
 	char out[BUFFER_SIZE];
 
@@ -220,7 +220,7 @@ DO_COMMAND(do_writebuffer)
 
 void write_html_header(FILE *fp)
 {
-	const char *header =
+	char *header =
 		"<html>\n"
 		"<head>\n"
 		"<meta http-equiv=\"content-type\" content=\"text/html; charset=iso-8859-1\">\n"
@@ -246,7 +246,7 @@ void write_html_header(FILE *fp)
 }
 
 
-void vt102_to_html(struct session *ses, const char *txt, char *out)
+void vt102_to_html(struct session *ses, char *txt, char *out)
 {
 	char tmp[BUFFER_SIZE], *pti, *pto;
 	int vtc, fgc, bgc, cnt;
@@ -255,8 +255,8 @@ void vt102_to_html(struct session *ses, const char *txt, char *out)
 	fgc = ses->fgc;
 	bgc = ses->bgc;
 
-	pti = (char *) txt;
-	pto = (char *) out;
+	pti = txt;
+	pto = out;
 
 	while (*pti)
 	{

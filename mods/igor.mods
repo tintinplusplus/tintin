@@ -1219,3 +1219,23 @@ gag.c          Seperated gags from substitutions.
 files.c        Inproved accuracy of #read's error report.
 
 path.c         Merged all path commands into one generic path command.
+
+March 2007     1.96.8
+
+main.c         Added getopt supported command-line argument handling.
+
+main.c         Added [-t title] option to set the title bar.
+
+files.c        Now stripping all trailing spaces and tabs in #read.
+
+utils.c        Added show_debug command to display debug messages a bit easier.
+
+net.c          Added IPv6 support.
+
+cursor.c       Added cursor_echo function to toggle local echo.
+
+cursor.c       Added cursor_insert function to toggle insert mode.
+
+tinexp.c       Using $variable[index] now works with lists.
+
+variable.c     Can set list indexes with #var {variable[index]} {text}

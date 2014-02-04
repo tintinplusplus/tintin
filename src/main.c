@@ -28,7 +28,6 @@
 #include "tintin.h"
 
 #include <signal.h>
-#include <fcntl.h>
 #include <sys/socket.h>
 
 /*************** globals ******************/
@@ -108,7 +107,7 @@ RETSIGTYPE suspend_handler(int signal)
 
 	fflush(stdout);
 
-	tcsetattr(0, TCSANOW, &gtd->terminal);
+	reset_terminal();
 
 	kill(0, SIGSTOP);
 
@@ -128,6 +127,8 @@ void trap_handler(int signal)
 		exit(-1);
 	}
 	crashed = TRUE;
+
+	reset_terminal();
 
 	clean_screen(gtd->ses);
 
@@ -207,25 +208,46 @@ int main(int argc, char **argv)
 
 	if (argc > 1)
 	{
-		if (!strcmp(argv[1], "-v"))
-		{
-			do_configure(gtd->ses, "{VERBOSE} {ON}");
+		char c;
 
-			do_read(gtd->ses, argv[2]);
-		}
-		else if (!strcmp(argv[1], "-e") && argv[2])
+		while ((c = getopt(argc, argv, "e: h r: t: v")) != EOF)
 		{
-			gtd->ses = parse_input(gtd->ses, argv[2]);
+			switch (c)
+			{
+				case 'e':
+					gtd->ses = parse_input(gtd->ses, optarg);
+					break;
+
+				case 'h':
+					tintin_printf(NULL, "Usage: %s [-v] [file] [-e \"command\"] [-r file] [-t title]", argv[0]);
+					reset_terminal();
+					exit(1);
+					break;
+
+				case 'r':
+					gtd->ses = do_read(gtd->ses, optarg);
+					break;
+
+				case 't':
+					printf("\033]0;%s\007", optarg);
+					break;
+
+				case 'v':
+					do_configure(gtd->ses, "{VERBOSE} {ON}");
+					break;
+
+				default:
+					tintin_printf(NULL, "Unknown option '%c'.", c);
+					break;
+			}
 		}
-		else if (!strcmp(argv[1], "-h"))
+		
+		if (argv[optind] != NULL)
 		{
-			tintin_printf(NULL, "Usage: %s [file] [-v file] [-e \"command\"]", argv[0]);
+			gtd->ses = do_read(gtd->ses, argv[optind]);
 		}
-		else
-		{
-			gtd->ses = do_read(gtd->ses, argv[1]);
-		}
-	}
+	} 
+
 	mainloop();
 
 	pop_call();
@@ -315,7 +337,7 @@ void init_tintin(void)
 }
 
 
-void quitmsg(const char *message)
+void quitmsg(char *message)
 {
 	struct session *ses;
 
@@ -338,7 +360,7 @@ void quitmsg(const char *message)
 		write_history(gts, filename);
 	}
 
-	tcsetattr(0, TCSANOW, &gtd->terminal);
+	reset_terminal();
 
 	clean_screen(gts);
 

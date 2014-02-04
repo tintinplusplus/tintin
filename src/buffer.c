@@ -80,7 +80,7 @@ void init_buffer(struct session *ses, int size)
 }
 
 
-void add_line_buffer(struct session *ses, const char *line, int more_output)
+void add_line_buffer(struct session *ses, char *line, int more_output)
 {
 	char linebuf[BUFFER_SIZE], linelog[BUFFER_SIZE];
 	char *pti, *pto;
@@ -526,19 +526,19 @@ DO_COMMAND(do_buffer)
 	switch (left[0])
 	{
 		case 'h':
-			buffer_h();
+			buffer_h("");
 			break;
 
 		case 'u':
-			buffer_u();
+			buffer_u("");
 			break;
 
 		case 'd':
-			buffer_d();
+			buffer_d("");
 			break;
 
 		case 'e':
-			buffer_e();
+			buffer_e("");
 			break;
 
 		case 'f':
@@ -554,18 +554,18 @@ DO_COMMAND(do_buffer)
 			break;
 
 		case 'l':
-			buffer_l();
+			buffer_l("");
 			break;
 
 		default:
-			buffer_e();
+			buffer_e("");
 			break;
 	}
 
 	return ses;
 }
 
-void buffer_u(void)
+DO_CURSOR(buffer_u)
 {
 	int scroll_size, scroll_cnt, buffer_add, buffer_tmp;
 
@@ -615,7 +615,7 @@ void buffer_u(void)
 	show_buffer(gtd->ses);
 }
 
-void buffer_d(void)
+DO_CURSOR(buffer_d)
 {
 	int scroll_size, scroll_cnt, buffer_add, buffer_tmp;
 
@@ -654,7 +654,7 @@ void buffer_d(void)
 	{
 		if (gtd->ses->buffer[scroll_cnt] == NULL)
 		{
-			buffer_e();
+			buffer_e("");
 			return;
 		}
 
@@ -683,7 +683,7 @@ void buffer_d(void)
 	show_buffer(gtd->ses);
 }
 
-void buffer_h(void)
+DO_CURSOR(buffer_h)
 {
 	if (gtd->ses->buffer == NULL)
 	{
@@ -700,10 +700,10 @@ void buffer_h(void)
 	}
 	gtd->ses->scroll_base = str_hash_lines(gtd->ses->buffer[gtd->ses->scroll_line]);
 
-	buffer_d();
+	buffer_d("");
 }
 
-void buffer_e(void)
+DO_CURSOR(buffer_e)
 {
 	if (gtd->ses->buffer == NULL)
 	{
@@ -727,7 +727,7 @@ void buffer_e(void)
 	gtd->ses->scroll_base =  0;
 }
 
-void buffer_l(void)
+DO_CURSOR(buffer_l)
 {
 	if (gtd->ses->buffer == NULL)
 	{
@@ -740,11 +740,11 @@ void buffer_l(void)
 	}
 	else
 	{
-		buffer_e();
+		buffer_e("");
 	}
 }
 
-void buffer_f(const char *arg)
+void buffer_f(char *arg)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int scroll_cnt, grep_cnt, grep_max;

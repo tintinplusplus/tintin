@@ -90,7 +90,7 @@ DO_COMMAND(do_unalias)
 	return ses;
 }
 
-int alias_regexp(const char *exp, const char *str)
+int alias_regexp(char *exp, char *str)
 {
 	short cnt;
 
@@ -176,7 +176,7 @@ int check_all_aliases(struct session *ses, char *original, char *line)
 
 	for (i = 1 ; i < 10 ; i++)
 	{
-		arg = (char *) get_arg_in_braces(arg, gtd->vars[i], FALSE);
+		arg = get_arg_in_braces(arg, gtd->vars[i], FALSE);
 	}
 
 	for (node = root->update = root->f_node ; node ; node = root->update)
@@ -199,10 +199,8 @@ int check_all_aliases(struct session *ses, char *original, char *line)
 				cat_sprintf(original, " %s", gtd->vars[0]);
 			}
 
-			if (HAS_BIT(ses->list[LIST_ALIAS]->flags, LIST_FLAG_DEBUG))
-			{
-				show_message(ses, LIST_ALIAS, "#ALIAS DEBUG: %s", original);
-			}
+			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s", original);
+
 			return TRUE;
 		}
 	}

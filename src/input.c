@@ -71,7 +71,7 @@ void process_input(void)
 
 	if (gtd->ses->scroll_line != -1)
 	{
-		buffer_e();
+		buffer_e("");
 	}
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
@@ -129,7 +129,7 @@ void read_line(char *line)
 	{
 		if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
 		{
-			cursor_table[cnt].fun();
+			cursor_table[cnt].fun("");
 			gtd->macro_buf[0] = 0;
 
 			return;
@@ -182,21 +182,30 @@ void read_line(char *line)
 				break;
 
 			default:
-				ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
-				gtd->input_len++;
-				gtd->input_cur++;
-				gtd->input_pos++;
-
-				input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+				if (HAS_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT) && gtd->input_len != gtd->input_cur)
+				{
+					gtd->input_buf[gtd->input_cur] = gtd->macro_buf[cnt];
+					gtd->input_cur++;
+					gtd->input_pos++;
+					input_printf("%c", gtd->macro_buf[cnt]);
+				}
+				else
+				{
+					ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
+					gtd->input_len++;
+					gtd->input_cur++;
+					gtd->input_pos++;
+					input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+				}         
 
 				gtd->macro_buf[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;
 
-				cursor_check_line();
+				cursor_check_line("");
 
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 				{
-					cursor_history_find();
+					cursor_history_find("");
 				}
 				break;
 		}
@@ -437,7 +446,7 @@ void echo_command(struct session *ses, char *line, int newline)
 	add_line_buffer(ses, buffer, -1);
 }
 
-void input_printf(const char *format, ...)
+void input_printf(char *format, ...)
 {
 	char buf[BUFFER_SIZE];
 	va_list args;

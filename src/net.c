@@ -37,7 +37,75 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
-int connect_mud(const char *host, const char *port, struct session *ses)
+/*
+	IPv6 compatible connect code, doesn't work on several platforms.
+*/
+
+#ifdef HAVE_GETADDRINFO
+
+int connect_mud(char *host, char *port, struct session *ses)
+{
+	int sock, error;
+	struct addrinfo *address;
+	static struct addrinfo hints;
+
+	if (!is_number(port))
+	{
+		tintin_puts("#THE PORT SHOULD BE A NUMBER.", ses);
+		return -1;
+	}
+
+	hints.ai_family   = AF_UNSPEC;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_socktype = SOCK_STREAM;
+
+	error = getaddrinfo(host, port, &hints, &address);
+
+	switch (error)
+	{
+		case 0:
+			break;
+
+		case -2:
+			tintin_printf2(ses, "#SESSION ERROR - UNKNOWN HOST.");
+			return -1;
+
+		default:
+			tintin_printf2(ses, "#SESSION, UNKNOWN ERROR.");
+			return -1;
+	}
+
+	sock = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
+
+	if (sock < 0)
+	{
+		syserr("socket");
+	}
+
+	ses->connect_error = connect(sock, address->ai_addr, address->ai_addrlen);
+
+	if (ses->connect_error)
+	{
+		close(sock);
+		freeaddrinfo(address);
+
+		return 0;
+	}
+
+	inet_ntop(address->ai_family, address->ai_addr, host, address->ai_addrlen);
+
+	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+	{
+		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
+	}
+	freeaddrinfo(address);
+
+	return sock;
+}
+
+#else
+
+int connect_mud(char *host, char *port, struct session *ses)
 {
 	int sock, d;
 	struct sockaddr_in sockaddr;
@@ -92,8 +160,9 @@ int connect_mud(const char *host, const char *port, struct session *ses)
 	return sock;
 }
 
+#endif
 
-void write_line_mud(const char *line, struct session *ses)
+void write_line_mud(char *line, struct session *ses)
 {
 	if (ses == gts)
 	{

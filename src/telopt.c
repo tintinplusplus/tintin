@@ -64,7 +64,7 @@ struct iac_type
 	int  (* func) (struct session *ses, int cplen, unsigned char *cpsrc);
 };
 
-const struct iac_type iac_table [] =
+struct iac_type iac_table [] =
 {
 	{   3,  iac_do_sga,           &send_will_sga           },
 	{   3,  iac_do_ttype,         &send_will_ttype         },
@@ -95,7 +95,7 @@ const struct iac_type iac_table [] =
 };
 
 
-void telopt_debug(struct session *ses, const char *format, ...)
+void telopt_debug(struct session *ses, char *format, ...)
 {
 	char buf[BUFFER_SIZE];
 	va_list args;

@@ -38,7 +38,7 @@ struct help_type
 	This help table is a mess, but I got better things to do - Igor
 */
 
-const struct help_type help_table[] =
+struct help_type help_table[] =
 {
 	{
 		"ALIAS",
@@ -256,7 +256,7 @@ const struct help_type help_table[] =
 	{
 		"CURSOR",
 		"\n"
-		"Command: #cursor {option}\n"
+		"Command: #cursor {option} {argument}\n"
 		"\n"
 		"         Typing #cursor without an option will show all available cursor\n"
 		"         options. The cursor command's primarly goal is adding customizable\n"
@@ -783,7 +783,13 @@ const struct help_type help_table[] =
 		"         semicolon or end of line is ignored. You shouldn't put braces { } in it\n"
 		"         though, unless you close them properly.\n"
 		"\n"
-		"Example: #nop This is the start of my autoactions.\n"
+		"Notice:  By using braces you can comment out multiple lines of code in a script\n"
+		"         file.\n"
+		"\n"
+		"         For commenting out an entire trigger and especially large sections of\n"
+		"         triggers you would want to use /* text */\n"
+		"\n"
+		"Example: #nop This is the start of my script file.\n"
 	},
 	{
 		"PARSE",
@@ -858,7 +864,7 @@ const struct help_type help_table[] =
 		"         This however means you must always match every { with a } for the read\n"
 		"         command to work.\n"
 		"\n"
-		"         You can comment out triggers using /* test */\n"
+		"         You can comment out triggers using /* text */\n"
 	},
 	{
 		"REPLACESTRING",

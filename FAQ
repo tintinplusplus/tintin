@@ -24,7 +24,8 @@ A00) Quite easy, start tintin using ./tt++, to connect to a mud type:
 
 Q01) What machines does tintin work on?
 
-A01) Pretty much any UNIX machine with a modern compiler.
+A01) Pretty much any UNIX machine with a modern compiler as well as Windows
+     and OS X.
 
 
 Q02) What version should I use 1.50 or 1.86 or 1.90+ ?
@@ -97,7 +98,7 @@ A14) If you read the COPYING file you will see you are allowed to modify and
 
 Q15) My old script files do not work, is this a bug?
 
-A15) Possible, more likely your old script files do not work because a lot has
+A15) Possibly, more likely your old script files do not work because a lot has
      changed in this version. Try reading #help <command> about the subject.
      Also the new script parser resembles the working of common scripting
      languages. Also try to look through the examples, they are supposed to
@@ -106,10 +107,10 @@ A15) Possible, more likely your old script files do not work because a lot has
 
 Q16) #prompt {string} does not work
 
-A16) That's because the new syntax is: #prompt {search string} {substitution}
+A16) That's because the new syntax is: #prompt {string} {substitution}
      Read the help for the substitute command for more information.
 
-Q17) I want to make an ALIAS that created an ACTION, but both use %0, how to
+Q17) I want to make an ALIAS that creates an ACTION, but both use %0, how to
      go about this?
 
 A17) Use %%90 %%91 %%92. When the alias is parsed %9 will be replaced with the

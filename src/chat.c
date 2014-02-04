@@ -99,7 +99,7 @@ DO_CHAT(chat_initialize)
 	struct sockaddr_in sa;
 	struct hostent *hp = NULL;
 	struct linger ld;
-	const char *reuse = "1";
+	char *reuse = "1";
 	int sock;
 
 	if (gtd->chat)
@@ -253,6 +253,159 @@ int chat_new(int s)
 	Places a call to another chat client.
 */
 
+#ifdef HAVE_GETADDRINFO
+
+void *threaded_chat_call(void *arg)
+{
+	int sock, error;
+	char host[BUFFER_SIZE], port[BUFFER_SIZE], name[BUFFER_SIZE];
+	struct addrinfo *address;
+	static struct addrinfo hints;
+	struct chat_data *new_buddy;
+	struct timeval to;
+	fd_set wds, rds;
+
+	chat_printf("Attempting to call %s ...", arg);
+
+	to.tv_sec = CALL_TIMEOUT;
+	to.tv_usec = 0;
+
+	arg = (void *) get_arg_in_braces((char *) arg, host, FALSE);
+	arg = (void *) get_arg_in_braces((char *) arg, port, FALSE);
+
+	if (*port == 0)
+	{
+		sprintf(port, "%d", DEFAULT_PORT);
+	}
+
+	hints.ai_family   = AF_UNSPEC;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_socktype = SOCK_STREAM;
+
+	error = getaddrinfo(host, port, &hints, &address);
+
+	switch (error)
+	{
+		case 0:
+			break;
+
+		case -2:
+			chat_printf("Failed to call %s, unknown host.", host);
+			return NULL;
+
+		default:
+			chat_printf("Failed to call %s.", host);
+			return NULL;
+	}
+
+	if ((sock = socket(address->ai_family, address->ai_socktype, address->ai_protocol)) < 0)
+	{
+		syserr("socket");
+	}
+
+	switch (address->ai_family)
+	{
+		case AF_INET:
+			inet_ntop(address->ai_family, &((struct sockaddr_in *)address->ai_addr)->sin_addr, host, address->ai_addrlen);
+			break;
+
+		case AF_INET6:
+			inet_ntop(address->ai_family, &((struct sockaddr_in6 *)address->ai_addr)->sin6_addr, host, address->ai_addrlen);
+			break;
+	}
+
+	if (connect(sock, address->ai_addr, address->ai_addrlen) != 0)
+	{
+		chat_printf("Failed to connect to %s:%s", host, port);
+
+		close(sock);
+		freeaddrinfo(address);
+
+		return NULL;
+	}
+
+	FD_ZERO(&wds);
+
+	FD_SET(sock, &wds); /* mother chat desc */
+
+	if (select(FD_SETSIZE, NULL, &wds, NULL, &to) == -1)
+	{
+		chat_printf("Failed to connect to %s %s", host, port);
+
+		close(sock);
+		freeaddrinfo(address);
+
+		return NULL;
+	}
+
+	if (!FD_ISSET(sock, &wds))
+	{
+		chat_printf("Connection timed out.");
+
+		close(sock);
+		freeaddrinfo(address);
+
+		return NULL;
+	}
+
+	new_buddy = calloc(1, sizeof(struct chat_data));
+
+	new_buddy->ip    = strdup(host);
+	new_buddy->port  = atoi(port);
+	new_buddy->fd    = sock;
+	new_buddy->name  = strdup("");
+	new_buddy->group = strdup("");
+
+	strip_vt102_codes(gtd->chat->name, name);
+
+	chat_socket_printf(new_buddy, "CHAT:%s\n%s%-5u", name, gtd->chat->ip, gtd->chat->port);
+
+	chat_printf("Socket connected, negotiating protocol...");
+
+	FD_ZERO(&rds);
+	FD_SET(sock, &rds);
+
+	to.tv_sec  = CALL_TIMEOUT;
+	to.tv_usec = 0;
+
+	if (select(FD_SETSIZE, &rds, NULL, NULL, &to) == -1)
+	{
+		close_chat(new_buddy, FALSE);
+		freeaddrinfo(address);
+
+		return NULL;
+	}
+
+	if (process_chat_input(new_buddy) == -1)
+	{
+		FD_CLR(new_buddy->fd, &rds);
+		close_chat(new_buddy, FALSE);
+		freeaddrinfo(address);
+
+		return NULL;
+	}
+
+	if (*new_buddy->name == 0)
+	{
+		close_chat(new_buddy, FALSE);
+	}
+	else
+	{
+		if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+		{
+			perror("chat_new: fcntl O_NDELAY|O_NONBLOCK");
+		}
+
+		LINK(new_buddy, gtd->chat->next, gtd->chat->prev);
+		chat_printf("Connection made to %s.", new_buddy->name);
+	}
+	freeaddrinfo(address);
+
+	return NULL;
+}
+
+#else
+
 void *threaded_chat_call(void *arg)
 {
 	int sock, dig;
@@ -267,8 +420,8 @@ void *threaded_chat_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	arg = (void *) get_arg_in_braces((const char *) arg, ip, FALSE);
-	arg = (void *) get_arg_in_braces((const char *) arg, pn, FALSE);
+	arg = (void *) get_arg_in_braces((char *) arg, ip, FALSE);
+	arg = (void *) get_arg_in_braces((char *) arg, pn, FALSE);
 
 	if (*pn == 0)
 	{
@@ -404,7 +557,9 @@ void *threaded_chat_call(void *arg)
 	return NULL;
 }
 
-void chat_call(const char *arg)
+#endif
+
+void chat_call(char *arg)
 {
 	pthread_t thread;
 
@@ -496,7 +651,7 @@ void process_chat_connections(fd_set *read_set, fd_set *write_set, fd_set *exc_s
 	return;
 }
 
-void chat_socket_printf(struct chat_data *buddy, const char *format, ...)
+void chat_socket_printf(struct chat_data *buddy, char *format, ...)
 {
 	char buf[BUFFER_SIZE];
 	va_list args;
@@ -516,7 +671,7 @@ void chat_socket_printf(struct chat_data *buddy, const char *format, ...)
 	}
 }
 
-void chat_printf(const char *format, ...)
+void chat_printf(char *format, ...)
 {
 	struct chat_data *buddy;
 	char buf[BUFFER_SIZE], tmp[BUFFER_SIZE];
@@ -1350,7 +1505,7 @@ DO_CHAT(chat_paste)
 
 			RESTRING(gtd->chat->paste_buf, temp);
 
-			cursor_clear_line();
+			cursor_clear_line("");
 		}
 
 		arg = get_arg_in_braces(gtd->chat->paste_buf, left, FALSE);
@@ -1440,7 +1595,7 @@ DO_CHAT(chat_peek)
 }
 
 
-void chat_ping(const char *arg)
+void chat_ping(char *arg)
 {
 	struct chat_data *buddy;
 
@@ -2388,7 +2543,7 @@ int get_file_size(char *fpath)
 }
 
 
-struct chat_data *find_buddy(const char *arg)
+struct chat_data *find_buddy(char *arg)
 {
 	struct chat_data *buddy;
 	int cnt = 1;
@@ -2429,7 +2584,7 @@ struct chat_data *find_buddy(const char *arg)
 }
 
 
-struct chat_data *find_group(const char *arg)
+struct chat_data *find_group(char *arg)
 {
 	struct chat_data *buddy;
 

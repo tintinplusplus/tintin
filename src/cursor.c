@@ -30,16 +30,17 @@
 
 DO_COMMAND(do_cursor)
 {
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*left == 0)
 	{
 		tintin_header(ses, " CURSOR OPTIONS ");
 
-		for (cnt = 0 ; *cursor_table[cnt].code ; cnt++)
+		for (cnt = 0 ; *cursor_table[cnt].fun ; cnt++)
 		{
 			if (*cursor_table[cnt].name)
 			{
@@ -56,11 +57,11 @@ DO_COMMAND(do_cursor)
 	}
 	else
 	{
-		for (cnt = 0 ; *cursor_table[cnt].code ; cnt++)
+		for (cnt = 0 ; *cursor_table[cnt].fun ; cnt++)
 		{
 			if (is_abbrev(left, cursor_table[cnt].name))
 			{
-				cursor_table[cnt].fun();
+				cursor_table[cnt].fun(right);
 
 				return ses;
 			}
@@ -70,24 +71,24 @@ DO_COMMAND(do_cursor)
 	return ses;
 }
 
-void cursor_backspace(void)
+DO_CURSOR(cursor_backspace)
 {
 	if (gtd->input_cur == 0)
 	{
 		return;
 	}
 
-	cursor_left();
-	cursor_delete();
+	cursor_left("");
+	cursor_delete("");
 }
 
-void cursor_check_line(void)
+DO_CURSOR(cursor_check_line)
 {
 	if (gtd->input_pos != gtd->input_cur)
 	{
 		if (gtd->input_cur < gtd->ses->cols - 2)
 		{
-			cursor_redraw_line();
+			cursor_redraw_line("");
 
 			return;
 		}
@@ -100,20 +101,20 @@ void cursor_check_line(void)
 
 	if (gtd->input_pos >= gtd->ses->cols - 2)
 	{
-		cursor_redraw_line();
+		cursor_redraw_line("");
 
 		return;
 	}
 
 	if (gtd->input_pos != gtd->input_cur && gtd->input_pos <= 2)
 	{
-		cursor_redraw_line();
+		cursor_redraw_line("");
 
 		return;
 	}
 }
 
-void cursor_clear_left(void)
+DO_CURSOR(cursor_clear_left)
 {
 	if (gtd->input_cur == 0)
 	{
@@ -132,7 +133,7 @@ void cursor_clear_left(void)
 	{
 		gtd->input_cur  = 0;
 		gtd->input_pos  = 0;
-		cursor_redraw_line();
+		cursor_redraw_line("");
 	}
 	else
 	{
@@ -141,7 +142,7 @@ void cursor_clear_left(void)
 	}
 }
 
-void cursor_clear_line(void)
+DO_CURSOR(cursor_clear_line)
 {
 	if (gtd->input_len == 0)
 	{
@@ -163,7 +164,7 @@ void cursor_clear_line(void)
 	gtd->input_buf[0] = 0;
 }
 
-void cursor_clear_right(void)
+DO_CURSOR(cursor_clear_right)
 {
 	if (gtd->input_cur == gtd->input_len)
 	{
@@ -177,12 +178,12 @@ void cursor_clear_right(void)
 	gtd->input_len = gtd->input_cur;
 }
 
-void cursor_convert_meta(void)
+DO_CURSOR(cursor_convert_meta)
 {
 	SET_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR);
 }
 	
-void cursor_delete(void)
+DO_CURSOR(cursor_delete)
 {
 	if (gtd->input_len == 0)
 	{
@@ -200,10 +201,10 @@ void cursor_delete(void)
 
 	input_printf("\033[1P");
 
-	cursor_fix_line();
+	cursor_fix_line("");
 }
 
-void cursor_delete_word(void)
+DO_CURSOR(cursor_delete_word)
 {
 	int index_cur;
 	int index_pos;
@@ -246,10 +247,30 @@ void cursor_delete_word(void)
 
 	gtd->input_len -= index_cur - gtd->input_cur;
 
-	cursor_check_line();
+	cursor_check_line("");
 }
 
-void cursor_end(void)
+DO_CURSOR(cursor_echo)
+{
+	if (*arg == 0)
+	{
+		TOG_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+	}
+	else if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO);
+	}
+	else
+	{
+		tintin_printf(NULL, "#SYNTAX: #CURSOR {ECHO} {ON|OFF}");
+	}
+}
+
+DO_CURSOR(cursor_end)
 {
 	if (gtd->input_cur == gtd->input_len)
 	{
@@ -257,15 +278,15 @@ void cursor_end(void)
 	}
 	gtd->input_cur = gtd->input_len;
 
-	cursor_redraw_line();
+	cursor_redraw_line("");
 }
 
-void cursor_exit(void)
+DO_CURSOR(cursor_exit)
 {
 	do_zap(gtd->ses, "");
 }
 
-void cursor_history_next(void)
+DO_CURSOR(cursor_history_next)
 {
 	struct listnode *node;
 
@@ -300,7 +321,7 @@ void cursor_history_next(void)
 
 	gtd->input_his = gtd->input_his->next;
 
-	cursor_clear_line();
+	cursor_clear_line("");
 
 	if (gtd->input_his == NULL)
 	{
@@ -315,10 +336,10 @@ void cursor_history_next(void)
 	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = 0;
 
-	cursor_redraw_line();
+	cursor_redraw_line("");
 }
 
-void cursor_history_prev(void)
+DO_CURSOR(cursor_history_prev)
 {
 	struct listnode *node;
 
@@ -366,7 +387,7 @@ void cursor_history_prev(void)
 		gtd->input_his = gtd->input_his->prev;
 	}
 
-	cursor_clear_line();
+	cursor_clear_line("");
 
 	strcpy(gtd->input_buf, gtd->input_his->left);
 
@@ -374,10 +395,10 @@ void cursor_history_prev(void)
 	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = 0;
 
-	cursor_redraw_line();
+	cursor_redraw_line("");
 }
 
-void cursor_history_search(void)
+DO_CURSOR(cursor_history_search)
 {
 	if (gts->list[LIST_HISTORY]->l_node == NULL)
 	{
@@ -390,7 +411,7 @@ void cursor_history_search(void)
 
 		strcpy(gtd->input_tmp, gtd->input_buf);
 
-		cursor_clear_line();
+		cursor_clear_line("");
 
 		input_printf("(search) [ ] \033[3D");
 	}
@@ -408,11 +429,11 @@ void cursor_history_search(void)
 
 		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
-		cursor_redraw_line();
+		cursor_redraw_line("");
 	}
 }
 
-void cursor_history_find(void)
+DO_CURSOR(cursor_history_find)
 {
 	struct listnode *node;
 	struct listroot *root;
@@ -441,7 +462,7 @@ void cursor_history_find(void)
 	pop_call();
 }
 
-void cursor_home(void)
+DO_CURSOR(cursor_home)
 {
 	if (gtd->input_cur == 0)
 	{
@@ -455,7 +476,7 @@ void cursor_home(void)
 		gtd->input_cur = 0;
 		gtd->input_pos = 0;
 
-		cursor_redraw_line();
+		cursor_redraw_line("");
 	}
 	else
 	{
@@ -464,7 +485,27 @@ void cursor_home(void)
 	}
 }
 
-void cursor_left(void)
+DO_CURSOR(cursor_insert)
+{
+	if (*arg == 0)
+	{
+		TOG_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT);
+	}
+	else if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT);
+	}
+	else
+	{
+		tintin_printf(NULL, "#SYNTAX: #CURSOR {INSERT} {ON|OFF}");
+	}
+}
+
+DO_CURSOR(cursor_left)
 {
 	if (gtd->input_cur > 0)
 	{
@@ -472,15 +513,15 @@ void cursor_left(void)
 		gtd->input_pos--;
 		input_printf("\033[1D");
 
-		cursor_check_line();
+		cursor_check_line("");
 	}
 }
 
-void cursor_redraw_input(void)
+DO_CURSOR(cursor_redraw_input)
 {
 	if (IS_SPLIT(gtd->ses))
 	{
-		cursor_redraw_line();
+		cursor_redraw_line("");
 	}
 	else
 	{
@@ -493,7 +534,7 @@ void cursor_redraw_input(void)
 }
 
 
-void cursor_redraw_line(void)
+DO_CURSOR(cursor_redraw_line)
 {
 	if (gtd->input_pos)
 	{
@@ -539,7 +580,7 @@ void cursor_redraw_line(void)
 		input_printf("%.*s\0338", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos]);
 	}
 
-	cursor_fix_line();
+	cursor_fix_line("");
 
 	if (gtd->input_pos)
 	{
@@ -547,7 +588,7 @@ void cursor_redraw_line(void)
 	}
 }
 
-void cursor_fix_line(void)
+DO_CURSOR(cursor_fix_line)
 {
 	if (gtd->input_len - gtd->input_cur + gtd->input_pos > gtd->ses->cols)
 	{
@@ -559,7 +600,7 @@ void cursor_fix_line(void)
 	}
 }
 
-void cursor_right(void)
+DO_CURSOR(cursor_right)
 {
 	if (gtd->input_cur < gtd->input_len)
 	{
@@ -568,17 +609,17 @@ void cursor_right(void)
 		input_printf("\033[1C");
 	}
 
-	cursor_check_line();
+	cursor_check_line("");
 }
 
 
 
-void cursor_suspend(void)
+DO_CURSOR(cursor_suspend)
 {
 	do_suspend(gtd->ses, "");
 }
 
-void cursor_tab(void)
+DO_CURSOR(cursor_tab)
 {
 	char tab[BUFFER_SIZE];
 	struct listnode *node;

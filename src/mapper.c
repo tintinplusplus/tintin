@@ -33,7 +33,7 @@
 */
 
 void show_map(struct session *ses, char *argument);
-void create_legenda(struct session *ses, const char *arg);
+void create_legenda(struct session *ses, char *arg);
 
 short               map_grid_x;
 short               map_grid_y;
@@ -956,7 +956,7 @@ void delete_map(struct session *ses)
 	ses->map = NULL;
 }
 		
-void create_legenda(struct session *ses, const char *arg)
+void create_legenda(struct session *ses, char *arg)
 {
 	int cnt;
 	char buf[BUFFER_SIZE];
@@ -973,7 +973,7 @@ void create_legenda(struct session *ses, const char *arg)
 }
 
 
-int create_room(struct session *ses, const char *arg)
+int create_room(struct session *ses, char *arg)
 {
 	char vnum[BUFFER_SIZE], flags[BUFFER_SIZE], color[BUFFER_SIZE], name[BUFFER_SIZE], symbol[BUFFER_SIZE];
 	struct room_data *newroom;
@@ -1041,7 +1041,7 @@ void delete_room(struct session *ses, int room, int exits)
 	}
 }
 
-void create_exit(struct session *ses, int room, const char *arg)
+void create_exit(struct session *ses, int room, char *arg)
 {
 	struct exit_data *newexit;
 	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE];
@@ -1185,10 +1185,10 @@ void follow_map(struct session *ses, char *argument)
 	}
 }
 
-void insert_undo(struct session *ses, const char *format, ...)
+void insert_undo(struct session *ses, char *format, ...)
 {
 	char buf[BUFFER_SIZE], dir[BUFFER_SIZE], rev[BUFFER_SIZE], flag[BUFFER_SIZE];
-	const char *arg;
+	char *arg;
 	va_list args;
 
 	va_start(args, format);

@@ -29,7 +29,7 @@
 #include "tintin.h"
 
 
-const struct command_type command_table[] =
+struct command_type command_table[] =
 {
 	{	"action",            do_action,            CMD_FLAG_NONE    },
 	{	"alias",             do_alias,             CMD_FLAG_NONE    },
@@ -108,7 +108,7 @@ const struct command_type command_table[] =
 };
 
 
-const struct list_type list_table[LIST_MAX] =
+struct list_type list_table[LIST_MAX] =
 {
 	{    "ACTION",            "ACTIONS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
@@ -134,7 +134,7 @@ const struct list_type list_table[LIST_MAX] =
 };
 
 
-const struct config_type config_table[] =
+struct config_type config_table[] =
 {
 	{
 		"SPEEDWALK",
@@ -269,7 +269,7 @@ const struct config_type config_table[] =
 	}
 };
 
-const struct color_type color_table[] =
+struct color_type color_table[] =
 {
 	{    "reset",          "0", "<088>" },
 	{    "light",          "1", "<188>" },
@@ -298,7 +298,7 @@ const struct color_type color_table[] =
 	{    "",              ""  , "<888>" }
 };
 
-const struct class_type class_table[] =
+struct class_type class_table[] =
 {
 	{    "OPEN",                       class_open             },
 	{	"CLOSE",                      class_close            },
@@ -308,7 +308,7 @@ const struct class_type class_table[] =
 	{    "",                           NULL                   },
 };
 
-const struct chat_type chat_table[] =
+struct chat_type chat_table[] =
 {
 	{     "ACCEPT",          chat_accept,         "Accept a file transfer"		               },
 	{     "CALL",            chat_call,           "Call a buddy"                                   },
@@ -345,7 +345,7 @@ const struct chat_type chat_table[] =
 };
 
 
-const struct array_type array_table[] =
+struct array_type array_table[] =
 {
 	{     "DEL",                       array_del              },
 	{     "FND",                       array_fnd              },
@@ -356,7 +356,7 @@ const struct array_type array_table[] =
 	{     "",                          NULL                   }
 };
 
-const struct map_type map_table[] =
+struct map_type map_table[] =
 {
 	{     "COLOR",                     map_color              },
 	{     "CREATE",                    map_create             },
@@ -386,7 +386,7 @@ const struct map_type map_table[] =
 	{     "",                          NULL                   }
 };
 
-const struct cursor_type cursor_table[] =
+struct cursor_type cursor_table[] =
 {
 	{
 		"",
@@ -462,6 +462,12 @@ const struct cursor_type cursor_table[] =
 		cursor_home
 	},
 	{
+		"",
+		"",
+		"b",
+		cursor_home
+	},
+	{
 		"BACKWARD",
 		"Move cursor backward",
 		"",
@@ -495,6 +501,12 @@ const struct cursor_type cursor_table[] =
 		"END",
 		"Move cursor to end of input",
 		"",
+		cursor_end
+	},
+	{
+		"",
+		"",
+		"f",
 		cursor_end
 	},
 	{
@@ -594,6 +606,18 @@ const struct cursor_type cursor_table[] =
 		cursor_suspend
 	},
 	{
+		"ECHO",
+		"Turn local echoing on or off",
+		"",
+		cursor_echo
+	},
+	{
+		"INSERT",
+		"Turn insert mode on or off",
+		"",
+		cursor_insert
+	},
+	{
 		"",
 		"",
 		"",
@@ -601,7 +625,7 @@ const struct cursor_type cursor_table[] =
 	}
 };
 
-const struct timer_type timer_table[] =
+struct timer_type timer_table[] =
 {
 	{    "Poll Stdin"                  },
 	{    "Poll Sessions"               },
@@ -614,14 +638,14 @@ const struct timer_type timer_table[] =
 	{    "Stall Program"               }
 };
 
-const struct event_type event_table[] =
+struct event_type event_table[] =
 {
 	{    "MAP ENTER ROOM",               "Triggers when entering a map room."    },
 	{    "SESSION CONNECTED",            "Triggers when a new session connects." },
 	{    "",                             ""                                      }
 };
 
-const struct path_type path_table[] =
+struct path_type path_table[] =
 {
 	{    "DEL",                        path_del               },
 	{    "END",                        path_end               },

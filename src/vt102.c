@@ -100,7 +100,7 @@ void reset_scroll_region(struct session *ses)
 }
 
 
-int skip_vt102_codes(const char *str)
+int skip_vt102_codes(char *str)
 {
 	int skip;
 
@@ -177,7 +177,7 @@ int skip_vt102_codes(const char *str)
 }
 
 
-int skip_vt102_codes_non_graph(const char *str)
+int skip_vt102_codes_non_graph(char *str)
 {
 	int skip = 0;
 
@@ -268,12 +268,12 @@ int skip_vt102_codes_non_graph(const char *str)
 }
 
 
-void strip_vt102_codes(const char *str, char *buf)
+void strip_vt102_codes(char *str, char *buf)
 {
 	char *pti, *pto;
 
-	pti = (char *) str;
-	pto = (char *) buf;
+	pti = str;
+	pto = buf;
 
 	while (*pti)
 	{
@@ -290,12 +290,12 @@ void strip_vt102_codes(const char *str, char *buf)
 	*pto = 0;
 }
 
-void strip_vt102_codes_non_graph(const char *str, char *buf)
+void strip_vt102_codes_non_graph(char *str, char *buf)
 {
 	char *pti, *pto;
 
-	pti = (char *) str;
-	pto = (char *) buf;
+	pti = str;
+	pto = buf;
 
 	while (*pti)
 	{
@@ -312,13 +312,13 @@ void strip_vt102_codes_non_graph(const char *str, char *buf)
 	*pto = 0;
 }
 
-void strip_non_vt102_codes(const char *str, char *buf)
+void strip_non_vt102_codes(char *str, char *buf)
 {
 	char *pti, *pto;
 	int len;
 
-	pti = (char *) str;
-	pto = (char *) buf;
+	pti = str;
+	pto = buf;
 
 	while (*pti)
 	{
@@ -337,9 +337,9 @@ void strip_non_vt102_codes(const char *str, char *buf)
 	*pto = 0;
 }
 
-int strip_vt102_strlen(const char *str)
+int strip_vt102_strlen(char *str)
 {
-	const char *pti;
+	char *pti;
 	int i = 0;
 
 	pti = str;
@@ -362,7 +362,7 @@ int strip_vt102_strlen(const char *str)
 }
 
 
-int interpret_vt102_codes(struct session *ses, const char *str, int real)
+int interpret_vt102_codes(struct session *ses, char *str, int real)
 {
 	char data[BUFFER_SIZE] = { 0 };
 	int skip = 0;

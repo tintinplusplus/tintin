@@ -167,7 +167,7 @@ struct session *activate_session(struct session *ses)
 /* open a new session */
 /**********************/
 
-struct session *new_session(const char *name, const char *address, struct session *ses)
+struct session *new_session(char *name, char *address, struct session *ses)
 {
 	int cnt = 0;
 	char host[BUFFER_SIZE], port[BUFFER_SIZE];

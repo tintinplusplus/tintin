@@ -19,6 +19,8 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA #
 ###############################################################################
 
+AM_INIT_AUTOMAKE
+
 AC_INIT(tintin.h)
 AC_CONFIG_HEADER(config.h)
 
@@ -29,6 +31,7 @@ AC_SUBST(MYINCLUDE)
 AC_SUBST(MYLIB)    
 AC_SUBST(mybindir)
 AC_SUBST(BIG5)
+AC_SUBST(IPv6)
 
 if [ test $bindir != "\${exec_prefix}/bin" ]
 then
@@ -51,7 +54,8 @@ else
 	MYINCLUDE=""
 fi
 
-AC_ARG_ENABLE(big5, [  --enable-big5          enable big5 support], BIG5="-DBIG5")
+AC_ARG_ENABLE(big5, [  --enable-big5           enable big5 support], BIG5="-DBIG5")
+
 
 # Checks for programs.
 
@@ -82,7 +86,7 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select socket strcasecmp strchr strdup strerror strftime strncasecmp strstr utime ])
+AC_CHECK_FUNCS([gethostbyname gethostname gettimeofday inet_ntoa memset select socket strcasecmp strchr strdup strerror strftime strncasecmp strstr utime getaddrinfo])
 
 # Checks libraries
 

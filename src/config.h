@@ -1,3 +1,4 @@
+/* config.h.  Generated from config.h.in by configure.  */
 /******************************************************************************
 *   TinTin++                                                                  *
 *   Copyright (C) 2004 (See CREDITS file)                                     *
@@ -25,99 +26,99 @@
    System headers sometimes define this.
    We just want to avoid a redefinition error message.  */
 #ifndef _ALL_SOURCE
-#undef _ALL_SOURCE
+/* #undef _ALL_SOURCE */
 #endif
 
 /* Define to empty if the keyword does not work.  */
-#undef const
+/* #undef const */
 
 /* Define if you have the getmntent function.  */
-#undef HAVE_GETMNTENT
+#define HAVE_GETMNTENT 1
 
 /* Define if you have the strftime function.  */
-#undef HAVE_STRFTIME
+#define HAVE_STRFTIME 1
 
 /* Define as __inline if that's what the C compiler calls it.  */
-#undef inline
+/* #undef inline */
 
 /* Define if on MINIX.  */
-#undef _MINIX
+/* #undef _MINIX */
 
 /* Define if the system does not provide POSIX.1 features except
    with this defined.  */
-#undef _POSIX_1_SOURCE
+/* #undef _POSIX_1_SOURCE */
 
 /* Define if you need to in order for stat and other things to work.  */
-#undef _POSIX_SOURCE
+/* #undef _POSIX_SOURCE */
 
 /* Define as the return type of signal handlers (int or void).  */
-#undef RETSIGTYPE
+#define RETSIGTYPE void
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
-#undef TIME_WITH_SYS_TIME
+#define TIME_WITH_SYS_TIME 1
 
 /* Define if you have the strcasecmp function.  */
-#undef HAVE_STRCASECMP
+#define HAVE_STRCASECMP 1
 
 /* Define if you have the <ctype.h> header file.  */
-#undef HAVE_CTYPE_H
+#define HAVE_CTYPE_H 1
 
 /* Define if you have the <dirent.h> header file.  */
-#undef HAVE_DIRENT_H
+#define HAVE_DIRENT_H 1
 
 /* Define if you have the <ndir.h> header file.  */
-#undef HAVE_NDIR_H
+/* #undef HAVE_NDIR_H */
 
 /* Define if you have the <net/errno.h> header file.  */
-#undef HAVE_NET_ERRNO_H
+/* #undef HAVE_NET_ERRNO_H */
 
 /* Define if you have the <param.h> header file.  */
-#undef HAVE_PARAM_H
+/* #undef HAVE_PARAM_H */
 
 /* Define if you have the <stdlib.h> header file.  */
-#undef HAVE_STDLIB_H
+#define HAVE_STDLIB_H 1
 
 /* Define if you have the <string.h> header file.  */
-#undef HAVE_STRING_H
+#define HAVE_STRING_H 1
 
 /* Define if you have the <strings.h> header file.  */
-#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H 1
 
 /* Define if you have the <sys/dir.h> header file.  */
-#undef HAVE_SYS_DIR_H
+/* #undef HAVE_SYS_DIR_H */
 
 /* Define if you have the <sys/ioctl.h> header file.  */
-#undef HAVE_SYS_IOCTL_H
+#define HAVE_SYS_IOCTL_H 1
 
 /* Define if you have the <sys/ndir.h> header file.  */
-#undef HAVE_SYS_NDIR_H
+/* #undef HAVE_SYS_NDIR_H */
 
 /* Define if you have the <sys/ptem.h> header file.  */
-#undef HAVE_SYS_PTEM_H
+/* #undef HAVE_SYS_PTEM_H */
 
 /* Define if you have the <sys/termio.h> header file.  */
-#undef HAVE_SYS_TERMIO_H
+#define HAVE_SYS_TERMIO_H 1
 
 /* Define if you have the <sys/time.h> header file.  */
-#undef HAVE_SYS_TIME_H
+#define HAVE_SYS_TIME_H 1
 
 /* Define if you have the <termcap.h> header file.  */
-#undef HAVE_TERMCAP_H
+#define HAVE_TERMCAP_H 1
 
 /* Define if you have the <time.h> header file.  */
-#undef HAVE_TIME_H
+#define HAVE_TIME_H 1
 
 /* Define if you have the <unistd.h> header file.  */
-#undef HAVE_UNISTD_H
+#define HAVE_UNISTD_H 1
 
 /* Define if you have the nsl library (-lnsl).  */
-#undef HAVE_LIBNSL
+/* #undef HAVE_LIBNSL */
 
 /* Define if you have the socket library (-lsocket).  */
-#undef HAVE_LIBSOCKET
+/* #undef HAVE_LIBSOCKET */
 
 /* Define if you have the termcap library (-ltermcap).  */
-#undef HAVE_LIBTERMCAP
+#define HAVE_LIBTERMCAP 1
 
 /* Define if you have getaddrinfo for IPv6 */
-#undef HAVE_GETADDRINFO
+/* #undef HAVE_GETADDRINFO */

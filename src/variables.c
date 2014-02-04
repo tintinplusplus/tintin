@@ -55,7 +55,9 @@ DO_COMMAND(do_variable)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, "0", LIST_VARIABLE);
+		sprintf(temp, "{%s} {%s}", left, right);
+
+		do_internal_variable(ses, temp);
 
 		show_message(ses, LIST_VARIABLE, "#OK. $%s IS NOW SET TO {%s}.", left, right);
 	}
@@ -65,10 +67,8 @@ DO_COMMAND(do_variable)
 
 DO_COMMAND(do_internal_variable)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-	struct listroot *root;
-
-	root = ses->list[LIST_VARIABLE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], index[BUFFER_SIZE], *pti, *pto;
+	struct listnode *node;
 
 	arg = get_arg_in_braces(arg, temp,  FALSE);
 	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
@@ -76,7 +76,40 @@ DO_COMMAND(do_internal_variable)
 	arg = get_arg_in_braces(arg, temp, TRUE);
 	substitute(ses, temp, right, SUB_VAR|SUB_FUN);
 
-	if (*left)
+	pti = left;
+	pto = temp;
+
+	while (*pti && *pti != '[')
+	{
+		*pto++ = *pti++;
+	}
+	*pto = 0;
+
+	pto = index;
+
+	if (*pti == '[')
+	{
+		pti++;
+	}
+
+	while (*pti && *pti != ']')
+	{
+		
+		*pto++ = *pti++;
+	}
+	*pto = 0;
+
+	if (*index && *pti == ']')
+	{
+		if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) == NULL)
+		{
+			updatenode_list(ses, temp, "", "0", LIST_VARIABLE);
+
+			node = searchnode_list(ses->list[LIST_VARIABLE], temp);
+		}
+		set_list_item(ses, node, index, right);
+	}
+	else if (*left)
 	{
 		updatenode_list(ses, left, right, "0", LIST_VARIABLE);
 	}

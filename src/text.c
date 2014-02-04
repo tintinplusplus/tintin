@@ -29,7 +29,7 @@
 
 
 
-void printline(struct session *ses, const char *str, int prompt)
+void printline(struct session *ses, char *str, int prompt)
 {
 	char wrapped_str[BUFFER_SIZE];
 
@@ -62,13 +62,13 @@ void printline(struct session *ses, const char *str, int prompt)
 	Word wrapper, only wraps scrolling region, returns nr of lines - Igor
 */
 
-int word_wrap(struct session *ses, const char *textin, char *textout, int scroll)
+int word_wrap(struct session *ses, char *textin, char *textout, int scroll)
 {
 	char *pti, *pto, *lis, *los;
 	int skip = 0, cnt = 0;
 
-	pti = lis = (char *) textin;
-	pto = los = (char *) textout;
+	pti = lis = textin;
+	pto = los = textout;
 
 	ses->cur_col = 1;
 

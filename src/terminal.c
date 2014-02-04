@@ -77,6 +77,11 @@ void init_terminal()
 	}
 }
 
+void reset_terminal(void)
+{
+	tcsetattr(0, TCSANOW, &gtd->terminal);
+}
+
 void echo_off(struct session *ses)
 {
 	struct termios io;

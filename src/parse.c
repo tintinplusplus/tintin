@@ -31,7 +31,7 @@
 /* parse input, check for TINTIN commands and aliases and send to session */
 /**************************************************************************/
 
-struct session *parse_input(struct session *ses, const char *input)
+struct session *parse_input(struct session *ses, char *input)
 {
 	char command[BUFFER_SIZE], arg[BUFFER_SIZE];
 
@@ -135,7 +135,7 @@ struct session *parse_input(struct session *ses, const char *input)
 /* return TRUE if commands only consists of capital letters N,S,E ... */
 /**********************************************************************/
 
-int is_speedwalk_dirs(const char *cp)
+int is_speedwalk_dirs(char *cp)
 {
 	int flag = FALSE;
 
@@ -177,7 +177,7 @@ int is_speedwalk_dirs(const char *cp)
 /* do the speedwalk thing */
 /**************************/
 
-void process_speedwalk(const char *cp, struct session *ses)
+void process_speedwalk(char *cp, struct session *ses)
 {
 	char sc[2];
 	int loopcnt, i;
@@ -215,7 +215,7 @@ void process_speedwalk(const char *cp, struct session *ses)
 /* parse most of the tintin-commands */
 /*************************************/
 
-struct session *parse_tintin_command(const char *command, char *arg, struct session *ses)
+struct session *parse_tintin_command(char *command, char *arg, struct session *ses)
 {
 	char newcommand[BUFFER_SIZE], argument[BUFFER_SIZE];
 	int cmd;
@@ -283,7 +283,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 	get all arguments - only check for unescaped ';'
 */
 
-const char *get_arg_all(const char *s, char *arg)
+char *get_arg_all(char *s, char *arg)
 {
 	int nest = 0;
 
@@ -330,10 +330,10 @@ const char *get_arg_all(const char *s, char *arg)
 	Braces are stripped in braced arguments leaving all else as is.
 */
 
-const char *get_arg_in_braces(const char *s, char *arg, int flag)
+char *get_arg_in_braces(char *s, char *arg, int flag)
 {
 	int nest = 1;
-	const char *ptr;
+	char *ptr;
 
 	s = space_out(s);
 	ptr = s;
@@ -399,7 +399,7 @@ const char *get_arg_in_braces(const char *s, char *arg, int flag)
 /* get all arguments                  */
 /**************************************/
 
-const char *get_arg_with_spaces(const char *s, char *arg)
+char *get_arg_with_spaces(char *s, char *arg)
 {
 	int nest = 0;
 
@@ -445,7 +445,7 @@ const char *get_arg_with_spaces(const char *s, char *arg)
 	get one arg, stop at spaces
 */
 
-const char *get_arg_stop_spaces(const char *s, char *arg)
+char *get_arg_stop_spaces(char *s, char *arg)
 {
 	int nest = 0;
 
@@ -496,7 +496,7 @@ const char *get_arg_stop_spaces(const char *s, char *arg)
 	spaceout - advance ptr to next none-space
 */
 
-const char *space_out(const char *s)
+char *space_out(char *s)
 {
 	while (isspace(*s))
 	{
@@ -509,13 +509,13 @@ const char *space_out(const char *s)
 	send command+argument to the mud
 */
 
-void write_mud(struct session *ses, const char *command)
+void write_mud(struct session *ses, char *command)
 {
 	char output[BUFFER_SIZE];
 
 	if (ses->map && ses->map->in_room)
 	{
-		follow_map(ses, (char *) command);
+		follow_map(ses, command);
 	}
 	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{

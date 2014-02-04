@@ -143,7 +143,7 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 	}
 }
 
-int get_highlight_codes(struct session *ses, const char *string, char *result)
+int get_highlight_codes(struct session *ses, char *string, char *result)
 {
 	int cnt;
 

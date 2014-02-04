@@ -12,7 +12,6 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
-#CONFIG           {VERBOSE}               {OFF}
 #alias {oops} {#showme <118>Problem with check %1}
 #unvar bla
 #class bla open
@@ -38,8 +37,8 @@ oops 5
 #sys rm -f x.tmp
 
 #alias bla {#var bla 1;#var bla 2;#var bla 3}
-#loadpath bla
-#3 #walk
+#path load bla
+#3 #path walk
 #if {$bla != 3} {oops 9}
 
 
@@ -285,4 +284,4 @@ oops 5
 	isca: bbs.iscabbs.com 23
 }
 
-#showme t00t
+#delay 0 #showme t00t

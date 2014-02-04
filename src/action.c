@@ -92,7 +92,7 @@ DO_COMMAND(do_unaction)
 }
 
 
-void check_all_actions(struct session *ses, const char *original, char *line)
+void check_all_actions(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 	struct listroot *root;
@@ -109,10 +109,8 @@ void check_all_actions(struct session *ses, const char *original, char *line)
 
 			substitute(ses, node->right, buffer, SUB_ARG|SUB_SEC);
 
-			if (HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_DEBUG))
-			{
-				show_message(ses, LIST_ACTION, "#ACTION DEBUG: %s", buffer);
-			}
+			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", buffer);
+
 			parse_input(ses, buffer);
 
 			return;

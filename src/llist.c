@@ -85,7 +85,7 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 	create a node and stuff it into the list in the desired order
 */
 
-void insertnode_list(struct session *ses, const char *ltext, const char *rtext, const char *prtext, int index)
+void insertnode_list(struct session *ses, char *ltext, char *rtext, char *prtext, int index)
 {
 	struct listnode *node, *newnode;
 
@@ -141,7 +141,7 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 }
 
 
-void updatenode_list(struct session *ses, const char *ltext, const char *rtext, const char *prtext, int index)
+void updatenode_list(struct session *ses, char *ltext, char *rtext, char *prtext, int index)
 {
 	struct listnode *node;
 
@@ -241,7 +241,7 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 	search for a node containing the ltext in left-field
 */
 
-struct listnode *searchnode_list(struct listroot *listhead, const char *cptr)
+struct listnode *searchnode_list(struct listroot *listhead, char *cptr)
 {
 	struct listnode *node;
 
@@ -259,7 +259,7 @@ struct listnode *searchnode_list(struct listroot *listhead, const char *cptr)
 	search for a node that has cptr as a beginning
 */
 
-struct listnode *searchnode_list_begin(struct listroot *listhead, const char *cptr, int mode)
+struct listnode *searchnode_list_begin(struct listroot *listhead, char *cptr, int mode)
 {
 	struct listnode *node;
 	int len;
@@ -327,7 +327,7 @@ void show_list(struct session *ses, struct listroot *listhead, int index)
 }
 
 
-int show_node_with_wild(struct session *ses, const char *cptr, int index)
+int show_node_with_wild(struct session *ses, char *cptr, int index)
 {
 	struct listnode *node;
 	int flag = FALSE;
@@ -343,7 +343,7 @@ int show_node_with_wild(struct session *ses, const char *cptr, int index)
 	return flag;
 }
 
-struct listnode *search_node_with_wild(struct listroot *listhead, const char *cptr)
+struct listnode *search_node_with_wild(struct listroot *listhead, char *cptr)
 {
 	struct listnode *node;
 
@@ -363,7 +363,7 @@ struct listnode *search_node_with_wild(struct listroot *listhead, const char *cp
 	end of a list - as insertnode_list(), but not alphabetical
 */
 
-void addnode_list(struct listroot *listhead, const char *ltext, const char *rtext, const char *prtext)
+void addnode_list(struct listroot *listhead, char *ltext, char *rtext, char *prtext)
 {
 	struct listnode *newnode;
 

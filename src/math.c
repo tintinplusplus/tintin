@@ -70,7 +70,7 @@ DO_COMMAND(do_math)
 	{
 		sprintf(result, "{%s} {%.*f}", left, precision, mathexp(ses, right));
 
-		do_variable(ses, result);
+		do_internal_variable(ses, result);
 	}
 	return ses;
 }
@@ -104,7 +104,7 @@ DO_COMMAND(do_if)
 	return ses;
 }
 
-double get_number(struct session *ses, const char *str)
+double get_number(struct session *ses, char *str)
 {
 	char number[BUFFER_SIZE];
 
@@ -113,7 +113,7 @@ double get_number(struct session *ses, const char *str)
 	return mathexp(ses, number);
 }
 
-void get_number_string(struct session *ses, const char *str, char *result)
+void get_number_string(struct session *ses, char *str, char *result)
 {
 	char number[BUFFER_SIZE];
 
@@ -126,7 +126,7 @@ void get_number_string(struct session *ses, const char *str, char *result)
 	Flexible tokenized mathematical expression interpreter - Igor
 */
 
-double mathexp(struct session *ses, const char *str)
+double mathexp(struct session *ses, char *str)
 {
 	struct listnode *node;
 
@@ -173,7 +173,7 @@ double mathexp(struct session *ses, const char *str)
 	point = -1;                                                  \
 }
 
-int mathexp_tokenize(struct session *ses, const char *str)
+int mathexp_tokenize(struct session *ses, char *str)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[BUFFER_SIZE], *pti, *pta;
 	int level, status, valid, point;
@@ -184,8 +184,8 @@ int mathexp_tokenize(struct session *ses, const char *str)
 	valid     = FALSE;
 	precision = 0;
 
-	pta = (char *) buf3;
-	pti = (char *) str;
+	pta = buf3;
+	pti = str;
 
 	kill_list(ses, LIST_MATH);
 
@@ -660,7 +660,7 @@ void mathexp_compute(struct listnode *node)
 	node->pr = strdup(temp);
 }
 
-double tintoi(const char *str)
+double tintoi(char *str)
 {
 	switch (str[0])
 	{
@@ -681,7 +681,7 @@ double tintoi(const char *str)
 	}
 }
 
-double tincmp(const char *left, const char *right)
+double tincmp(char *left, char *right)
 {
 	switch (left[0])
 	{
@@ -693,7 +693,7 @@ double tincmp(const char *left, const char *right)
 	}
 }
 
-double tineval(const char *left, const char *right)
+double tineval(char *left, char *right)
 {
 	switch (left[0])
 	{
@@ -705,7 +705,7 @@ double tineval(const char *left, const char *right)
 	}
 }
 			
-double tindice(const char *left, const char *right)
+double tindice(char *left, char *right)
 {
 	long long cnt, numdice, sizedice, sum;
 
