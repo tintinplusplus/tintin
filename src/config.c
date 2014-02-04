@@ -340,6 +340,8 @@ DO_CONFIG(config_packetpatch)
 	if (!is_number(arg))
 	{
 		tintin_printf(ses, "#SYNTAX: #CONFIG {PACKET PATCH} <NUMBER>");
+
+		return NULL;
 	}
 
 	if (atoi(arg) < 0 || atoi(arg) > 10000)

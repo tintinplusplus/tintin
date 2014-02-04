@@ -657,7 +657,7 @@ DO_CURSOR(cursor_tab)
 		input_now--;
 	}
 
-	if (input_now == gtd->input_len - 1)
+	if (input_now != 0 && input_now == gtd->input_len - 1)
 	{
 		return;
 	}

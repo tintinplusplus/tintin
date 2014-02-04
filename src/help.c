@@ -329,7 +329,7 @@ struct help_type help_table[] =
 	},
 	{
 		"FORMAT",
-		"<178>Command<078>: #format <178>{<078>variable<178>}<078> <178>{<078>format<178>}<078> <178>{<078>argument1 argument2 etc<178>}<078>\n"
+		"<178>Command<078>: #format <178>{<078>variable<178>}<078> <178>{<078>format<178>}<078> <178>{{<078>argument1<178>} {<078>argument2<178>} {<078>etc<178>}}<078>\n"
 		"\n"
 		"         Allows you to store a string into a variable in the exact same way\n"
 		"         C's sprintf works with a few enhancements and limitations such as\n"
@@ -349,15 +349,15 @@ struct help_type help_table[] =
 		"         #format {test} {%r}   {string}  reverse text, hiya = ayih\n"
 		"         #format {test} {%t}     {time}  print the current military time\n"
 		"         #format {test} {%u}   {string}  uppercase text\n"
-		"         #format {test} {%C}   {colums}  store the screen width in {colums}\n"
+		"         #format {cols} {%C}         {}  store the screen width in {cols}\n"
 		"         #format {test} {%D}     {time}  print the current day\n"
 		"         #format {test} {%G}   {number}  perform thousand grouping on {number}\n"
 		"         #format {test} {%L}   {string}  store the string length in {test}\n"
 		"         #format {test} {%M}     {time}  print the current month\n"
-		"         #format {test} {%R}     {rows}  store the screen height in {rows}\n"
-		"         #format {time} {%T}             store the epoch time in {time}\n"
-		"         #format {time} {%U}             store the micro epoch time in {time}\n"
-		"         #format {time} {%Y}     {time}  print the current year\n"
+		"         #format {rows} {%R}         {}  store the screen height in {rows}\n"
+		"         #format {time} {%T}         {}  store the epoch time in {time}\n"
+		"         #format {time} {%U}         {}  store the micro epoch time in {time}\n"
+		"         #format {test} {%Y}     {time}  print the current year\n"
 	},
 	{
 		"FUNCTION",

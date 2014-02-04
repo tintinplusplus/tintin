@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.4"
+#define VERSION_NUM               "1.97.5"
 
 #define ESCAPE                          27
 

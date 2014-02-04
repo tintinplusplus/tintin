@@ -77,14 +77,6 @@ DO_COMMAND(do_session)
 	}
 	else
 	{
-		for (sesptr = gts->next ; sesptr ; sesptr = sesptr->next)
-		{
-			if (!strcmp(sesptr->name, left))
-			{
-				tintin_puts(ses, "#THERE'S A SESSION WITH THAT NAME ALREADY.");
-				return ses;
-			}
-		}
 		ses = new_session(ses, left, arg, 0);
 	}
 	return gtd->ses;
@@ -198,6 +190,17 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		}
 	}
 
+	for (newsession = gts->next ; newsession ; newsession = newsession->next)
+	{
+		if (!strcmp(newsession->name, name))
+		{
+			tintin_puts(ses, "THERE'S A SESSION WITH THAT NAME ALREADY.");
+
+			pop_call();
+			return ses;
+		}
+	}
+
 	newsession                = calloc(1, sizeof(struct session));
 
 	newsession->name          = strdup(name);
@@ -238,10 +241,9 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		SET_BIT(newsession->telopts, TELOPT_FLAG_SGA);
 		DEL_BIT(newsession->telopts, TELOPT_FLAG_ECHO);
 
-		newsession->socket = desc;
+		gtd->ses         = newsession;
+		gtd->ses->socket = desc;
 	}
-
-
 
 	pop_call();
 	return gtd->ses;

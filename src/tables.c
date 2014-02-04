@@ -70,7 +70,7 @@ struct command_type command_table[] =
 	{	"message",           do_message,           CMD_FLAG_SUB     },
 	{	"nop",               do_nop,               CMD_FLAG_NONE    },
 	{	"parse",             do_parse,             CMD_FLAG_NONE    },
-	{	"path",              do_path,              CMD_FLAG_NONE    },
+	{	"path",              do_path,              CMD_FLAG_SUB     },
 	{	"pathdir",           do_pathdir,           CMD_FLAG_NONE    },
 	{	"prompt",            do_prompt,            CMD_FLAG_NONE    },
 	{	"read",              do_read,              CMD_FLAG_SUB     },

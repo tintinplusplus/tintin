@@ -315,7 +315,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						}
 						else
 						{
-							tintin_puts(NULL, "#IAC BAD TELOPT");
+							tintin_printf(NULL, "#IAC BAD TELOPT %d", cpsrc[os]);
 							skip = 1;
 						}
 						break;

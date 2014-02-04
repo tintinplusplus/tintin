@@ -170,7 +170,7 @@ void poll_input(void)
 
 void poll_sessions(void)
 {
-	fd_set readfds, writefds, excfds;
+	fd_set readfds, excfds;
 	static struct timeval to;
 	struct session *ses;
 	int rv;
@@ -180,7 +180,6 @@ void poll_sessions(void)
 	if (gts->next)
 	{
 		FD_ZERO(&readfds);
-		FD_ZERO(&writefds);
 		FD_ZERO(&excfds);
 
 		for (ses = gts->next ; ses ; ses = gtd->update)
@@ -194,25 +193,10 @@ void poll_sessions(void)
 					FD_SET(ses->socket, &readfds);
 					FD_SET(ses->socket, &excfds);
 
-					rv = select(FD_SETSIZE, &readfds, &writefds, &excfds, &to);
+					rv = select(FD_SETSIZE, &readfds, NULL, &excfds, &to);
 
 					if (rv <= 0)
 					{
-						if (rv == 0 || errno == EINTR)
-						{
-							break;
-						}
-						syserr("select");
-					}
-
-					if (FD_ISSET(ses->socket, &excfds))
-					{
-						FD_CLR(ses->socket, &readfds);
-
-						readmud(ses);
-
-						cleanup_session(ses);
-
 						break;
 					}
 
@@ -228,6 +212,17 @@ void poll_sessions(void)
 
 							break;
 						}
+					}
+
+					if (FD_ISSET(ses->socket, &excfds))
+					{
+						FD_CLR(ses->socket, &readfds);
+
+						cleanup_session(ses);
+
+						gtd->mud_output_len = 0;
+
+						break;
 					}
 				}
 

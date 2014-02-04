@@ -39,8 +39,6 @@ DO_COMMAND(do_path)
 	if (*left == 0)
 	{
 		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|WALK|DEL|INS|MAP} {argument}");
-
-
 	}
 	else
 	{

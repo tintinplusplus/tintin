@@ -288,6 +288,8 @@ oops 5
 	isca: bbs.iscabbs.com 23
 }
 
+#tab boss
+
 #highlight {t00t} {green}
 
 #delay 0.1 #showme t00t

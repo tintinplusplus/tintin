@@ -42,7 +42,7 @@ DO_COMMAND(do_run)
 	char *left, *right;
 	int desc;
 	struct winsize size;
-	        
+
 	char *argv[4] = {"sh", "-c", "", NULL};
 
 	arg = get_arg_in_braces(arg, &left,  FALSE);
@@ -70,9 +70,10 @@ DO_COMMAND(do_run)
 			break;
 
 		default:
-			return new_session(ses, left, "", desc);
+			ses = new_session(ses, left, "", desc);
+			break;
 	}
-	return ses;
+	return gtd->ses;
 }
 
 DO_COMMAND(do_scan)

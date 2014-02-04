@@ -839,3 +839,11 @@ July 2007      1.97.4
                Added packet defragmentation at the socket level.
                Fixed a buffer overflow in the scrollback buffer's prompt
                handling.
+
+August 2007    1.97.5
+
+               Fixed some bugs in socket handling.
+
+               #run now shows the stderr when failing to run.
+
+               Fixed a bug with #config {packet patch}.
