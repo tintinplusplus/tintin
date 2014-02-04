@@ -832,3 +832,10 @@ July 2007      1.97.3
 
                Added the #script command to run any kind of script client side.
                Fixed a variety of minor bugs.
+
+July 2007      1.97.4
+
+               Added the #run command to run various applications inside tintin.
+               Added packet defragmentation at the socket level.
+               Fixed a buffer overflow in the scrollback buffer's prompt
+               handling.

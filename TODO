@@ -8,6 +8,8 @@ GENERAL STUFF:
 
 - events for text and input and prompt lines
 
+- look into packet defragmentation for chat
+
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:
@@ -15,8 +17,6 @@ MAPPING STUFF:
 - a method to double check correct movement.
 
 - a method to highlight a route on the map
-
-- a travel/explore option.
 
 - a method to mark a room on the map for corpse retreival etc.
 
@@ -37,9 +37,7 @@ MAPPING STUFF:
 
 * This is a list of improvements that are planned for a rainy day.
 
-- Buffer safe strings (partial implemention finished)
-
-- improved #system command
+- Buffer safe strings (partial implementation finished)
 
 - fix up ipv6 support in chat.c
 
@@ -78,10 +76,3 @@ MAPPING STUFF:
 
 - plugins: Maybe sometime far in the future I'll add a plugin to add plugins.
 
-- external script support: Python, Ruby, etc is fun, but I'd rather develop
-  tintin's scripting language instead. You can use external scripts with
-  the #system command, write the scripts output to a file, and use #read to
-  execute it. 
-
-
----

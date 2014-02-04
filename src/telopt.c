@@ -351,7 +351,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					break;
 
 				case '\r':
-					if (cplen > 1 && cpsrc[1] == 0)
+					if (cplen > 1 && (cpsrc[1] == 0 || cpsrc[1] != '\n'))
 					{
 						*cpdst++ = *cpsrc;
 						gtd->mud_output_len++;
@@ -363,8 +363,17 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					{
 						DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
 					}
-					*cpdst++ = *cpsrc;
-					gtd->mud_output_len++;
+					if (cplen > 1 && cpsrc[1] == '\r')
+					{
+						*cpdst++ = *cpsrc++;
+						gtd->mud_output_len++;
+						cplen--;
+					}
+					else
+					{
+						*cpdst++ = *cpsrc;
+						gtd->mud_output_len++;
+					}
 					break;
 
 				default:
@@ -413,6 +422,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			cplen--;
 		}
 	}
+	gtd->mud_output_buf[gtd->mud_output_len] = 0;
 }
 
 int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc)

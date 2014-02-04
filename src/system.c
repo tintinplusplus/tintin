@@ -27,21 +27,38 @@
 
 #include "tintin.h"
 
+#ifdef HAVE_PTY_H
 #include <pty.h>
-#include <utmp.h>
+#else
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
+#endif
+
+extern char **environ;
 
 DO_COMMAND(do_run)
 {
 	char *left, *right;
 	int desc;
-
+	struct winsize size;
+	        
 	char *argv[4] = {"sh", "-c", "", NULL};
-	char *envp[1] = {NULL};
 
 	arg = get_arg_in_braces(arg, &left,  FALSE);
 	arg = get_arg_in_braces(arg, &right, TRUE);
 
-	switch(forkpty(&desc, NULL, &gtd->old_terminal, NULL))
+	if (*left == 0 || *right == 0)
+	{
+		tintin_printf2(ses, "#RUN: TWO ARGUMENTS REQUIRED.");
+
+		return ses;
+	}
+
+	size.ws_row = get_scroll_size(ses);
+	size.ws_col = ses->cols;
+
+	switch(forkpty(&desc, NULL, &gtd->old_terminal, &size))
 	{
 		case -1:
 			perror("forkpty");
@@ -49,13 +66,49 @@ DO_COMMAND(do_run)
 
 		case 0:
 			argv[2] = stringf_alloc("exec %s", right);
-
-			execve("/bin/sh", argv, envp);
+			execve("/bin/sh", argv, environ);
 			break;
 
 		default:
 			return new_session(ses, left, "", desc);
 	}
+	return ses;
+}
+
+DO_COMMAND(do_scan)
+{
+	FILE *fp;
+	char *filename;
+
+	get_arg_in_braces(arg, &filename, TRUE);
+
+	if ((fp = fopen(filename, "r")) == NULL)
+	{
+		tintin_printf(ses, "#ERROR: #SCAN {%s} - FILE NOT FOUND.", filename);
+		return ses;
+	}
+
+	SET_BIT(ses->flags, SES_FLAG_SCAN);
+
+	if (STRING_SIZE > gtd->mud_output_max)
+	{
+		gtd->mud_output_max  = STRING_SIZE;
+		gtd->mud_output_buf  = realloc(gtd->mud_output_buf, gtd->mud_output_max);
+	}
+
+	while (fgets(gtd->mud_output_buf, STRING_SIZE, fp))
+	{
+		gtd->mud_output_len = 1;
+
+		readmud(ses);
+	}
+
+	DEL_BIT(ses->flags, SES_FLAG_SCAN);
+
+	show_message(ses, -1, "#OK. FILE READ.", filename);
+
+	fclose(fp);
+
 	return ses;
 }
 
@@ -122,3 +175,37 @@ DO_COMMAND(do_system)
 
 	return ses;
 }
+
+
+DO_COMMAND(do_textin)
+{
+	FILE *fp;
+	char *filename, buffer[BUFFER_SIZE], *cptr;
+
+	get_arg_in_braces(arg, &filename, TRUE);
+
+	if ((fp = fopen(filename, "r")) == NULL)
+	{
+		tintin_printf(ses, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", filename);
+		return ses;
+	}
+
+	while (fgets(buffer, sizeof(buffer), fp))
+	{
+		for (cptr = buffer ; *cptr && *cptr != '\n' ; cptr++)
+		{
+			;
+		}
+		*cptr++ = '\r';
+		*cptr++ = '\n';
+		*cptr++ = '\0';
+
+		write_line_mud(buffer, ses);
+	}
+	fclose(fp);
+
+	show_message(ses, -1, "#OK. FILE READ.");
+
+	return ses;
+}
+

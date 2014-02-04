@@ -191,33 +191,27 @@ void write_line_mud(char *line, struct session *ses)
 }
 
 
-void read_buffer_mud(struct session *ses)
+int read_buffer_mud(struct session *ses)
 {
 	unsigned char buf[STRING_SIZE];
 	int size;
 
 	push_call("read_buffer_mud(%p)",ses);
 
-	gtd->mud_output_len = 0;
-
 	size = read(ses->socket, buf, STRING_SIZE - 1);
 
 	if (size <= 0)
 	{
-		gtd->mud_output_len = -1;
-
 		pop_call();
-		return;
+		return FALSE;
 	}
 
 	buf[size] = 0;
 
 	translate_telopts(ses, buf, size);
 
-	gtd->mud_output_buf[gtd->mud_output_len] = 0;
-
 	pop_call();
-	return;
+	return TRUE;
 }
 
 
@@ -228,23 +222,6 @@ void readmud(struct session *ses)
 
 	push_call("readmud(%p)", ses);
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_SCAN))
-	{
-		read_buffer_mud(ses);
-
-		switch (gtd->mud_output_len)
-		{
-			case -1:
-				cleanup_session(ses);
-
-				pop_call();
-				return;
-
-			case  0:
-				pop_call();
-				return;
-		}
-	}
 	gtd->mud_output_len = 0;
 
 	/* separate into lines and print away */

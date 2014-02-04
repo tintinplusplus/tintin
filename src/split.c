@@ -126,6 +126,8 @@ void clean_screen(struct session *ses)
 
 void dirty_screen(struct session *ses)
 {
+	printf("\033=\033[?1h");
+
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
 		init_split(ses, ses->top_row, ses->bot_row);

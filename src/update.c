@@ -183,47 +183,55 @@ void poll_sessions(void)
 		FD_ZERO(&writefds);
 		FD_ZERO(&excfds);
 
-		for (ses = gts->next ; ses ; ses = ses->next)
-		{
-			if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
-			{
-				FD_SET(ses->socket, &readfds);
-				FD_SET(ses->socket, &writefds);
-				FD_SET(ses->socket, &excfds);
-			}
-		}
-
-		rv = select(FD_SETSIZE, &readfds, &writefds, &excfds, &to);
-
-		if (rv <= 0)
-		{
-			if (rv == 0 || errno == EINTR)
-			{
-				return;
-			}
-			syserr("select");
-		}
-
-		for (ses = gts->next ; ses ; ses = gtd->update)
-		{
-			gtd->update = ses->next;
-
-			if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED) && FD_ISSET(ses->socket, &excfds))
-			{
-				FD_CLR(ses->socket, &readfds);
-				FD_CLR(ses->socket, &writefds);
-
-				cleanup_session(ses);
-			}
-		}
-
 		for (ses = gts->next ; ses ; ses = gtd->update)
 		{
 			gtd->update = ses->next;
 
 			if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 			{
-				if (FD_ISSET(ses->socket, &readfds))
+				while (TRUE)
+				{
+					FD_SET(ses->socket, &readfds);
+					FD_SET(ses->socket, &excfds);
+
+					rv = select(FD_SETSIZE, &readfds, &writefds, &excfds, &to);
+
+					if (rv <= 0)
+					{
+						if (rv == 0 || errno == EINTR)
+						{
+							break;
+						}
+						syserr("select");
+					}
+
+					if (FD_ISSET(ses->socket, &excfds))
+					{
+						FD_CLR(ses->socket, &readfds);
+
+						readmud(ses);
+
+						cleanup_session(ses);
+
+						break;
+					}
+
+					if (FD_ISSET(ses->socket, &readfds))
+					{
+						if (read_buffer_mud(ses) == FALSE)
+						{
+							readmud(ses);
+
+							cleanup_session(ses);
+
+							gtd->mud_output_len = 0;
+
+							break;
+						}
+					}
+				}
+
+				if (gtd->mud_output_len)
 				{
 					readmud(ses);
 				}
@@ -363,6 +371,10 @@ void packet_update(void)
 			{
 				save_pos(ses);
 				goto_rowcol(ses, ses->bot_row, 1);
+			}
+			else
+			{
+//				printf("\r");
 			}
 
 			SET_BIT(ses->flags, SES_FLAG_READMUD);

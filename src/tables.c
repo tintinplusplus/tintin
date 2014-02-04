@@ -76,6 +76,7 @@ struct command_type command_table[] =
 	{	"read",              do_read,              CMD_FLAG_SUB     },
 	{	"replacestring",     do_replacestring,     CMD_FLAG_SUB     },
 	{	"return",            do_return,            CMD_FLAG_NONE    },
+	{    "run",               do_run,               CMD_FLAG_SUB     },
 	{	"scan",              do_scan,              CMD_FLAG_SUB     },
 	{    "script",            do_script,            CMD_FLAG_SUB     },
 	{	"send",              do_send,              CMD_FLAG_NONE    },

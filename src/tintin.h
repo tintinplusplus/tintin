@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.97.3"
+#define VERSION_NUM               "1.97.4"
 
 #define ESCAPE                          27
 
@@ -1111,10 +1111,8 @@ extern int check_all_aliases(struct session *ses, char *original, char *line, ch
 
 extern DO_COMMAND(do_read);
 extern DO_COMMAND(do_write);
-extern DO_COMMAND(do_session);
+
 extern void prepare_for_write(int mode, struct listnode *node, char *result);
-extern DO_COMMAND(do_textin);
-extern DO_COMMAND(do_scan);
 
 #endif 
 
@@ -1270,7 +1268,7 @@ extern DO_COMMAND(do_gagline);
 
 extern int connect_mud(char *host, char *port, struct session *ses);
 extern void write_line_mud(char *line, struct session *ses);
-extern void read_buffer_mud(struct session *ses);
+extern int read_buffer_mud(struct session *ses);
 extern void readmud(struct session *ses);
 extern void process_mud_output(struct session *ses, char *linebuf, int prompt);
 
@@ -1366,7 +1364,7 @@ extern DO_COMMAND(do_untab);
 #ifndef __SESSION_H__
 #define __SESSION_H__
 
-
+extern DO_COMMAND(do_session);
 extern struct session *session_command(char *arg, struct session *ses);
 extern void show_session(struct session *ses, struct session *ptr);
 extern struct session *newactive_session(void);
@@ -1392,9 +1390,10 @@ extern void check_all_substitutions(struct session *ses, char **original, char *
 #define __SYSTEM_H__
 
 extern DO_COMMAND(do_run);
+extern DO_COMMAND(do_scan);
 extern DO_COMMAND(do_script);
 extern DO_COMMAND(do_system);
-
+extern DO_COMMAND(do_textin);
 #endif
 
 
