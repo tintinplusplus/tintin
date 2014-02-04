@@ -105,6 +105,11 @@ void init_split(struct session *ses, int top, int bot)
 	{
 		send_sb_naws(ses, 0, NULL);
 	}
+
+	if (ses->map && HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
+	{
+		SET_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
+	}
 }
 
 

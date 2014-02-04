@@ -703,18 +703,23 @@ void write_mud(struct session *ses, char *command, int flags)
 
 	size = substitute(ses, command, output, flags);
 
-	write_line_mud(ses, output, size);
-
-	if (ses->map && ses->map->in_room)
-	{
-		follow_map(ses, command);
-	}
-
 	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{
-		check_insert_path(command, ses);
+		if (ses->map->nofollow == 0)
+		{
+			check_insert_path(command, ses);
+		}
 	}
 
+	if (ses->map && ses->map->in_room && ses->map->nofollow == 0)
+	{
+		if (follow_map(ses, command))
+		{
+			return;
+		}
+	}
+
+	write_line_mud(ses, output, size);
 }
 
 

@@ -30,18 +30,21 @@
 
 DO_COMMAND(do_variable)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
 
 	struct listroot *root = ses->list[LIST_VARIABLE];
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, SUB_VAR|SUB_FUN);
-	      sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+	str = arg;
+
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0)
 	{
 		show_list(root, 0);
 	}
-	else if (*arg1 && *arg == 0)
+	else if (*arg1 && *str == 0)
 	{
 		struct listnode *node = search_nest_node(root, arg1);
 
@@ -58,7 +61,13 @@ DO_COMMAND(do_variable)
 	{
 		set_nest_node(root, arg1, "%s", arg2);
 
-		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
+		while (*arg)
+		{
+			arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+
+			add_nest_node(root, arg1, "%s", arg2);
+		}
+		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, str);
 	}
 	return ses;
 }
@@ -187,7 +196,7 @@ void lowerstring(char *str)
 
 	for (pts = str ; *pts ; pts++)
 	{
-		*pts = tolower(*pts);
+		*pts = tolower((int) *pts);
 	}
 }
 
@@ -197,7 +206,7 @@ void upperstring(char *str)
 
 	for (pts = str ; *pts ; pts++)
 	{
-		*pts = toupper(*pts);
+		*pts = toupper((int) *pts);
 	}
 }
 
@@ -234,14 +243,14 @@ void thousandgroupingstring(struct session *ses, char *str)
 
 	for (cnt3 = 0 ; cnt1 >= 0 ; cnt1--, cnt2--)
 	{
-		if (cnt3++ % 3 == 0 && cnt3 != 1 && isdigit(strold[cnt1]))
+		if (cnt3++ % 3 == 0 && cnt3 != 1 && isdigit((int) strold[cnt1]))
 		{
 			result[cnt2--] = ',';
 		}
 
 		result[cnt2] = strold[cnt1];
 
-		if (!isdigit(result[cnt2]))
+		if (!isdigit((int) result[cnt2]))
 		{
 			cnt4 = 1;
 			cnt3 = 0;
@@ -259,7 +268,7 @@ void stripspaces(char *str)
 
 	for (cnt = strlen(str) - 1 ; cnt >= 0 ; cnt--)
 	{
-		if (!isspace(str[cnt]))
+		if (!isspace((int) str[cnt]))
 		{
 			break;
 		}
@@ -268,7 +277,7 @@ void stripspaces(char *str)
 
 	for (cnt = 0 ; str[cnt] != 0 ; cnt++)
 	{
-		if (!isspace(str[cnt]))
+		if (!isspace((int) str[cnt]))
 		{
 			break;
 		}
@@ -350,9 +359,11 @@ void wrapstring(struct session *ses, char *str)
 
 int stringlength(struct session *ses, char *str)
 {
-	substitute(ses, str, str, SUB_VAR|SUB_FUN|SUB_COL);
+	char temp[BUFFER_SIZE];
 
-	return strip_vt102_strlen(str);
+	substitute(ses, str, temp, SUB_COL|SUB_ESC);
+
+	return strip_vt102_strlen(temp);
 }
 
 void timestring(struct session *ses, char *str)
@@ -381,7 +392,7 @@ void timestring(struct session *ses, char *str)
 
 DO_COMMAND(do_format)
 {
-	char temp[BUFFER_SIZE], destvar[BUFFER_SIZE], format[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf, *ptt;
+	char temp[BUFFER_SIZE], destvar[BUFFER_SIZE], format[BUFFER_SIZE], newformat[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf, *ptt, *pts, *ptn;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
@@ -403,7 +414,10 @@ DO_COMMAND(do_format)
 
 	i = 0;
 
-	for (ptf = format ; *ptf ; ptf++)
+	ptf = format;
+	ptn = newformat;
+
+	while (*ptf)
 	{
 		if (i == 20)
 		{
@@ -412,9 +426,9 @@ DO_COMMAND(do_format)
 
 		if (*ptf == '%')
 		{
-			ptt = temp;
+			pts = ptn;
 
-			*ptt++ = *ptf++;
+			*ptn++ = *ptf++;
 
 			if (*ptf == 0)
 			{
@@ -422,11 +436,23 @@ DO_COMMAND(do_format)
 			}
 			else if (*ptf == '%')
 			{
-				ptf++;
+				*ptn++ = *ptf++;
 			}
 			else
 			{
-				while (!isalpha(*ptf))
+				while (!isalpha((int) *ptf) && !isdigit((int) *ptf))
+				{
+					*ptn++ = *ptf++;
+				}
+
+				if (*ptf == 0)
+				{
+					break;
+				}
+
+				ptt = temp;
+
+				while (!isalpha((int) *ptf))
 				{
 					*ptt++ = *ptf++;
 				}
@@ -435,6 +461,27 @@ DO_COMMAND(do_format)
 				{
 					break;
 				}
+
+				*ptt = 0;
+
+				ptt = temp;
+
+				if (*ptt == '0')
+				{
+					*ptn++ = *ptt++;
+				}
+
+				if (is_number(ptt))
+				{
+					sprintf(ptt, "%d", atoi(ptt) + strlen(arglist[i]) - stringlength(ses, arglist[i]));
+				}
+				
+				while (*ptt)
+				{
+					*ptn++ = *ptt++;
+				}
+
+				*ptn = 0;
 
 				switch (*ptf)
 				{
@@ -447,7 +494,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'd':
-						strcpy(ptt, "lld");
+						sprintf(temp, "%slld", pts);
 						sprintf(arglist[i], temp, (long long) get_number(ses, arglist[i]));
 						break;
 
@@ -468,7 +515,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'n':
-						arglist[i][0] = toupper(arglist[i][0]);
+						arglist[i][0] = toupper((int) arglist[i][0]);
 						break;
 
 					case 'p':
@@ -541,13 +588,19 @@ DO_COMMAND(do_format)
 						show_message(ses, LIST_VARIABLE, "#FORMAT: UNKNOWN ARGUMENT {%%%c}.", *ptf);
 						break;
 				}
-				*ptf = 's';
+				*ptn++ = 's';
 				i++;
+				ptf++;
 			}
 		}
+		else
+		{
+			*ptn++ = *ptf++;
+		}
 	}
+	*ptn = 0;
 
-	sprintf(temp, format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
+	sprintf(temp, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
 
 	set_nest_node(ses->list[LIST_VARIABLE], destvar, "%s", temp);
 

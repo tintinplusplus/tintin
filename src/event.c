@@ -106,7 +106,7 @@ int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 			RESTRING(gtd->vars[cnt], va_arg(list, char *));
 		}
 
-		substitute(ses, node->right, buf, SUB_ARG|SUB_SEC);
+		substitute(ses, node->right, buf, SUB_ARG);
 
 		script_driver(ses, LIST_EVENT, buf);
 

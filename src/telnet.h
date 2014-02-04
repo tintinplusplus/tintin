@@ -95,7 +95,8 @@
 #define     TELOPT_MCCP2         86  /* Mud Client Compression Protocol */
 #define     TELOPT_MSP           90  /* Mud Sound Protocol */
 #define     TELOPT_MXP           91  /* Mud eXtention Protocol */
-#define     TELOPT_ZMP           93
+#define     TELOPT_ZMP           93  /* Zenith Mud Protocol */
+#define     TELOPT_GMCP         201  /* Generic Mud Communication Protocol */
 #define     TELOPT_EXOPL        255
 
 char *telcmds[] =
@@ -125,3 +126,8 @@ char *telcmds[] =
 
 #define     MSSP_VAR              1
 #define     MSSP_VAL              2
+
+#define     MSDP_VAR              1
+#define     MSDP_VAL              2
+#define     MSDP_OPEN             3
+#define     MSDP_CLOSE            4

@@ -396,7 +396,10 @@ DO_COMMAND(do_write)
 
 		for (j = 0 ; j < root->used ; j++)
 		{
-			write_node(ses, i, root->list[j], file);
+			if (*root->list[j]->group == 0)
+			{
+				write_node(ses, i, root->list[j], file);
+			}
 		}
 	}
 

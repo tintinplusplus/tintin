@@ -314,7 +314,7 @@ char *get_arg_parse(struct scriptnode *token)
 #ifdef BIG5
 	if (buf[0] & 0x80 && *token->data->arg)
 	{
-		buf[1] = *token->data->arg++
+		buf[1] = *token->data->arg++;
 	}
 #endif
 	return buf;
@@ -541,9 +541,9 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						break;
 
 					case TOKEN_TYPE_REGEX:
-						str = addregextoken(root, lvl++, TOKEN_TYPE_REGEX, cmd, arg);
+						str = addregextoken(root, lvl, TOKEN_TYPE_REGEX, cmd, arg);
 
-						addtoken(root, --lvl, TOKEN_TYPE_END, -1, "endregex");
+//						addtoken(root, --lvl, TOKEN_TYPE_END, -1, "endregex");
 
 						if (*str && *str != COMMAND_SEPARATOR)
 						{
@@ -955,7 +955,7 @@ char *write_script(struct session *ses, struct scriptroot *root)
 				break;
 
 			case TOKEN_TYPE_REGEX:
-				cat_sprintf(buf, "%s%c%s {%s} {%s} {%s}\n", indent(token->lvl), gtd->tintin_char, command_table[token->cmd].name, token->str, token->regex->str, token->regex->bod);
+				cat_sprintf(buf, "%s%c%s {%s} {%s} {%s}", indent(token->lvl), gtd->tintin_char, command_table[token->cmd].name, token->str, token->regex->str, token->regex->bod);
 				break;
 
 			case TOKEN_TYPE_END:

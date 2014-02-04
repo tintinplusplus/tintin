@@ -408,6 +408,12 @@ void dispose_session(struct session *ses)
 		delete_map(ses);
 	}
 
+	if (ses->mccp)
+	{
+		inflateEnd(ses->mccp);
+		free(ses->mccp);
+	}
+
 	init_buffer(ses, 0);
 
 	free(ses->name);

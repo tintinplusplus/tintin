@@ -129,6 +129,7 @@ struct listnode *insert_node_list(struct listroot *root, char *ltext, char *rtex
 	node->left  = strdup(ltext);
 	node->right = strdup(rtext);
 	node->pr    = strdup(prtext);
+
 	node->group = HAS_BIT(root->flags, LIST_FLAG_CLASS) ? strdup(root->ses->group) : strdup("");
 
 	switch (root->type)

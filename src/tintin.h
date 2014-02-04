@@ -115,13 +115,13 @@
 
 #define HISTORY_FILE         ".tt_history"
 
-#define STRING_SIZE                  80000
-#define BUFFER_SIZE                  40000
+#define STRING_SIZE                  45000
+#define BUFFER_SIZE                  20000
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION             "2.00.2"
+#define CLIENT_VERSION             "2.00.3"
 
 #define ESCAPE                          27
 
@@ -353,6 +353,7 @@ enum operators
 #define ROOM_FLAG_VOID                (1 <<  3)
 #define ROOM_FLAG_STATIC              (1 <<  4)
 #define ROOM_FLAG_RIVER               (1 <<  5)
+#define ROOM_FLAG_PATH                (1 <<  6)
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
@@ -360,6 +361,7 @@ enum operators
 #define MAP_FLAG_ASCIIGRAPHICS        (1 <<  3)
 #define MAP_FLAG_ASCIIVNUMS           (1 <<  4)
 #define MAP_FLAG_MUDFONT              (1 <<  5)
+#define MAP_FLAG_NOFOLLOW             (1 <<  6)
 
 #define MAP_EXIT_N                    (1 <<  0)
 #define MAP_EXIT_E                    (1 <<  1)
@@ -833,8 +835,9 @@ struct map_data
 	FILE                  * logfile;
 	struct link_data      * undo_head;
 	struct link_data      * undo_tail;
-	char                  * room_color;
 	char                  * exit_color;
+	char                  * path_color;
+	char                  * room_color;
 	int                     max_grid_x;
 	int                     max_grid_y;
 	int                     undo_size;
@@ -842,6 +845,7 @@ struct map_data
 	int                     flags;
 	int                     in_room;
 	int                     last_room;
+	short                   nofollow;
 	char                    legend[17][100];
 };
 
@@ -866,6 +870,7 @@ struct exit_data
 	struct exit_data        * prev;
 	int                       vnum;
 	int                       dir;
+	int                       flags;
 	char                    * name;
 	char                    * cmd;
 };
@@ -953,7 +958,7 @@ extern void read_line();
 extern void read_key(void);
 extern void convert_meta(char *input, char *output);
 extern void unconvert_meta(char *input, char *output);
-extern void echo_command(struct session *ses, char *line, int newline);
+extern void echo_command(struct session *ses, char *line);
 extern void input_printf(char *format, ...);
 extern void modified_input(void);
 
@@ -1090,8 +1095,7 @@ extern DO_MAP(map_create);
 extern DO_MAP(map_delete);
 extern DO_MAP(map_destroy);
 extern DO_MAP(map_dig);
-extern DO_MAP(map_exitcmd);
-extern DO_MAP(map_exitdir);
+extern DO_MAP(map_exit);
 extern DO_MAP(map_explore);
 extern DO_MAP(map_find);
 extern DO_MAP(map_flag);
@@ -1132,7 +1136,7 @@ extern int  get_map_exit(struct session *ses, char *arg);
 extern int  get_map_exits(struct session *ses, int room);
 extern void create_map_grid(struct session *ses, int room, int x, int y);
 extern void build_map_grid(int room, int x, int y, int z);
-extern void follow_map(struct session *ses, char *argument);
+extern int  follow_map(struct session *ses, char *argument);
 extern void add_undo(struct session *ses, char *format, ...);
 extern void del_undo(struct session *ses, struct link_data *link);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
@@ -1493,6 +1497,7 @@ extern int get_nest_size(struct listroot *root, char *variable, char *result);
 extern struct listnode *get_nest_node(struct listroot *root, char *variable, char *result, int def);
 extern int get_nest_index(struct listroot *root, char *variable, char *result, int def);
 extern struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, ...);
+extern struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, ...);
 extern void show_nest_node(struct listnode *node, char *result, int initialize);
 extern void copy_nest_node(struct listroot *dst_root, struct listnode *dst, struct listnode *src);
 
@@ -1535,6 +1540,7 @@ extern int send_will_telopt(struct session *ses, int cplen, unsigned char *cpsrc
 extern int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src);
 extern int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src);
+extern int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src);
 extern int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src);
 extern int recv_sb_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc);

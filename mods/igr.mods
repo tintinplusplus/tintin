@@ -1,12 +1,73 @@
+Jul 2010       2.00.3
+
+mapper.c       When path finding the path will be highlighted on the map.
+
+telopt.c       Added support for GMCP events and JSON to TINTIN conversion.
+
+mapper.c       Merged the #map exit and #map exitdir into the #map exit command,
+               adding options for COMMAND, DIRECTION, FLAG, NAME, and VNUM.
+
+mapper.c       Added support for exit flags, no actual exit flags have been
+               implemented yet.
+
+mapper.c       Added #map goto {vnum} {dig} option to have goto dig a room
+               if the room does not exist.
+
+mapper.c       Added #map dig {dir} {<vnum>} option to dig an exit to the
+               specified vnum.
+
+mapper.c       Added NOFOLLOW flag support to stop auto following of the
+               mapper.
+
+nest.c         Fixed freeze bug caused by using a semi-colon between
+               associative array elements.
+
+variables.c    Statements like %+10s now ignore colors.
+
+variable.c     Escapes are now handled correctly by %L in #format.
+
+input.c        Fixed an issue in echo_command causing broken packets to
+               be echoed without triggering any actions or events.
+
+mapper.c       When setting an exit command it will work like an alias when
+               in that room.
+
+list.c         #list {var} add now allows semi-colon separated arguments.
+
+list.c         #list {var} create now allows semi-colon separated arguments.
+
+variable.c     #variable allows additional arguments which can be used to
+               merge nested variables.
+
+nest.c         Added add_nest_node function which is a copy of set_nest_node
+               except that it doesn't clear the variable.
+
+telopt.c       Added MSDP_OPEN and MSDP_CLOSE support.
+
+telopt.c       MSDP arrays no longer generate an event for each item, instead
+               a list is generated.
+
+tintin.h       Lowered BUFFER_SIZE to 25000 because of crash reports.
+
+files.c        #write now only saves triggers that do not belong to a class.
+
+mapper.c       Added MAP ENTER MAP and MAP EXIT MAP events.
+
+split.c        Redrawing the VTMAP whenever the split settings are reset,
+               typically on session switch and screen resize.
+
 Apr 2010       2.00.2
 
-line.c         Added the #line substitute options.
+line.c         Added the #line substitute options which allows the
+               substitution of variables, functions, colors, and
+               escape codes in the given argument.
 
 config.c       Added a config option to enable BIG5 support.
 
 mapper.c       Added an optional vnum argument to #map get and #map set,
-               calling #map set on an invalid vnum results in the variable
-               being set to 0.
+               calling #map get on an invalid vnum results in the variable
+               being set to 0 while #map set calls on invalid vnums do
+               nothing.
 
 terminal.c     Added SCREEN RESIZE event.
 

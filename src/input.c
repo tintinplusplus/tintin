@@ -61,11 +61,11 @@ void process_input(void)
 
 	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
-		echo_command(gtd->ses, gtd->input_buf, FALSE);
+		echo_command(gtd->ses, gtd->input_buf);
 	}
 	else
 	{
-		echo_command(gtd->ses, "", FALSE);		
+		echo_command(gtd->ses, "");
 	}
 
 	if (gtd->ses->scroll_line != -1)
@@ -249,7 +249,7 @@ void read_key(void)
 	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
 	{
 		match = 0;
-	
+
 		root  = gtd->ses->list[LIST_MACRO];
 
 		for (root->update = 0 ; root->update < root->used ; root->update++)
@@ -487,7 +487,7 @@ void unconvert_meta(char *input, char *output)
 	Currenly only used in split mode.
 */
 
-void echo_command(struct session *ses, char *line, int newline)
+void echo_command(struct session *ses, char *line)
 {
 	char buffer[STRING_SIZE], result[STRING_SIZE];
 
@@ -500,32 +500,19 @@ void echo_command(struct session *ses, char *line, int newline)
 		sprintf(buffer, "%s", line);
 	}
 
-	if (newline == TRUE)
+	/*
+		Deal with pending output
+	*/
+
+	if (ses->more_output[0])
 	{
-		if (ses->more_output[0] == 0)
+		if (ses->check_output)
 		{
-			return;
+			strcpy(result, ses->more_output);
+			ses->more_output[0] = 0;
+
+			process_mud_output(ses, result, FALSE);
 		}
-		ses->check_output = 0;
-
-		if (HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
-		{
-			SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
-
-			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
-			{
-				tintin_printf2(ses, "%s%s", ses->more_output, buffer);
-			}
-			else
-			{
-				tintin_printf2(ses, "%s", buffer);
-			}
-
-			DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
-		}
-		add_line_buffer(ses, buffer, -1);
-
-		return;
 	}
 
 	DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);

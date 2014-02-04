@@ -144,7 +144,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 		goto row, erase to eol, print prompt, goto bot_row
 	*/
 
-	printf("\033[%d;1H\033[K%s\033[%d;1H", row, temp, ses->bot_row);
+	printf("\033[%d;1H\033[%d;1H\033[K%s\033[%d;1H", row, row, temp, ses->bot_row);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{

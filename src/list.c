@@ -75,7 +75,7 @@ DO_COMMAND(do_list)
 
 DO_ARRAY(array_add)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], args[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
 	int index;
 
 	if (!list->root)
@@ -85,17 +85,23 @@ DO_ARRAY(array_add)
 
 	index = list->root->used + 1;
 
-	substitute(ses, arg, args, SUB_VAR|SUB_FUN);
-
-	arg = args;
-
 	while (*arg)
 	{
-		sprintf(arg1, "%d", index++);
+		arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-		arg = get_arg_in_braces(arg, arg2, GET_ONE);
+		str = arg1;
 
-		insert_node_list(list->root, arg1, arg2, "");
+		while (*str)
+		{
+			str = get_arg_in_braces(str, arg2, GET_ALL);
+
+			insert_node_list(list->root, ntos(index++), arg2, "");
+
+			if (*str == COMMAND_SEPARATOR)
+			{
+				str++;
+			}
+		}
 	}
 	return ses;
 }
@@ -115,12 +121,9 @@ DO_ARRAY(array_clear)
 
 DO_ARRAY(array_create)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
+
 	int index = 1;
-
-	substitute(ses, arg, arg3, SUB_VAR|SUB_FUN);
-
-	arg = arg3;
 
 	if (list->root)
 	{
@@ -131,11 +134,21 @@ DO_ARRAY(array_create)
 
 	while (*arg)
 	{
-		sprintf(arg1, "%d", index++);
+		arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-		arg = get_arg_in_braces(arg, arg2, GET_ONE);
+		str = arg1;
 
-		insert_node_list(list->root, arg1, arg2, "");
+		while (*str)
+		{
+			str = get_arg_in_braces(str, arg2, GET_ALL);
+
+			insert_node_list(list->root, ntos(index++), arg2, "");
+
+			if (*str == COMMAND_SEPARATOR)
+			{
+				str++;
+			}
+		}
 	}
 	return ses;
 }

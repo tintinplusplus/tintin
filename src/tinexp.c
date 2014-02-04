@@ -734,7 +734,44 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			default:
-				*pto++ = *pti++;
+				if (HAS_BIT(flags, SUB_SEC) && !HAS_BIT(flags, SUB_ARG))
+				{
+					switch (*pti)
+					{
+						case '\\':
+							*pto++ = '\\';
+							*pto++ = '\\';
+							break;
+
+						case '{':
+							*pto++ = '\\';
+							*pto++ = 'x';
+							*pto++ = '7';
+							*pto++ = 'B';
+							break;
+
+						case '}':
+							*pto++ = '\\';
+							*pto++ = 'x';
+							*pto++ = '7';
+							*pto++ = 'D';
+							break;
+
+						case COMMAND_SEPARATOR:
+							*pto++ = '\\';
+							*pto++ = COMMAND_SEPARATOR;
+							break;
+
+						default:
+							*pto++ = *pti;
+							break;
+					}
+					pti++;
+				}
+				else
+				{
+					*pto++ = *pti++;
+				}
 				break;
 		}
 	}
@@ -992,7 +1029,7 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 					case '?':
 						gtd->args[up(var)] = up(arg);
 						pti += 2;
-						strcpy(pto, *pti == 0 ? "(.?)" : "(.??)");
+						strcpy(pto, *pti == 0 ? "(.?)" : "(.?" "?)");
 						pto += strlen(pto);
 						break;
 
@@ -1210,7 +1247,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 
 					case '?':
 						pti += 2;
-						strcpy(pto, *pti == 0 ? "(.?)" : "(.??)");
+						strcpy(pto, *pti == 0 ? "(.?)" : "(.?" "?)");
 						pto += strlen(pto);
 						break;
 

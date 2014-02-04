@@ -133,6 +133,11 @@ void update_nest_node(struct listroot *root, char *arg)
 		{
 			update_node_list(root, get_alnum(root->ses, arg1), arg2, "");
 		}
+
+		if (*arg == COMMAND_SEPARATOR)
+		{
+			arg++;
+		}
 	}
 }
 
@@ -350,6 +355,51 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 		node->root = NULL;
 	}
 
+	if (*space_out(arg2) == DEFAULT_OPEN)
+	{
+		update_nest_node(update_nest_root(root, get_alnum(root->ses, name)), arg2);
+
+		return search_node_list(root, get_alnum(root->ses, name));
+	}
+	else
+	{
+		return update_node_list(root, get_alnum(root->ses, name), arg2, "");
+	}
+}
+
+struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, ...)
+{
+	struct listnode *node;
+	char arg2[BUFFER_SIZE], name[BUFFER_SIZE], *arg;
+	va_list args;
+
+	va_start(args, format);
+	vsprintf(arg2, format, args);
+	va_end(args);
+
+	arg = get_arg_to_brackets(arg1, name);
+
+	while (*arg)
+	{
+		root = update_nest_root(root, get_alnum(root->ses, name));
+
+		if (root)
+		{
+			arg = get_arg_in_brackets(arg, name);
+		}
+	}
+
+	node = search_node_list(root, get_alnum(root->ses, name));
+/*
+	Adding here, so don't clear the variable.
+
+	if (node && node->root)
+	{
+		free_list(node->root);
+
+		node->root = NULL;
+	}
+*/
 	if (*space_out(arg2) == DEFAULT_OPEN)
 	{
 		update_nest_node(update_nest_root(root, get_alnum(root->ses, name)), arg2);

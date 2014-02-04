@@ -1,5 +1,7 @@
 * Stuff that needs to be done
 
+- look into 20 nested if checks crashing the tokenizer.
+
 - Check if Cygwin install info is still correct.
 
 - fix UTF-8 handling in input and wordwrap.
@@ -11,8 +13,6 @@
 - look into getting rid of node->data
 
 - garbage collection for deleted nodes.
-
-- classes aren't saved when using #write
 
 -------------------------------------------------------------------------------
 
@@ -46,13 +46,17 @@ READLINE:
 
 MAPPING STUFF:
 
+- Add something to indicate a non standard exit on the ASCII mapper.
+
+- Add #map uninsert option. http://tintin.sourceforge.net/board/viewtopic.php?t=1225
+
+- Add #map at <vnum> <command> option.
+
 - Display hidden exits differently.
 
 - Synchronise drawn map with the link map.
 
 - Add support to set hiddenexit colors.
-
-- A method to double check correct movement.
 
 - A method to highlight a route on the map
 

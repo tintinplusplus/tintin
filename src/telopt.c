@@ -50,6 +50,8 @@ char iac_sb_mssp[]            = { IAC, SB,    TELOPT_MSSP            };
 
 char iac_sb_msdp[]            = { IAC, SB,    TELOPT_MSDP            };
 
+char iac_sb_gmcp[]            = { IAC, SB,    TELOPT_GMCP            };
+
 char iac_sb_new_environ[]     = { IAC, SB,    TELOPT_NEW_ENVIRON     };
 
 char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
@@ -82,6 +84,7 @@ struct iac_type iac_table [] =
 	{   3,  iac_will_mssp,        &send_do_mssp            },
 	{   3,  iac_sb_mssp,          &recv_sb_mssp            },
 	{   3,  iac_sb_msdp,          &recv_sb_msdp            },
+	{   3,  iac_sb_gmcp,          &recv_sb_gmcp            },
 	{   3,  iac_sb_new_environ,   &recv_sb_new_environ     },
 	{   6,  iac_sb_tspeed,        &recv_sb_tspeed          },
 	{   6,  iac_sb_ttype,         &recv_sb_ttype           },
@@ -120,6 +123,8 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	{
 		return 0;
 	}
+
+	push_call("translate_telopts(%p,%p,%d)",ses,src,cplen);
 
 	if (ses->mccp)
 	{
@@ -276,6 +281,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 					if (iac_table[cnt].func == init_mccp)
 					{
+						pop_call();
 						return translate_telopts(ses, cpsrc + skip, cplen - skip);
 					}
 					break;
@@ -380,6 +386,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 				gtd->mud_output_buf[gtd->mud_output_len] = 0;
 
+				pop_call();
 				return cplen;
 			}
 		}
@@ -462,6 +469,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	gtd->mud_output_buf[gtd->mud_output_len] = 0;
 
+	pop_call();
 	return 0;
 }
 
@@ -753,13 +761,17 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 	MSDP (Mud Server Data Protocol)
 */
 
+#define MSDP_STATE_NEW 0
+#define MSDP_STATE_VAR 1
+#define MSDP_STATE_VAL 2
+
 int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 {
 	char buf[BUFFER_SIZE], var[BUFFER_SIZE], val[BUFFER_SIZE];
-	char *pto;
-	int i;
+	char *pto, *ptarr[1000];
+	int i, nest = 0, state[1000];
 
-	var[0] = val[0] = i = 0;
+	var[0] = val[0] = i = state[nest] = 0;
 
 	if (skip_sb(ses, cplen, src) > cplen)
 	{
@@ -770,34 +782,145 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 	{
 		switch (src[i])
 		{
-			case MSSP_VAR:
+			case MSDP_VAR:
 				i++;
 				pto = buf;
 
-				while (i < cplen && src[i] >= 3 && src[i] != IAC)
+				while (i < cplen && src[i] > 4 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
 				*pto = 0;
 
 				substitute(ses, buf, var, SUB_SEC);
+
+				state[nest] = 0;
 				break;
 
-			case MSSP_VAL:
-				i++;
-				pto = buf;
+			case MSDP_VAL:
+				pto = val;
 
-				while (i < cplen && src[i] >= 3 && src[i] != IAC)
+				while (i < cplen)
 				{
-					*pto++ = src[i++];
+					switch (src[i])
+					{
+						case MSDP_VAR:
+							if (state[nest] >= 2)
+							{
+								*pto++ = '}';
+							}
+
+							if (nest == 0)
+							{
+								goto end_val;
+							}
+
+							if (state[nest] >= 1)
+							{
+								*pto++ = '}';
+							}
+							*pto++ = '{';
+
+							state[nest] = 0;
+							break;
+
+						case MSDP_VAL:
+							if (state[nest] == 0)
+							{
+								if (nest)
+								{
+									*pto++ = '}';
+									*pto++ = '{';
+								}
+								ptarr[nest] = pto;
+								state[nest]++;
+							}
+							else if (state[nest] == 1)
+							{
+								sprintf(buf, "{1}{%.*s}{2}{", pto - ptarr[nest], ptarr[nest]);
+								sprintf(ptarr[nest], "%s", buf);
+								pto += 9;
+								state[nest]++;
+							}
+							else
+							{
+								pto += sprintf(pto, "}{%d}{", ++state[nest]);
+							}
+							break;
+
+						case MSDP_OPEN:
+							if (++nest > 1)
+							{
+								*pto++ = '{';
+							}
+							state[nest] = 0;
+							break;
+
+						case MSDP_CLOSE:
+							if (state[nest] >= 2)
+							{
+								*pto++ = '}';
+							}
+
+							if (state[nest] >= 1)
+							{
+								*pto++ = '}';
+							}
+
+							if (--nest > 0)
+							{
+								*pto++ = '}';
+							}
+
+							break;
+
+						case IAC:
+							if (state[nest] >= 2)
+							{
+								*pto++ = '}';
+							}
+							goto end_val;
+
+						case '\\':
+							*pto++ = '\\';
+							*pto++ = '\\';
+							break;
+
+						case '{':
+							*pto++ = '\\';
+							*pto++ = 'x';
+							*pto++ = '7';
+							*pto++ = 'B';
+							break;
+
+						case '}':
+							*pto++ = '\\';
+							*pto++ = 'x';
+							*pto++ = '7';
+							*pto++ = 'D';
+							break;
+
+						case COMMAND_SEPARATOR:
+							*pto++ = '\\';
+							*pto++ = COMMAND_SEPARATOR;
+							break;
+
+						default:
+							*pto++ = src[i];
+							break;
+					}
+					i++;
 				}
+
+				end_val:
+
 				*pto = 0;
 
-				substitute(ses, buf, val, SUB_SEC);
-
-				telopt_debug(ses, "IAC SB MSDP (VAR %-20s VAL %s)", var, val);
+				telopt_debug(ses, "IAC SB MSDP VAR (%s) %*s VAL (%s)", var, 20 - strlen(var), "", val);
 
 				check_all_events(ses, 0, 2, "IAC SB MSDP", var, val);
+
+				state[nest] = 0;
 				break;
 
 			default:
@@ -809,6 +932,7 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 	telopt_debug(ses, "IAC SB MSDP IAC SE");
 
 	check_all_events(ses, 0, 0, "IAC SB MSDP IAC SE");
+
 	return UMIN(i + 1, cplen);
 }
 
@@ -951,6 +1075,218 @@ int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 }
 
 
+int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
+{
+	char mod[BUFFER_SIZE], val[BUFFER_SIZE], json[BUFFER_SIZE], *pto;
+	int i, state[1000], nest, type;
+
+	push_call("recv_sb_gmcp(%p,%d,%p)",ses,cplen,src);
+
+	if (skip_sb(ses, cplen, src) > cplen)
+	{
+		pop_call();
+		return cplen + 1;
+	}
+
+	mod[0] = val[0] = state[0] = nest = type = 0;
+
+	i = 3;
+
+	pto = mod;
+
+	// space out
+
+	while (i < cplen && src[i] == ' ')
+	{
+		i++;
+	}
+
+	// grab module
+
+	while (i < cplen && src[i] != IAC)
+	{
+		if (src[i] == ' ' || src[i] == '{' || src[i] == '[')
+		{
+			break;
+		}
+		*pto++ = src[i++];
+	}
+
+	*pto = 0;
+
+	// parse JSON content
+
+	pto = val;
+
+	while (i < cplen && src[i] != IAC)
+	{
+		switch (src[i])
+		{
+			case ' ':
+				i++;
+				break;
+
+			case '{':
+				if (nest != 0)
+				{
+					*pto++ = '{';
+				}
+				i++;
+				state[++nest] = 0;
+				break;
+
+			case '}':
+				nest--;
+				i++;
+				if (nest != 0)
+				{
+					*pto++ = '}';
+				}
+				break;
+
+			case '[':
+				if (nest != 0)
+				{
+					*pto++ = '{';
+				}
+				i++;
+				state[++nest] = 1;
+				pto += sprintf(pto, "{%d}", state[nest]);
+				break;
+
+			case ']':
+				nest--;
+				i++;
+				if (nest != 0)
+				{
+					*pto++ = '}';
+				}
+				break;
+
+			case ':':
+				i++;
+				break;
+
+			case ',':
+				i++;
+				if (state[nest])
+				{
+					pto += sprintf(pto, "{%d}", ++state[nest]);
+				}
+				break;
+
+			case '"':
+				i++;
+				if (nest)
+				{
+					*pto++ = '{';
+				}
+				type = 1;
+
+				while (i < cplen && src[i] != IAC && type == 1)
+				{
+					switch (src[i])
+					{
+						case '\\':
+							*pto++ = src[i++];
+							if (i < cplen && src[i] != IAC)
+							{
+								*pto++ = src[i++];
+							}
+							break;
+
+						case '"':
+							i++;
+							type = 0;
+							break;
+
+						case '{':
+							i++;
+							*pto++ = '\\';
+							*pto++ = 'x';
+							*pto++ = '7';
+							*pto++ = 'B';
+							break;
+
+						case '}':
+							i++;
+							*pto++ = '\\';
+							*pto++ = 'x';
+							*pto++ = '7';
+							*pto++ = 'D';
+							break;
+
+						case COMMAND_SEPARATOR:
+							i++;
+							*pto++ = '\\';
+							*pto++ = COMMAND_SEPARATOR;
+							break;
+
+						default:
+							*pto++ = src[i++];
+							break;
+					}
+				}
+
+				if (nest)
+				{
+					*pto++ = '}';
+				}
+				break;
+
+			default:
+				if (nest)
+				{
+					*pto++ = '{';
+				}
+
+				type = 1;
+
+				while (i < cplen && src[i] != IAC && type == 1)
+				{
+					switch (src[i])
+					{
+						case '}':
+						case ']':
+						case ',':
+						case ':':
+							type = 0;
+							break;
+
+						case ' ':
+							i++;
+							break;
+
+						default:
+							*pto++ = src[i++];
+							break;
+					}
+				}
+
+				if (nest)
+				{
+					*pto++ = '}';
+				}
+				break;
+		}
+	}
+	*pto = 0;
+
+	while (i < cplen && src[i] != SE)
+	{
+		i++;
+	}
+
+	sprintf(json, "%.*s", i - 4, src + 3);
+
+	telopt_debug(ses, "IAC SB GMCP %s IAC SE", mod);
+
+	check_all_events(ses, 1, 2, "IAC SB GMCP %s IAC SE", mod, val, json);
+
+	pop_call();
+	return UMIN(i + 1, cplen);
+}
+
 /*
 	MCCP
 */
@@ -1044,6 +1380,8 @@ int skip_sb(struct session *ses, int cplen, unsigned char *cpsrc)
 			return i + 1;
 		}
 	}
+
+	telopt_debug(ses, "SKIP SB (%d)", cplen);
 
 	return cplen + 1;
 }

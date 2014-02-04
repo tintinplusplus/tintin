@@ -37,6 +37,10 @@ struct tintin_data *gtd;
 
 void pipe_handler(int signal)
 {
+	reset_terminal();
+
+	clean_screen(gtd->ses);
+
 	tintin_printf(NULL, "broken_pipe: dumping stack");
 
 	dump_stack();
