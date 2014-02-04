@@ -116,8 +116,6 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define DEFAULT_BZIP_EXT          ".bz2"
 #define DEFAULT_BUNZIP_STR        "bunzip2 -c "
 
-
-#define FILE_SIZE                150000
 #define BUFFER_SIZE               10000
 #define NUMBER_SIZE                 100
 
@@ -262,6 +260,7 @@ typedef struct session *ARRAY   (struct session *ses, LNODE *list, const char *a
 #define SES_FLAG_EOR                  (1 << 26)
 #define SES_FLAG_GA                   (1 << 27)
 #define SES_FLAG_BREAK                (1 << 28)
+#define SES_FLAG_PATCHIAC             (1 << 29)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -462,6 +461,7 @@ struct tintin_data
 	long long               time;
 	int                     str_hash_size;
 	int                     history_size;
+	int                     command_ref[26];
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
@@ -946,7 +946,6 @@ extern struct tintin_data *gtd;
 
 extern void trap_handler(int signal);
 extern void winchhandler(int no_care);
-extern void tstphandler(int no_care);
 extern int main(int argc, char **argv);
 extern void init_tintin(void);
 
@@ -1114,7 +1113,6 @@ extern void strip_vt102_codes_non_graph(const char *str, char *buf);
 extern void strip_non_vt102_codes(const char *str, char *buf);
 extern int strip_vt102_strlen(const char *str);
 extern void interpret_vt102_codes(struct session *ses, const char *str);
-
 
 #endif
 

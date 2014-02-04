@@ -102,7 +102,7 @@ int regexp(const char *exp, const char *str)
 void substitute(struct session *ses, const char *string, char *result, int flags)
 {
 	struct listnode *node;
-	char temp[BUFFER_SIZE], funcargs[BUFFER_SIZE], *pti, *pto, *ptt;
+	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], *pti, *pto, *ptt;
 	const char *pte;
 	int i, cnt, flags_neol = flags;
 
@@ -142,7 +142,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 				{
 					if (pti[1] == DEFAULT_OPEN)
 					{
-						for (ptt = temp, i = 2 ; pti[i] && pti[i] != DEFAULT_CLOSE ; i++)
+						for (ptt = buf, i = 2 ; pti[i] && pti[i] != DEFAULT_CLOSE ; i++)
 						{
 							*ptt++ = pti[i];
 						}
@@ -150,6 +150,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						if (pti[i] == DEFAULT_CLOSE)
 						{
 							*ptt = 0;
+							substitute(ses, buf, temp, flags_neol);
 						}
 						else
 						{
@@ -173,7 +174,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						if (pti[1] == DEFAULT_OPEN)
 						{
 							pto += strlen(pto);
-							pti += 3 + strlen(temp);
+							pti += 3 + strlen(buf);
 						}
 						else
 						{
@@ -264,9 +265,9 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 
 					pti = (char *) get_arg_in_braces(&pti[i], temp, FALSE);
 
-					substitute(ses, temp, funcargs, flags_neol);
+					substitute(ses, temp, buf, flags_neol);
 
-					pte = funcargs;
+					pte = buf;
 
 					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
 					{
@@ -400,6 +401,9 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						case 'a':
 							*pto++ = '\a';
 							break;
+						case 'b':
+							*pto++ = '\b';
+							break;
 						case 'e':
 							*pto++ = '\033';
 							break;
@@ -522,7 +526,14 @@ int action_regexp(const char *exp, const char *str)
 			case '%':
 				if (exp[1] >= '0' && exp[1] <= '9')
 				{
-					for (cnt = strlen(str) ; cnt >= 0 ; cnt--)
+					if (exp[2] == 0)
+					{
+						strcpy(gtd->vars[exp[1] - '0'], str);
+
+						return TRUE;
+					}
+
+					for (cnt = 0 ; ; cnt++)
 					{
 						if (action_regexp(exp + 2, &str[cnt]))
 						{
@@ -531,8 +542,11 @@ int action_regexp(const char *exp, const char *str)
 
 							return TRUE;
 						}
+						if (str[cnt] == 0)
+						{
+							return FALSE;
+						}
 					}
-					return FALSE;
 				}
 				break;
 

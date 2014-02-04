@@ -150,11 +150,11 @@ DO_COMMAND(do_hash)
 			max_hash = cnt_hash;
 		}
 	}
-	tintin_printf2(ses, "Strings Allocated: %8d", cnt_str);
-	tintin_printf2(ses, "Total Links:       %8d", cnt_count);
-	tintin_printf2(ses, "Max Hash:          %8d", max_hash);
-	tintin_printf2(ses, "Total Memory:      %8d", cnt_size);
-	tintin_printf2(ses, "Saved Memory:      %8d", cnt_unhashed_size - cnt_size);
+	tintin_printf2(NULL, "Strings Allocated: %8d", cnt_str);
+	tintin_printf2(NULL, "Total Links:       %8d", cnt_count);
+	tintin_printf2(NULL, "Max Hash:          %8d", max_hash);
+	tintin_printf2(NULL, "Total Memory:      %8d", cnt_size);
+	tintin_printf2(NULL, "Saved Memory:      %8d", cnt_unhashed_size - cnt_size);
 
 	return ses;
 }

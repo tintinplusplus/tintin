@@ -223,8 +223,9 @@ int chat_new(int s)
 
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
-	new_buddy->ip = strdup(inet_ntoa(isa.sin_addr));
-	new_buddy->fd = fd;
+	new_buddy->ip   = strdup(inet_ntoa(isa.sin_addr));
+	new_buddy->fd   = fd;
+	new_buddy->name = strdup("Unknown");
 
 	new_buddy->timeout = CALL_TIMEOUT + time(NULL);
 
@@ -364,10 +365,11 @@ void *threaded_chat_call(void *arg)
 	if (process_chat_input(new_buddy) == -1)
 	{
 		close_chat(new_buddy);
+
 		return NULL;
 	}
 
-	chat_printf("<CHAT> Connection made to %s", new_buddy->name);
+	chat_printf("<CHAT> Connection made to %s.", new_buddy->name);
 
 	LINK(new_buddy, gtd->chat->next, gtd->chat->prev, next, prev);
 
@@ -543,6 +545,8 @@ void chat_printf(const char *format, ...)
 
 int process_chat_input(struct chat_data *buddy)
 {
+	struct chat_data *node;
+
 	char buf[BUFFER_SIZE], name[BUFFER_SIZE], ip[BUFFER_SIZE], *sep;
 	int size;
 
@@ -572,7 +576,20 @@ int process_chat_input(struct chat_data *buddy)
 			{
 				buddy->port = atoi(ip + strlen(ip) - 5);
 			}
-			buddy->name = strdup(name);
+
+			RESTRING(buddy->name, name);
+
+			for (node = gtd->chat ; node ; node = node->next)
+			{
+				if (node != buddy && !strcasecmp(name, node->name))
+				{
+/*					chat_socket_printf(buddy, "%c\n<CHAT> %s is already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND); */
+
+					chat_printf("<CHAT> Refusing connection from %s:%d, already connected to someone named %s.", buddy->ip, buddy->port, name);
+
+/*					return 1; */
+				}
+			}
 		}
 		chat_printf("<CHAT> Connected to %s@%s:%d", buddy->name, buddy->ip, buddy->port);
 

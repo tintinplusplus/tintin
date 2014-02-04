@@ -36,7 +36,7 @@
 
 struct session *parse_input(char *input, struct session *ses)
 {
-	char temp[BUFFER_SIZE], command[BUFFER_SIZE], arg[BUFFER_SIZE];
+	char command[BUFFER_SIZE], arg[BUFFER_SIZE];
 	char *pti, *pta;
 	struct listnode *ln;
 	int i;
@@ -91,10 +91,11 @@ struct session *parse_input(char *input, struct session *ses)
 				break;
 			}
 		}
-		pti = (char *) get_arg_stop_spaces(pti, temp);
-		pti = (char *) get_arg_all(pti, arg);
+		pti = (char *) get_arg_stop_spaces(pti, arg);
 
-		substitute(ses, temp, command, SUB_VAR|SUB_FUN);
+		substitute(ses, arg, command, SUB_VAR|SUB_FUN);
+
+		pti = (char *) get_arg_all(pti, arg);
 
 		if (*command == gtd->tintin_char)
 		{
@@ -102,6 +103,8 @@ struct session *parse_input(char *input, struct session *ses)
 		}
 		else if ((ln = searchnode_list_begin(ses->list[LIST_ALIAS], command, ALPHA)))
 		{
+			DEL_BIT(ses->flags, SES_FLAG_USERCOMMAND); 
+
 			strcpy(gtd->vars[0], arg);
 
 			pta = arg;
@@ -258,19 +261,24 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 		return ses;
 	}
 
-	for (cmd = 0 ; *command_table[cmd].name != 0 ; cmd++)
+	if (isalpha(*command))
 	{
-		if (is_abbrev(command, command_table[cmd].name))
-		{
-			if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
-			{
-				substitute(ses, arg, argument, SUB_VAR|SUB_FUN);
+		cmd = gtd->command_ref[tolower(*command) - 'a'];
 
-				return (ses = (*command_table[cmd].command) (ses, argument));
-			}
-			else
+		for ( ; *command_table[cmd].name != 0 ; cmd++)
+		{
+			if (is_abbrev(command, command_table[cmd].name))
 			{
-				return (ses = (*command_table[cmd].command) (ses, arg));
+				if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
+				{
+					substitute(ses, arg, argument, SUB_VAR|SUB_FUN);
+
+					return (ses = (*command_table[cmd].command) (ses, argument));
+				}
+				else
+				{
+					return (ses = (*command_table[cmd].command) (ses, arg));
+				}
 			}
 		}
 	}

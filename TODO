@@ -1,13 +1,14 @@
 * Stuff that isn't that hard to do, but somehow never ends up being fixed.
 
-- remove assignment spams when using an alias.
+- add character mode with SGA and ECHO on
 
 - fix up macro usage in character mode SGA + LOCAL ECHO OFF.
 
-- look into cleanup_session crashing tintin sometimes.
+- Add a FAQ to the website.
 
-- check if buffer code is platform independent
+- Add color bleeding for #split
 
+- Compatibility with gt.gamingmuseum.com 23 like muds.
 
 * This is a list of new features/improvements that are planned.
 
@@ -17,7 +18,7 @@
 
 - floating point calculations
 
-- code that deals with broken lines (half finished)
+- code that deals with broken lines (beta, seems to work)
 
 - event system to deal with various situations
 

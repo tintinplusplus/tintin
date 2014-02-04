@@ -72,32 +72,6 @@ RETSIGTYPE winchhandler(int no_care)
 }
 
 
-/*
-	CHANGED to get rid of double-echoing bug when tintin++ gets suspended
-*/
-
-RETSIGTYPE tstphandler(int no_care)
-{
-	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
-
-	fflush(stdout);
-
-	kill(0, SIGSTOP);
-
-	dirty_screen(gtd->ses);
-
-	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
-
-	/*
-		we haveta reinitialize the signals for sysv machines
-	*/
-
-	if (signal(SIGTSTP, tstphandler) == BADSIG)
-	{
-		syserr("signal SIGTSTP");
-	}
-}
-
 void trap_handler(int signal)
 {
 	static char crashed = FALSE;
@@ -147,6 +121,10 @@ int main(int argc, char **argv)
 		syserr("signal SIGSEGV");
 	}
 
+	if (signal(SIGHUP, trap_handler) == BADSIG)
+	{
+		syserr("signal SIGHUP");
+	}
 
 	if (signal(SIGABRT, myquitsig) == BADSIG)
 	{
@@ -157,12 +135,6 @@ int main(int argc, char **argv)
 	{
 		syserr("signal SIGINT");
 	}
-
-	if (signal(SIGTSTP, tstphandler) == BADSIG)
-	{
-		syserr("signal SIGTSTP");
-	}
-
 
 	if (signal(SIGWINCH, winchhandler) == BADSIG)
 	{
@@ -211,7 +183,7 @@ int main(int argc, char **argv)
 
 void init_tintin(void)
 {
-	int cnt;
+	int ref, cnt;
 
 	gts                 = calloc(1, sizeof(struct session));
 
@@ -238,6 +210,18 @@ void init_tintin(void)
 	gtd->mud_output_max = 64;
 	gtd->mud_output_buf = calloc(1, gtd->mud_output_max);
 
+	for (ref = 0 ; ref < 26 ; ref++)
+	{
+		for (cnt = 0 ; *command_table[cnt].name != 0 ; cnt++)
+		{
+			if (*command_table[cnt].name == 'a' + ref)
+			{
+				gtd->command_ref[ref] = cnt;
+				break;
+			}
+		}
+	}
+
 	initrl();
 
 	init_screen_size(gts);
@@ -246,7 +230,9 @@ void init_tintin(void)
 		Set application keypad mode and  ESC 0 prefix
 	*/
 
-/*	chat_init(""); */
+/*
+	chat_init("");
+*/
 
 	printf("\033=\033[?1h");
 
@@ -255,7 +241,7 @@ void init_tintin(void)
 	do_configure(gts, "{SPEEDWALK}          {ON}");
 	do_configure(gts, "{VERBATIM}          {OFF}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
-	do_configure(gts, "{ECHO COMMAND}      {OFF}");
+	do_configure(gts, "{ECHO COMMAND}       {ON}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
 	do_configure(gts, "{LOG}               {RAW}");

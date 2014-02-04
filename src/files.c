@@ -29,6 +29,7 @@
 /*********************************************************************/
 
 #include "tintin.h"
+#include <sys/stat.h>
 
 /*
 	read and execute a command file
@@ -46,7 +47,8 @@ DO_COMMAND(do_read)
 struct session *readfile(struct session *ses, const char *arg, struct listnode *class)
 {
 	FILE *fp;
-	char bufi[FILE_SIZE], bufo[FILE_SIZE], filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
+	struct stat filedata;
+	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
 	int lvl, cnt, com, lnc, fix;
 	int counter[LIST_MAX];
 
@@ -76,20 +78,22 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 		counter[cnt] = ses->list[cnt]->count;
 	}
 
-	for (bufi[0] = 0 ; fgets(bufo, BUFFER_SIZE, fp) ; strcat(bufi, bufo))
+	stat(filename, &filedata);
+
+	if ((bufi = calloc(1, filedata.st_size + 2)) == NULL || (bufo = calloc(1, filedata.st_size + 2)) == NULL)
 	{
-		if (strlen(bufo) + strlen(bufi) >= FILE_SIZE)
-		{
-			tintin_printf(ses, "#ERROR: #READ {%s} - FILESIZE MUST BE SMALLER THAN %d.", FILE_SIZE);
+		tintin_printf(ses, "#ERROR: #READ {%s} - FAILED TO ALLOCATE MEMORY.", filename);
 
-			fclose(fp);
+		fclose(fp);
 
-			return ses;
-		}
+		return ses;
 	}
+
+	fread(bufi, 1, filedata.st_size, fp);
 
 	pti = bufi;
 	pto = bufo;
+
 	lvl = com = lnc = fix = 0;
 
 	while (*pti)
@@ -232,6 +236,9 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 		fclose(fp);
 
+		free(bufi);
+		free(bufo);
+
 		return ses;
 	}
 
@@ -240,6 +247,9 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 		tintin_printf(ses, "#ERROR: #READ {%s} - MISSING %d '%s'", filename, abs(com), com < 0 ? "/*" : "*/");
 
 		fclose(fp);
+
+		free(bufi);
+		free(bufo);
 
 		return ses;
 	}
@@ -272,6 +282,9 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 			tintin_printf(ses, "#ERROR: #READ {%s} - BUFFER OVERFLOW AT COMMAND: %s.", filename, bufi);
 
 			fclose(fp);
+
+			free(bufi);
+			free(bufo);
 
 			return ses;
 		}
@@ -313,6 +326,9 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 		}
 	}
 	fclose(fp);
+
+	free(bufi);
+	free(bufo);
 
 	return ses;
 }

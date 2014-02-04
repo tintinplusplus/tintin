@@ -44,16 +44,12 @@ void init_buffer(struct session *ses, int size)
 	if (ses->buffer)
 	{
 		cnt = ses->scroll_row;
-
+		
 		do
 		{
-			if (cnt == ses->scroll_max)
+			if (++cnt == ses->scroll_max)
 			{
 				cnt = 0;
-			}
-			else
-			{
-				cnt++;
 			}
 
 			if (ses->buffer[cnt] == NULL)
@@ -66,11 +62,18 @@ void init_buffer(struct session *ses, int size)
 		while (cnt != ses->scroll_row);
 	}
 
-	ses->buffer = calloc(size, sizeof(char *));
+	if (ses->buffer)
+	{
+		free(ses->buffer);
+	}
 
-	ses->scroll_max = size;
-	ses->scroll_row = size - 1;
+	if (size)
+	{
+		ses->buffer = calloc(size, sizeof(char *));
 
+		ses->scroll_max = size;
+		ses->scroll_row = size - 1;
+	}
 	pop_call();
 	return;
 }

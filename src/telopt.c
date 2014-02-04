@@ -112,7 +112,7 @@ void telopt_debug(struct session *ses, const char *format, ...)
 
 void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 {
-	int skip, cnt;
+	int skip, cnt, os;
 	unsigned char *cpdst;
 	unsigned char *cpsrc;
 
@@ -183,12 +183,21 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	while (cplen > 0)
 	{
-
-		if (*cpsrc == IAC)
+		if (*cpsrc == IAC || HAS_BIT(ses->flags, SES_FLAG_PATCHIAC))
 		{
+			if (HAS_BIT(ses->flags, SES_FLAG_PATCHIAC))
+			{
+				DEL_BIT(ses->flags, SES_FLAG_PATCHIAC);
+				os = 0; /* offset */
+			}
+			else
+			{
+				os = 1;
+			}
+
 			if (HAS_BIT(ses->flags, SES_FLAG_DEBUGTELNET))
 			{
-				switch(cpsrc[1])
+				switch(cpsrc[os])
 				{
 					case NOP:   
 					case DM:
@@ -198,29 +207,34 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case AYT:   
 					case EC:    
 					case EL:
+						tintin_printf2(ses, "RCVD %s", TELCMD(cpsrc[os]));
+						break;
+
 					case GA:
 					case EOR:
-						tintin_printf2(ses, "RCVD %s", TELCMD(cpsrc[1]));
+						sprintf(cpdst, "RCVD %s", TELCMD(cpsrc[os]));
+						gtd->mud_output_len += strlen(cpdst);
+						cpdst += strlen(cpdst);
 						break;
 
 					case DO:
 					case DONT:
 					case WILL:
 					case WONT:
-						if (TELOPT_OK(cpsrc[2]))
+						if (TELOPT_OK(cpsrc[os+1]))
 						{
-							tintin_printf2(ses, "RCVD %s %s", TELCMD(cpsrc[1]), TELOPT(cpsrc[2]));
+							tintin_printf2(ses, "RCVD %s %s", TELCMD(cpsrc[os]), TELOPT(cpsrc[os+1]));
 						}
 						else
 						{
-							tintin_printf2(ses, "RCVD %s %d", TELCMD(cpsrc[1]), cpsrc[2]);
+							tintin_printf2(ses, "RCVD %s %d", TELCMD(cpsrc[os]), cpsrc[os+1]);
 						}
 						break;
 
 					case SB:
-						if (TELOPT_OK(cpsrc[2]))
+						if (TELOPT_OK(cpsrc[os+1]))
 						{
-							tintin_printf2(ses, "RCVD IAC SB %s SEND", TELOPT(cpsrc[2]));
+							tintin_printf2(ses, "RCVD IAC SB %s SEND", TELOPT(cpsrc[os+1]));
 						}
 						else
 						{
@@ -234,7 +248,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			{
 				if (cplen >= iac_table[cnt].size && !memcmp(cpsrc, iac_table[cnt].code, iac_table[cnt].size))
 				{
-					skip = iac_table[cnt].size;
+					skip = iac_table[cnt].size - 1 + os;
 
 					if (iac_table[cnt].func != NULL)
 					{
@@ -250,7 +264,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				}
 			}
 
-			switch (cpsrc[1])
+			switch (cpsrc[os])
 			{
 				case SE:
 				case NOP:
@@ -263,29 +277,38 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				case EL:
 				case GA:
 				case EOR:
-				     skip = 2;
+				     skip = os + 1;
 				     break;
 
 				case WILL:
 				case WONT:
 				case DO:
 				case DONT:
-					skip = 3;
+					skip = os + 2;
 					break;
 
 				case SB:
-					skip = 3;
+					skip = os + 2;
 					break;
 
 				case IAC:
 					gtd->mud_output_len++;
 					*cpdst++ = 0xFF;
-					skip = 2;
+					skip = os + 1;
 					break;
 
 				default:
-					tintin_puts("#IAC BAD TELOPT", NULL);
-					skip = 1;
+					if (cplen == 1)
+					{
+						skip  = 0;
+						cplen = 0;
+						SET_BIT(ses->flags, SES_FLAG_PATCHIAC);
+					}
+					else
+					{
+						tintin_puts("#IAC BAD TELOPT", NULL);
+						skip = 1;
+					}
 					break;
 			}
 			cplen -= skip;
@@ -298,7 +321,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			gtd->mud_output_len++;
 			cplen--;
 
-			if (*cpsrc)
+			if (cplen)
 			{
 				*cpdst++ = *cpsrc++;
 				gtd->mud_output_len++;

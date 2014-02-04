@@ -334,11 +334,11 @@ void cleanup_session(struct session *ses)
 	pop_call();
 	push_call("cleanup_session(%p) (free)", ses);
 
+	init_buffer(ses, 0);
+
 	free(ses->name);
 	free(ses->host);
 	free(ses->port);
-	init_buffer(ses, 2);
-	free(ses->buffer);
 
 	free(ses);
 

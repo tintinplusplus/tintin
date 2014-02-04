@@ -175,3 +175,36 @@ oops 5
         }
     }
 }
+
+#alias testspeed
+{
+	#format time1 %U;
+	#loop {1 1000} {#nop};
+        #format time2 %U;
+        #echo {Time delay %m} {{$time2 - $time1}}
+}
+
+#act {test %0 %1} {#showme -%0-%1-}
+
+#alias {to_sea} {w;e;w;n;n;dive;#delay {2} {e;e;e;s;e;#showme -%1-;#if {"%1" != ""} {#nop;%1}}}
+
+#alias {learn_it} {to_sea {learn force from teacher;n;sleep}}
+
+#function oneword
+{
+    #format oneword 0;
+    #format result %s; /* clears the variable */
+    #parse {&0}
+    {
+        #if {$oneword}
+        {
+            #format result %s%s {{$result} {&&90}}
+        }
+        {
+            #if {"&&90" == " "}
+            {
+                #format oneword 1
+            }
+        }
+    }
+}

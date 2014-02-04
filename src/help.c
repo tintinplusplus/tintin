@@ -218,7 +218,7 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.6                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.7                           <068>#\n"
 		"<068>    ######################################################################<088>\n\n"
 	},
 	{
@@ -335,13 +335,16 @@ const struct help_type help_table[] =
 	},
 	{
 		"DEBUG",
-		"Command: #debug {listname} {on|off}\n"
+		"Command: #debug {listname} {on|off|log}\n"
 		"\n"
 		"         Toggles a list on or off. With no argument it shows your current\n"
 		"         settings, as well as the list names that you can debug.\n"
 		"\n"
 		"         If you for example set ACTIONS to ON you will get debug information\n"
 		"         whenever an action is triggered.\n"
+		"\n"
+		"         #debug {listname} {log} will silently write debugging information to\n"
+		"         the log file, you must be logging in order for this to work.\n"
 		"\n"
 		"         Not every list has debug support yet.\n"
 	},
@@ -354,6 +357,7 @@ const struct help_type help_table[] =
 		"\\n  will send a new line.\n"
 		"\\r  will send a carriage return.\n"
 		"\\t  will send a tab.\n"
+		"\\x  will print a hexadecimal value, \xFF for example.\n"
 		"\\[  will send the '{' character\n"
 		"\\]  will send the '}' character\n"
 		"\n"
@@ -364,7 +368,7 @@ const struct help_type help_table[] =
 		"FORALL",
 		"Command: #forall {list} {command}\n"
 		"         How this works is best shown with an example\n"
-		"Example: #forall {a b c d} {say $forall}\n"
+		"Example: #forall {a b c d} {say &0}\n"
 		"         This equals: say a;say b;say c;say d;\n"
 		"         Useful for whenever it's useful.\n"
 	},
@@ -494,10 +498,10 @@ const struct help_type help_table[] =
 		"\n"
 		"Like a for statement, loop will loop from start to finish incrementing or\n"
 		"decrementing by 1 each time through.  The value of the loop variable is\n"
-		"placed in $loop, which you can use in the commands.\n"
+		"placed in &0, which you can use in the commands.\n"
 		"\n"
 		"examples:\n"
-		"#loop {1 3} {get all $loop.corpse}\n"
+		"#loop {1 3} {get all &0.corpse}\n"
 		"equivalent to the following:\n"
 		"  get all 1.corpse;get all 2.corpse;get all 3.corpse\n"
 		"#loop {3,1} {drop &0.key}\n"
@@ -605,7 +609,7 @@ const struct help_type help_table[] =
 		"\n"
 		"Like a for statement, parse will loop from start to finish through the\n"
 		"given string. The value of the character parse is at will be placed in\n"
-		"the $parse variable as well as in &0.\n"
+		"the &0 variable.\n"
 	},
 	{
 		"PATH",
@@ -797,7 +801,7 @@ const struct help_type help_table[] =
 		"#sub {^Zoe%0} {ZOE%0}\n"
 		"any line that starts with the name Zoe will be replaced by a line that\n"
 		"starts with 'ZOE'\n"
-		"#sub {%0massacres%1} {<018>%0<118>MASSACRES<018>%1}\n"
+		"#sub {%0massacres%1} {<<888>018>%0<<888>118>MASSACRES<<888>018>%1}\n"
 		"replace all occurrences of 'massacres' with 'MASSACRES' and change the colors,\n"
 		"see #help colors, for more information.\n"
 	},
@@ -1058,16 +1062,6 @@ const struct help_type help_table[] =
 		"variables to a coms file, specified by filename.\n"
 	},
 	{
-		"WRITESESSION",
-		"\n"
-		"Command: #writesession {filename}\n"
-		"               #writesession filename\n"
-		"\n"
-		"Write all current actions, aliases, subs, antisubs, highlights, and\n"
-		"variables that are specific to your current session to a file.  This\n"
-		"means actions that were not defined when there was no session active.\n"
-	},
-	{
 		"ZAP",
 		"\n"
 		"Command: #zap\n"
@@ -1105,7 +1099,7 @@ DO_COMMAND(do_help)
 	}
 	else
 	{
-		for (cnt = 0 ; help_table[cnt].name != 0 ; cnt++)
+		for (cnt = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
 			if (is_abbrev(arg, help_table[cnt].name))
 			{
@@ -1124,7 +1118,7 @@ DO_COMMAND(do_help)
 				break;
 			}
 		}
-		if (help_table[cnt].name == 0)
+		if (*help_table[cnt].name == 0)
 		{
 			tintin_printf2(ses, "No help found for '%s'", arg);
 		}

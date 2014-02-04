@@ -79,7 +79,15 @@ DO_COMMAND(do_nop)
 
 DO_COMMAND(do_suspend)
 {
-	tstphandler(0);
+	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
+
+	fflush(stdout);
+
+	kill(0, SIGSTOP);
+
+	dirty_screen(gtd->ses);
+
+	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
 
 	return ses;
 }
@@ -293,7 +301,7 @@ DO_COMMAND(do_parse)
 		{
 			sprintf(gtd->cmds[0], "%c", left[cnt]);
 
-			sprintf(temp, "parse %c", left[cnt]);
+			sprintf(temp, "parse {%c}", left[cnt]);
 			do_internal_variable(ses, temp);
 
 			substitute(ses, right, temp, SUB_CMD);

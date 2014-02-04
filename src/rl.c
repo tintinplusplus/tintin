@@ -90,8 +90,9 @@ void printline(struct session *ses, const char *str, int prompt)
 	}
 	else
 	{
-		printf("%s\n\r", wrapped_str);
+		printf("%s\r\n", wrapped_str);
 	}
+
 }
 
 void bait(void)
@@ -555,22 +556,23 @@ void echo_command(struct session *ses, char *line, int newline)
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND) || gtd->ses->more_output[0])
+		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_ECHOCOMMAND) || gtd->ses->more_output[0] == 0)
 		{
-			SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
-
-			if (gtd->ses->more_output[0])
-			{
-				gtd->ses->check_output = 0;
-
-				tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
-			}
-			else
-			{
-				tintin_printf2(gtd->ses, "%s", buffer);
-			}
-			DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+			return;
 		}
+		SET_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
+
+		if (gtd->ses->more_output[0])
+		{
+			gtd->ses->check_output = 0;
+
+			tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
+		}
+		else
+		{
+			tintin_printf2(gtd->ses, "%s", buffer);
+		}
+		DEL_BIT(gtd->ses->flags, SES_FLAG_SCROLLSTOP);
 	}
 	add_line_buffer(gtd->ses, buffer, -1);
 }

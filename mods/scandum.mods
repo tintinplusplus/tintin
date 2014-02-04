@@ -832,14 +832,14 @@ tinexp.c       Fixed parsing of function arguments some more.
 array.c        Added #list command with basic list support.
 
 
+
                - 1.96.6
+
+
 
 chat.c         Added multi threading for opening new chat connections.
 
 parse.c        Added protection for infinite loops.
-
-variable.c     Added %D option to format, which will print a given decimal
-               value as a single character.
 
 utils.c        Added hex_number translation function.
 
@@ -847,12 +847,6 @@ tinexp.c       Can now use \x?? where ?? is a hexadecimal number.
 
 *.c            Changed usage of \e with \033 since \e isn't supported on all
                systems.
-
-rl.c           Verbatim mode now enters character mode as well. Aliasses and
-               macros do not work while in this mode, these are expected to
-               be defined server side anyways in this mode.
-
-rl.c           In verbatim mode ctrl-c will send IAC IP.
 
 misc.c         #debug all log, logs debug info without displaying it.
 
@@ -868,3 +862,32 @@ variable.c     Added %D %M %Y options to print the day month year
 misc.c         Added parse command to parse strings
 
 misc.c         Fixed double variable substitution for #echo
+
+
+
+               - 1.95.7
+
+
+main.c         Added a command reference table to speed up the processing of
+               commands slightly.
+
+tinexp.c       The body of a by braces surrounded variable name will be
+               substituted now, allowing variables as variable names.
+
+parse.c        No longer sending message spam when using an alias
+
+buffer.c       Fixed a long standing crash bug in the buffer cleanup routine.
+
+tinexp.c       Now matching arguments in triggers like the old tintin did. This
+               will interfere with a couple of triggers but shouldn't be too
+               big a problem. %0 to %9 will capture the smallest possible
+               amount of text instead of the biggest.
+
+telopt.c       IAC EOR and GA spams are dealt with better with {debug telnet}
+               enabled.
+
+telopt.c       Dealing with packet fragmentation in the odd case an IAC EOR or
+               GA code is split, not sure if it works since it's hard to test.
+
+vt102.c        Added 2 routines to support color bleeding in split mode.
+

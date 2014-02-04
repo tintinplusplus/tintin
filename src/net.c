@@ -139,6 +139,8 @@ void read_buffer_mud(struct session *ses)
 		return;
 	}
 
+	buf[size] = 0;
+
 	translate_telopts(ses, buf, size);
 
 	gtd->mud_output_buf[gtd->mud_output_len] = 0;
