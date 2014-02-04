@@ -90,7 +90,7 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 			switch (type)
 			{
 				case LIST_ALIAS:
-					node->regex = tintin_regexp_compile(node, node->left, PCRE_ANCHORED);
+					node->regex = tintin_regexp_compile(ses, node, node->left, PCRE_ANCHORED);
 					break;
 
 				case LIST_ACTION:
@@ -98,7 +98,7 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 				case LIST_HIGHLIGHT:
 				case LIST_PROMPT:
 				case LIST_SUBSTITUTE:
-					node->regex = tintin_regexp_compile(node, node->left, 0);
+					node->regex = tintin_regexp_compile(ses, node, node->left, 0);
 					break;
 
 				case LIST_VARIABLE:
@@ -135,7 +135,7 @@ struct listnode *insert_node_list(struct listroot *root, char *ltext, char *rtex
 	switch (root->type)
 	{
 		case LIST_ALIAS:
-			node->regex = tintin_regexp_compile(node, node->left, PCRE_ANCHORED);
+			node->regex = tintin_regexp_compile(root->ses, node, node->left, PCRE_ANCHORED);
 			break;
 
 		case LIST_ACTION:
@@ -143,7 +143,7 @@ struct listnode *insert_node_list(struct listroot *root, char *ltext, char *rtex
 		case LIST_HIGHLIGHT:
 		case LIST_PROMPT:
 		case LIST_SUBSTITUTE:
-			node->regex = tintin_regexp_compile(node, node->left, 0);
+			node->regex = tintin_regexp_compile(root->ses, node, node->left, 0);
 			break;
 	}
 
@@ -335,10 +335,13 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 	bot = 0;
 	top = root->used - 1;
 	val = top;
-	toi = get_number(root->ses, text);
 
-	if (!seek && toi && (*text == '+' || *text == '-') && HAS_BIT(list_table[root->type].flags, LIST_FLAG_NEST))
+//	toi = get_number(root->ses, text);
+
+	if (seek == 0 && (*text == '+' || *text == '-') && HAS_BIT(list_table[root->type].flags, LIST_FLAG_NEST))
 	{
+		toi = get_number(root->ses, text);
+
 		if (toi > 0 && toi <= root->used)
 		{
 			return toi - 1;
@@ -353,9 +356,11 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 		}
 	}
 
+	toi = is_number(text) ? get_number(root->ses, text) : 0;
+
 	while (bot <= top)
 	{
-		toj = get_number(root->ses, root->list[val]->left);
+		toj = is_number(root->list[val]->left) ? get_number(root->ses, root->list[val]->left) : 0;
 
 		if (toi)
 		{
@@ -524,7 +529,7 @@ int show_node_with_wild(struct session *ses, char *text, int type)
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (match(NULL, root->list[i]->left, text))
+		if (match(ses, root->list[i]->left, text, SUB_VAR|SUB_FUN))
 		{
 			show_node(root, root->list[i], 0);
 
@@ -557,7 +562,7 @@ void delete_node_with_wild(struct session *ses, int type, char *text)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (match(NULL, root->list[i]->left, arg1))
+		if (match(ses, root->list[i]->left, arg1, SUB_VAR|SUB_FUN))
 		{
 			show_message(ses, type, "#OK. {%s} IS NO LONGER %s %s.", root->list[i]->left, (*list_table[type].name == 'A' || *list_table[type].name == 'E') ? "AN" : "A", list_table[type].name);
 
@@ -579,8 +584,8 @@ DO_COMMAND(do_kill)
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int index;
 
-	arg = get_arg_in_braces(arg, arg1, 0);
-	      get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(ses, arg, arg1, 0);
+	      get_arg_in_braces(ses, arg, arg2, 1);
 
 	if (*arg1 == 0 || !strcasecmp(arg1, "ALL"))
 	{
@@ -625,8 +630,8 @@ DO_COMMAND(do_message)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int index, found = FALSE;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(ses, arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, right, FALSE);
 
 	if (*left == 0)
 	{
@@ -682,8 +687,8 @@ DO_COMMAND(do_ignore)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int index, found = FALSE;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = get_arg_in_braces(ses, arg, left,  0);
+	arg = get_arg_in_braces(ses, arg, right, 0);
 
 	if (*left == 0)
 	{
@@ -739,8 +744,8 @@ DO_COMMAND(do_debug)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int index, found = FALSE;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = get_arg_in_braces(ses, arg, left,  0);
+	arg = get_arg_in_braces(ses, arg, right, 0);
 
 	if (*left == 0)
 	{

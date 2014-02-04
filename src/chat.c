@@ -51,7 +51,7 @@ DO_COMMAND(do_chat)
 	char cmd[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, cmd, FALSE);
+	arg = get_arg_in_braces(ses, arg, cmd, FALSE);
 
 	if (*cmd == 0)
 	{
@@ -80,9 +80,9 @@ DO_COMMAND(do_chat)
 			return ses;
 		}
 
-		arg = get_arg_in_braces(arg, left,  chat_table[cnt].lval);
+		arg = get_arg_in_braces(ses, arg, left,  chat_table[cnt].lval);
 		substitute(ses, left, left, SUB_VAR|SUB_FUN);
-		arg = get_arg_in_braces(arg, right, chat_table[cnt].rval);
+		arg = get_arg_in_braces(ses, arg, right, chat_table[cnt].rval);
 		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 		chat_table[cnt].fun(left, right);
 
@@ -280,8 +280,8 @@ void *threaded_chat_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	arg = (void *) get_arg_in_braces((char *) arg, host, FALSE);
-	arg = (void *) get_arg_in_braces((char *) arg, port, FALSE);
+	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, host, FALSE);
+	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, port, FALSE);
 
 	if (*port == 0)
 	{
@@ -433,8 +433,8 @@ void *threaded_chat_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	arg = (void *) get_arg_in_braces((char *) arg, host, FALSE);
-	arg = (void *) get_arg_in_braces((char *) arg, port, FALSE);
+	arg = (void *) get_arg_in_braces(ses, (char *) arg, host, FALSE);
+	arg = (void *) get_arg_in_braces(ses, (char *) arg, port, FALSE);
 
 	if (*port == 0)
 	{
@@ -1510,7 +1510,7 @@ DO_CHAT(chat_name)
 		return;
 	}
 
-	if (strip_vt102_strlen(left) > 20)
+	if (strip_vt102_strlen(gtd->ses, left) > 20)
 	{
 		chat_printf("Your name cannot be longer than 20 characters.");
 
@@ -1543,7 +1543,7 @@ DO_CHAT(chat_paste)
 			cursor_clear_line("");
 		}
 
-		arg = get_arg_in_braces(gtd->chat->paste_buf, name, FALSE);
+		arg = get_arg_in_braces(gtd->ses, gtd->chat->paste_buf, name, FALSE);
 
 		sprintf(temp, "%s\n<078>======================================================================", arg);
 

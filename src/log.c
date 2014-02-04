@@ -59,56 +59,74 @@ DO_COMMAND(do_log)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, left,  FALSE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-	if (ses->logfile)
+	if (*left == 0)
 	{
-		fclose(ses->logfile);
-		ses->logfile = NULL;
-		show_message(ses, -1, "#OK: LOGGING TURNED OFF.");
+		show_message(ses, -1, "#SYNTAX: #LOG {APPEND|OVERWRITE|OFF} {<FILENAME>}");
 	}
-	else if (*left == 0 || *right == 0 || (!is_abbrev(left, "APPEND") && !is_abbrev(left, "OVERWRITE")))
+	else if (is_abbrev(left, "APPEND") && *right != 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #LOG [<APPEND|OVERWRITE> <FILENAME>]");
-	}
-	else
-	{
-		if (is_abbrev(left, "APPEND"))
+		if (ses->logfile)
 		{
-			if ((ses->logfile = fopen(right, "a")))
-			{
-				fseek(ses->logfile, 0, SEEK_END);
+			fclose(ses->logfile);
+		}
 
-				if (ftell(ses->logfile) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
-				{
-					write_html_header(ses->logfile);
-				}
-				show_message(ses, -1, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
-			}
-			else
+		if ((ses->logfile = fopen(right, "a")))
+		{
+			fseek(ses->logfile, 0, SEEK_END);
+
+			if (ftell(ses->logfile) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 			{
-				tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
+				write_html_header(ses->logfile);
 			}
+			show_message(ses, -1, "#LOG: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 		}
 		else
 		{
-			if ((ses->logfile = fopen(right, "w")))
-			{
-				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
-				{
-					write_html_header(ses->logfile);
-				}
-				show_message(ses, -1, "#OK: LOGGING OUTPUT TO '%s'", right);
-			}
-			else
-			{
-				tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
-			}
+			tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 		}
+	}
+	else if (is_abbrev(left, "OVERWRITE") && *right != 0)
+	{
+		if (ses->logfile)
+		{
+			fclose(ses->logfile);
+		}
+
+		if ((ses->logfile = fopen(right, "w")))
+		{
+			if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+			{
+				write_html_header(ses->logfile);
+			}
+			show_message(ses, -1, "#LOG: LOGGING OUTPUT TO '%s'", right);
+		}
+		else
+		{
+			tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
+		}
+	}
+	else if (is_abbrev(left, "OFF"))
+	{
+		if (ses->logfile)
+		{
+			fclose(ses->logfile);
+			ses->logfile = NULL;
+			show_message(ses, -1, "#LOG: LOGGING TURNED OFF.");
+		}
+		else
+		{
+			show_message(ses, -1, "#LOG: LOGGING ALREADY TURNED OFF.");
+		}
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #LOG {APPEND|OVERWRITE|OFF} {<FILENAME>}");
 	}
 	return ses;
 }

@@ -44,30 +44,30 @@ struct listnode *search_base_node(struct listroot *root, char *variable)
 {
 	char name[BUFFER_SIZE];
 
-	get_arg_to_brackets(variable, name);
+	get_arg_to_brackets(root->ses, variable, name);
 
-	return search_node_list(root, get_alnum(root->ses, name));
+	return search_node_list(root, name);
 }
 
 struct listnode *search_nest_node(struct listroot *root, char *variable)
 {
 	char name[BUFFER_SIZE], *arg;
 
-	arg = get_arg_to_brackets(variable, name);
+	arg = get_arg_to_brackets(root->ses, variable, name);
 
 	while (root && *arg)
 	{
-		root = search_nest_root(root, get_alnum(root->ses, name));
+		root = search_nest_root(root, name);
 
 		if (root)
 		{
-			arg = get_arg_in_brackets(arg, name);
+			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
 	}
 
 	if (root)
 	{
-		return search_node_list(root, get_alnum(root->ses, name));
+		return search_node_list(root, name);
 	}
 
 	return NULL;
@@ -77,21 +77,21 @@ int search_nest_index(struct listroot *root, char *variable)
 {
 	char name[BUFFER_SIZE], *arg;
 
-	arg = get_arg_to_brackets(variable, name);
+	arg = get_arg_to_brackets(root->ses, variable, name);
 
 	while (root && *arg)
 	{
-		root = search_nest_root(root, get_alnum(root->ses, name));
+		root = search_nest_root(root, name);
 
 		if (root)
 		{
-			arg = get_arg_in_brackets(arg, name);
+			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
 	}
 
 	if (root)
 	{
-		return search_index_list(root, get_alnum(root->ses, name), NULL);
+		return search_index_list(root, name, NULL);
 	}
 
 	return -1;
@@ -122,16 +122,16 @@ void update_nest_node(struct listroot *root, char *arg)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, arg1, FALSE);
-		arg = get_arg_in_braces(arg, arg2, FALSE);
+		arg = get_arg_in_braces(root->ses, arg, arg1, FALSE);
+		arg = get_arg_in_braces(root->ses, arg, arg2, FALSE);
 
 		if (*arg2 == DEFAULT_OPEN)
 		{
-			update_nest_node(update_nest_root(root, get_alnum(root->ses, arg1)), arg2);
+			update_nest_node(update_nest_root(root, arg1), arg2);
 		}
 		else if (*arg1)
 		{
-			update_node_list(root, get_alnum(root->ses, arg1), arg2, "");
+			update_node_list(root, arg1, arg2, "");
 		}
 
 		if (*arg == COMMAND_SEPARATOR)
@@ -146,21 +146,21 @@ int delete_nest_node(struct listroot *root, char *variable)
 	char name[BUFFER_SIZE], *arg;
 	int index;
 
-	arg = get_arg_to_brackets(variable, name);
+	arg = get_arg_to_brackets(root->ses, variable, name);
 
 	while (root && *arg)
 	{
-		root = search_nest_root(root, get_alnum(root->ses, name));
+		root = search_nest_root(root, name);
 
 		if (root)
 		{
-			arg = get_arg_in_brackets(arg, name);
+			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
 	}
 
 	if (root)
 	{
-		index = search_index_list(root, get_alnum(root->ses, name), NULL);
+		index = search_index_list(root, name, NULL);
 
 		if (index != -1)
 		{
@@ -180,7 +180,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 	char name[BUFFER_SIZE], *arg;
 	int index, count;
 
-	arg = get_arg_to_brackets(variable, name);
+	arg = get_arg_to_brackets(root->ses, variable, name);
 
 	*result = 0;
 
@@ -195,7 +195,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 			return root->used + 1;
 		}
 
-		if (search_nest_root(root, get_alnum(root->ses, name)) == NULL)
+		if (search_nest_root(root, name) == NULL)
 		{
 			if (search_node_list(root, name))
 			{
@@ -204,36 +204,36 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 		}
 	}
 
+
+
 	while (root && *name)
 	{
 		// Handle regex queries
 
-		if (search_nest_root(root, get_alnum(root->ses, name)) == NULL)
+		if (search_nest_root(root, name) == NULL)
 		{
 			if (search_node_list(root, name) == NULL)
 			{
-				for (index = count = 0 ; index < root->used ; index++)
+				if (tintin_regexp_check(root->ses, name))
 				{
-					if (match(NULL, root->list[index]->left, name))
+					for (index = count = 0 ; index < root->used ; index++)
 					{
-//						cat_sprintf(result, "{%s}", root->list[index]->right);
-						show_nest_node(root->list[index], result, 0);
-						count++;
+						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
+						{
+							show_nest_node(root->list[index], result, 0); // behaves like strcat
+							count++;
+						}
 					}
-				}
-
-				if (count)
-				{
 					return count + 1;
 				}
 				else
 				{
-					return tintin_regexp_check(name); // so using a regex returns "" instead of "0"
+					return 0;
 				}
 			}
 		}
 
-		root = search_nest_root(root, get_alnum(root->ses, name));
+		root = search_nest_root(root, name);
 
 		if (root)
 		{
@@ -245,7 +245,7 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 				}
 				return root->used + 1;
 			}
-			arg = get_arg_in_brackets(arg, name);
+			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
 	}
 
@@ -334,19 +334,19 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	vsprintf(arg2, format, args);
 	va_end(args);
 
-	arg = get_arg_to_brackets(arg1, name);
+	arg = get_arg_to_brackets(root->ses, arg1, name);
 
 	while (*arg)
 	{
-		root = update_nest_root(root, get_alnum(root->ses, name));
+		root = update_nest_root(root, name);
 
 		if (root)
 		{
-			arg = get_arg_in_brackets(arg, name);
+			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
 	}
 
-	node = search_node_list(root, get_alnum(root->ses, name));
+	node = search_node_list(root, name);
 
 	if (node && node->root)
 	{
@@ -357,13 +357,13 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 
 	if (*space_out(arg2) == DEFAULT_OPEN)
 	{
-		update_nest_node(update_nest_root(root, get_alnum(root->ses, name)), arg2);
+		update_nest_node(update_nest_root(root, name), arg2);
 
-		return search_node_list(root, get_alnum(root->ses, name));
+		return search_node_list(root, name);
 	}
 	else
 	{
-		return update_node_list(root, get_alnum(root->ses, name), arg2, "");
+		return update_node_list(root, name, arg2, "");
 	}
 }
 
@@ -377,19 +377,19 @@ struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, 
 	vsprintf(arg2, format, args);
 	va_end(args);
 
-	arg = get_arg_to_brackets(arg1, name);
+	arg = get_arg_to_brackets(root->ses, arg1, name);
 
 	while (*arg)
 	{
-		root = update_nest_root(root, get_alnum(root->ses, name));
+		root = update_nest_root(root, name);
 
 		if (root)
 		{
-			arg = get_arg_in_brackets(arg, name);
+			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
 	}
 
-	node = search_node_list(root, get_alnum(root->ses, name));
+	node = search_node_list(root, name);
 /*
 	Adding here, so don't clear the variable.
 
@@ -402,15 +402,17 @@ struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, 
 */
 	if (*space_out(arg2) == DEFAULT_OPEN)
 	{
-		update_nest_node(update_nest_root(root, get_alnum(root->ses, name)), arg2);
+		update_nest_node(update_nest_root(root, name), arg2);
 
-		return search_node_list(root, get_alnum(root->ses, name));
+		return search_node_list(root, name);
 	}
 	else
 	{
-		return update_node_list(root, get_alnum(root->ses, name), arg2, "");
+		return update_node_list(root, name, arg2, "");
 	}
 }
+
+// cats to result when initialize is 0
 
 void show_nest_node(struct listnode *node, char *result, int initialize)
 {

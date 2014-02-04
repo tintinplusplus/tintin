@@ -37,7 +37,7 @@ DO_COMMAND(do_event)
 	root = ses->list[LIST_EVENT];
 
 	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, arg2, 1);
+	arg = get_arg_in_braces(ses, arg, arg2, 1);
 
 	if (*arg1 == 0)
 	{
@@ -81,7 +81,7 @@ DO_COMMAND(do_unevent)
 	return ses;
 }
 
-int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
+int check_all_events(struct session *ses, int flags, int args, int vars, char *fmt, ...)
 {
 	struct session *ses_ptr;
 	struct listnode *node;
@@ -113,7 +113,12 @@ int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 				RESTRING(gtd->vars[cnt], va_arg(list, char *));
 			}
 
-			substitute(ses_ptr, node->right, buf, SUB_ARG);
+			substitute(ses_ptr, node->right, buf, flags);
+
+			if (HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_DEBUG))
+			{
+				show_debug(ses_ptr, LIST_ACTION, "#DEBUG EVENT {%s}", node->left);
+			}
 
 			script_driver(ses_ptr, LIST_EVENT, buf);
 
@@ -124,6 +129,7 @@ int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 				return 1;
 			}
 		}
+
 		if (ses)
 		{
 			return 0;

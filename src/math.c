@@ -61,8 +61,9 @@ DO_COMMAND(do_math)
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, left,  GET_NST);
-	arg = get_arg_in_braces(arg, right, GET_ALL);
+	arg = sub_arg_in_braces(ses, arg, left, GET_NST, SUB_VAR|SUB_FUN);
+
+	arg = get_arg_in_braces(ses, arg, right, GET_ALL);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -94,34 +95,6 @@ double get_number(struct session *ses, char *str)
 void get_number_string(struct session *ses, char *str, char *result)
 {
 	sprintf(result, "%.*f", precision, get_number(ses, str));
-}
-
-char *get_alnum(struct session *ses, char *str)
-{
-	char buffer[BUFFER_SIZE];
-	static char result[BUFFER_SIZE];
-	int sign;
-
-	sign = *str == '-' || *str == '+' ? TRUE : FALSE;
-
-	mathexp(ses, str, buffer);
-
-	if (is_number(buffer))
-	{
-		if (sign)
-		{
-			sprintf(result, "%+.*f", precision, tintoi(buffer));
-		}
-		else
-		{
-			sprintf(result, "%.*f", precision, tintoi(buffer));
-		}
-	}
-	else
-	{
-		strcpy(result, buffer);
-	}
-	return result;
 }
 
 double mathswitch(struct session *ses, char *left, char *right)
@@ -171,7 +144,7 @@ void mathexp(struct session *ses, char *str, char *result)
 
 #define MATH_NODE(buffercheck, priority, newstatus)                  \
 {                                                                    \
-	if (buffercheck && (pta == buf3 || valid == FALSE))          \
+	if (buffercheck && pta == buf3)                              \
 	{                                                            \
 		return FALSE;                                        \
 	}                                                            \
@@ -181,7 +154,6 @@ void mathexp(struct session *ses, char *str, char *result)
 	add_math_node(buf1, buf2, buf3);                             \
 	status = newstatus;                                          \
 	pta = buf3;                                                  \
-	valid = FALSE;                                               \
 	point = -1;                                                  \
 }
 
@@ -212,13 +184,11 @@ void del_math_node(struct link_data *node)
 int mathexp_tokenize(struct session *ses, char *str)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[STRING_SIZE], *pti, *pta;
-	int level, status, valid, point, colon;
+	int level, status, point;
 
 	level     = 0;
 	point     = -1;
-	colon     = 0;
 	status    = EXP_VARIABLE;
-	valid     = FALSE;
 	precision = 0;
 
 	pta = buf3;
@@ -247,7 +217,6 @@ int mathexp_tokenize(struct session *ses, char *str)
 					case '8':
 					case '9':
 						*pta++ = *pti++;
-						valid = TRUE;
 
 						if (point >= 0)
 						{
@@ -277,7 +246,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 					case '"':
 						if (pta != buf3)
 						{
-							show_message(ses, -1, "MATH EXP: \" FOUND INSIDE A NUMBER");
+//							show_message(ses, -1, "MATH EXP: \" FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -287,7 +256,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 					case '(':
 						if (pta != buf3)
 						{
-							show_message(ses, -1, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
+//							show_message(ses, -1, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -301,19 +270,13 @@ int mathexp_tokenize(struct session *ses, char *str)
 
 					case ':':
 						*pta++ = *pti++;
-						if (colon >= 3)
-						{
-							show_message(ses, -1, "#MATH EXP: MORE THAN THREE COLONS FOUND INSIDE A NUMBER");
-							return FALSE;
-						}
-						colon++;
 						break;
 						
 					case '.':
 						*pta++ = *pti++;
 						if (point >= 0)
 						{
-							show_message(ses, -1, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
+//							show_message(ses, -1, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
 							precision = 0;
 							return FALSE;
 						}
@@ -325,8 +288,29 @@ int mathexp_tokenize(struct session *ses, char *str)
 						pti++;
 						break;
 
+					case ')':
+					case 'd':
+					case '*':
+					case '/':
+					case '%':
+					case '<':
+					case '>':
+					case '&':
+					case '^':
+					case '|':
+					case '=':
+						if (pta != buf3)
+						{
+							MATH_NODE(FALSE, EXP_PR_VAR, EXP_OPERATOR);
+						}
+						else
+						{
+							*pta++ = *pti++;
+						}
+						break;
+
 					default:
-						MATH_NODE(TRUE, EXP_PR_VAR, EXP_OPERATOR);
+						*pta++ = *pti++;
 						break;
 				}
 				break;
@@ -336,7 +320,6 @@ int mathexp_tokenize(struct session *ses, char *str)
 				{
 					case '"':
 						*pta++ = *pti++;
-						valid = TRUE;
 						MATH_NODE(FALSE, EXP_PR_VAR, EXP_OPERATOR);
 						break;
 
@@ -494,7 +477,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 
 	if (level != 0)
 	{
-		show_message(ses, -1, "#MATH EXP: UNMATCHED PARENTHESES, LEVEL: %d", level);
+//		show_message(ses, -1, "#MATH EXP: UNMATCHED PARENTHESES, LEVEL: %d", level);
 		return FALSE;
 	}
 
@@ -569,7 +552,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 		case 'd':
 			if (tintoi(node->next->str3) <= 0)
 			{
-				show_message(ses, -1, "#MATHEXP: INVALID DICE: %s", node->next->str3);
+//				show_message(ses, -1, "#MATHEXP: INVALID DICE: %s", node->next->str3);
 				value = 0;
 			}
 			else
@@ -583,7 +566,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 		case '/':
 			if (tintoi(node->next->str3) == 0)
 			{
-				show_message(ses, -1, "#MATH ERROR: DIVISION ZERO.");
+//				show_message(ses, -1, "#MATH ERROR: DIVISION ZERO.");
 				value = tintoi(node->prev->str3);
 			}
 			else
@@ -601,7 +584,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 		case '%':
 			if (tintoi(node->next->str3) == 0)
 			{
-				show_message(ses, -1, "#MATH ERROR: MODULO ZERO.");
+//				show_message(ses, -1, "#MATH ERROR: MODULO ZERO.");
 				value = tintoi(node->prev->str3);
 			}
 			else
@@ -673,6 +656,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 				case '|':
 					value = tintoi(node->prev->str3) || tintoi(node->next->str3);
 					break;
+
 				default:
 					value = (long long) tintoi(node->prev->str3) | (long long) tintoi(node->next->str3);
 					break;
@@ -685,7 +669,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 			value = (tineval(ses, node->prev->str3, node->next->str3) == 0);
 			break;
 		default:
-			show_message(ses, -1, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->str3[0], node->str3[1]);
+//			show_message(ses, -1, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->str3[0], node->str3[1]);
 			value = 0;
 			break;
 	}
@@ -912,7 +896,7 @@ double tineval(struct session *ses, char *left, char *right)
 	switch (left[0])
 	{
 		case '"':
-			return match(NULL, left, right);
+			return match(ses, left, right, SUB_NONE);
 
 		default:
 			return tintoi(left) == tintoi(right);

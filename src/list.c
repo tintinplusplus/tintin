@@ -93,7 +93,7 @@ DO_ARRAY(array_add)
 
 		while (*str)
 		{
-			str = get_arg_in_braces(str, arg2, GET_ALL);
+			str = get_arg_in_braces(ses, str, arg2, GET_ALL);
 
 			insert_node_list(list->root, ntos(index++), arg2, "");
 
@@ -138,13 +138,13 @@ DO_ARRAY(array_create)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, arg1, GET_ONE);
+		arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
 
 		str = arg1;
 
 		while (*str)
 		{
-			str = get_arg_in_braces(str, arg2, GET_ALL);
+			str = get_arg_in_braces(ses, str, arg2, GET_ALL);
 
 			insert_node_list(list->root, ntos(index++), arg2, "");
 
@@ -170,7 +170,7 @@ DO_ARRAY(array_delete)
 	if (list->root)
 	{
 		arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
-		arg = get_arg_in_braces(arg, arg2, GET_ALL);
+		arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
 		loop = *arg2 ? (int) get_number(ses, arg2) : 1;
 
@@ -218,7 +218,7 @@ DO_ARRAY(array_find)
 	{
 		for (index = 0 ; index < list->root->used ; index++)
 		{
-			if (match(ses, list->root->list[index]->right, arg1))
+			if (match(ses, list->root->list[index]->right, arg1, SUB_NONE))
 			{
 				break;
 			}
@@ -368,36 +368,52 @@ DO_ARRAY(array_set)
 
 DO_ARRAY(array_sort)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], *str;
 	int cnt;
-
-	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (!list->root)
 	{
 		list->root = init_list(ses, LIST_VARIABLE, LIST_SIZE);
 	}
 
-	for (cnt = 0 ; cnt < list->root->used ; cnt++)
+	while (*arg)
 	{
-		if (strcmp(arg2, list->root->list[cnt]->right) <= 0)
+		arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+
+		str = arg1;
+
+		while (*str)
 		{
-			break;
+			str = get_arg_in_braces(ses, str, arg2, GET_ALL);
+
+			for (cnt = 0 ; cnt < list->root->used ; cnt++)
+			{
+				if (strcmp(arg2, list->root->list[cnt]->right) <= 0)
+				{
+					break;
+				}
+			}
+
+			if (cnt == list->root->used)
+			{
+				sprintf(arg3, "{%d} {%s}", -1, arg2);
+			}
+			else
+			{
+				sprintf(arg3, "{%d} {%s}", cnt + 1, arg2);
+			}
+
+			array_insert(ses, list, arg3);
+
+			if (*str == COMMAND_SEPARATOR)
+			{
+				str++;
+			}
+		}
+		if (*arg == COMMAND_SEPARATOR)
+		{
+			arg++;
 		}
 	}
-
-	sprintf(arg1, "%d", cnt + 1);
-
-	if (cnt == list->root->used)
-	{
-		sprintf(arg1, "{%d} {%s}", -1, arg2);
-	}
-	else
-	{
-		sprintf(arg1, "{%d} {%s}", cnt + 1, arg2);
-	}
-
-	array_insert(ses, list, arg1);
-
 	return ses;
 }

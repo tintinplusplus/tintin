@@ -122,12 +122,15 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	unsigned char *cpdst;
 	unsigned char *cpsrc;
 
+	push_call("translate_telopts(%p,%p,%d)",ses,src,cplen);
+
 	if (cplen == 0)
 	{
+		gtd->mud_output_buf[gtd->mud_output_len] = 0;	
+
+		pop_call();
 		return 0;
 	}
-
-	push_call("translate_telopts(%p,%p,%d)",ses,src,cplen);
 
 	if (ses->mccp)
 	{
@@ -160,12 +163,17 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				tintin_printf2(ses, "");
 				tintin_printf2(ses, "#COMPRESSION END, DISABLING MCCP.");
 
-				cpsrc = src + (cplen - ses->mccp->avail_in);
+				cnt  = ses->mccp->next_out - gtd->mccp_buf;
+				skip = cplen - ses->mccp->avail_in;
+
 				cplen = ses->mccp->avail_in;
+				cpsrc = src + skip;
 
 				inflateEnd(ses->mccp);
 				free(ses->mccp);
 				ses->mccp = NULL;
+
+				translate_telopts(ses, gtd->mccp_buf, cnt);
 				break;
 
 			default:
@@ -311,7 +319,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case WILL:
 						if (cplen > 2)
 						{
-							if (!check_all_events(ses, 1, 0, "IAC WILL %s", telopt_table[cpsrc[2]].name))
+							if (!check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC WILL %s", telopt_table[cpsrc[2]].name))
 							{
 								if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
 								{
@@ -333,7 +341,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case DO:
 						if (cplen > 2)
 						{
-							if (!check_all_events(ses, 1, 0, "IAC DO %s", telopt_table[cpsrc[2]].name))
+							if (!check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC DO %s", telopt_table[cpsrc[2]].name))
 							{
 								if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
 								{
@@ -356,7 +364,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case DONT:
 						if (cplen > 2)
 						{
-							check_all_events(ses, 2, 0, "IAC %s %s", TELCMD(cpsrc[1]), telopt_table[cpsrc[2]].name);
+							check_all_events(ses, SUB_ARG|SUB_SEC, 2, 0, "IAC %s %s", TELCMD(cpsrc[1]), telopt_table[cpsrc[2]].name);
 
 							DEL_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
 						}
@@ -422,6 +430,12 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					cplen--;
 					continue;
 
+				case 5:
+					check_all_events(ses, SUB_ARG, 0, 1, "VT100 ENQ", gtd->term);
+					cpsrc++;
+					cplen--;
+					continue;
+
 				case '\r':
 					if (cplen > 1 && cpsrc[1] == '\n')
 					{
@@ -449,6 +463,41 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					continue;
 
 				default:
+					if (cpsrc[0] == ESCAPE)
+					{
+						if (cplen >= 2 && cpsrc[1] == 'Z')
+						{
+							check_all_events(ses, SUB_ARG, 0, 0, "VT100 DECID");
+							cpsrc += 2;
+							cplen -= 2;
+							continue;
+						}
+						if (cplen >= 3 && cpsrc[1] == '[')
+						{
+							if (cpsrc[2] == 'c')
+							{
+								check_all_events(ses, SUB_ARG, 0, 0, "VT100 DA");
+								cpsrc += 3;
+								cplen -= 3;
+								continue;
+							}
+							if (cplen >= 4 && cpsrc[2] >= '5' && cpsrc[2] <= '6' && cpsrc[3] == 'n')
+							{
+								if (cpsrc[2] == '5')
+								{
+									check_all_events(ses, SUB_ARG, 0, 0, "VT100 DSR");
+								}
+								if (cpsrc[2] == '6')
+								{
+									check_all_events(ses, SUB_ARG, 0, 2, "VT100 CPR", ntos(ses->cols), ntos(ses->rows));
+								}
+								cpsrc += 4;
+								cplen -= 4;
+								continue;
+							}
+						}
+					}
+
 					if (HAS_BIT(ses->telopts, TELOPT_FLAG_PROMPT))
 					{
 						DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
@@ -522,7 +571,7 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, 0, 0, "IAC DONT TERMINAL TYPE"))
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DONT TTYPE"))
 	{
 		DEL_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
 
@@ -533,13 +582,25 @@ int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, 0, 1, "IAC SB TERMINAL TYPE", ntos(cpsrc[3])))
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "IAC SB TTYPE", ntos(cpsrc[3])))
 	{
-		if (HAS_BIT(ses->telopts, TELOPT_FLAG_TTYPE) && getenv("TERM"))
+		if (HAS_BIT(ses->telopts, TELOPT_FLAG_MTTS))
 		{
-			socket_printf(ses, 6 + strlen(getenv("TERM")), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, getenv("TERM"), IAC, SE);
+			char mtts[BUFFER_SIZE];
 
-			telopt_debug(ses, "SENT IAC SB TTYPE %s", getenv("TERM"));
+			sprintf(mtts, "MTTS %d", 1 + (HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? 0 : 2) + (HAS_BIT(ses->flags, SES_FLAG_UTF8) ? 4 : 0) + (HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? 8 : 0));
+
+			socket_printf(ses, 6 + strlen(mtts), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, mtts, IAC, SE);
+
+			telopt_debug(ses, "SENT IAC SB TTYPE %s", mtts);
+		}
+		else if (HAS_BIT(ses->telopts, TELOPT_FLAG_TTYPE))
+		{
+			socket_printf(ses, 6 + strlen(gtd->term), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, gtd->term, IAC, SE);
+
+			telopt_debug(ses, "SENT IAC SB TTYPE %s", gtd->term);
+
+			SET_BIT(ses->telopts, TELOPT_FLAG_MTTS);
 		}
 		else
 		{
@@ -562,7 +623,7 @@ int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	SET_BIT(ses->telopts, TELOPT_FLAG_TSPEED);
 
-	if (!check_all_events(ses, 0, 1, "IAC SB TSPEED", ntos(cpsrc[3])))
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "IAC SB TSPEED", ntos(cpsrc[3])))
 	{
 		socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
 
@@ -704,7 +765,7 @@ int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, 0, 0, "IAC WILL MSSP"))
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL MSSP"))
 	{
 		if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
 		{
@@ -756,7 +817,7 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 
 				telopt_debug(ses, "MSSP VAR %-20s VAL %s", var, val);
 
-				check_all_events(ses, 0, 2, "IAC SB MSSP", var, val);
+				check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "IAC SB MSSP", var, val);
 				break;
 
 			default:
@@ -767,7 +828,7 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 
 	telopt_debug(ses, "IAC SB MSSP IAC SE");
 
-	check_all_events(ses, 0, 0, "IAC SB MSSP IAC SE");
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC SB MSSP IAC SE");
 
 	return UMIN(i + 1, cplen);
 }
@@ -776,182 +837,177 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 	MSDP (Mud Server Data Protocol)
 */
 
-#define MSDP_STATE_NEW 0
-#define MSDP_STATE_VAR 1
-#define MSDP_STATE_VAL 2
-
 int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 {
-	char buf[BUFFER_SIZE], var[BUFFER_SIZE], val[BUFFER_SIZE];
-	char *pto, *ptarr[1000];
-	int i, nest = 0, state[1000];
+	char var[BUFFER_SIZE], val[BUFFER_SIZE], *pto;
+	int i, nest, state[100], last;
 
-	var[0] = val[0] = i = state[nest] = 0;
+	var[0] = val[0] = state[0] = nest = last = 0;
 
 	if (skip_sb(ses, cplen, src) > cplen)
 	{
 		return cplen + 1;
 	}
 
-	while (i < cplen && src[i] != SE)
+	i = 3;
+	pto = var;
+
+	while (i < cplen && nest < 99)
 	{
+		if (src[i] == IAC && i + 1 < cplen && src[i+1] == SE)
+		{
+			break;
+		}
+
 		switch (src[i])
 		{
-			case MSDP_VAR:
-				i++;
-				pto = buf;
-
-				while (i < cplen && src[i] > 4 && src[i] != IAC)
-				{
-					*pto++ = src[i++];
-				}
-				*pto = 0;
-
-				substitute(ses, buf, var, SUB_SEC);
-
+			case MSDP_TABLE_OPEN:
+				nest++;
 				state[nest] = 0;
+				last = MSDP_TABLE_OPEN;
+				break;
+
+			case MSDP_TABLE_CLOSE:
+				if (nest)
+				{
+					if (last == MSDP_VAL || last == MSDP_VAR)
+					{
+						*pto++ = '}';
+					}
+					nest--;
+				}
+				if (nest)
+				{
+					*pto++ = '}';
+				}
+				last = MSDP_TABLE_CLOSE;
+				break;
+
+			case MSDP_ARRAY_OPEN:
+				nest++;
+				state[nest] = 1;
+				last = MSDP_ARRAY_OPEN;
+				break;
+
+			case MSDP_ARRAY_CLOSE:
+				if (nest)
+				{
+					if (last == MSDP_VAL)
+					{
+						*pto++ = '}';
+					}
+					nest--;
+				}
+				if (nest)
+				{
+					*pto++ = '}';
+				}
+				last = MSDP_ARRAY_CLOSE;
+				break;
+
+			case MSDP_VAR:
+				if (nest)
+				{
+					if (last == MSDP_VAL)
+					{
+						*pto++ = '}';
+					}
+					*pto++ = '{';
+				}
+				else
+				{
+					*pto = 0;
+
+					if (last)
+					{
+						telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
+						check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP %s", var, var, val);
+						check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP", var, val);
+					}
+					pto = var;
+				}
+				last = MSDP_VAR;
 				break;
 
 			case MSDP_VAL:
-				pto = val;
-
-				while (i < cplen)
+				if (nest)
 				{
-					switch (src[i])
+					if (last == MSDP_VAR || last == MSDP_VAL)
 					{
-						case MSDP_VAR:
-							if (state[nest] >= 2)
-							{
-								*pto++ = '}';
-							}
-
-							if (nest == 0)
-							{
-								goto end_val;
-							}
-
-							if (state[nest] >= 1)
-							{
-								*pto++ = '}';
-							}
-							*pto++ = '{';
-
-							state[nest] = 0;
-							break;
-
-						case MSDP_VAL:
-							if (state[nest] == 0)
-							{
-								if (nest)
-								{
-									*pto++ = '}';
-									*pto++ = '{';
-								}
-								ptarr[nest] = pto;
-								state[nest]++;
-							}
-							else if (state[nest] == 1)
-							{
-								sprintf(buf, "{1}{%.*s}{2}{", (int) (pto - ptarr[nest]), ptarr[nest]);
-								sprintf(ptarr[nest], "%s", buf);
-								pto += 9;
-								state[nest]++;
-							}
-							else
-							{
-								pto += sprintf(pto, "}{%d}{", ++state[nest]);
-							}
-							break;
-
-						case MSDP_OPEN:
-							if (++nest > 1)
-							{
-								*pto++ = '{';
-							}
-							state[nest] = 0;
-							break;
-
-						case MSDP_CLOSE:
-							if (state[nest] >= 2)
-							{
-								*pto++ = '}';
-							}
-
-							if (state[nest] >= 1)
-							{
-								*pto++ = '}';
-							}
-
-							if (--nest > 0)
-							{
-								*pto++ = '}';
-							}
-
-							break;
-
-						case IAC:
-							if (state[nest] >= 2)
-							{
-								*pto++ = '}';
-							}
-							goto end_val;
-
-						case '\\':
-							*pto++ = '\\';
-							*pto++ = '\\';
-							break;
-
-						case '{':
-							*pto++ = '\\';
-							*pto++ = 'x';
-							*pto++ = '7';
-							*pto++ = 'B';
-							break;
-
-						case '}':
-							*pto++ = '\\';
-							*pto++ = 'x';
-							*pto++ = '7';
-							*pto++ = 'D';
-							break;
-
-						case COMMAND_SEPARATOR:
-							*pto++ = '\\';
-							*pto++ = COMMAND_SEPARATOR;
-							break;
-
-						default:
-							*pto++ = src[i];
-							break;
+						*pto++ = '}';
 					}
-					i++;
+					if (state[nest])
+					{
+						pto += sprintf(pto, "{%d}", state[nest]++);
+					}
+					*pto++ = '{';
 				}
+				else
+				{
+					*pto = 0;
 
-				end_val:
+					if (last != MSDP_VAR)
+					{
+						telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
+						check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP %s", var, var, val);
+						check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP", var, val);
+					}
+					pto = val;
+				}
+				last = MSDP_VAL;
+				break;
 
-				*pto = 0;
+			case '\\':
+				*pto++ = '\\';
+				*pto++ = '\\';
+				break;
 
-				telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
+			case '{':
+				*pto++ = '\\';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'B';
+				break;
 
-				check_all_events(ses, 1, 2, "IAC SB MSDP %s", var, var, val);
+			case '}':
+				*pto++ = '\\';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'D';
+				break;
 
-				check_all_events(ses, 0, 2, "IAC SB MSDP", var, val);
-
-				state[nest] = 0;
+			case COMMAND_SEPARATOR:
+				*pto++ = '\\';
+				*pto++ = COMMAND_SEPARATOR;
 				break;
 
 			default:
-				i++;
+				*pto++ = src[i];
 				break;
 		}
+		i++;
+	}
+
+	if (i < cplen && src[i] == IAC && nest < 99)
+	{
+		*pto = 0;
+
+		if (last)
+		{
+			telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
+			check_all_events(ses, SUB_ARG, 1, 2, "IAC SB MSDP %s", var, var, val);
+			check_all_events(ses, SUB_ARG, 0, 2, "IAC SB MSDP", var, val);
+		}
+		i++;
 	}
 
 	telopt_debug(ses, "IAC SB MSDP IAC SE");
 
-	check_all_events(ses, 0, 0, "IAC SB MSDP IAC SE");
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC SB MSDP IAC SE");
 
 	return UMIN(i + 1, cplen);
 }
+
 
 /*
 	NEW-ENVIRON
@@ -997,7 +1053,7 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 				{
 					telopt_debug(ses, "IAC SB NEW-ENVIRON SEND %s", x ? "VAR" : "USR");
 
-					check_all_events(ses, 1, 2, "IAC SB NEW-ENVIRON SEND %s", x ? "VAR" : "USR", var, "");
+					check_all_events(ses, SUB_ARG|SUB_SEC, 1, 2, "IAC SB NEW-ENVIRON SEND %s", x ? "VAR" : "USR", var, "");
 				}
 				break;
 
@@ -1015,7 +1071,7 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 
 				telopt_debug(ses, "IAC SB NEW-ENVIRON %s %s", src[3] ? "IS" : "INFO", x ? "VAR" : "USR");
 
-				check_all_events(ses, 2, 2, "IAC SB NEW-ENVIRON %s %s", src[i] ? "IS" : "INFO", x ? "VAR" : "USR", var, val);
+				check_all_events(ses, SUB_ARG|SUB_SEC, 2, 2, "IAC SB NEW-ENVIRON %s %s", src[i] ? "IS" : "INFO", x ? "VAR" : "USR", var, val);
 				break;
 
 			case IAC:
@@ -1023,7 +1079,7 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 				{
 					telopt_debug(ses, "IAC SB NEW-ENVIRON %s", src[3] == 0 ? "IS" : src[3] == 1 ? "SEND" : "INFO");
 
-					check_all_events(ses, 1, 2, "IAC SB NEW-ENVIRON %s", src[3] == 0 ? "IS" : src[3] == 1 ? "SEND" : "INFO", var, val);
+					check_all_events(ses, SUB_ARG|SUB_SEC, 1, 2, "IAC SB NEW-ENVIRON %s", src[3] == 0 ? "IS" : src[3] == 1 ? "SEND" : "INFO", var, val);
 				}
 				i++;
 				break;
@@ -1035,7 +1091,7 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 
 	telopt_debug(ses, "IAC SB NEW-ENVIRON IAC SE");
 
-	check_all_events(ses, 0, 0, "IAC SB NEW-ENVIRON IAC SE");
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC SB NEW-ENVIRON IAC SE");
 
 	return i + 1;
 }
@@ -1078,7 +1134,7 @@ int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 				{
 					telopt_debug(ses, "IAC SB ZMP %s", var);
 
-					check_all_events(ses, 1, 1, "IAC SB ZMP %s", var, val);
+					check_all_events(ses, SUB_ARG|SUB_SEC, 1, 1, "IAC SB ZMP %s", var, val);
 				}
 				break;
 		}
@@ -1086,7 +1142,7 @@ int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 
 	telopt_debug(ses, "IAC SB ZMP %s IAC SE", var);
 
-	check_all_events(ses, 1, 0, "IAC SB ZMP %s IAC SE", var);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC SB ZMP %s IAC SE", var);
 
 	return UMIN(i + 1, cplen);
 }
@@ -1094,7 +1150,7 @@ int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 {
 	char mod[BUFFER_SIZE], val[BUFFER_SIZE], json[BUFFER_SIZE], *pto;
-	int i, state[1000], nest, type;
+	int i, state[100], nest, type;
 
 	push_call("recv_sb_gmcp(%p,%d,%p)",ses,cplen,src);
 
@@ -1134,7 +1190,7 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 
 	pto = val;
 
-	while (i < cplen && src[i] != IAC)
+	while (i < cplen && src[i] != IAC && nest < 99)
 	{
 		switch (src[i])
 		{
@@ -1212,7 +1268,6 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 							}
 							else
 							{
-								*pto++ = '\\';
 								*pto++ = '\\';
 							}
 							break;
@@ -1294,11 +1349,6 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 	}
 	*pto = 0;
 
-	while (i < cplen && src[i] != SE)
-	{
-		i++;
-	}
-
 	// Raw json data for debugging purposes.
 
 	pto = json;
@@ -1343,9 +1393,14 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 	}
 	*pto = 0;
 
+	while (i < cplen && src[i] != SE)
+	{
+		i++;
+	}
+
 	telopt_debug(ses, "IAC SB GMCP %s IAC SE", mod);
 
-	check_all_events(ses, 1, 2, "IAC SB GMCP %s IAC SE", mod, val, json);
+	check_all_events(ses, SUB_ARG, 1, 2, "IAC SB GMCP %s IAC SE", mod, val, json);
 
 	pop_call();
 	return UMIN(i + 1, cplen);
@@ -1482,7 +1537,7 @@ int recv_sb(struct session *ses, int cplen, unsigned char *cpsrc)
 	*pt1 = 0;
 	*pt2 = 0;
 
-	check_all_events(ses, 1, 2, "IAC SB %s", telopt_table[cpsrc[2]].name, var1, var2);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 1, 2, "IAC SB %s", telopt_table[cpsrc[2]].name, var1, var2);
 
 	return i + 2;
 }

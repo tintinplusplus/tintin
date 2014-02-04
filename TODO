@@ -1,67 +1,69 @@
-* Stuff that needs to be done
+* Stuff that's going to be done.
 
-- Fix '#var {bli} {bla} ' bug
+- Proper Map terrain handling.
 
-- Fix brace related GMCP crashes.
+- MSDP array support.
 
-- Check if Cygwin install info is still correct.
+--------------------------------------------------------------------------------
 
-- fix UTF-8 handling in input.
 
-- fix packet patch prompt repetition bug.
+* Stuff that might be implemented
 
-- add chat server script 'log' option to show last 15 messages.
+- SGA disabling
 
-- look into getting rid of node->data
+- CHARSET TELOPT support.
+
+- BINARY TELOPT support.
+
+- Split pane scrollback
+
+- Don't eat the path when using #path walk forward, allowing mixed usage of
+  forward and backward. Also add a #MAP START OF PATH event?
+
+- add #line gag {lines} option or #lines {lines} {gag}.
+
+- Add something like #log append $dir/logs/log.txt {%D %H:%M:%S} 
+
+--------------------------------------------------------------------------------
+
+
+* Known bugs that need to be fixed.
+
+
+- Word wrap related scroll back problems.
+
+- Crash on multiple session close
+
+
+* Bugs that might be fixed.
+
+
+- There's a bug with prompt repetitions with packet patch set.
 
 - garbage collection for deleted nodes.
-
-- global flag to only show the same area.
-
-- map color setting for hidden exits.
-
-- look into Launchpad PPA
-
--------------------------------------------------------------------------------
-
-GENERAL STUFF:
-
-- Add escape stripping #prompt option.
-
-- Look into old school automatic packet patching.
-
-- Add split pane scrollback
-
-- Add a ARG_LEN / ARG_MAX setting.
-
-- Add a #line skip option.
 
 - Deal with escaping { } / ; in #script variables.
 
 - Make tintin char setting by session instead of global.
 
-- Add a way to append text to prompts.
+- http://tintin.sourceforge.net/board/posting.php?mode=reply&t=36
 
-- Proper manual for CHAT and MAP.
+--------------------------------------------------------------------------------
 
-- Don't eat the path when using #path walk forward, allowing mixed usage of
-  forward and backward. Also add a #MAP START OF PATH event?
 
-- crash on: #map exit {2}{command}{s;#map read floobity.map} 
+* Mapping related stuff
 
-- add #line gag {lines} option or #lines {lines} {gag}.
+- Add weight setting for rooms to alter traversal.
+
+- Add get support for room exits.
+
+- Add full table support
 
 - auto adjust max vnum size of mapper.
 
--------------------------------------------------------------------------------
+- global flag to only show the same area with the mapper.
 
-READLINE:
-
-- Debug end of screen input drawing.
-
--------------------------------------------------------------------------------
-
-MAPPING STUFF:
+- map color setting for hidden exits.
 
 - Create global exits, like recall, that can be used with #map run.
 
@@ -77,20 +79,34 @@ MAPPING STUFF:
 
 - Add conditional if checks for room traversal.
 
--------------------------------------------------------------------------------
-DEBUGGING STUFF:
+--------------------------------------------------------------------------------
 
-#SESSION 'mssp' DIED.
 
-#THERE'S NO ACTIVE SESSION NOW.
-#UNLINK ERROR in file session.c on line 351
-DEBUG_STACK[000] = cleanup_session(0x8205430)
+* Other stuff
 
-ERROR: close in cleanup (9: Bad file descriptor)
 
--------------------------------------------------------------------------------
+- look into Launchpad PPA
 
-* This is a list of improvements that are planned for a rainy day.
+- Chat server script 'log' option to show last 15 messages.
+
+
+* Other stuff that's not overly interesting
+
+
+- look into getting rid of node->data
+
+- Look into old school automatic packet patching.
+
+- Add a ARG_LEN / ARG_MAX setting.
+
+- Add a #line skip option.
+
+- Proper manual for CHAT and MAP.
+
+
+
+* Stuff for a rainy day
+
 
 - Buffer safe strings.
 
@@ -99,10 +115,6 @@ ERROR: close in cleanup (9: Bad file descriptor)
 - Look into packet defragmentation for chat.
 
 - Color code compression, particularly useful with vt map drawing.
-
-- link http://www.lauzet.com/argon on webpage
-
-- See if it's possible to add better #path run support.
 
 - Events for prompt lines.
 
@@ -116,31 +128,10 @@ ERROR: close in cleanup (9: Bad file descriptor)
 
 -------------------------------------------------------------------------------
 
+
 * Stuff that has been request but that I'm not entirely sure about
 
-- http://tintin.sourceforge.net/board/posting.php?mode=reply&t=36
-
-- Add a command to manipulate the input buffer.
-
-- Add color compression to the strip_non_vt function.
+- Add a command to manipulate the input buffer..
 
 - Keep last input visible with repeat enter enabled.
 
--------------------------------------------------------------------------------
-
-
-* This is a list of new features/improvements I'm not interest in.
-
-- X window support: console is just fine.
-
-- MXP support, will be tricky with tintin++ being a console client, a good
-  starting point might be libmxp provided by the creator of kmuddy.
-
-  http://www.kmuddy.org/libmxp/
-
-  Tintin will also need a html terminal, which isn't available yet.
-
-- MSP support: I'm not aware of a good easy cross platform sound library. You
-  can use a command line sound mixer with the #system command.
-
-- Plugins: Maybe sometime far in the future I'll add a plugin to add plugins.

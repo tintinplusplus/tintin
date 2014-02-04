@@ -33,8 +33,8 @@ DO_COMMAND(do_cursor)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left,  TRUE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+	arg = get_arg_in_braces(ses, arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
@@ -70,6 +70,214 @@ DO_COMMAND(do_cursor)
 		tintin_printf(ses, "#ERROR: #CURSOR {%s} IS NOT A VALID OPTION.", capitalize(left));
 	}
 	return ses;
+}
+
+// Multi-Byte support routines
+
+int inputline_str_str_len(int start, int end)
+{
+	int raw_cnt, str_cnt, ret_cnt;
+
+	raw_cnt = str_cnt = ret_cnt = 0;
+
+	while (raw_cnt < gtd->input_len)
+	{
+		if (str_cnt >= end)
+		{
+			break;
+		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
+		{
+			raw_cnt++;
+
+			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
+			{
+				raw_cnt++;
+			}
+		}
+		else
+		{
+			raw_cnt++;
+		}
+		str_cnt++;
+
+		if (str_cnt > start)
+		{
+			ret_cnt++;
+		}
+	}
+	return ret_cnt;
+}
+
+int inputline_raw_str_len(int start, int end)
+{
+	int raw_cnt, ret_cnt;
+
+	raw_cnt = start;
+	ret_cnt = 0;
+
+	while (raw_cnt < gtd->input_len)
+	{
+		if (raw_cnt >= end)
+		{
+			break;
+		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
+		{
+			raw_cnt++;
+
+			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
+			{
+				raw_cnt++;
+			}
+		}
+		else
+		{
+			raw_cnt++;
+		}
+		ret_cnt++;
+	}
+	return ret_cnt;
+}
+
+int inputline_str_raw_len(int start, int end)
+{
+	int raw_cnt, str_cnt, ret_cnt;
+
+	raw_cnt = str_cnt = ret_cnt = 0;
+
+	while (raw_cnt < gtd->input_len)
+	{
+		if (str_cnt >= end)
+		{
+			break;
+		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
+		{
+			ret_cnt += (str_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+
+			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
+			{
+				ret_cnt += (str_cnt >= start) ? 1 : 0;
+				raw_cnt++;
+			}
+		}
+		else
+		{
+			ret_cnt += (str_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+		}
+		str_cnt++;
+	}
+	return ret_cnt;
+}
+
+int inputline_raw_raw_len(int start, int end)
+{
+	int raw_cnt, ret_cnt;
+
+	raw_cnt = ret_cnt = 0;
+
+	while (raw_cnt < gtd->input_len)
+	{
+		if (raw_cnt >= end)
+		{
+			break;
+		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
+		{
+			ret_cnt += (raw_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+
+			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
+			{
+				ret_cnt += (raw_cnt >= start) ? 1 : 0;
+				raw_cnt++;
+			}
+		}
+		else
+		{
+			ret_cnt += (raw_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+		}
+	}
+	return ret_cnt;
+}
+
+// Get string length of the input area
+
+int inputline_max_str_len(void)
+{
+	return gtd->ses->cols + 1 - gtd->input_off - (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH) ? 11 : 0);
+}
+
+int inputline_cur_str_len(void)
+{
+	return inputline_str_str_len(gtd->input_hid, gtd->input_hid + inputline_max_str_len());
+}
+
+// Check for invalid characters.
+
+int inputline_str_chk(int offset, int totlen)
+{
+	while (offset < totlen)
+	{
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5))
+		{
+			if (gtd->input_buf[offset] & 128)
+			{
+				if (offset + 1 < totlen || gtd->input_buf[offset+1] == 0)
+				{
+					return FALSE;
+				}
+				offset += 2;
+			}
+			else
+			{
+				offset += 1;
+			}
+		}
+		else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8))
+		{
+			switch (gtd->input_buf[offset] & (128+64+32+16))
+			{
+				case 128+64:
+				case 128+64+16:
+					if (offset + 1 < totlen || (gtd->input_buf[offset+1] & 192) != 128)
+					{
+						return FALSE;
+					}
+					offset += 2;
+					break;
+
+				case 128+64+32:
+					if (offset + 2 < totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128)
+					{
+						return FALSE;
+					}
+					offset += 3;
+					break;
+
+				case 128+64+32+16:
+					if (offset + 3 < totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128 || (gtd->input_buf[offset+3] & 192) != 128)
+					{
+						return FALSE;
+					}
+					offset += 4;
+					break;
+
+				default:
+					offset += 1;
+					break;
+			}
+		}
+	}
+	return TRUE;
 }
 
 DO_CURSOR(cursor_backspace)
@@ -114,34 +322,25 @@ DO_CURSOR(cursor_buffer_up)
 
 DO_CURSOR(cursor_check_line)
 {
-	if (gtd->input_pos != gtd->input_cur)
+	if (gtd->input_pos - gtd->input_hid > inputline_max_str_len() - 3)
 	{
-		if (gtd->input_cur < gtd->ses->cols - 2)
-		{
-			cursor_redraw_line("");
-
-			return;
-		}
+		return cursor_redraw_line("");
 	}
 
-	if (gtd->input_pos > 2 && gtd->input_pos < gtd->ses->cols - 2)
+	if (gtd->input_hid && gtd->input_pos - gtd->input_hid < 2)
 	{
-		return;
+		return cursor_redraw_line("");
+	}
+}
+
+DO_CURSOR(cursor_check_line_modified)
+{
+	if (gtd->input_hid + inputline_max_str_len() < inputline_raw_str_len(0, gtd->input_len))
+	{
+		return cursor_redraw_line("");
 	}
 
-	if (gtd->input_pos >= gtd->ses->cols - 2)
-	{
-		cursor_redraw_line("");
-
-		return;
-	}
-
-	if (gtd->input_pos != gtd->input_cur && gtd->input_pos <= 2)
-	{
-		cursor_redraw_line("");
-
-		return;
-	}
+	return cursor_check_line("");
 }
 
 DO_CURSOR(cursor_clear_left)
@@ -153,25 +352,18 @@ DO_CURSOR(cursor_clear_left)
 
 	sprintf(gtd->paste_buf, "%.*s", gtd->input_cur, gtd->input_buf);
 
-	memmove(&gtd->input_buf[0], &gtd->input_buf[gtd->input_cur+1], gtd->input_len - gtd->input_cur);
+	input_printf("\033[%dG\033[%dP", gtd->input_off, gtd->input_pos - gtd->input_hid);
 
-	input_printf("\033[%dD\033[%dP", gtd->input_cur, gtd->input_cur);
+	memmove(&gtd->input_buf[0], &gtd->input_buf[gtd->input_cur], gtd->input_len - gtd->input_cur);
 
 	gtd->input_len -= gtd->input_cur;
 
 	gtd->input_buf[gtd->input_len] = 0;
 
-	if (gtd->input_cur != gtd->input_pos)
-	{
-		gtd->input_cur  = 0;
-		gtd->input_pos  = 0;
-		cursor_redraw_line("");
-	}
-	else
-	{
-		gtd->input_cur  = 0;
-		gtd->input_pos  = 0;
-	}
+	gtd->input_cur  = 0;
+	gtd->input_pos  = 0;
+
+	cursor_check_line_modified("");
 
 	modified_input();
 }
@@ -183,17 +375,11 @@ DO_CURSOR(cursor_clear_line)
 		return;
 	}
 
-	if (gtd->input_pos)
-	{
-		input_printf("\033[%dG\033[%dP", gtd->input_off, gtd->input_len);
-	}
-	else
-	{
-		input_printf("\033[%dP", gtd->input_len);
-	}
+	input_printf("\033[%dG\033[%dP", gtd->input_off, inputline_cur_str_len());
 
 	gtd->input_len = 0;
 	gtd->input_cur = 0;
+	gtd->input_hid = 0;
 	gtd->input_pos = 0;
 	gtd->input_buf[0] = 0;
 
@@ -209,7 +395,7 @@ DO_CURSOR(cursor_clear_right)
 
 	strcpy(gtd->paste_buf, &gtd->input_buf[gtd->input_cur]);
 
-	input_printf("\033[%dP", gtd->input_len - gtd->input_pos);
+	input_printf("\033[%dP", inputline_max_str_len() - inputline_str_str_len(gtd->input_hid, gtd->input_pos));
 
 	gtd->input_buf[gtd->input_cur] = 0;
 
@@ -223,7 +409,7 @@ DO_CURSOR(cursor_convert_meta)
 	SET_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR);
 }
 
-DO_CURSOR(cursor_delete_exit)
+DO_CURSOR(cursor_delete_or_exit)
 {
 	if (gtd->input_len == 0)
 	{
@@ -247,13 +433,39 @@ DO_CURSOR(cursor_delete)
 		return;
 	}
 
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5) && (gtd->input_buf[gtd->input_cur] & 128) == 128)
+	{
+		if (gtd->input_cur + 1 < gtd->input_len && gtd->input_buf[gtd->input_cur+1])
+		{
+			memmove(&gtd->input_buf[gtd->input_cur+1], &gtd->input_buf[gtd->input_cur+2], gtd->input_len - gtd->input_cur);
+
+			gtd->input_len--;
+
+			input_printf("\033[1P");
+		}
+	}
+	else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[gtd->input_cur] & 192) == 192)
+	{
+		while (gtd->input_cur + 1 < gtd->input_len && (gtd->input_buf[gtd->input_cur+1] & 192) == 128)
+		{
+			memmove(&gtd->input_buf[gtd->input_cur+1], &gtd->input_buf[gtd->input_cur+2], gtd->input_len - gtd->input_cur);
+
+			gtd->input_len--;
+		}
+	}
+
 	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[gtd->input_cur+1], gtd->input_len - gtd->input_cur);
 
 	gtd->input_len--;
 
-	input_printf("\033[1P");
-
-	cursor_fix_line("");
+	if (gtd->input_hid + inputline_max_str_len() <= inputline_raw_str_len(0, gtd->input_len))
+	{
+		cursor_redraw_line("");
+	}
+	else
+	{
+		input_printf("\033[1P");
+	}
 
 	modified_input();
 }
@@ -269,27 +481,31 @@ DO_CURSOR(cursor_delete_word_left)
 
 	index_cur = gtd->input_cur;
 
-	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] == ' ')
+	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] == ' ')
 	{
-		gtd->input_cur--;
 		gtd->input_pos--;
+		gtd->input_cur--;
 	}
 
-	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] != ' ')
+	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
+		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		{
+			gtd->input_pos--;
+		}
+
 		gtd->input_cur--;
-		gtd->input_pos--;
 	}
 
 	sprintf(gtd->paste_buf, "%.*s", index_cur - gtd->input_cur, &gtd->input_buf[gtd->input_cur]);
 
 	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], gtd->input_len - index_cur + 1);
 
-	input_printf("\033[%dD\033[%dP", index_cur - gtd->input_cur, index_cur - gtd->input_cur);
+//	input_printf("\033[%dD\033[%dP", index_cur - gtd->input_cur, index_cur - gtd->input_cur);
 
 	gtd->input_len -= index_cur - gtd->input_cur;
 
-	cursor_check_line("");
+	cursor_redraw_line("");
 
 	modified_input();
 }
@@ -297,7 +513,7 @@ DO_CURSOR(cursor_delete_word_left)
 
 DO_CURSOR(cursor_delete_word_right)
 {
-	int index_cur, index_pos;
+	int index_cur;
 
 	if (gtd->input_cur == gtd->input_len)
 	{
@@ -305,33 +521,29 @@ DO_CURSOR(cursor_delete_word_right)
 	}
 
 	index_cur = gtd->input_cur;
-	index_pos = gtd->input_pos;
 
 	while (gtd->input_cur != gtd->input_len && gtd->input_buf[gtd->input_cur] == ' ')
 	{
 		gtd->input_cur++;
-		gtd->input_pos++;
 	}
 
 	while (gtd->input_cur != gtd->input_len && gtd->input_buf[gtd->input_cur] != ' ')
 	{
 		gtd->input_cur++;
-		gtd->input_pos++;
 	}
 
 	sprintf(gtd->paste_buf, "%.*s", gtd->input_cur - index_cur, &gtd->input_buf[gtd->input_cur]);
 
 	memmove(&gtd->input_buf[index_cur], &gtd->input_buf[gtd->input_cur], gtd->input_len - gtd->input_cur + 1);
 
-	input_printf("\033[%dP", gtd->input_cur - index_cur);
+//	input_printf("\033[%dP", gtd->input_cur - index_cur);
 
 	gtd->input_len -= gtd->input_cur - index_cur;
 
-	gtd->input_pos = index_pos;
 	gtd->input_cur = index_cur;
 
-	cursor_fix_line("");
-
+	cursor_redraw_line("");
+	
 	modified_input();
 }
 
@@ -347,11 +559,9 @@ DO_CURSOR(cursor_echo_off)
 
 DO_CURSOR(cursor_end)
 {
-	if (gtd->input_cur == gtd->input_len)
-	{
-		return;
-	}
 	gtd->input_cur = gtd->input_len;
+
+	gtd->input_pos = inputline_raw_str_len(0, gtd->input_len);
 
 	cursor_redraw_line("");
 }
@@ -365,6 +575,7 @@ DO_CURSOR(cursor_enter)
 	gtd->input_len    = 0;
 	gtd->input_cur    = 0;
 	gtd->input_pos    = 0;
+	gtd->input_off    = 1;
 	gtd->macro_buf[0] = 0;
 	gtd->input_tmp[0] = 0;
 
@@ -420,7 +631,7 @@ DO_CURSOR(cursor_history_next)
 
 		if (root->update < root->used)
 		{
-			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 11);
+			input_printf("\033[%dG  \033[0K%.*s\033[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		return;
 	}
@@ -457,10 +668,8 @@ DO_CURSOR(cursor_history_next)
 	}
 
 	gtd->input_len = strlen(gtd->input_buf);
-	gtd->input_cur = gtd->input_len;
-	gtd->input_pos = 0;
 
-	cursor_redraw_line("");
+	cursor_end("");
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 }
@@ -486,7 +695,7 @@ DO_CURSOR(cursor_history_prev)
 
 		if (root->update >= 0)
 		{
-			input_printf("\033[%dC   \033[0K%.*s\033[%dG", gtd->input_len - gtd->input_cur + 1, gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 11);
+			input_printf("\033[%dG  \033[0K%.*s\033[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		return;
 	}
@@ -531,10 +740,8 @@ DO_CURSOR(cursor_history_prev)
 	}
 
 	gtd->input_len = strlen(gtd->input_buf);
-	gtd->input_cur = gtd->input_len;
-	gtd->input_pos = 0;
 
-	cursor_redraw_line("");
+	cursor_end("");
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 }
@@ -572,7 +779,7 @@ DO_CURSOR(cursor_history_search)
 
 		gtd->input_len = strlen(gtd->input_buf);
 		gtd->input_cur = gtd->input_len;
-		gtd->input_pos = gtd->input_len;
+		gtd->input_pos = 0;
 
 		root->update = -1;
 
@@ -590,6 +797,15 @@ DO_CURSOR(cursor_history_find)
 
 	push_call("cursor_history_find(%s)", gtd->input_buf);
 
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5))
+	{
+		if (inputline_str_chk(0, gtd->input_len) == FALSE)
+		{
+			pop_call();
+			return;
+		}
+	}
+
 	for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 	{
 		if (*gtd->input_buf && find(gtd->ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
@@ -600,25 +816,11 @@ DO_CURSOR(cursor_history_find)
 
 	if (root->update >= 0)
 	{
-		if (gtd->input_len == gtd->input_cur)
-		{
-			input_printf("\033[0K]   %.*s\033[%dG", gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 11);
-		}
-		else
-		{
-			input_printf("\033[%dC\033[0K]\033[3C%.*s\033[%dG", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, root->list[root->update]->left, gtd->input_pos + 1);
-		}
+		input_printf("\033[%dG ]  %.*s\033[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
 	}
 	else
 	{
-		if (gtd->input_len == gtd->input_cur)
-		{
-			input_printf("\033[0K]\033[%dG", gtd->input_pos + 11);
-		}
-		else
-		{
-			input_printf("\033[%dC\033[0K]\033[%dG", gtd->input_len - gtd->input_cur, gtd->input_pos + 11);
-		}
+		input_printf("\033[%dG ] \033[0K\033[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + gtd->input_pos - gtd->input_hid);
 	}
 	pop_call();
 	return;
@@ -631,19 +833,16 @@ DO_CURSOR(cursor_home)
 		return;
 	}
 
-	input_printf("\033[%dD", gtd->input_pos);
+	input_printf("\033[%dD", gtd->input_pos - gtd->input_hid);
 
-	if (gtd->input_cur != gtd->input_pos)
+	gtd->input_cur = 0;
+	gtd->input_pos = 0;
+
+	if (gtd->input_hid)
 	{
-		gtd->input_cur = 0;
-		gtd->input_pos = 0;
+		gtd->input_hid = 0;
 
 		cursor_redraw_line("");
-	}
-	else
-	{
-		gtd->input_cur = 0;
-		gtd->input_pos = 0;
 	}
 }
 
@@ -674,6 +873,22 @@ DO_CURSOR(cursor_left)
 	{
 		gtd->input_cur--;
 		gtd->input_pos--;
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5) && inputline_str_chk(0, gtd->input_cur) == FALSE)
+		{
+			gtd->input_cur--;
+			gtd->input_pos--;
+
+			input_printf("\033[1D");
+		}
+		else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8))
+		{
+			while (gtd->input_cur > 0 && (gtd->input_buf[gtd->input_cur] & 192) == 128)
+			{
+				gtd->input_cur--;
+			}
+		}
+
 		input_printf("\033[1D");
 
 		cursor_check_line("");
@@ -682,30 +897,33 @@ DO_CURSOR(cursor_left)
 
 DO_CURSOR(cursor_left_word)
 {
-	int index_cur;
+//	int index_pos;
 
 	if (gtd->input_cur == 0)
 	{
 		return;
 	}
 
-	index_cur = gtd->input_cur;
+//	index_pos = gtd->input_pos;
 
-	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] == ' ')
+	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] == ' ')
 	{
-		gtd->input_cur--;
 		gtd->input_pos--;
+		gtd->input_cur--;
 	}
 
-	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] != ' ')
+	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
+		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		{
+			gtd->input_pos--;
+		}
 		gtd->input_cur--;
-		gtd->input_pos--;
 	}
 
-	input_printf("\033[%dD", index_cur - gtd->input_cur);
+//	input_printf("\033[%dD", index_pos - gtd->input_pos);
 
-	cursor_check_line("");
+	cursor_redraw_line("");
 }
 
 
@@ -746,56 +964,63 @@ DO_CURSOR(cursor_redraw_input)
 
 DO_CURSOR(cursor_redraw_line)
 {
-	input_printf("\033[%dG\033[%dX", gtd->input_off, gtd->input_len);
-
-	if (gtd->input_pos != gtd->input_cur)
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5))
 	{
-		if (gtd->input_cur < gtd->ses->cols - 2)
+		if (inputline_str_chk(0, gtd->input_len) == FALSE)
 		{
-			gtd->input_pos = gtd->input_cur;
+			return;
 		}
 	}
 
-	if (gtd->input_pos >= gtd->ses->cols - 2)
-	{
-		while (gtd->input_pos >= gtd->ses->cols - 2)
-		{
-			gtd->input_pos -= gtd->ses->cols / 3;
-		}
-	}
+	// Erase current input
 
-	if (gtd->input_pos != gtd->input_cur)
-	{
-		if (gtd->input_pos <= 2)
-		{
-			while (gtd->input_pos <= 2)
-			{
-				gtd->input_pos += gtd->ses->cols * 2 / 3;
-			}
-		}
-	}
+	input_printf("\033[%dG\033[%dP", gtd->input_off, inputline_max_str_len());
 
-	if (gtd->input_pos != gtd->input_cur)
+	// Center long lines of input
+
+	if (gtd->input_pos > inputline_max_str_len() - 3)
 	{
-		input_printf("<%.*s\033[%dG", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur - gtd->input_pos + 1], gtd->input_pos+gtd->input_off);
+		while (gtd->input_pos - gtd->input_hid > inputline_max_str_len() - 3)
+		{
+			gtd->input_hid += inputline_max_str_len() / 2;
+		}
+
+		while (gtd->input_pos - gtd->input_hid < 2)
+		{
+			gtd->input_hid -= inputline_max_str_len() / 2;
+		}
 	}
 	else
 	{
-		input_printf("%.*s\033[%dG", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos], gtd->input_pos+gtd->input_off);
+		if (gtd->input_hid && gtd->input_pos - gtd->input_hid < 2)
+		{
+			gtd->input_hid = 0;
+		}
 	}
 
-	cursor_fix_line("");
-}
+	// Print the entire thing
 
-DO_CURSOR(cursor_fix_line)
-{
-	if (gtd->input_len - gtd->input_cur + gtd->input_pos > gtd->ses->cols)
+	if (gtd->input_hid)
 	{
-		input_printf("\033[%dG%.1s>\033[%dG", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2], gtd->input_pos+gtd->input_off);
+		if (gtd->input_hid + inputline_max_str_len() >= inputline_raw_str_len(0, gtd->input_len))
+		{
+			input_printf("<%.*s\033[%dG",  inputline_str_raw_len(gtd->input_hid + 1, gtd->input_hid + inputline_max_str_len() - 0), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 1)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+		}
+		else
+		{
+			input_printf("<%.*s>\033[%dG", inputline_str_raw_len(gtd->input_hid + 1, gtd->input_hid + inputline_max_str_len() - 1), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 1)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+		}
 	}
-	else if (gtd->input_len - gtd->input_cur + gtd->input_pos == gtd->ses->cols)
+	else
 	{
-		input_printf("\033[%dG%.2s\033[%dG",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2], gtd->input_pos+gtd->input_off);
+		if (gtd->input_hid + inputline_max_str_len() >= inputline_raw_str_len(0, gtd->input_len))
+		{
+			input_printf("%.*s\033[%dG",   inputline_str_raw_len(gtd->input_hid + 0, gtd->input_hid + inputline_max_str_len() - 0), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 0)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+		}
+		else
+		{
+			input_printf("%.*s>\033[%dG",  inputline_str_raw_len(gtd->input_hid + 0, gtd->input_hid + inputline_max_str_len() - 1), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 0)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+		}
 	}
 }
 
@@ -805,6 +1030,25 @@ DO_CURSOR(cursor_right)
 	{
 		gtd->input_cur++;
 		gtd->input_pos++;
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5))
+		{
+			if (gtd->input_cur < gtd->input_len && inputline_str_chk(0, gtd->input_cur) == FALSE)
+			{
+				gtd->input_cur++;
+				gtd->input_pos++;
+
+				input_printf("\033[1C");
+			}
+		}
+		else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8))
+		{
+			while (gtd->input_cur < gtd->input_len && (gtd->input_buf[gtd->input_cur] & 192) == 128)
+			{
+				gtd->input_cur++;
+			}
+		}
+
 		input_printf("\033[1C");
 	}
 
@@ -830,18 +1074,24 @@ DO_CURSOR(cursor_right_word)
 
 	while (gtd->input_cur < gtd->input_len && gtd->input_buf[gtd->input_cur] != ' ')
 	{
+		if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		{
+			gtd->input_pos++;
+		}
 		gtd->input_cur++;
-		gtd->input_pos++;
 	}
 
-	input_printf("\033[%dC", gtd->input_cur - index_cur);
-
-	cursor_check_line("");
+	cursor_redraw_line("");
 }
 
 DO_CURSOR(cursor_suspend)
 {
 	do_suspend(gtd->ses, "");
+}
+
+DO_CURSOR(cursor_test)
+{
+	tintin_printf2(gtd->ses, "bar_len %d off %d pos %d hid %d cur %d len %d max %d tot %d", inputline_max_str_len(), gtd->input_off, gtd->input_pos, gtd->input_hid, gtd->input_cur, gtd->input_len, inputline_max_str_len(), inputline_cur_str_len());
 }
 
 /*
@@ -917,7 +1167,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 		while (*arg)
 		{
-			arg = get_arg_stop_spaces(arg, tab, 0);
+			arg = get_arg_stop_spaces(gtd->ses, arg, tab, 0);
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
@@ -961,12 +1211,13 @@ void cursor_hide_completion(int input_now)
 
 		if (len_change > 0)
 		{
+/*
 			if (gtd->input_cur < gtd->input_len)
 			{
 				input_printf("\033[%dC", gtd->input_len - gtd->input_cur);
 			}
 			input_printf("\033[%dD\033[%dP", len_change, len_change);
-
+*/
 			gtd->input_len = gtd->input_len - len_change;
 			gtd->input_buf[gtd->input_len] = 0;
 			gtd->input_cur = gtd->input_len;
@@ -987,7 +1238,7 @@ void cursor_show_completion(int input_now, int show_last_node)
 	}
 
 	node = show_last_node ? root->list[root->used - 1] : root->list[0];
-
+/*
 	if (gtd->input_cur < gtd->input_len)
 	{
 		input_printf("\033[%dC", gtd->input_len - gtd->input_cur);
@@ -1000,13 +1251,19 @@ void cursor_show_completion(int input_now, int show_last_node)
 	{
 		input_printf("%s", node->left);
 	}
+*/
 	strcpy(&gtd->input_buf[input_now], node->left);
 
 	gtd->input_len = input_now + strlen(node->left);
 	gtd->input_cur = gtd->input_len;
 	gtd->input_pos = gtd->input_len;
 
-	cursor_check_line("");
+	cursor_redraw_line("");
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		cursor_history_find("");
+	}
 
 	if (node == root->list[0])
 	{

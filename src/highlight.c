@@ -36,7 +36,7 @@ DO_COMMAND(do_highlight)
 
 	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, 1, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, arg3, 1);
+	arg = get_arg_in_braces(ses, arg, arg3, 1);
 
 	if (*arg3 == 0)
 	{
@@ -83,12 +83,12 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 {
 	struct listroot *root = ses->list[LIST_HIGHLIGHT];
 	struct listnode *node;
-	char *ptl, *ptm;
+	char *pto, *ptl, *ptm;
 	char match[BUFFER_SIZE], color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], plain[BUFFER_SIZE];
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, root->list[root->update], original, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
 			node = root->list[root->update];
 
@@ -96,7 +96,8 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 			*output = *reset = 0;
 
-			ptl = original;
+			pto = original;
+			ptl = line;
 
 			do
 			{
@@ -109,21 +110,32 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 				strip_vt102_codes(match, plain);
 
-				ptm = strstr(ptl, match);
+				ptm = strstr(pto, match);
+
+				if (!HAS_BIT(node->flags, NODE_FLAG_META))
+				{
+					if (ptm == NULL)
+					{
+						break;
+					}
+
+					ptl = strstr(ptl, match);
+					ptl = ptl + strlen(match);
+				}
 
 				*ptm = 0;
 
-				get_color_codes(reset, ptl, reset);
+				get_color_codes(reset, pto, reset);
 
-				cat_sprintf(output, "%s%s%s\033[0m%s", ptl, color, plain, reset);
+				cat_sprintf(output, "%s%s%s\033[0m%s", pto, color, plain, reset);
 
-				ptl = ptm + strlen(match);
+				pto = ptm + strlen(match);
 
-				show_debug(ses, LIST_HIGHLIGHT, "#DEBUG HIGHLIGHT {%s} {%s}", node->left, match);
+				show_debug(ses, LIST_HIGHLIGHT, "#DEBUG HIGHLIGHT {%s}", node->left);
 			}
-			while (check_one_regexp(ses, node, ptl, ptl, 0));
+			while (check_one_regexp(ses, node, ptl, pto, 0));
 
-			strcat(output, ptl);
+			strcat(output, pto);
 
 			strcpy(original, output);
 		}

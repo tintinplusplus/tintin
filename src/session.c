@@ -28,6 +28,7 @@
 #include "tintin.h"
 
 #include <errno.h>
+#include <signal.h>
 
 /************************/
 /* the #session command */
@@ -43,7 +44,7 @@ DO_COMMAND(do_session)
 
 	arg = temp;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, left,  FALSE);
 
 	if (*left == 0)
 	{
@@ -95,7 +96,7 @@ void show_session(struct session *ses, struct session *ptr)
 {
 	char temp[BUFFER_SIZE];
 
-	sprintf(temp, "%-12s%20s:%-5s", ptr->name, ptr->host, ptr->port);
+	sprintf(temp, "%3d %-12s %20s:%-5s", ptr->socket, ptr->name, ptr->host, ptr->port);
 
 	if (ptr == gtd->ses)
 	{
@@ -146,7 +147,7 @@ struct session *newactive_session(void)
 
 struct session *activate_session(struct session *ses)
 {
-	check_all_events(gtd->ses, 0, 1, "SESSION DEACTIVATED", gtd->ses->name);
+	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "SESSION DEACTIVATED", gtd->ses->name);
 
 	gtd->ses = ses;
 
@@ -154,7 +155,7 @@ struct session *activate_session(struct session *ses)
 
 	tintin_printf(ses, "#SESSION '%s' ACTIVATED.", ses->name);
 
-	check_all_events(ses, 0, 1, "SESSION ACTIVATED", ses->name);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "SESSION ACTIVATED", ses->name);
 
 	return ses;
 }
@@ -177,8 +178,8 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		return ses;
 	}
 
-	address = get_arg_in_braces(address, host, FALSE);
-	address = get_arg_in_braces(address, port, FALSE);
+	address = get_arg_in_braces(ses, address, host, FALSE);
+	address = get_arg_in_braces(ses, address, port, FALSE);
 
 	if (desc == 0)
 	{
@@ -309,7 +310,7 @@ void connect_session(struct session *ses)
 			init_telnet_session(ses);
 		}
 
-		check_all_events(ses, 0, 4, "SESSION CONNECTED", ses->name, ses->host, ses->ip, ses->port);
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION CONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
 		return;
 	}
@@ -371,9 +372,17 @@ void cleanup_session(struct session *ses)
 		{
 			syserr("close in cleanup");
 		}
+
+		// the PID is stored in the session's port.
+
+		if (HAS_BIT(ses->flags, SES_FLAG_RUN))
+		{
+			kill(atoi(ses->port), SIGKILL);
+		}
+
 	}
 
-	check_all_events(ses, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
 
 	tintin_printf(gtd->ses, "");
 

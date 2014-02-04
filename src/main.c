@@ -287,8 +287,8 @@ int main(int argc, char **argv)
 			gtd->ses = do_read(gtd->ses, argv[optind]);
 		}
 	}
-	check_all_events(gts, 0, 2, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION);
-	check_all_events(gts, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
+	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 2, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION);
+	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
 
 	mainloop();
 
@@ -331,6 +331,8 @@ void init_tintin(int greeting)
 
 	gtd->input_off      = 1;
 
+	gtd->term           = strdup(getenv("TERM") ? getenv("TERM") : "UNKNOWN");
+
 	for (index = 0 ; index < 100 ; index++)
 	{
 		gtd->vars[index] = strdup("");
@@ -360,6 +362,7 @@ void init_tintin(int greeting)
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
 	do_configure(gts, "{COMMAND ECHO}       {ON}");
 	do_configure(gts, "{CONNECT RETRY}      {15}");
+	do_configure(gts, "{CHARSET}         {ASCII}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
 	do_configure(gts, "{PACKET PATCH}     {0.00}");
@@ -372,6 +375,7 @@ void init_tintin(int greeting)
 	do_configure(gts, "{VERBATIM CHAR}      {\\}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
+	do_configure(gts, "{256 COLORS}       {AUTO}");
 
 	gts->input_level--;
 
@@ -414,7 +418,7 @@ void quitmsg(char *message)
 		close(gtd->chat->fd);
 	}
 
-	check_all_events(gts, 0, 0, "PROGRAM TERMINATION");
+	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 0, "PROGRAM TERMINATION");
 
 /*
 	if (gtd->history_size)

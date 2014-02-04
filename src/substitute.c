@@ -33,8 +33,8 @@ DO_COMMAND(do_substitute)
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], *str;
 
 	str = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(str, arg2, 1);
-	arg = get_arg_in_braces(arg, arg3, 1);
+	arg = get_arg_in_braces(ses, str, arg2, 1);
+	arg = get_arg_in_braces(ses, arg, arg3, 1);
 
 	if (*arg3 == 0)
 	{
@@ -71,17 +71,18 @@ DO_COMMAND(do_unsubstitute)
 
 void check_all_substitutions(struct session *ses, char *original, char *line)
 {
-	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *ptl, *ptm;
+	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *ptl, *ptm, *pto;
 	struct listroot *root = ses->list[LIST_SUBSTITUTE];
 	struct listnode *node;
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, root->list[root->update], original, original, 0))
+		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
 			node = root->list[root->update];
 
-			ptl = original;
+			pto = original;
+			ptl = line;
 
 			*output = 0;
 
@@ -96,19 +97,30 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 				substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				ptm = strstr(ptl, match);
+				ptm = strstr(pto, match);
+
+				if (!HAS_BIT(node->flags, NODE_FLAG_META))
+				{
+					if (ptm == NULL)
+					{
+						break;
+					}
+
+					ptl = strstr(ptl, match);
+					ptl = ptl + strlen(match);
+				}
 
 				*ptm = 0;
 
-				cat_sprintf(output, "%s%s", ptl, subst);
+				cat_sprintf(output, "%s%s", pto, subst);
 
-				ptl = ptm + strlen(match);
+				pto = ptm + strlen(match);
 
 				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
 			}
-			while (check_one_regexp(ses, node, ptl, ptl, 0));
+			while (check_one_regexp(ses, node, ptl, pto, 0));
 
-			strcat(output, ptl);
+			strcat(output, pto);
 
 			strcpy(original, output);
 		}

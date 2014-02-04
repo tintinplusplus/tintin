@@ -32,9 +32,9 @@ DO_COMMAND(do_history)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, left,  FALSE);
 
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)

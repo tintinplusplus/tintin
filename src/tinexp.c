@@ -32,21 +32,15 @@
 #include "tintin.h"
 
 
-int match(struct session *ses, char *str, char *exp)
+int match(struct session *ses, char *str, char *exp, int flags)
 {
 	char expbuf[BUFFER_SIZE];
 
-	if (ses)
-	{
-		sprintf(expbuf, "^%s$", exp);
+	sprintf(expbuf, "^%s$", exp);
 
-		substitute(ses, expbuf, expbuf, SUB_VAR|SUB_FUN);
-	}
-	else
-	{
-		sprintf(expbuf, "^%s$", exp);
-	}
-	return tintin_regexp(NULL, str, expbuf, 0, 0);
+	substitute(ses, expbuf, expbuf, flags);
+
+	return tintin_regexp(ses, NULL, str, expbuf, 0, 0);
 }
 
 int find(struct session *ses, char *str, char *exp, int sub)
@@ -58,11 +52,11 @@ int find(struct session *ses, char *str, char *exp, int sub)
 		substitute(ses, str, strbuf, SUB_VAR|SUB_FUN);
 		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
 
-		return tintin_regexp(NULL, strbuf, expbuf, 0, sub);
+		return tintin_regexp(ses, NULL, strbuf, expbuf, 0, sub);
 	}
 	else
 	{
-		return tintin_regexp(NULL, str, exp, 0, sub);
+		return tintin_regexp(ses, NULL, str, exp, 0, sub);
 	}
 }
 
@@ -70,10 +64,10 @@ DO_COMMAND(do_regexp)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], is_true[BUFFER_SIZE], is_false[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
-	arg = get_arg_in_braces(arg, is_true,  1);
-	arg = get_arg_in_braces(arg, is_false, 1);
+	arg = get_arg_in_braces(ses, arg, left,  0);
+	arg = get_arg_in_braces(ses, arg, right, 0);
+	arg = get_arg_in_braces(ses, arg, is_true,  1);
+	arg = get_arg_in_braces(ses, arg, is_false, 1);
 
 	if (*is_true == 0)
 	{
@@ -84,7 +78,7 @@ DO_COMMAND(do_regexp)
 		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
 		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-		if (tintin_regexp(NULL, left, right, 0, SUB_CMD))
+		if (tintin_regexp(ses, NULL, left, right, 0, SUB_CMD))
 		{
 			substitute(ses, is_true, is_true, SUB_CMD);
 
@@ -202,18 +196,12 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 	while (TRUE)
 	{
-
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		switch (*pti)
 		{
@@ -280,7 +268,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						def = TRUE;
 
-						pti = get_arg_in_braces(pti, buf, TRUE);
+						pti = get_arg_in_braces(ses, pti, buf, TRUE);
 
 						substitute(ses, buf, temp, flags_neol);
 					}
@@ -295,7 +283,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*ptt = 0;
 					}
 
-					pti = get_arg_at_brackets(pti, temp + strlen(temp));
+					pti = get_arg_at_brackets(ses, pti, temp + strlen(temp));
 
 					substitute(ses, temp, buf, flags_neol);
 
@@ -466,7 +454,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						continue;
 					}
 
-					pti = get_arg_in_braces(&pti[i], temp, FALSE);
+					pti = get_arg_in_braces(ses, &pti[i], temp, FALSE);
 
 					substitute(ses, temp, buf, flags_neol);
 
@@ -478,7 +466,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					for (i = 1 ; i < 100 ; i++)
 					{
-						pte = get_arg_in_braces(pte, temp, TRUE);
+						pte = get_arg_in_braces(ses, pte, temp, TRUE);
 
 						RESTRING(gtd->vars[i], temp);
 
@@ -527,17 +515,13 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 						while (*ptt)
 						{
-#ifdef BIG5
-							if (*ptt & 0x80)
+							if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 							{
-								*pto++ = *ptt++;
-								if (*ptt)
-								{
-									*pto++ = *ptt++;
-								}
+								*pto++ = *pti++;
+								*pto++ = *pti++;
 								continue;
 							}
-#endif
+
 							if (HAS_BIT(flags, SUB_SEC))
 							{
 								switch (*ptt)
@@ -644,7 +628,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						def = TRUE;
 
-						pti = get_arg_in_braces(pti, buf, TRUE);
+						pti = get_arg_in_braces(ses, pti, buf, TRUE);
 
 						substitute(ses, buf, temp, flags_neol);
 					}
@@ -657,7 +641,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*ptt = 0;
 					}
 
-					pti = get_arg_at_brackets(pti, temp + strlen(temp));
+					pti = get_arg_at_brackets(ses, pti, temp + strlen(temp));
 
 					substitute(ses, temp, buf, flags_neol);
 
@@ -814,14 +798,14 @@ int check_one_regexp(struct session *ses, struct listnode *node, char *line, cha
 		str = line;
 	}	
 
-	return tintin_regexp(node->regex, str, exp, option, SUB_ARG);
+	return tintin_regexp(ses, node->regex, str, exp, option, SUB_ARG);
 }
 
 /*
 	Keep synched with tintin_regexp and tintin_regexp_compile
 */
 
-int tintin_regexp_check(char *exp)
+int tintin_regexp_check(struct session *ses, char *exp)
 {
 	if (*exp == '^')
 	{
@@ -830,13 +814,13 @@ int tintin_regexp_check(char *exp)
 
 	while (*exp)
 	{
-#ifdef BIG5
-		if (*exp & 0x80)
+
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *exp & 128 && exp[1] != 0)
 		{
 			exp += 2;
 			continue;
 		}
-#endif		
+
 		switch (exp[0])
 		{
 			case '\\':
@@ -885,7 +869,7 @@ int tintin_regexp_check(char *exp)
 	return FALSE;
 }
 				
-int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
+int tintin_regexp(struct session *ses, pcre *nodepcre, char *str, char *exp, int option, int flag)
 {
 	char out[BUFFER_SIZE], *pti, *pto;
 	int arg = 1, var = 1, fix = 0;
@@ -900,14 +884,13 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
 			*pto++ = *pti++;
 			continue;
 		}
-#endif
+
 		switch (pti[0])
 		{
 			case '\\':
@@ -918,7 +901,7 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 			case '{':
 				gtd->args[up(var)] = up(arg);
 				*pto++ = '(';
-				pti = get_arg_in_braces(pti, pto, TRUE);
+				pti = get_arg_in_braces(ses, pti, pto, TRUE);
 				pto += strlen(pto);
 				*pto++ = ')';
 				break;
@@ -1079,7 +1062,7 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 	return regexp_compare(nodepcre, str, out, option, flag + fix);
 }
 
-pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
+pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *exp, int option)
 {
 	char out[BUFFER_SIZE], *pti, *pto;
 
@@ -1099,15 +1082,12 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 
 	while (*pti)
 	{
-
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
 			*pto++ = *pti++;
 			continue;
 		}
-#endif
 		switch (pti[0])
 		{
 			case '\\':
@@ -1117,7 +1097,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 
 			case '{':
 				*pto++ = '(';
-				pti = get_arg_in_braces(pti, pto, TRUE);
+				pti = get_arg_in_braces(ses, pti, pto, TRUE);
 				while (*pto)
 				{
 					if (pto[0] == '$' || pto[0] == '@')

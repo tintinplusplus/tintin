@@ -34,8 +34,8 @@ DO_COMMAND(do_alias)
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, arg2, 1);
-	arg = get_arg_in_braces(arg, arg3, 1);
+	arg = get_arg_in_braces(ses, arg, arg2, 1);
+	arg = get_arg_in_braces(ses, arg, arg3, 1);
 
 	if (*arg3 == 0)
 	{
@@ -109,13 +109,13 @@ int check_all_aliases(struct session *ses, char *input)
 					continue;
 				}
 				
-				arg = get_arg_in_braces(line, tmp, FALSE);
+				arg = get_arg_in_braces(ses, line, tmp, FALSE);
 
 				RESTRING(gtd->vars[0], arg)
 
 				for (i = 1 ; i < 100 && *arg ; i++)
 				{
-					arg = get_arg_in_braces(arg, tmp, FALSE);
+					arg = get_arg_in_braces(ses, arg, tmp, FALSE);
 
 					RESTRING(gtd->vars[i], tmp);
 				}

@@ -122,7 +122,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION             "2.00.6"
+#define CLIENT_VERSION           "2.00.7  "
 
 #define ESCAPE                          27
 
@@ -312,7 +312,7 @@ enum operators
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
-#define SES_FLAG_VERBOSELINE          (1 << 14) /* Unused */
+#define SES_FLAG_VERBOSELINE          (1 << 14)
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
@@ -324,7 +324,10 @@ enum operators
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_RUN                  (1 << 25)
-
+#define SES_FLAG_UTF8                 (1 << 26)
+#define SES_FLAG_BIG5                 (1 << 27)
+#define SES_FLAG_256COLOR             (1 << 28)
+#define SES_FLAG_IGNORELINE           (1 << 29)
 
 #define TELOPT_FLAG_SGA               (1 <<  0)
 #define TELOPT_FLAG_ECHO              (1 <<  1)
@@ -333,6 +336,7 @@ enum operators
 #define TELOPT_FLAG_DEBUG             (1 <<  4)
 #define TELOPT_FLAG_TSPEED            (1 <<  5)
 #define TELOPT_FLAG_TTYPE             (1 <<  6)
+#define TELOPT_FLAG_MTTS              (1 <<  7)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -484,6 +488,20 @@ enum operators
 	point = NULL; \
 }
 
+/*
+	Bit operations
+*/
+
+#define HAS_BIT(bitvector, bit)   ((bitvector)  & (bit))
+#define SET_BIT(bitvector, bit)   ((bitvector) |= (bit))
+#define DEL_BIT(bitvector, bit)   ((bitvector) &= (~(bit)))
+#define TOG_BIT(bitvector, bit)   ((bitvector) ^= (bit))
+#define FFS_BIT(bitvector)        ((ffs(bitvector) - 1)) 
+
+/*
+	Generic
+*/
+
 #define URANGE(a, b, c)           ((b) < (a) ? (a) : (b) > (c) ? (c) : (b))
 #define UMAX(a, b)                ((a) > (b) ? (a) : (b))
 #define UMIN(a, b)                ((a) < (b) ? (a) : (b))
@@ -510,15 +528,6 @@ enum operators
 
 
 
-/*
-	Bit operations
-*/
-
-#define HAS_BIT(bitvector, bit)   ((bitvector)  & (bit))
-#define SET_BIT(bitvector, bit)   ((bitvector) |= (bit))
-#define DEL_BIT(bitvector, bit)   ((bitvector) &= (~(bit)))
-#define TOG_BIT(bitvector, bit)   ((bitvector) ^= (bit))
-#define FFS_BIT(bitvector)        ((ffs(bitvector) - 1)) 
 
 
 /*
@@ -624,10 +633,12 @@ struct tintin_data
 	char                    input_tmp[BUFFER_SIZE];
 	char                    macro_buf[BUFFER_SIZE];
 	char                    paste_buf[BUFFER_SIZE];
+	int                     input_off;
 	int                     input_len;
 	int                     input_cur;
 	int                     input_pos;
-	int                     input_off;
+	int                     input_hid;
+	char                  * term;
 	long long               time;
 	long long               timer[TIMER_CPU][5];
 	long long               total_io_ticks;
@@ -820,6 +831,12 @@ struct telopt_type
 	int                     flag;
 };
 
+struct term_type
+{
+	char                 * name;
+	int                    flag;
+};
+
 struct str_hash_data
 {
 	struct str_hash_data    * next;
@@ -870,6 +887,8 @@ struct room_data
 	char                    * desc;
 	char                    * area;
 	char                    * note;
+	char                    * terrain;
+	char                    * data;
 };
 
 struct exit_data
@@ -881,6 +900,7 @@ struct exit_data
 	int                       flags;
 	char                    * name;
 	char                    * cmd;
+	char                    * data;
 };
 
 
@@ -920,12 +940,13 @@ extern DO_CURSOR(cursor_buffer_home);
 extern DO_CURSOR(cursor_buffer_lock);
 extern DO_CURSOR(cursor_buffer_up);
 extern DO_CURSOR(cursor_check_line);
+extern DO_CURSOR(cursor_check_line_modified);
 extern DO_CURSOR(cursor_clear_left);
 extern DO_CURSOR(cursor_clear_line);
 extern DO_CURSOR(cursor_clear_right);
 extern DO_CURSOR(cursor_convert_meta);
 extern DO_CURSOR(cursor_delete);
-extern DO_CURSOR(cursor_delete_exit);
+extern DO_CURSOR(cursor_delete_or_exit);
 extern DO_CURSOR(cursor_delete_word_left);
 extern DO_CURSOR(cursor_delete_word_right);
 extern DO_CURSOR(cursor_echo_on);
@@ -933,7 +954,6 @@ extern DO_CURSOR(cursor_echo_off);
 extern DO_CURSOR(cursor_end);
 extern DO_CURSOR(cursor_enter);
 extern DO_CURSOR(cursor_exit);
-extern DO_CURSOR(cursor_fix_line);
 extern DO_CURSOR(cursor_history_find);
 extern DO_CURSOR(cursor_history_next);
 extern DO_CURSOR(cursor_history_prev);
@@ -948,6 +968,7 @@ extern DO_CURSOR(cursor_redraw_line);
 extern DO_CURSOR(cursor_right);
 extern DO_CURSOR(cursor_right_word);
 extern DO_CURSOR(cursor_suspend);
+extern DO_CURSOR(cursor_test);
 extern DO_CURSOR(cursor_tab_backward);
 extern DO_CURSOR(cursor_tab_forward);
 extern DO_CURSOR(cursor_auto_tab_backward);
@@ -1169,7 +1190,6 @@ extern void show_vtmap(struct session *ses);
 
 extern DO_COMMAND(do_math);
 extern double get_number(struct session *ses, char *str);
-extern char *get_alnum(struct session *ses, char *str);
 extern void get_number_string(struct session *ses, char *str, char *result);
 extern double mathswitch(struct session *ses, char *left, char *right);
 extern void mathexp(struct session *ses, char *str, char *result);
@@ -1204,14 +1224,14 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 
 extern int substitute(struct session *ses, char *string, char *result, int flags);
 
-extern int match(struct session *ses, char *str, char *exp);
+extern int match(struct session *ses, char *str, char *exp, int flags);
 extern int find(struct session *ses, char *str, char *exp, int sub);
 DO_COMMAND(do_regexp);
 extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int flag);
 extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
-extern int tintin_regexp_check(char *exp);
-extern int tintin_regexp(pcre *pcre, char *str, char *exp, int option, int flag);
-extern pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option);
+extern int tintin_regexp_check(struct session *ses, char *exp);
+extern int tintin_regexp(struct session *ses, pcre *pcre, char *str, char *exp, int option, int flag);
+extern pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *exp, int option);
 
 #endif
 
@@ -1243,7 +1263,8 @@ extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
 extern DO_CONFIG(config_mccp);
 extern DO_CONFIG(config_autotab);
-extern DO_CONFIG(config_big5);
+extern DO_CONFIG(config_charset);
+extern DO_CONFIG(config_256color);
 
 #endif
 
@@ -1343,7 +1364,7 @@ extern void dump_full_stack(void);
 
 extern DO_COMMAND(do_event);
 extern DO_COMMAND(do_unevent);
-extern int check_all_events(struct session *ses, int args, int vars, char *fmt, ...);
+extern int check_all_events(struct session *ses, int flags, int args, int vars, char *fmt, ...);
 
 #endif
 
@@ -1431,6 +1452,7 @@ DO_HISTORY(history_write);
 #define __LINE_H__
 extern DO_COMMAND(do_line);
 extern DO_LINE(line_gag);
+extern DO_LINE(line_ignore);
 extern DO_LINE(line_log);
 extern DO_LINE(line_logverbatim);
 extern DO_LINE(line_substitute);
@@ -1581,15 +1603,15 @@ extern struct session *parse_command(struct session *ses, char *input);
 extern int is_speedwalk(struct session *ses, char *input);
 extern void process_speedwalk(struct session *ses, char *input);
 extern struct session *parse_tintin_command(struct session *ses, char *input);
-extern char *get_arg_all(char *string, char *result, int flag);
-extern char *get_arg_in_braces(char *string, char *result, int flag);
+extern char *get_arg_all(struct session *ses, char *string, char *result, int verbatim);
+extern char *get_arg_in_braces(struct session *ses, char *string, char *result, int flag);
 extern char *sub_arg_in_braces(struct session *ses, char *string, char *result, int flag, int sub);
-extern char *get_arg_with_spaces(char *string, char *result, int flag);
-extern char *get_arg_stop_spaces(char *string, char *result, int flag);
+extern char *get_arg_with_spaces(struct session *ses, char *string, char *result, int flag);
+extern char *get_arg_stop_spaces(struct session *ses, char *string, char *result, int flag);
 extern char *space_out(char *string);
-extern char *get_arg_to_brackets(char *string, char *result);
-extern char *get_arg_at_brackets(char *string, char *result);
-extern char *get_arg_in_brackets(char *string, char *result);
+extern char *get_arg_to_brackets(struct session *ses, char *string, char *result);
+extern char *get_arg_at_brackets(struct session *ses, char *string, char *result);
+extern char *get_arg_in_brackets(struct session *ses, char *string, char *result);
 extern void write_mud(struct session *ses, char *command, int flags);
 extern void do_one_line(char *line, struct session *ses);
 
@@ -1603,10 +1625,11 @@ extern DO_PATH(path_del);
 extern DO_PATH(path_end);
 extern DO_PATH(path_ins);
 extern DO_PATH(path_load);
-extern DO_PATH(path_map);
 extern DO_PATH(path_new);
 extern DO_PATH(path_run);
 extern DO_PATH(path_save);
+extern DO_PATH(path_show);
+extern DO_PATH(path_unzip);
 extern DO_PATH(path_walk);
 extern DO_PATH(path_zip);
 
@@ -1683,6 +1706,7 @@ extern struct line_type line_table[];
 extern struct history_type history_table[];
 extern struct buffer_type buffer_table[];
 extern struct telopt_type telopt_table[];
+extern struct term_type term_table[];
 
 #endif
 
@@ -1741,7 +1765,7 @@ extern long long utime(void);
 extern char *capitalize(char *str);
 extern char *ntos(long long number);
 extern char *indent(int cnt);
-extern void cat_sprintf(char *dest, char *fmt, ...);
+extern int cat_sprintf(char *dest, char *fmt, ...);
 extern void ins_sprintf(char *dest, char *fmt, ...);
 extern int str_suffix(char *str1, char *str2);
 extern void syserr(char *msg);
@@ -1794,7 +1818,6 @@ extern DO_COMMAND(do_replace);
 
 extern void save_pos(struct session *ses);
 extern void restore_pos(struct session *ses);
-extern void restore_cursor(struct session *ses);
 extern void goto_rowcol(struct session *ses, int row, int col);
 extern void erase_screen(struct session *ses);
 extern void erase_toeol(void);
@@ -1808,7 +1831,7 @@ extern void strip_vt102_codes(char *str, char *buf);
 extern void strip_vt102_codes_non_graph(char *str, char *buf);
 extern void strip_non_vt102_codes(char *str, char *buf);
 extern void get_color_codes(char *old, char *str, char *buf);
-extern int strip_vt102_strlen(char *str);
+extern int strip_vt102_strlen(struct session *ses, char *str);
 extern int strip_color_strlen(char *str);
 extern int interpret_vt102_codes(struct session *ses, char *str, int real);
 

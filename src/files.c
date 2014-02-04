@@ -41,7 +41,7 @@ DO_COMMAND(do_read)
 	int lvl, cnt, com, lnc, fix, ok;
 	int counter[LIST_MAX];
 
-	get_arg_in_braces(arg, filename, TRUE);
+	get_arg_in_braces(ses, arg, filename, TRUE);
 	substitute(ses, filename, filename, SUB_VAR|SUB_FUN);
 
 	if ((fp = fopen(filename, "r")) == NULL)
@@ -93,17 +93,13 @@ DO_COMMAND(do_read)
 	{
 		if (com == 0)
 		{
-#ifdef BIG5
-			if (*pti & 0x80)
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 			{
 				*pto++ = *pti++;
-				if (*pti)
-				{
-					*pto++ = *pti++;
-				}
+				*pto++ = *pti++;
 				continue;
 			}
-#endif
+
 			switch (*pti)
 			{
 				case DEFAULT_OPEN:
@@ -377,7 +373,7 @@ DO_COMMAND(do_write)
 	struct listroot *root;
 	int i, j, cnt = 0;
 
-	get_arg_in_braces(arg, filename, TRUE);
+	get_arg_in_braces(ses, arg, filename, TRUE);
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{

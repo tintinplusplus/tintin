@@ -129,5 +129,8 @@ char *telcmds[] =
 
 #define     MSDP_VAR              1
 #define     MSDP_VAL              2
-#define     MSDP_OPEN             3
-#define     MSDP_CLOSE            4
+#define     MSDP_TABLE_OPEN       3
+#define     MSDP_TABLE_CLOSE      4
+#define     MSDP_ARRAY_OPEN       5
+#define     MSDP_ARRAY_CLOSE      6
+

@@ -38,7 +38,7 @@ DO_COMMAND(do_configure)
 
 	root = ses->list[LIST_CONFIG];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, left,  FALSE);
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
@@ -68,7 +68,12 @@ DO_COMMAND(do_configure)
 			{
 				if (config_table[index].config(ses, right, index) != NULL)
 				{
-					show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[index].name, capitalize(right));
+					node = search_node_list(ses->list[LIST_CONFIG], config_table[index].name);
+
+					if (node)
+					{
+						show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[index].name, node->right);
+					}
 				}
 				return ses;
 			}
@@ -515,23 +520,62 @@ DO_CONFIG(config_autotab)
 	return ses;
 }
 
-DO_CONFIG(config_big5)
+DO_CONFIG(config_charset)
 {
-	if (!strcasecmp(arg, "ON"))
+	if (!strcasecmp(arg, "BIG5"))
 	{
-		#define BIG5
+		SET_BIT(ses->flags, SES_FLAG_BIG5);
+		DEL_BIT(ses->flags, SES_FLAG_UTF8);
 	}
-	else if (!strcasecmp(arg, "OFF"))
+	else if (!strcasecmp(arg, "UTF-8"))
 	{
-		#undef BIG5D
+		SET_BIT(ses->flags, SES_FLAG_UTF8);
+		DEL_BIT(ses->flags, SES_FLAG_BIG5);
+	}
+	else if (!strcasecmp(arg, "ASCII"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_BIG5);
+		DEL_BIT(ses->flags, SES_FLAG_UTF8);
 	}
 	else
 	{
-		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ASCII|BIG5|UTF-8>", config_table[index].name);
 
 		return NULL;
 	}
 	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+
+	return ses;
+}
+
+DO_CONFIG(config_256color)
+{
+	if (!strcasecmp(arg, "AUTO"))
+	{
+		if (!strcasecmp(gtd->term, "xterm") || strstr(gtd->term, "256color") || strstr(gtd->term, "256COLOR"))
+		{
+			SET_BIT(ses->flags, SES_FLAG_256COLOR);
+		}
+		else
+		{
+			DEL_BIT(ses->flags, SES_FLAG_256COLOR);
+		}
+	}
+	else if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_256COLOR);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_256COLOR);
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <AUTO|ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? "ON" : "OFF", "");
 
 	return ses;
 }

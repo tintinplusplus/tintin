@@ -38,7 +38,7 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|MAP|NEW|RUN|SAVE|WALK|ZIP} {argument}.");
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|NEW|RUN|SAVE|SHOW|UNZIP|WALK|ZIP} {argument}.");
 	}
 	else
 	{
@@ -92,7 +92,7 @@ DO_PATH(path_end)
 	}
 }
 
-DO_PATH(path_map)
+DO_PATH(path_show)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 	char buf[BUFFER_SIZE];
@@ -100,7 +100,7 @@ DO_PATH(path_map)
 
 	if (root->used == 0)
 	{
-		show_message(ses, LIST_PATH, "#PATH MAP: EMPTY PATH.");
+		show_message(ses, LIST_PATH, "#PATH SHOW: EMPTY PATH.");
 	}
 	else
 	{
@@ -135,7 +135,7 @@ DO_PATH(path_save)
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (!is_abbrev(left, "FORWARD") && !is_abbrev(left, "BACKWARD"))
+	if (!is_abbrev(left, "FORWARDS") && !is_abbrev(left, "BACKWARDS"))
 	{
 		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <VARIABLE NAME>");
 	}
@@ -151,7 +151,7 @@ DO_PATH(path_save)
 	{
 		result[0] = 0;
 
-		if (is_abbrev(left, "FORWARD"))
+		if (is_abbrev(left, "FORWARDS"))
 		{
 			for (i = 0 ; i < root->used ; i++)
 			{
@@ -205,7 +205,7 @@ DO_PATH(path_load)
 			arg++;
 		}
 
-		arg = get_arg_in_braces(arg, temp, TRUE);
+		arg = get_arg_in_braces(ses, arg, temp, TRUE);
 
 		if ((node = search_node_list(ses->list[LIST_PATHDIR], temp)))
 		{
@@ -274,10 +274,14 @@ DO_PATH(path_run)
 
 		if (*left)
 		{
+			double delay = 0;
+
 			for (i = 0 ; i < root->used ; i++)
 			{
 				sprintf(name, "PATH %lld", utime());
-				sprintf(time, "%f", i * get_number(ses, left));
+				sprintf(time, "%f", delay);
+
+				delay += get_number(ses, left);
 
 				update_node_list(ses->list[LIST_DELAY], name, root->list[i]->left, time);
 			}
@@ -330,7 +334,7 @@ DO_PATH(path_walk)
 		}
 		if (root->used == 0)
 		{
-			check_all_events(ses, 0, 0, "END OF PATH");
+			check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "END OF PATH");
 		}
 	}
 }
@@ -421,6 +425,85 @@ DO_PATH(path_zip)
 	insert_node_list(ses->list[LIST_PATH], left, right, "0");
 
 	show_message(ses, LIST_PATH, "#OK. THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", left, right);
+}
+
+DO_PATH(path_unzip)
+{
+	char left[BUFFER_SIZE], temp[BUFFER_SIZE], *str;
+	struct listnode *node;
+
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+
+	if ((node = search_node_list(ses->list[LIST_VARIABLE], left)) == NULL)
+	{
+		arg = left;
+	}
+	else
+	{
+		arg = node->right;
+	}
+
+	kill_list(ses->list[LIST_PATH]);
+
+	while (*arg)
+	{
+		if (*arg == ';')
+		{
+			arg++;
+		}
+
+		arg = get_arg_in_braces(ses, arg, temp, TRUE);
+
+		if (is_speedwalk(ses, temp))
+		{
+			char dir[2];
+			int cnt, i;
+
+			str = temp;
+
+			for (dir[1] = 0 ; *str ; str++)
+			{
+				if (isdigit((int) *str))
+				{
+					sscanf(str, "%d%c", &cnt, dir);
+
+					while (*str != dir[0])
+					{
+						str++;
+					}
+				}
+				else
+				{
+					cnt = 1;
+					dir[0] = *str;
+				}
+
+				for (i = 0 ; i < cnt ; i++)
+				{
+					if ((node = search_node_list(ses->list[LIST_PATHDIR], dir)))
+					{
+						insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+					}
+					else
+					{
+						insert_node_list(ses->list[LIST_PATH], dir, dir, "0");
+					}
+				}
+			}
+		}
+		else
+		{
+			if ((node = search_node_list(ses->list[LIST_PATHDIR], temp)))
+			{
+				insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+			}
+			else
+			{
+				insert_node_list(ses->list[LIST_PATH], temp, temp, "0");
+			}
+		}
+	}
+	show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES UNZIPPED.", ses->list[LIST_PATH]->used);
 }
 
 

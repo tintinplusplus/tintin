@@ -76,7 +76,7 @@ struct session *parse_input(struct session *ses, char *input)
 	{
 		input = space_out(input);
 
-		input = get_arg_all(input, line, GET_ALL);
+		input = get_arg_all(ses, input, line, FALSE);
 
 		if (parse_command(ses, line))
 		{
@@ -86,7 +86,7 @@ struct session *parse_input(struct session *ses, char *input)
 		{
 			ses = script_driver(ses, LIST_ALIAS, line);
 		}
-		else if (is_speedwalk(ses, line))
+		else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && is_speedwalk(ses, line))
 		{
 			process_speedwalk(ses, line);
 		}
@@ -118,7 +118,7 @@ struct session *parse_command(struct session *ses, char *input)
 
 	push_call("parse_command(%p,%p)",ses,input);
 
-	arg = get_arg_stop_spaces(input, cmd1, 0);
+	arg = get_arg_stop_spaces(ses, input, cmd1, 0);
 
 	substitute(ses, cmd1, cmd2, SUB_VAR|SUB_FUN);
 
@@ -139,11 +139,6 @@ struct session *parse_command(struct session *ses, char *input)
 int is_speedwalk(struct session *ses, char *input)
 {
 	int flag = FALSE;
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK))
-	{
-		return FALSE;
-	}
 
 	while (*input)
 	{
@@ -220,7 +215,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	char line[BUFFER_SIZE];
 	struct session *sesptr;
 
-	input = get_arg_stop_spaces(input, line, 0);
+	input = get_arg_stop_spaces(ses, input, line, 0);
 
 	substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
@@ -228,7 +223,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	{
 		int cnt = atoi(line);
 
-		input = get_arg_in_braces(input, line, TRUE);
+		input = get_arg_in_braces(ses, input, line, TRUE);
 
 		while (cnt-- > 0)
 		{
@@ -243,7 +238,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 		{
 			if (*input)
 			{
-				input = get_arg_in_braces(input, line, TRUE);
+				input = get_arg_in_braces(ses, input, line, TRUE);
 
 				substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
@@ -269,7 +264,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 */
 
 
-char *get_arg_all(char *string, char *result, int flag)
+char *get_arg_all(struct session *ses, char *string, char *result, int verbatim)
 {
 	char *pto, *pti;
 	int nest = 0;
@@ -290,24 +285,18 @@ char *get_arg_all(char *string, char *result, int flag)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
 		{
 			*pto++ = *pti++;
 		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !HAS_BIT(flag, GET_VBT))
+		else if (*pti == COMMAND_SEPARATOR && nest == 0 && !verbatim)
 		{
 			break;
 		}
@@ -330,7 +319,7 @@ char *get_arg_all(char *string, char *result, int flag)
 	Braces are stripped in braced arguments leaving all else as is.
 */
 
-char *get_arg_in_braces(char *string, char *result, int flag)
+char *get_arg_in_braces(struct session *ses, char *string, char *result, int flag)
 {
 	char *pti, *pto;
 	int nest = 1;
@@ -342,11 +331,11 @@ char *get_arg_in_braces(char *string, char *result, int flag)
 	{
 		if (!HAS_BIT(flag, GET_ALL))
 		{
-			pti = get_arg_stop_spaces(pti, result, flag);
+			pti = get_arg_stop_spaces(ses, pti, result, flag);
 		}
 		else
 		{
-			pti = get_arg_with_spaces(pti, result, flag);
+			pti = get_arg_with_spaces(ses, pti, result, flag);
 		}
 		return pti;
 	}
@@ -355,18 +344,13 @@ char *get_arg_in_braces(char *string, char *result, int flag)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		if (*pti == DEFAULT_OPEN)
 		{
@@ -401,7 +385,7 @@ char *sub_arg_in_braces(struct session *ses, char *string, char *result, int fla
 {
 	char buffer[BUFFER_SIZE];
 
-	string = get_arg_in_braces(string, buffer, flag);
+	string = get_arg_in_braces(ses, string, buffer, flag);
 
 	substitute(ses, buffer, result, sub);
 
@@ -412,7 +396,7 @@ char *sub_arg_in_braces(struct session *ses, char *string, char *result, int fla
 	get all arguments
 */
 
-char *get_arg_with_spaces(char *string, char *result, int flag)
+char *get_arg_with_spaces(struct session *ses, char *string, char *result, int flag)
 {
 	char *pto, *pti;
 	int nest = 0;
@@ -422,18 +406,13 @@ char *get_arg_with_spaces(char *string, char *result, int flag)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
+
 		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
 		{
 			*pto++ = *pti++;
@@ -461,7 +440,7 @@ char *get_arg_with_spaces(char *string, char *result, int flag)
 	get one arg, stop at spaces
 */
 
-char *get_arg_stop_spaces(char *string, char *result, int flag)
+char *get_arg_stop_spaces(struct session *ses, char *string, char *result, int flag)
 {
 	char *pto, *pti;
 	int nest = 0;
@@ -471,18 +450,12 @@ char *get_arg_stop_spaces(char *string, char *result, int flag)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
 		{
@@ -537,7 +510,7 @@ char *space_out(char *string)
 	For list handling
 */
 
-char *get_arg_to_brackets(char *string, char *result)
+char *get_arg_to_brackets(struct session *ses, char *string, char *result)
 {
 	char *pti, *pto;
 
@@ -546,18 +519,12 @@ char *get_arg_to_brackets(char *string, char *result)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		if (*pti == '[')
 		{
@@ -570,7 +537,7 @@ char *get_arg_to_brackets(char *string, char *result)
 	return pti;
 }
 
-char *get_arg_at_brackets(char *string, char *result)
+char *get_arg_at_brackets(struct session *ses, char *string, char *result)
 {
 	char *pti, *pto;
 	int nest = 0;
@@ -587,18 +554,12 @@ char *get_arg_at_brackets(char *string, char *result)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		if (*pti == '[')
 		{
@@ -631,7 +592,7 @@ char *get_arg_at_brackets(char *string, char *result)
 	return pti;
 }
 
-char *get_arg_in_brackets(char *string, char *result)
+char *get_arg_in_brackets(struct session *ses, char *string, char *result)
 {
 	char *pti, *pto;
 	int nest = 1;
@@ -650,18 +611,12 @@ char *get_arg_in_brackets(char *string, char *result)
 
 	while (*pti)
 	{
-#ifdef BIG5
-		if (*pti & 0x80)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
-
-			if (*pti)
-			{
-				*pto++ = *pti++;
-			}
+			*pto++ = *pti++;
 			continue;
 		}
-#endif
 
 		if (*pti == '[')
 		{
@@ -734,9 +689,15 @@ void do_one_line(char *line, struct session *ses)
 
 	push_call("[%s] do_one_line(%s)",ses->name,line);
 
+	if (HAS_BIT(ses->flags, SES_FLAG_IGNORELINE))
+	{
+		pop_call(); 
+		return;
+	}
+
 	strip_vt102_codes(line, strip);
 
-	check_all_events(ses, 0, 2, "RECEIVED LINE", line, strip);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED LINE", line, strip);
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{

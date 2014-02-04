@@ -59,7 +59,7 @@ DO_COMMAND(do_variable)
 	}
 	else
 	{
-		set_nest_node(root, arg1, "%s", arg2);
+		struct listnode *node = set_nest_node(root, arg1, "%s", arg2);
 
 		while (*arg)
 		{
@@ -70,7 +70,9 @@ DO_COMMAND(do_variable)
 				add_nest_node(root, arg1, "%s", arg2);
 			}
 		}
-		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, str);
+		show_nest_node(node, arg2, 1);
+
+		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
 	}
 	return ses;
 }
@@ -79,7 +81,7 @@ DO_COMMAND(do_unvariable)
 {
 	char arg1[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, arg1, TRUE);
+	get_arg_in_braces(ses, arg, arg1, TRUE);
 
 	if (delete_nest_node(ses->list[LIST_VARIABLE], arg1))
 	{
@@ -101,7 +103,7 @@ DO_COMMAND(do_replace)
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, arg1, GET_NST);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_NST);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg3, GET_ALL, SUB_VAR|SUB_FUN);
 
@@ -113,7 +115,7 @@ DO_COMMAND(do_replace)
 	{
 		show_message(ses, LIST_VARIABLE, "#REPLACE: VARIABLE {%s} NOT FOUND.", arg1);
 	}
-	else if (tintin_regexp(NULL, node->right, arg2, 0, SUB_CMD) == FALSE)
+	else if (tintin_regexp(ses, NULL, node->right, arg2, 0, SUB_CMD) == FALSE)
 	{
 		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", arg2, node->right);
 	}
@@ -144,7 +146,7 @@ DO_COMMAND(do_replace)
 
 			pti = ptm + strlen(gtd->cmds[0]);
 		}
-		while (tintin_regexp(NULL, pti, arg2, 0, SUB_CMD));
+		while (tintin_regexp(ses, NULL, pti, arg2, 0, SUB_CMD));
 
 		strcat(buf, pti);
 
@@ -371,7 +373,100 @@ int stringlength(struct session *ses, char *str)
 
 	substitute(ses, str, temp, SUB_COL|SUB_ESC);
 
-	return strip_vt102_strlen(temp);
+	return strip_vt102_strlen(ses, temp);
+}
+
+
+// Returns the raw length for the stripped range
+
+int string_str_raw_len(struct session *ses, char *str, int start, int end)
+{
+	char tmp[BUFFER_SIZE];
+	int raw_cnt, str_cnt, ret_cnt, tot_len;
+
+	raw_cnt = str_cnt = ret_cnt = 0;
+
+	substitute(ses, str, tmp, SUB_COL|SUB_ESC);
+
+	tot_len = strlen(tmp);
+
+	while (raw_cnt < tot_len)
+	{
+		if (skip_vt102_codes(&tmp[raw_cnt]))
+		{
+			ret_cnt += (str_cnt >= start) ? skip_vt102_codes(&tmp[raw_cnt]) : 0;
+			raw_cnt += skip_vt102_codes(&tmp[raw_cnt]);
+
+			continue;
+		}
+
+		if (str_cnt >= end)
+		{
+			break;
+		}
+
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (tmp[raw_cnt] & 192) == 192)
+		{
+			ret_cnt += (str_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+
+			while (raw_cnt < tot_len && (tmp[raw_cnt] & 192) == 128)
+			{
+				ret_cnt += (str_cnt >= start) ? 1 : 0;
+				raw_cnt++;
+			}
+		}
+		else
+		{
+			ret_cnt += (str_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+		}
+		str_cnt++;
+	}
+	return ret_cnt;
+}
+
+int string_raw_str_len(struct session *ses, char *str, int start, int end)
+{
+	char tmp[BUFFER_SIZE];
+	int raw_cnt, ret_cnt, tot_len;
+
+	substitute(ses, str, tmp, SUB_COL|SUB_ESC);
+
+	raw_cnt = start;
+	ret_cnt = 0;
+	tot_len = strlen(tmp);
+
+	while (raw_cnt < tot_len)
+	{
+		if (raw_cnt >= end)
+		{
+			break;
+		}
+
+		if (skip_vt102_codes(&tmp[raw_cnt]))
+		{
+			raw_cnt += skip_vt102_codes(&tmp[raw_cnt]);
+
+			continue;
+		}
+
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (tmp[raw_cnt] & 192) == 192)
+		{
+			raw_cnt++;
+
+			while (raw_cnt < tot_len && (tmp[raw_cnt] & 192) == 128)
+			{
+				raw_cnt++;
+			}
+		}
+		else
+		{
+			raw_cnt++;
+		}
+		ret_cnt++;
+	}
+	return ret_cnt;
 }
 
 void timestring(struct session *ses, char *str)
@@ -381,13 +476,13 @@ void timestring(struct session *ses, char *str)
 	struct tm timeval_tm;
 	time_t    timeval_t;
 
-	arg = get_arg_in_braces(str, left, TRUE);
+	arg = get_arg_in_braces(ses, str, left, TRUE);
 
 	if (*arg == COMMAND_SEPARATOR)
 	{
 		arg++;
 	}
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, right, TRUE);
 
 	if (*right)
 	{
@@ -413,7 +508,7 @@ DO_COMMAND(do_format)
 	arg = sub_arg_in_braces(ses, arg, destvar,  GET_NST, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, format,   GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*destvar == 0 || *format == 0)
+	if (*destvar == 0)
 	{
 		tintin_printf2(ses, "#SYNTAX: #format {variable} {format} {arg1} {arg2}");
 
@@ -486,7 +581,14 @@ DO_COMMAND(do_format)
 
 				if (is_number(ptt))
 				{
-					sprintf(ptt, "%d", atoi(ptt) + (int) strlen(arglist[i]) - stringlength(ses, arglist[i]));
+					if (newformat[1] == '.')
+					{
+						sprintf(ptt, "%d", string_str_raw_len(ses, arglist[i], 0, atoi(ptt)));
+					}
+					else
+					{
+						sprintf(ptt, "%d", atoi(ptt) + strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE));
+					}
 				}
 				
 				while (*ptt)

@@ -210,7 +210,7 @@ void write_line_mud(struct session *ses, char *line, int size)
 
 	retry = 0;
 
-	check_all_events(ses, 0, 1, "SEND OUTPUT", line);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "SEND OUTPUT", line);
 
 	pop_call();
 	return;
@@ -248,7 +248,7 @@ void readmud(struct session *ses)
 
 	if (gtd->mud_output_len < BUFFER_SIZE)
 	{
-		check_all_events(ses, 0, 1, "RECEIVED OUTPUT", gtd->mud_output_buf);
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED OUTPUT", gtd->mud_output_buf);
 	}
 
 	gtd->mud_output_len = 0;

@@ -44,11 +44,6 @@ void restore_pos(struct session *ses)
 	ses->cur_col = ses->sav_col;
 }
 
-void restore_cursor(struct session *ses)
-{
-	printf("\033[%d;%dH", ses->rows, gtd->input_pos+1);
-}
-
 void goto_rowcol(struct session *ses, int row, int col)
 {
 	printf("\033[%d;%dH", row, col);
@@ -650,7 +645,7 @@ void get_color_codes(char *old, char *str, char *buf)
 	strcat(buf, "m");
 }
 
-int strip_vt102_strlen(char *str)
+int strip_vt102_strlen(struct session *ses, char *str)
 {
 	char *pti;
 	int i = 0;
@@ -664,11 +659,25 @@ int strip_vt102_strlen(char *str)
 			pti += skip_vt102_codes(pti);
 		}
 
-		if (*pti)
+		if (*pti == 0)
+		{
+			break;
+		}
+
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
 		{
 			pti++;
-			i++;
+
+			while ((*pti & 192) == 128)
+			{
+				pti++;
+			}
 		}
+		else
+		{
+			pti++;
+		}
+		i++;
 	}
 	return i;
 }
@@ -702,9 +711,6 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 
 	switch (str[skip])
 	{
-		case   5:
-			return FALSE; /* ^E fucks with the terminal */
-
 		case   8:
 			ses->cur_col = UMAX(1, ses->cur_col - 1);
 			return TRUE;
@@ -731,6 +737,13 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 			ses->cur_col = ses->sav_col;
 			return TRUE;
 
+		case 'c':
+			ses->cur_row = 1;
+			ses->cur_col = 1;
+			ses->sav_row = ses->cur_row;
+			ses->sav_col = ses->cur_col;
+			return TRUE;
+
 		case 'D':
 			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
 			return TRUE;
@@ -743,13 +756,6 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 		case 'M':
 			ses->cur_row = URANGE(1, ses->cur_row - 1, ses->rows);
 			return TRUE;
-
-		case 'Z':
-			if (real)
-			{
-				socket_printf(ses, 5, "%c%c%c%c%c", ESCAPE, '[', '?', '6', 'c');
-			}
-			return FALSE;
 
 		case '[':
 			break;
@@ -768,15 +774,7 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 				return TRUE;
 
 			case 'c':
-				if (real)
-				{
-					socket_printf(ses, 5, "%c%c%c%c%c", ESCAPE, '[', '?', '6', 'c');
-				}
-				ses->cur_row = 1;
-				ses->cur_col = 1;
-				ses->sav_row = ses->cur_row;
-				ses->sav_col = ses->cur_col;
-				return FALSE;					
+				return FALSE;
 
 			case 'A':
 				ses->cur_row -= UMAX(1, atoi(data));
@@ -856,6 +854,9 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 				ses->cur_row = ses->sav_row;
 				ses->cur_col = ses->sav_col;
 				break;
+
+			case 'x':
+				return FALSE;
 
 			default:
 				data[skip - 2] = str[skip];

@@ -35,7 +35,7 @@ DO_COMMAND(do_all)
 
 	if (gts->next)
 	{
-		get_arg_in_braces(arg, left, TRUE);
+		get_arg_in_braces(ses, arg, left, TRUE);
 
 		substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
@@ -118,8 +118,8 @@ DO_COMMAND(do_echo)
 
 	if (*arg == DEFAULT_OPEN)
 	{
-		arg = get_arg_in_braces(arg, left, TRUE);
-		      get_arg_in_braces(arg, temp, TRUE);
+		arg = get_arg_in_braces(ses, arg, left, TRUE);
+		      get_arg_in_braces(ses, arg, temp, TRUE);
 
 		if (*temp)
 		{
@@ -137,7 +137,7 @@ DO_COMMAND(do_echo)
 
 	substitute(ses, arg, temp, SUB_ESC);
 
-	if (strip_vt102_strlen(ses->more_output) != 0)
+	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
 		sprintf(output, "\n\033[0m%s\033[0m", temp);
 	}
@@ -188,7 +188,7 @@ DO_COMMAND(do_forall)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, right, TRUE);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -200,7 +200,7 @@ DO_COMMAND(do_forall)
 
 		while (*arg)
 		{
-			arg = get_arg_in_braces(arg, temp, TRUE);
+			arg = get_arg_in_braces(ses, arg, temp, TRUE);
 
 			RESTRING(gtd->cmds[0], temp);
 
@@ -267,10 +267,9 @@ DO_COMMAND(do_nop)
 DO_COMMAND(do_parse)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-	int cnt;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(ses, arg, left,  0);
+	arg = get_arg_in_braces(ses, arg, right, 1);
 
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
@@ -280,22 +279,33 @@ DO_COMMAND(do_parse)
 	}
 	else
 	{
-		for (cnt = 0 ; left[cnt] != 0 ; cnt++)
-		{
-#ifdef BIG5
-			if (left[cnt] & 0x80 && left[cnt+1] != 0)
-			{
-				sprintf(temp, "%c%c", left[cnt], left[cnt+1]);
+		int i = 0;
 
-				cnt++;
+		while (left[i] != 0)
+		{
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && left[i] & 128 && left[i+1] != 0)
+			{
+				i += sprintf(temp, "%c%c", left[i], left[i+1]);
+			}
+			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (left[i] & 192) == 192 && left[i+1] != 0)
+			{
+				if ((left[i] & 240) == 240 && left[i+2] != 0 && left[i+3] != 0)
+				{
+					i += sprintf(temp, "%c%c%c%c", left[i], left[i+1], left[i+2], left[i+3]);
+				}
+				else if ((left[i] & 224) == 224 && left[i+2] != 0)
+				{
+					i += sprintf(temp, "%c%c%c", left[i], left[i+1], left[i+2]);
+				}
+				else
+				{
+					i += sprintf(temp, "%c%c", left[i], left[i+1]);
+				}
 			}
 			else
 			{
-				sprintf(temp, "%c", left[cnt]);
+				i += sprintf(temp, "%c", left[i]);
 			}
-#else
-			sprintf(temp, "%c", left[cnt]);
-#endif
 
 			RESTRING(gtd->cmds[0], temp);
 
@@ -314,7 +324,7 @@ DO_COMMAND(do_send)
 
 	push_call("do_send(%p,%p)",ses,arg);
 
-	get_arg_in_braces(arg, left, TRUE);
+	get_arg_in_braces(ses, arg, left, TRUE);
 
 	write_mud(ses, left, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
@@ -324,10 +334,10 @@ DO_COMMAND(do_send)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE], *ptf;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE];
 	int lnf;
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(ses, arg, left, TRUE);
 
 	lnf = !str_suffix(left, "\\");
 
@@ -335,69 +345,51 @@ DO_COMMAND(do_showme)
 
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*right)
-	{
-		do_one_line(temp, ses);
+	do_one_line(temp, ses);
 
-		if (HAS_BIT(ses->flags, SES_FLAG_GAG))
-		{
-			DEL_BIT(ses->flags, SES_FLAG_GAG);
-		}
-		else
-		{
-			do_one_prompt(ses, temp, (int) get_number(ses, right));
-		}
+	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
 		return ses;
 	}
 
-	if (ses == gtd->ses && !HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	if (*right)
+	{
+		do_one_prompt(ses, temp, (int) get_number(ses, right));
+
+		return ses;
+	}
+
+	if (strip_vt102_strlen(ses, ses->more_output) != 0)
+	{
+		sprintf(right, "\n\033[0m%s\033[0m", temp);
+	}
+	else
+	{
+		sprintf(right, "\033[0m%s\033[0m", temp);
+	}
+
+	add_line_buffer(ses, right, lnf);
+
+	if (ses != gtd->ses)
+	{
+		return ses;
+	}
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
 		save_pos(ses);
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	arg = temp;
+	printline(ses, right, lnf);
 
-	while (arg)
-	{
-		ptf = strchr(arg, '\n');
-
-		if (ptf != NULL)
-		{
-			*ptf++ = 0;
-		}
-
-		do_one_line(arg, ses);
-
-		if (HAS_BIT(ses->flags, SES_FLAG_GAG))
-		{
-			DEL_BIT(ses->flags, SES_FLAG_GAG);
-		}
-		else
-		{
-			if (strip_vt102_strlen(ses->more_output) != 0)
-			{
-				sprintf(left, "\n\033[0m%s\033[0m", arg);
-			}
-			else
-			{
-				sprintf(left, "\033[0m%s\033[0m", arg);
-			}
-
-			add_line_buffer(ses, left, ptf ? lnf : 0);
-
-			if (ses == gtd->ses)
-			{
-				printline(ses, left, lnf);
-			}
-		}
-		arg = ptf;
-	}
-
-	if (ses == gtd->ses && !HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{
 		restore_pos(ses);
 	}
+
 	return ses;
 }
 
@@ -406,7 +398,7 @@ DO_COMMAND(do_snoop)
 	struct session *sesptr = ses;
 	char left[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, left, 1);
+	get_arg_in_braces(ses, arg, left, 1);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left)

@@ -32,7 +32,7 @@ DO_COMMAND(do_line)
 	char left[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(ses, arg, left, FALSE);
 
 	if (*left == 0)
 	{
@@ -72,10 +72,10 @@ DO_LINE(line_log)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left, 0);
+	arg = get_arg_in_braces(ses, arg, left, 0);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(ses, arg, right, 1);
 
 	if (ses->logline)
 	{
@@ -113,7 +113,7 @@ DO_LINE(line_logverbatim)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(ses, arg, right, 1);
 
 	if (ses->logline)
 	{
@@ -131,9 +131,7 @@ DO_LINE(line_logverbatim)
 
 		if (*right)
 		{
-			substitute(ses, right, right, SUB_ESC|SUB_LNF);
-
-			logit(ses, right, ses->logline, FALSE);
+			logit(ses, right, ses->logline, TRUE);
 
 			fclose(ses->logline);
 			ses->logline = NULL;
@@ -151,8 +149,8 @@ DO_LINE(line_substitute)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], subs[BUFFER_SIZE];
 	int i, flags = 0;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(ses, arg, left,  0);
+	arg = get_arg_in_braces(ses, arg, right, 1);
 
 	if (*right == 0)
 	{
@@ -165,7 +163,7 @@ DO_LINE(line_substitute)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(arg, subs, 0);
+		arg = get_arg_in_braces(ses, arg, subs, 0);
 
 		for (i = 0 ; *substitution_table[i].name ; i++)
 		{
@@ -193,7 +191,7 @@ DO_LINE(line_verbose)
 	struct session *sesptr;
 	char left[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  TRUE);
+	arg = get_arg_in_braces(ses, arg, left,  TRUE);
 
 	if (*left == 0)
 	{
@@ -209,6 +207,31 @@ DO_LINE(line_verbose)
 	ses = script_driver(ses, -1, left);
 
 	DEL_BIT(sesptr->flags, SES_FLAG_VERBOSELINE);
+
+	return ses;
+}
+
+DO_LINE(line_ignore)
+{
+	struct session *sesptr;
+	char left[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+
+	if (*left == 0)
+	{
+		tintin_printf(ses, "#SYNTAX: #LINE {IGNORE} {command}.");
+
+		return ses;
+	}
+
+	sesptr = ses;
+
+	SET_BIT(sesptr->flags, SES_FLAG_IGNORELINE);
+
+	ses = script_driver(ses, -1, left);
+
+	DEL_BIT(sesptr->flags, SES_FLAG_IGNORELINE);
 
 	return ses;
 }

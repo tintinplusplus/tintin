@@ -257,8 +257,14 @@ struct help_type help_table[] =
 		"         foreground colors use <<888>g00> to <<888>g23>, for grayscale background colors\n"
 		"         use <<888>G00> to <<888>G23>.\n"
 		"\n"
-		"<178>Example<078>: #showme <<888>115>t<<888>828>e<<888>838>s<<888>848>t<<888>088> <<888>468>!<<888>568>!<<888>088>\n"
-		"         This will show: <115>t<828>e<838>s<848>t<088> <468>!<568>!<088>.\n"
+		"         The tertiary colors are as follows:\n"
+		"\n"
+		"         <<888>acf> - Azure            <<888>afc> - Viridian\n"
+		"         <<888>caf> - Indigo           <<888>cfa> - Lime\n"
+		"         <<888>fac> - Pink             <<888>fca> - Orange\n"
+		"\n"
+		"<178>Example<078>: #showme <<888>acf>Azure    <<888>afc>Viridian <<888>caf>Indigo\n"
+		"<178>Example<078>: #showme <<888>cfa>Lime     <<888>fac>Pink     <<888>fca>Orange\n"
 	},
 	{
 		"CONFIG",
@@ -275,7 +281,6 @@ struct help_type help_table[] =
 		"\n"
 		"         Config options which aren't listed by default:\n"
 		"\n"
-		"         #CONFIG {BIG5}         {ON|OFF} BIG5 Chinese character handling.\n"
 		"         #CONFIG {CONVERT META} {ON|OFF} Shows color codes and key bindings.\n"
 		"         #CONFIG {COLOR PATCH}  {ON|OFF} Fixes color code usage on some muds.\n"
 		"         #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
@@ -286,9 +291,10 @@ struct help_type help_table[] =
 		"CONTINUE",
 		"<178>Command<078>: #continue\n"
 		"\n"
-		"         The continue command can be used inside the #FOREACH, #LOOP, #PARSE, #WHILE\n"
-		"         and #SWITCH commands. When #CONTINUE is found, tintin will go to the end\n"
-		"         of the command and proceed as normal, which may be to reiterate the command.\n"
+		"         The continue command can be used inside the #FOREACH, #LOOP, #PARSE,\n"
+		"         #WHILE and #SWITCH commands. When #CONTINUE is found, tintin will go\n"
+		"         to the end of the command and proceed as normal, which may be to\n"
+		"         reiterate the command.\n"
 		"\n"
 		"<178>Example<078>: #loop 1 10 cnt {#if {$cnt % 2 == 0} {#continue} {say $cnt}}\n"
 	},
@@ -432,8 +438,9 @@ struct help_type help_table[] =
 		"         PROGRAM TERMINATION\n"
 		"         RECEIVED INPUT       %0 raw text\n"
 		"         RECEIVED LINE        %0 raw text %1 plain text\n"
+		"         RECEIVED OUTPUT      %0 raw text\n"
 		"         SCREEN RESIZE        %0 cols %1 rows\n"
-		"         SEND OUTPUT          %0 raw output\n"
+		"         SEND OUTPUT          %0 raw text\n"
 		"         SESSION ACTIVATED    %0 name\n"
 		"         SESSION CONNECTED    %0 name %1 host %2 ip %3 port\n"
 		"         SESSION DEACTIVATED  %0 name\n"
@@ -538,7 +545,7 @@ struct help_type help_table[] =
 		"GREETING",
 		"<068>      #<068>##################################################################<068>#\n"
 		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                     <068>#\n"
+		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
 		"<068>      #<078>                                                                  <068>#\n"
 		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
 		"<068>      #<078>                                                                  <068>#\n"
@@ -552,7 +559,7 @@ struct help_type help_table[] =
 	{
 		"GREETING",
 		"<068>      #<068>##################################################################<068>#\n"
-		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                     <068>#\n"
+		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
 		"<068>      #<078>                                                                  <068>#\n"
 		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
 		"<068>      #<078>                                                                  <068>#\n"
@@ -695,11 +702,14 @@ struct help_type help_table[] =
 		"\n"
 		"         #line gag                              Gag the next line.\n"
 		"\n"
+		"         #line ignore {argument}                Argument is executed without\n"
+		"                                                any triggers being checked.\n"
+		"\n"
 		"         #line substitute {options} {argument}  Substitutes the given options:\n"
 		"                                                variables, functions, colors,\n"
-		"                                                escapes, secure, in the given\n"
-		"                                                argument next executes it as a\n"
-		"                                                command.\n"
+		"                                                escapes, secure, eol, lnf, in\n"
+		"                                                the given argument next executes\n"
+		"                                                it as a command.\n"
 		"\n"
 		"         #line verbose {argument}               Argument is executed verbose.\n"
 		"\n"
@@ -728,6 +738,9 @@ struct help_type help_table[] =
 		"\n"
 		"         When inserting an item a positive index will prepend the item at the\n"
 		"         given index, while a negative index will append the item.\n"
+		"\n"
+		"         The add and create options allow using multiple items, as well\n"
+		"         as semi-colon separated items.\n"
 		"\n"
 		"         A length of 0 is returned for an empty or non existant list.\n"
 		"\n"
@@ -811,7 +824,7 @@ struct help_type help_table[] =
 		"                  room vnum is given as the second argument an exit will be\n"
 		"                  created to the given room vnum.\n"
 		"\n"
-		"         #map exit <exit name> <COMMAND|DIRECTION|FLAG|NAME|VNUM> <argument>\n"
+		"         #map exit <exit> <COMMAND|DIRECTION|FLAG|GET|NAME|SET|VNUM> <argument>\n"
 		"                  Set the exit data. Useful with a closed door where you can\n"
 		"                  set the exit command: '#map exit e command {open east;e}'.\n"
 		"\n"
@@ -834,21 +847,25 @@ struct help_type help_table[] =
 		"                  found. These options are also available to the goto, and link\n"
 		"                  commands.\n"
 		"\n"
-		"         #map flag static: Will make the map static so new rooms are no longer\n"
-		"                  created when walking into an unmapped direction. Useful when\n"
-		"                  you're done mapping and regularly bump into walls accidentally\n"
-		"                  creating a new room. #map dig etc will still work.\n"
-		"\n"
-		"         #map flag vtmap: Will enable the vtmap which is shown in the top split\n"
-		"                  screen if you have one. You can create a 10 rows high top\n"
-		"                  screen by using '#split 10 1'.\n"
-		"\n"
 		"         #map flag asciigraphics: Draws a smaller but more detailed map that\n"
 		"                  displays the ne se sw nw exits and room symbols.\n"
 		"\n"
 		"         #map flag asciivnums: Display room vnums with asciigraphics enabled.\n"
 		"\n"
+		"         #map flag nofollow: When you enter movement commands the map will no\n"
+		"                  longer automatically follow along. Useful for MSDP and GMCP\n"
+		"                  automapping scripts.\n"
+		"\n"
+		"         #map flag static: Will make the map static so new rooms are no longer\n"
+		"                  created when walking into an unmapped direction. Useful when\n"
+		"                  you're done mapping and regularly bump into walls accidentally\n"
+		"                  creating a new room. #map dig etc will still work.\n"
+		"\n"
 		"         #map flag vtgraphics: Enables vt line drawing on some terminals\n"
+		"\n"
+		"         #map flag vtmap: Will enable the vtmap which is shown in the top split\n"
+		"                  screen if you have one. You can create a 16 rows high top\n"
+		"                  screen by using '#split 16 1'.\n"
 		"\n"
 		"         #map goto <room name> [exits]: Takes you to the given room name, if\n"
 		"                  you provide exits those must match as well.\n"
@@ -863,7 +880,7 @@ struct help_type help_table[] =
 		"         #map insert <direction> [roomflag]: Insert a room in the given\n"
 		"                  direction. Most useful for inserting void rooms.\n"
 		"\n"
-		"         #map jump <x> <y>: Jump to the given coordinate, which is relative\n"
+		"         #map jump <x> <y> <z>: Jump to the given coordinate, which is relative\n"
 		"                  to your current room.\n"
 		"\n"
 		"         #map leave: Makes you leave the map. Useful when entering a maze.\n"
@@ -882,7 +899,8 @@ struct help_type help_table[] =
 		"         #map link <direction> <room name>: Links two rooms. If a valid\n"
 		"                  direction is given the link is two way.\n"
 		"\n"
-		"         #map list <location>: Lists all matching rooms and their distance.\n"
+		"         #map list <roomname> <exits> <roomdesc> <roomarea> <roomnote>: Lists\n"
+		"                  all matching rooms and their distance.\n"
 		"\n"
 		"         #map map {<x>x<y>} {filename} {a}: shows a map of surrounding rooms.\n"
 		"                  The {horizontal x vertical} argument i.e 80x25 is optional,\n"
@@ -1041,18 +1059,20 @@ struct help_type help_table[] =
 		"PATH",
 		"<178>Command<078>: #path <178>{<078>del<178>|<078>end<178>|<078>ins<178>|<078>load<178>|<078>map<178>|<078>new<178>|<078>run<178>|<078>save<178>|<078>walk<178>}<078> <178>{<078>argument<178>}<078>\n"
 		"\n"
-		"         #path del:  Will delete the last move of the path.\n"
-		"         #path end:  Movement commands are no longer added to the path.\n"
-		"         #path ins:  Add the given argument to the path.\n"
-		"         #path load: Load the given variable as the new path.\n"
-		"         #path map:  Display the so far created path.\n"
-		"         #path new:  Movement commands will be added to the path.\n"
-		"         #path run:  Enter all the steps of the current path, with\n"
-		"                     an optional given delay.\n"
-		"         #path save: Save the created path to a variable. You must specify\n"
-		"                     whether you want to save the path forward or backward.\n"
-		"         #path walk: Take one step forward of the current path. You can walk\n"
-		"                     backwards using #path walk backwards.\n"
+		"         #path del:   Will delete the last move of the path.\n"
+		"         #path end:   Movement commands are no longer added to the path.\n"
+		"         #path ins:   Add the given argument to the path.\n"
+		"         #path load:  Load the given variable as the new path.\n"
+		"         #path new:   Movement commands will be added to the path.\n"
+		"         #path run:   Enter all the steps of the current path, with\n"
+		"                      an optional given delay.\n"
+		"         #path save:  Save the created path to a variable. You must specify\n"
+		"                      whether you want to save the path forward or backward.\n"
+		"         #path show:  Display the so far created path.\n"
+		"         #path unzip: Load the given speedwalk as the new path.\n"
+		"         #path walk:  Take one step forward of the current path. You can\n"
+		"                      walk backwards using #path walk backwards.\n"
+		"         #path zip:   Turn loaded path into a speedwalk.\n"
 		"\n"
 		"<178>Example<078>: #path ins {unlock n;open n} {unlock s;open s}\n"
 	},
@@ -1447,6 +1467,27 @@ struct help_type help_table[] =
 		"<178>Comment<078>: You can remove a variable with the #unvariable command.\n"
 	},
 	{
+		"WHILE",
+		"<178>Command<078>: #while <178>{<078>conditional<178>} {<078>commands<178>}<078>\n"
+		"\n"
+		"         This command works similar to a 'while' statement in other languages.\n"
+		"\n"
+		"         When a 'while' command is encourated, the conditional is evaluated,\n"
+		"         and if TRUE (any non-zero result) the commands are executed. The\n"
+		"         'while' loop will be repeated indefinitely until the conditional is\n"
+		"         FALSE or the #BREAK or #RETURN commands are found.\n"
+		"\n"
+		"         The 'while' statement is only evaluated if it is read, so you must\n"
+		"         nest it inside a trigger, like an alias or action.\n"
+		"\n"
+		"         The conditional is evaluated exactly the same as in the 'math' command.\n"
+                "\n"
+                "<178>Example<078>: #math cnt 0;#while {$cnt < 20} {#math cnt $cnt + 1;say $cnt}\n"
+		"\n"
+		"<178>Comment<078>: See '#help math', for more information.\n"
+	},
+                                                                                                   
+	{
 		"WRITE",
 		"<178>Command<078>: #write <178>{<078>filename<178>}<078>\n"
 		"\n"
@@ -1473,7 +1514,7 @@ DO_COMMAND(do_help)
 	char left[BUFFER_SIZE], add[BUFFER_SIZE], buf[BUFFER_SIZE], *ptf, *pto;
 	int cnt, found;
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(ses, arg, left, TRUE);
 
 	if (*left == 0)
 	{
@@ -1494,7 +1535,7 @@ DO_COMMAND(do_help)
 
 		for (cnt = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1 || match(ses, help_table[cnt].name, left))
+			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1 || match(ses, help_table[cnt].name, left, SUB_VAR|SUB_FUN))
 			{
 				substitute(ses, help_table[cnt].text, buf, SUB_COL);
 

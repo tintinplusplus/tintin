@@ -63,7 +63,7 @@ DO_COMMAND(do_map)
 	int cnt;
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, arg1, FALSE);
+	arg = get_arg_in_braces(ses, arg, arg1, FALSE);
 
 	if (*arg1 == 0)
 	{
@@ -396,11 +396,28 @@ DO_MAP(map_exit)
 
 		show_message(ses, -1, "#MAP EXIT {%s} : FLAGS SET TO {%d}.", arg1, exit->flags);
 	}
+	else if (is_abbrev(arg2, "GET"))
+	{
+		if (*arg3)
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg3, "%s", exit->data);
+		}
+		else
+		{
+			tintin_printf2(ses, "#MAP EXIT GET: No destination variable.");
+		}
+	}
 	else if (is_abbrev(arg2, "NAME"))
 	{
 		exit->name = restring(exit->name, arg3);
 
 		show_message(ses, -1, "#MAP EXIT {%s} : NAME SET TO {%s}.", arg1, exit->name);
+	}
+	else if (is_abbrev(arg2, "SET"))
+	{
+		exit->data = restring(exit->data, arg3);
+
+		show_message(ses, -1, "#MAP EXIT {%s} : DATA SET TO {%s}.", arg1, exit->data);
 	}
 	else if (is_abbrev(arg2, "VNUM"))
 	{
@@ -637,17 +654,19 @@ DO_MAP(map_get)
 	}
 	else if (*arg1 == 0 || *arg2 == 0)
 	{
-		tintin_printf2(ses, "  roomvnum: %d", room->vnum);
-		tintin_printf2(ses, "  roomarea: %s", room->area);
-		tintin_printf2(ses, " roomcolor: %s", room->color);
-		tintin_printf2(ses, "  roomdesc: %s", room->desc);
-		tintin_printf2(ses, " roomexits: %d", get_map_exits(ses, room->vnum));
-		tintin_printf2(ses, " roomflags: %d", room->flags);
-		tintin_printf2(ses, "  roomname: %s", room->name);
-		tintin_printf2(ses, "  roomnote: %s", room->note);
-		tintin_printf2(ses, "roomsymbol: %s", room->symbol);
-		tintin_printf2(ses, "worldflags: %d", ses->map->flags);
-		tintin_printf2(ses, " worldsize: %d", ses->map->size);
+		tintin_printf2(ses, "   roomvnum: %d", room->vnum);
+		tintin_printf2(ses, "   roomarea: %s", room->area);
+		tintin_printf2(ses, "  roomcolor: %s", room->color);
+		tintin_printf2(ses, "   roomdata: %s", room->data);
+		tintin_printf2(ses, "   roomdesc: %s", room->desc);
+		tintin_printf2(ses, "  roomexits: %d", get_map_exits(ses, room->vnum));
+		tintin_printf2(ses, "  roomflags: %d", room->flags);
+		tintin_printf2(ses, "   roomname: %s", room->name);
+		tintin_printf2(ses, "   roomnote: %s", room->note);
+		tintin_printf2(ses, " roomsymbol: %s", room->symbol);
+		tintin_printf2(ses, "roomterrain: %s", room->terrain);
+		tintin_printf2(ses, " worldflags: %d", ses->map->flags);
+		tintin_printf2(ses, "  worldsize: %d", ses->map->size);
 	}
 	else
 	{
@@ -658,6 +677,10 @@ DO_MAP(map_get)
 		else if (is_abbrev(arg1, "roomcolor"))
 		{
 			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", room->color);
+		}
+		else if (is_abbrev(arg1, "roomdata"))
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", room->data);
 		}
 		else if (is_abbrev(arg1, "roomdesc"))
 		{
@@ -678,6 +701,10 @@ DO_MAP(map_get)
 		else if (is_abbrev(arg1, "roomsymbol"))
 		{
 			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", room->symbol);
+		}
+		else if (is_abbrev(arg1, "roomterrain"))
+		{
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", room->terrain);
 		}
 		else if (is_abbrev(arg1, "roomvnum"))
 		{
@@ -742,25 +769,38 @@ DO_MAP(map_info)
 		}
 	}
 
-	tintin_printf2(ses, "%-20s %d/%d", "Total rooms:",    cnt, ses->map->size);
-	tintin_printf2(ses, "%-20s %d", "Total exits:",    exits);
-	tintin_printf2(ses, "%-20s %s", "Vtmap:",          HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
-	tintin_printf2(ses, "%-20s %s", "Static:",         HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
+	tintin_printf2(ses, "%-20s%-20d%-20s%-20d", "Total rooms:", cnt, "Total exits:", exits);
+	tintin_printf2(ses, "%-20s%-20d%-20s%-20d", "World size:", ses->map->size, "Current room:", ses->map->in_room);
+
+	tintin_printf2(ses, "");
+
+	tintin_printf2(ses, "%-14s%5s %-14s%5s %-14s%5s %-14s%5s", "Vtmap:", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off", "Static:", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off", "Vtgraphics", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off", "Asciigraphics", HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS) ? "on" : "off");
+	tintin_printf2(ses, "%-14s%5s %-14s%5s", "Asciivnums:", HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIVNUMS) ? "on" : "off", "Nofollow:", HAS_BIT(ses->map->flags, MAP_FLAG_NOFOLLOW) ? "on" : "off");
 
 	if (ses->map->in_room)
 	{
 		tintin_printf2(ses, "");
-		tintin_printf2(ses, "%-20s %d", "Room vnum:",      ses->map->in_room);
-		tintin_printf2(ses, "%-20s %s", "Room name:",      ses->map->room_list[ses->map->in_room]->name);
-		tintin_printf2(ses, "%-20s %d", "Room size:",      ses->map->room_list[ses->map->in_room]->size);
-		tintin_printf2(ses, "%-20s %s", "Avoid:",          HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID) ? "on" : "off");
-		tintin_printf2(ses, "%-20s %s", "Hide:",           HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE) ? "on" : "off");		
-		tintin_printf2(ses, "%-20s %s", "Leave:",          HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE) ? "on" : "off");
-		tintin_printf2(ses, "%-20s %s", "Void:",           HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID) ? "on" : "off");
+
+		tintin_printf2(ses, "%-20s%s", "Room area:",    ses->map->room_list[ses->map->in_room]->area);
+		tintin_printf2(ses, "%-20s%s", "Room data:",    ses->map->room_list[ses->map->in_room]->data);
+		tintin_printf2(ses, "%-20s%s", "Room desc:",    ses->map->room_list[ses->map->in_room]->desc);
+		tintin_printf2(ses, "%-20s%s", "Room name:",    ses->map->room_list[ses->map->in_room]->name);
+		tintin_printf2(ses, "%-20s%s", "Room note:",    ses->map->room_list[ses->map->in_room]->note);
+		tintin_printf2(ses, "%-20s%s", "Room symbol:",  ses->map->room_list[ses->map->in_room]->symbol);
+		tintin_printf2(ses, "%-20s%s", "Room terrain:", ses->map->room_list[ses->map->in_room]->terrain);
+		tintin_printf2(ses, "%-20s%d", "Room vnum:",    ses->map->in_room);
+
+		tintin_printf2(ses, "");
+
+		tintin_printf2(ses, "%-14s%5s %-14s%5s %-14s%5s %-14s%5s", "Avoid:", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID) ? "on" : "off", "Hide:", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE) ? "on" : "off", "Leave:",  HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE) ? "on" : "off", "Static:", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_STATIC) ? "on" : "off");
+		tintin_printf2(ses, "%-14s%5s",                             "Void:", HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID) ? "on" : "off");
+
+		tintin_printf2(ses, "");
 
 		for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
 		{
-			tintin_printf2(ses, "%-20s %03d %-3s (%s) to room: %-5d (%s)", "Exit:", exit->dir, exit->name, exit->cmd, exit->vnum, ses->map->room_list[exit->vnum]->name);
+			tintin_printf2(ses, "%-14s%5s %-14s%5d %-14s%5d %-14s%5s", "Exit name:", exit->name, "Exit vnum:", exit->vnum, "Exit flags:", exit->flags, "Exit command:", exit->cmd);
+			tintin_printf2(ses, "%-14s%s", "Exit data:", exit->data);
 		}
 	}
 }
@@ -839,10 +879,12 @@ DO_MAP(map_insert)
 
 DO_MAP(map_jump)
 {
+	char arg3[BUFFER_SIZE];
 	int vnum;
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg3, GET_ALL, SUB_VAR|SUB_FUN);
 
 	map_grid_x = 0;
 	map_grid_y = 0;
@@ -851,8 +893,9 @@ DO_MAP(map_jump)
 	map_search_ses       = ses;
 	map_search_tar_room  = 0;
 
-	map_grid_x += atoi(arg1);
-	map_grid_y += atoi(arg2);
+	map_grid_x += get_number(ses, arg1);
+	map_grid_y += get_number(ses, arg2);
+	map_grid_z += get_number(ses, arg3);
 
 	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
@@ -874,7 +917,7 @@ DO_MAP(map_jump)
 	}
 	else
 	{
-		show_message(ses, -1, "#MAP: Couldn't find room at {%s} {%s}.", arg1, arg2);
+		show_message(ses, -1, "#MAP: Couldn't find room at {%d} {%d} {%d}.", map_grid_x, map_grid_y, map_grid_z);
 	}
 }
 
@@ -891,7 +934,7 @@ DO_MAP(map_leave)
 
 		show_message(ses, -1, "#MAP: Leaving the map. Use goto or return to return.");
 
-		check_all_events(ses, 0, 1, "MAP EXIT MAP", ntos(ses->map->in_room));
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "MAP EXIT MAP", ntos(ses->map->in_room));
 	}
 }
 
@@ -1438,6 +1481,7 @@ DO_MAP(map_set)
 	{
 		tintin_printf2(ses, "  roomarea: %s", room->area);
 		tintin_printf2(ses, " roomcolor: %s", room->color);
+		tintin_printf2(ses, "  roomdata: %s", room->data);
 		tintin_printf2(ses, "  roomdesc: %s", room->desc);
 		tintin_printf2(ses, " roomflags: %d", room->flags);
 		tintin_printf2(ses, "  roomname: %s", room->name);
@@ -1455,6 +1499,11 @@ DO_MAP(map_set)
 		{
 			RESTRING(room->color, arg2);
 			show_message(ses, -1, "#MAP SET: roomcolor set to: %s", arg2);
+		}
+		else if (is_abbrev(arg1, "roomdata"))
+		{
+			RESTRING(room->data, arg2);
+			show_message(ses, -1, "#MAP SET: roomdata set to: %s", arg2);
 		}
 		else if (is_abbrev(arg1, "roomdesc"))
 		{
@@ -1483,6 +1532,11 @@ DO_MAP(map_set)
 			RESTRING(room->symbol, arg2);
 
 			show_message(ses, -1, "#MAP SET: roomsymbol set to: %s", room->symbol);
+		}
+		else if (is_abbrev(arg1, "roomterrain"))
+		{
+			RESTRING(room->terrain, arg2);
+			show_message(ses, -1, "#MAP SET: roomterrain set to: %s", arg2);
 		}
 		else
 		{
@@ -1690,7 +1744,7 @@ DO_MAP(map_write)
 	{
 		if (ses->map->room_list[vnum])
 		{
-			fprintf(file, "\nR {%5d} {%d} {%s} {%s} {%s} {%s} {%s} {%s}\n",
+			fprintf(file, "\nR {%5d} {%d} {%s} {%s} {%s} {%s} {%s} {%s} {%s} {%s}\n",
 				ses->map->room_list[vnum]->vnum,
 				ses->map->room_list[vnum]->flags,
 				ses->map->room_list[vnum]->color,
@@ -1698,16 +1752,19 @@ DO_MAP(map_write)
 				ses->map->room_list[vnum]->symbol,
 				ses->map->room_list[vnum]->desc,
 				ses->map->room_list[vnum]->area,
-				ses->map->room_list[vnum]->note);
-                        
+				ses->map->room_list[vnum]->note,
+				ses->map->room_list[vnum]->terrain,
+				ses->map->room_list[vnum]->data);
+
 			for (exit = ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
 			{
-				fprintf(file, "E {%5d} {%s} {%s} {%d} {%d}\n",
+				fprintf(file, "E {%5d} {%s} {%s} {%d} {%d} {%s}\n",
 					exit->vnum,
 					exit->name,
 					exit->cmd,
 					exit->dir,
-					exit->flags);
+					exit->flags,
+					exit->data);
 			}
 		}
 	}
@@ -1727,7 +1784,7 @@ void create_map(struct session *ses, char *arg)
 	}
 
 	ses->map = (struct map_data *) calloc(1, sizeof(struct map_data));
-	ses->map->size = atoi(arg) > 0 ? atoi(arg) : 15000;
+	ses->map->size = atoi(arg) > 0 ? atoi(arg) : 50000;
 
 	ses->map->room_list = (struct room_data **) calloc(ses->map->size, sizeof(struct room_data *));
 
@@ -1780,7 +1837,7 @@ void create_legend(struct session *ses, char *arg)
 
 	for (cnt = 0 ; cnt < 17 ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, buf, FALSE);
+		arg = get_arg_in_braces(ses, arg, buf, FALSE);
 
 		substitute(ses, buf, buf, SUB_ESC);
 
@@ -1798,37 +1855,25 @@ void create_legend(struct session *ses, char *arg)
 
 int create_room(struct session *ses, char *arg)
 {
-	char vnum[BUFFER_SIZE], flags[BUFFER_SIZE], color[BUFFER_SIZE], name[BUFFER_SIZE], symbol[BUFFER_SIZE], desc[BUFFER_SIZE], area[BUFFER_SIZE], note[BUFFER_SIZE];
+	char buf[BUFFER_SIZE];
 	struct room_data *newroom;
 
-	arg = get_arg_in_braces(arg, vnum,   FALSE);
-	arg = get_arg_in_braces(arg, flags,  FALSE);
-	arg = get_arg_in_braces(arg, color,  FALSE);
-	arg = get_arg_in_braces(arg, name,   FALSE);
-	arg = get_arg_in_braces(arg, symbol, FALSE);
-	arg = get_arg_in_braces(arg, desc,   FALSE);
-	arg = get_arg_in_braces(arg, area,   FALSE);
-	arg = get_arg_in_braces(arg, note,   FALSE);
+	newroom          = (struct room_data *) calloc(1, sizeof(struct room_data));
 
-	/* Backward compatbility 1.96.5 */
-
-	if (*symbol == 0) { strcpy(symbol, " "); }
-
-	newroom         = (struct room_data *) calloc(1, sizeof(struct room_data));
-
-	newroom->color  = strdup(color);
-	newroom->name   = strdup(name);
-	newroom->symbol = strdup(symbol);
-	newroom->desc   = strdup(desc);
-	newroom->area   = strdup(area);
-	newroom->note   = strdup(note);
-
-	newroom->flags  = atoi(flags);
-	newroom->vnum   = atoi(vnum);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->vnum    = atoi(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->flags   = atoi(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->color   = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->name    = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->symbol  = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->desc    = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->area    = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->note    = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->terrain = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE); newroom->data    = strdup(buf);
 
 	ses->map->room_list[newroom->vnum] = newroom;
 
-	show_message(ses, -1, "#MAP CREATE ROOM %5s {%s}.", vnum, name);
+	show_message(ses, -1, "#MAP CREATE ROOM %5d {%s}.", newroom->vnum, newroom->name);
 
 	return newroom->vnum;
 }
@@ -1879,20 +1924,23 @@ void create_exit(struct session *ses, int room, char *arg)
 	struct exit_data *newexit;
 	struct listnode *node;
 
-	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE], dir[BUFFER_SIZE], flags[BUFFER_SIZE];
+	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE], dir[BUFFER_SIZE], flags[BUFFER_SIZE], data[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, vnum,  FALSE);
-	arg = get_arg_in_braces(arg, name,  FALSE);
-	arg = get_arg_in_braces(arg, cmd,   TRUE);
-	arg = get_arg_in_braces(arg, dir,   FALSE);
-	arg = get_arg_in_braces(arg, flags, FALSE);
+	arg = get_arg_in_braces(ses, arg, vnum,  FALSE);
+	arg = get_arg_in_braces(ses, arg, name,  FALSE);
+	arg = get_arg_in_braces(ses, arg, cmd,   TRUE);
+	arg = get_arg_in_braces(ses, arg, dir,   FALSE);
+	arg = get_arg_in_braces(ses, arg, flags, FALSE);
+	arg = get_arg_in_braces(ses, arg, data,  TRUE);
 
 	newexit        = (struct exit_data *) calloc(1, sizeof(struct exit_data));
+
 	newexit->vnum  = atoi(vnum);
 	newexit->name  = strdup(name);
 	newexit->cmd   = strdup(cmd);
 	newexit->dir   = atoi(dir);
 	newexit->flags = atoi(flags);
+	newexit->data  = strdup(data);
 
 	if (newexit->dir == 0)
 	{
@@ -2098,9 +2146,9 @@ void add_undo(struct session *ses, char *format, ...)
 	vsprintf(buf, format, args);
 	va_end(args);
 
-	arg = get_arg_in_braces(buf, dir, FALSE);
-	arg = get_arg_in_braces(arg, rev, FALSE);
-	arg = get_arg_in_braces(arg, flag, FALSE);
+	arg = get_arg_in_braces(ses, buf, dir, FALSE);
+	arg = get_arg_in_braces(ses, arg, rev, FALSE);
+	arg = get_arg_in_braces(ses, arg, flag, FALSE);
 
 	link = (struct link_data *) calloc(1, sizeof(struct link_data));
 
@@ -2465,7 +2513,7 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 						}
 						else if (strip_color_strlen(room->symbol) <= 1)
 						{
-							cat_sprintf(buf, "%s[%s%s]%s", HAS_BIT(room->flags, ROOM_FLAG_PATH) ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, room->symbol, HAS_BIT(room->flags, ROOM_FLAG_PATH) ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, ses->map->exit_color);
+							cat_sprintf(buf, "%s[%-1s%s]%s", HAS_BIT(room->flags, ROOM_FLAG_PATH) ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, room->symbol, HAS_BIT(room->flags, ROOM_FLAG_PATH) ? ses->map->path_color : *room->color ? room->color : ses->map->room_color, ses->map->exit_color);
 						}
 						else
 						{
@@ -2664,7 +2712,7 @@ int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3
 
 	if (*arg1)
 	{
-		if (!match(ses, ses->map->room_list[room]->name, arg1))
+		if (!match(ses, ses->map->room_list[room]->name, arg1, SUB_VAR|SUB_FUN))
 		{
 			return 0;
 		}
@@ -2678,7 +2726,7 @@ int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3
 
 		while (*arg)
 		{
-			arg = get_arg_in_braces(arg, exit, GET_ONE);
+			arg = get_arg_in_braces(ses, arg, exit, GET_ONE);
 
 			size++;
 
@@ -2702,7 +2750,7 @@ int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3
 
 	if (*arg3)
 	{
-		if (!match(ses, ses->map->room_list[room]->desc, arg3))
+		if (!match(ses, ses->map->room_list[room]->desc, arg3, SUB_VAR|SUB_FUN))
 		{
 			return 0;
 		}
@@ -2710,7 +2758,7 @@ int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3
 
 	if (*arg4)
 	{
-		if (!match(ses, ses->map->room_list[room]->area, arg4))
+		if (!match(ses, ses->map->room_list[room]->area, arg4, SUB_VAR|SUB_FUN))
 		{
 			return 0;
 		}
@@ -2718,7 +2766,7 @@ int match_room(struct session *ses, int room, char *arg1, char *arg2, char *arg3
 
 	if (*arg5)
 	{
-		if (!match(ses, ses->map->room_list[room]->note, arg5))
+		if (!match(ses, ses->map->room_list[room]->note, arg5, SUB_VAR|SUB_FUN))
 		{
 			return 0;
 		}
@@ -2792,8 +2840,8 @@ void goto_room(struct session *ses, int room)
 
 	if (ses->map->in_room)
 	{
-		check_all_events(ses, 0, 2, "MAP EXIT ROOM", ntos(last_room), ntos(room));
-		check_all_events(ses, 1, 2, "MAP EXIT ROOM %d", last_room, ntos(last_room), ntos(room));
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "MAP EXIT ROOM", ntos(last_room), ntos(room));
+		check_all_events(ses, SUB_ARG|SUB_SEC, 1, 2, "MAP EXIT ROOM %d", last_room, ntos(last_room), ntos(room));
 	}
 
 	ses->map->in_room = room;
@@ -2802,11 +2850,11 @@ void goto_room(struct session *ses, int room)
 
 	if (last_room == 0)
 	{
-		check_all_events(ses, 0, 1, "MAP ENTER MAP", ntos(room));
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "MAP ENTER MAP", ntos(room));
 	}
 
-	check_all_events(ses, 0, 2, "MAP ENTER ROOM", ntos(room), ntos(last_room));
-	check_all_events(ses, 1, 2, "MAP ENTER ROOM %d", room, ntos(room), ntos(last_room));
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "MAP ENTER ROOM", ntos(room), ntos(last_room));
+	check_all_events(ses, SUB_ARG|SUB_SEC, 1, 2, "MAP ENTER ROOM %d", room, ntos(room), ntos(last_room));
 
 	pop_call();
 	return;

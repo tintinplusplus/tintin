@@ -541,14 +541,14 @@ void time_update(void)
 
 	strcpy(old_yrs, yrs);
 
-	check_all_events(NULL, 0, 7, "YEAR", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, 1, 7, "YEAR %s", yrs, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "YEAR", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "YEAR %s", yrs, yrs, mon, wks, day, hrs, min, sec);
 
 
 	time_event_mon:
 
-	check_all_events(NULL, 0, 7, "MONTH", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, 1, 7, "MONTH %s", mon, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "MONTH", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "MONTH %s", mon, yrs, mon, wks, day, hrs, min, sec);
 
 
 	time_event_day:
@@ -557,38 +557,38 @@ void time_update(void)
 	{
 		strcpy(old_wks, wks);
 
-		check_all_events(NULL, 0, 7, "WEEK", yrs, mon, wks, day, hrs, min, sec);
-		check_all_events(NULL, 1, 7, "WEEK %s", wks, yrs, mon, wks, day, hrs, min, sec);
+		check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "WEEK", yrs, mon, wks, day, hrs, min, sec);
+		check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "WEEK %s", wks, yrs, mon, wks, day, hrs, min, sec);
 	}
 
-	check_all_events(NULL, 2, 7, "DATE %s-%s", mon, day, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 2, 7, "DATE %s-%s", mon, day, yrs, mon, wks, day, hrs, min, sec);
 
-	check_all_events(NULL, 0, 7, "DAY", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, 1, 7, "DAY %s", day, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "DAY", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "DAY %s", day, yrs, mon, wks, day, hrs, min, sec);
 
 
 	time_event_hrs:
 
-	check_all_events(NULL, 0, 7, "HOUR", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, 1, 7, "HOUR %s", hrs, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "HOUR", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "HOUR %s", hrs, yrs, mon, wks, day, hrs, min, sec);
 
 
 	time_event_min:
 
-	check_all_events(NULL, 4, 7, "DATE %s-%s %s:%s", mon, day, hrs, min, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 4, 7, "DATE %s-%s %s:%s", mon, day, hrs, min, yrs, mon, wks, day, hrs, min, sec);
 
-	check_all_events(NULL, 2, 7, "TIME %s:%s", hrs, min, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 2, 7, "TIME %s:%s", hrs, min, yrs, mon, wks, day, hrs, min, sec);
 
-	check_all_events(NULL, 0, 7, "MINUTE", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, 1, 7, "MINUTE %s", min, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "MINUTE", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "MINUTE %s", min, yrs, mon, wks, day, hrs, min, sec);
 
 
 	time_event_sec:
 
-	check_all_events(NULL, 3, 7, "TIME %s:%s:%s", hrs, min, sec, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 3, 7, "TIME %s:%s:%s", hrs, min, sec, yrs, mon, wks, day, hrs, min, sec);
 
-	check_all_events(NULL, 0, 7, "SECOND", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, 1, 7, "SECOND %s", sec, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 0, 7, "SECOND", yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG|SUB_SEC, 1, 7, "SECOND %s", sec, yrs, mon, wks, day, hrs, min, sec);
 
 	close_timer(TIMER_UPDATE_TIME);
 }

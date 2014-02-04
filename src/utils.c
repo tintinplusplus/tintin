@@ -79,16 +79,6 @@ int is_number(char *str)
 		return FALSE;
 	}
 
-	switch (*ptr)
-	{
-		case '!':
-		case '~':
-		case '+':
-		case '-':
-			ptr++;
-			break;
-	}
-
 	ptr = str + strlen(str);
 
 	while (TRUE)
@@ -123,6 +113,16 @@ int is_number(char *str)
 					return FALSE;
 				}
 				i++;
+				break;
+
+			case '!':
+			case '~':
+			case '+':
+			case '-':
+				if (ptr != str)
+				{
+					return FALSE;
+				}
 				break;
 
 			default:
@@ -249,17 +249,20 @@ char *indent(int cnt)
 	return outbuf;
 }
 
-void cat_sprintf(char *dest, char *fmt, ...)
+int cat_sprintf(char *dest, char *fmt, ...)
 {
 	char buf[STRING_SIZE];
+	int size;
 
 	va_list args;
 
 	va_start(args, fmt);
-	vsprintf(buf, fmt, args);
+	size = vsprintf(buf, fmt, args);
 	va_end(args);
 
 	strcat(dest, buf);
+
+	return size;
 }
 
 void ins_sprintf(char *dest, char *fmt, ...)
@@ -480,7 +483,7 @@ void tintin_puts3(struct session *ses, char *string)
 		return;
 	}
 
-	if (strip_vt102_strlen(ses->more_output) != 0)
+	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
 		sprintf(output, "\n%s", string);
 	}
@@ -532,7 +535,7 @@ void tintin_puts2(struct session *ses, char *string)
 		return;
 	}
 
-	if (strip_vt102_strlen(ses->more_output) != 0)
+	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
 		sprintf(output, "\n\033[0m%s\033[0m", string);
 	}

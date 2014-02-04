@@ -32,10 +32,10 @@ DO_COMMAND(do_split)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, left,  FALSE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(ses, arg, right, FALSE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 && *right == 0)
@@ -134,7 +134,7 @@ void clean_screen(struct session *ses)
 
 void dirty_screen(struct session *ses)
 {
-	printf("\033=\033[?1h");
+	printf("\033=");
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{

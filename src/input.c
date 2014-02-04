@@ -73,7 +73,7 @@ void process_input(void)
 
 	gtd->ses = script_driver(gtd->ses, -1, gtd->input_buf);
 
-	check_all_events(gtd->ses, 0, 1, "RECEIVED INPUT", gtd->input_buf);
+	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 
 	if (IS_SPLIT(gtd->ses))
 	{
@@ -167,36 +167,43 @@ void read_line()
 			default:
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT) && gtd->input_len != gtd->input_cur)
 				{
-					gtd->input_buf[gtd->input_cur] = gtd->macro_buf[cnt];
-
-					gtd->input_cur++;
-					gtd->input_pos++;
-
-					input_printf("%c", gtd->macro_buf[cnt]);
-				}
-				else
-				{
-					ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
-
-					gtd->input_len++;
-					gtd->input_cur++;
-					gtd->input_pos++;
-
-					if (gtd->input_len != gtd->input_cur)
+					if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->macro_buf[cnt] & 192) != 128)
 					{
-						input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+						cursor_delete("");
 					}
-					else
+				}
+
+				ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
+
+				gtd->input_len++;
+				gtd->input_cur++;
+
+				if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->macro_buf[cnt] & 192) != 128)
+				{
+					gtd->input_pos++;
+				}
+
+				if (gtd->input_len != gtd->input_cur)
+				{
+					if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->macro_buf[cnt] & 192) == 128)
 					{
 						input_printf("%c", gtd->macro_buf[cnt]);
 					}
+					else
+					{
+						input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+					}
+				}
+				else
+				{
+					input_printf("%c", gtd->macro_buf[cnt]);
 				}
 
 				gtd->macro_buf[0] = 0;
 				gtd->input_tmp[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;
 
-				cursor_check_line("");
+				cursor_check_line_modified("");
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 
@@ -271,10 +278,6 @@ void read_key(void)
 	{
 		switch (gtd->macro_buf[cnt])
 		{
-			case '\r':
-				printf("\n\[1;31mfound \\r!\n");
-				break;
-
 			case '\n':
 				gtd->input_buf[0] = 0;
 				gtd->macro_buf[0] = 0;

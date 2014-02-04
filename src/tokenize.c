@@ -158,9 +158,9 @@ char *addlooptoken(struct scriptroot *root, int lvl, int opr, int cmd, char *str
 
 	data = (struct scriptdata *) calloc(1, sizeof(struct scriptdata));
 
-	str = get_arg_in_braces(str, min, FALSE);
-	str = get_arg_in_braces(str, max, FALSE);
-	str = get_arg_in_braces(str, var, FALSE);
+	str = get_arg_in_braces(root->ses, str, min, FALSE);
+	str = get_arg_in_braces(root->ses, str, max, FALSE);
+	str = get_arg_in_braces(root->ses, str, var, FALSE);
 
 	data->cpy = refstring(NULL, "{%s} {%s} {%s}", min, max, var);
 
@@ -179,8 +179,8 @@ void resetlooptoken(struct session *ses, struct scriptnode *token)
 
 	str = token->data->cpy;
 
-	str = get_arg_in_braces(str, min, FALSE);
-	str = get_arg_in_braces(str, max, FALSE);
+	str = get_arg_in_braces(ses, str, min, FALSE);
+	str = get_arg_in_braces(ses, str, max, FALSE);
 
 	token->data->min = (int) get_number(ses, min);
 	token->data->max = (int) get_number(ses, max);
@@ -200,8 +200,8 @@ char *addforeachtoken(struct scriptroot *root, int lvl, int opr, int cmd, char *
 
 	char arg[BUFFER_SIZE], var[BUFFER_SIZE];
 
-	str = get_arg_in_braces(str, arg, FALSE);
-	str = get_arg_in_braces(str, var, FALSE);
+	str = get_arg_in_braces(root->ses, str, arg, FALSE);
+	str = get_arg_in_braces(root->ses, str, var, FALSE);
 
 	addtoken(root, lvl, opr, cmd, var);
 
@@ -245,11 +245,11 @@ void handlereturntoken(struct session *ses, struct scriptnode *token)
 	set_nest_node(ses->list[LIST_VARIABLE], "result", "%s", arg);
 }
 
-char *get_arg_foreach(struct scriptnode *token)
+char *get_arg_foreach(struct scriptroot *root, struct scriptnode *token)
 {
 	static char buf[BUFFER_SIZE];
 
-	token->data->arg = get_arg_in_braces(token->data->arg, buf, TRUE);
+	token->data->arg = get_arg_in_braces(root->ses, token->data->arg, buf, TRUE);
 
 	if (*token->data->arg == COMMAND_SEPARATOR)
 	{
@@ -264,8 +264,8 @@ char *addparsetoken(struct scriptroot *root, int lvl, int opr, int cmd, char *st
 
 	char arg[BUFFER_SIZE], var[BUFFER_SIZE];
 
-	str = get_arg_in_braces(str, arg, FALSE);
-	str = get_arg_in_braces(str, var, FALSE);
+	str = get_arg_in_braces(root->ses, str, arg, FALSE);
+	str = get_arg_in_braces(root->ses, str, var, FALSE);
 
 	addtoken(root, lvl, opr, cmd, var);
 
@@ -301,20 +301,34 @@ void breakparsetoken(struct scriptnode *token)
 	token->data->arg = token->data->str;
 }
 
-char *get_arg_parse(struct scriptnode *token)
+char *get_arg_parse(struct session *ses, struct scriptnode *token)
 {
-	static char buf[3];
+	static char buf[5];
 
-	buf[2] = 0;
-
-	buf[0] = *token->data->arg++;
-
-#ifdef BIG5
-	if (buf[0] & 0x80 && *token->data->arg)
+	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && token->data->arg[0] & 128 && token->data->arg[1] != 0)
 	{
-		buf[1] = *token->data->arg++;
+		token->data->arg += sprintf(buf, "%c%c", token->data->arg[0], token->data->arg[1]);
 	}
-#endif
+	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (token->data->arg[0] & 192) == 192 && token->data->arg[1] != 0)
+	{
+		if ((token->data->arg[0] & 240) == 240 && token->data->arg[2] != 0 && token->data->arg[3] != 0)
+		{
+			token->data->arg += sprintf(buf, "%c%c%c%c", token->data->arg[0], token->data->arg[1], token->data->arg[2], token->data->arg[3]);
+		}
+		else if ((token->data->arg[0] & 224) == 224 && token->data->arg[2] != 0)
+		{
+			token->data->arg += sprintf(buf, "%c%c%c", token->data->arg[0], token->data->arg[1], token->data->arg[2]);
+		}
+		else
+		{
+			token->data->arg += sprintf(buf, "%c%c", token->data->arg[0], token->data->arg[1]);
+		}
+	}
+	else
+	{
+		token->data->arg += sprintf(buf, "%c", token->data->arg[0]);
+	}
+
 	return buf;
 }
 
@@ -324,9 +338,9 @@ char *addregextoken(struct scriptroot *root, int lvl, int type, int cmd, char *s
 
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	str = get_arg_in_braces(str, arg1, FALSE);
-	str = get_arg_in_braces(str, arg2, FALSE);
-	str = get_arg_in_braces(str, arg3, TRUE);
+	str = get_arg_in_braces(root->ses, str, arg1, FALSE);
+	str = get_arg_in_braces(root->ses, str, arg2, FALSE);
+	str = get_arg_in_braces(root->ses, str, arg3, TRUE);
 
 	addtoken(root, lvl, type, cmd, arg1);
 
@@ -424,19 +438,19 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 
 		if (*str != gtd->tintin_char)
 		{
-			str = get_arg_all(str, line, VERBATIM(root->ses) ? GET_VBT : GET_ALL);
+			str = get_arg_all(root->ses, str, line, VERBATIM(root->ses));
 
 			addtoken(root, lvl, TOKEN_TYPE_STRING, -1, line);
 		}
 		else
 		{
-			arg = get_arg_stop_spaces(str, line, 0);
+			arg = get_arg_stop_spaces(root->ses, str, line, 0);
 
 			cmd = find_command(line+1);
 
 			if (cmd == -1)
 			{
-				str = get_arg_all(str, line, GET_ALL);
+				str = get_arg_all(root->ses, str, line, FALSE);
 				addtoken(root, lvl, TOKEN_TYPE_SESSION, -1, line+1);
 			}
 			else
@@ -444,29 +458,29 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 				switch (command_table[cmd].type)
 				{
 					case TOKEN_TYPE_BREAK:
-						str = get_arg_with_spaces(arg, line, 1);
+						str = get_arg_with_spaces(root->ses, arg, line, 1);
 						addtoken(root, lvl, TOKEN_TYPE_BREAK, cmd, line);
 						break;
 
 					case TOKEN_TYPE_CASE:
-						str = get_arg_in_braces(arg, line, FALSE);
+						str = get_arg_in_braces(root->ses, arg, line, FALSE);
 						addtoken(root, lvl++, TOKEN_TYPE_CASE, cmd, line);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endcase");
 						break;
 
 					case TOKEN_TYPE_CONTINUE:
-						str = get_arg_with_spaces(arg, line, 1);
+						str = get_arg_with_spaces(root->ses, arg, line, 1);
 						addtoken(root, lvl, TOKEN_TYPE_CONTINUE, cmd, line);
 						break;
 
 					case TOKEN_TYPE_DEFAULT:
 						addtoken(root, lvl++, TOKEN_TYPE_DEFAULT, cmd, "");
 
-						str = get_arg_in_braces(arg, line, TRUE);
+						str = get_arg_in_braces(root->ses, arg, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "enddefault");
@@ -475,17 +489,17 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 					case TOKEN_TYPE_ELSE:
 						addtoken(root, lvl++, TOKEN_TYPE_ELSE, cmd, "else");
 
-						str = get_arg_in_braces(arg, line, TRUE);
+						str = get_arg_in_braces(root->ses, arg, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endelse");
 						break;
 
 					case TOKEN_TYPE_ELSEIF:
-						str = get_arg_in_braces(arg, line, FALSE);
+						str = get_arg_in_braces(root->ses, arg, line, FALSE);
 						addtoken(root, lvl++, TOKEN_TYPE_ELSEIF, cmd, line);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endif");
@@ -494,17 +508,17 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 					case TOKEN_TYPE_FOREACH:
 						str = addforeachtoken(root, lvl++, TOKEN_TYPE_FOREACH, cmd, arg);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endforeach");
 						break;
 
 					case TOKEN_TYPE_IF:
-						str = get_arg_in_braces(arg, line, FALSE);
+						str = get_arg_in_braces(root->ses, arg, line, FALSE);
 						addtoken(root, lvl++, TOKEN_TYPE_IF, cmd, line);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endif");
@@ -513,7 +527,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						{
 							addtoken(root, lvl++, TOKEN_TYPE_ELSE, -1, "else");
 
-							str = get_arg_in_braces(str, line, TRUE);
+							str = get_arg_in_braces(root->ses, str, line, TRUE);
 							tokenize_script(root, lvl--, line);
 
 							addtoken(root, lvl, TOKEN_TYPE_END, -1, "endif");
@@ -523,7 +537,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 					case TOKEN_TYPE_LOOP:
 						str = addlooptoken(root, lvl++, TOKEN_TYPE_LOOP, cmd, arg);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endloop");
@@ -532,7 +546,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 					case TOKEN_TYPE_PARSE:
 						str = addparsetoken(root, lvl++, TOKEN_TYPE_PARSE, cmd, arg);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endparse");
@@ -547,7 +561,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						{
 							addtoken(root, lvl++, TOKEN_TYPE_ELSE, -1, "else");
 
-							str = get_arg_in_braces(str, line, TRUE);
+							str = get_arg_in_braces(root->ses, str, line, TRUE);
 							tokenize_script(root, lvl--, line);
 
 							addtoken(root, lvl, TOKEN_TYPE_END, -1, "endregex");
@@ -555,32 +569,32 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						break;
 
 					case TOKEN_TYPE_RETURN:
-						str = get_arg_with_spaces(arg, line, 1);
+						str = get_arg_with_spaces(root->ses, arg, line, 1);
 						addtoken(root, lvl, TOKEN_TYPE_RETURN, cmd, line);
 						break;
 
 					case TOKEN_TYPE_SWITCH:
-						str = get_arg_in_braces(arg, line, FALSE);
+						str = get_arg_in_braces(root->ses, arg, line, FALSE);
 						addtoken(root, lvl++, TOKEN_TYPE_SWITCH, cmd, line);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "end");
 						break;
 
 					case TOKEN_TYPE_WHILE:
-						str = get_arg_in_braces(arg, line, FALSE);
+						str = get_arg_in_braces(root->ses, arg, line, FALSE);
 						addtoken(root, lvl++, TOKEN_TYPE_WHILE, cmd, line);
 
-						str = get_arg_in_braces(str, line, TRUE);
+						str = get_arg_in_braces(root->ses, str, line, TRUE);
 						tokenize_script(root, lvl--, line);
 
 						addtoken(root, lvl, TOKEN_TYPE_END, -1, "endwhile");
 						break;
 
 					default:
-						str = get_arg_with_spaces(arg, line, 1);
+						str = get_arg_with_spaces(root->ses, arg, line, 1);
 						addtoken(root, lvl, TOKEN_TYPE_COMMAND, cmd, line);
 						break;
 				}
@@ -761,7 +775,7 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				}
 				else
 				{
-					set_nest_node(root->ses->list[LIST_VARIABLE], token->str, "%s", get_arg_foreach(token));
+					set_nest_node(root->ses->list[LIST_VARIABLE], token->str, "%s", get_arg_foreach(root, token));
 
 					if (*token->data->arg == 0)
 					{
@@ -813,9 +827,23 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				if (*token->data->arg == 0)
 				{
 					resetparsetoken(root->ses, token);
+
+					if (*token->data->arg == 0)
+					{
+						token->type++;
+
+						do
+						{
+							token = token->next;
+						}
+						while (token && token->lvl > lvl);
+
+						continue;
+					}
+
 				}
 
-				set_nest_node(root->ses->list[LIST_VARIABLE], token->str, "%s", get_arg_parse(token));
+				set_nest_node(root->ses->list[LIST_VARIABLE], token->str, "%s", get_arg_parse(root->ses, token));
 
 				if (*token->data->arg == 0)
 				{

@@ -93,16 +93,14 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 	{
 		if (skip_vt102_codes(pti))
 		{
-			if (display == FALSE || interpret_vt102_codes(ses, pti, TRUE))
+			if (display)
 			{
-				for (skip = skip_vt102_codes(pti) ; skip > 0 ; skip--)
-				{
-					*pto++ = *pti++;
-				}
+				interpret_vt102_codes(ses, pti, TRUE);
 			}
-			else
+
+			for (skip = skip_vt102_codes(pti) ; skip > 0 ; skip--)
 			{
-				pti += skip_vt102_codes(pti);
+				*pto++ = *pti++;
 			}
 			continue;
 		}
@@ -156,27 +154,25 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 		}
 		else
 		{
-#ifdef BIG5
-			if (*pti & 128 && pti[1] != 0)
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 			{
 				*pto++ = *pti++;
+				*pto++ = *pti++;
 			}
-#endif
-
-#ifdef UTF8
-			if (*pti & 128 && *pti & 64)
+			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
 			{
-				skip = (*pti & 16) ? 3 : (*pti & 32) ? 2 : 1;
+				*pto++ = *pti++;
 
-				while (skip-- && pti[1] != 0)
+				while ((*pti & 192) == 128)
 				{
 					*pto++ = *pti++;
 				}
 			}
-#endif
+			else
+			{
+				*pto++ = *pti++;
+			}
 			ses->cur_col++;
-
-			*pto++ = *pti++;
 		}
 	}
 	*pto = 0;
@@ -287,25 +283,25 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, 
 		else
 		{
 			ptb = pto;
-#ifdef BIG5
-			if (*pti & 128 && pti[1] != 0)
+
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 			{
 				*pto++ = *pti++;
+				*pto++ = *pti++;
 			}
-#endif
-
-#ifdef UTF8
-			if (*pti & 128 && *pti & 64)
+			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
 			{
-				i = (*pti & 16) ? 3 : (*pti & 32) ? 2 : 1;
+				*pto++ = *pti++;
 
-				while (i-- && pti[1] != 0)
+				while ((*pti & 192) == 128)
 				{
 					*pto++ = *pti++;
 				}
 			}
-#endif
-			*pto++ = *pti++;
+			else
+			{
+				*pto++ = *pti++;
+			}
 
 			if (cnt < skip || cnt >= keep)
 			{

@@ -147,15 +147,15 @@ struct list_type list_table[LIST_MAX] =
 
 struct substitution_type substitution_table[] =
 {
-//	{    "ARGUMENTS",         1     },
-	{    "VARIABLES",         2     },
-	{    "FUNCTIONS",         4     },
-	{    "COLORS",            8     },
-	{    "ESCAPES",           16    },
-//	{    "COMMANDS",          32    },
-	{    "SECURE",            64    },
-//	{    "EOL",               128   },
-//	{    "LNF",               256   },
+//	{    "ARGUMENTS",            1  },
+	{    "VARIABLES",            2  },
+	{    "FUNCTIONS",            4  },
+	{    "COLORS",               8  },
+	{    "ESCAPES",             16  },
+//	{    "COMMANDS",            32  },
+	{    "SECURE",              64  },
+	{    "EOL",                128  },
+	{    "LNF",                256  },
 //	{    "FIX",               1024  },
 	{    "",                  0     }
 };
@@ -170,13 +170,6 @@ struct config_type config_table[] =
 	},
 
 	{
-		"BIG5",
-		"Tintin skips BIG5 characters.",
-		"Tintin doesn't skip BIG5 characters.",
-		config_big5
-	},
-
-	{
 		"BUFFER SIZE",
 		"",
 		"The size of the scroll back buffer",
@@ -184,23 +177,30 @@ struct config_type config_table[] =
 	},
 
 	{
+		"CHARSET",
+		"",
+		"The character set encoding used by TinTin++",
+		config_charset
+	},
+
+	{
 		"COLOR PATCH",
-		"Tintin will properly color the start of each line",
-		"Tintin will leave color handling to the server",
+		"TinTin++ will properly color the start of each line",
+		"TinTin++ will leave color handling to the server",
 		config_colorpatch
 	},
 
 	{
 		"CONNECT RETRY",
 		"",
-		"Seconds Tintin will try to connect before giving up",
+		"Seconds TinTin++ will try to connect before giving up",
 		config_connectretry
 	},
 
 	{
 		"CONVERT META",
-		"Tintin converts meta prefixed characters",
-		"Tintin doesn't convert meta prefixed characters",
+		"TinTin++ converts meta prefixed characters",
+		"TinTin++ doesn't convert meta prefixed characters",
 		config_convertmeta
 	},
 
@@ -225,6 +225,8 @@ struct config_type config_table[] =
 		config_commandecho
 	},
 
+
+
 	{
 		"HISTORY SIZE",
 		"",
@@ -241,8 +243,8 @@ struct config_type config_table[] =
 
 	{
 		"LOG LEVEL",
-		"Tintin only logs low level mud data",
-		"Tintin only logs high level mud data",
+		"TinTin++ only logs low level mud data",
+		"TinTin++ only logs high level mud data",
 		config_loglevel
 	},
 
@@ -256,7 +258,7 @@ struct config_type config_table[] =
 	{
 		"PACKET PATCH",
 		"",
-		"Seconds Tintin will try to patch broken packets",
+		"Seconds TinTin++ will try to patch broken packets",
 		config_packetpatch
 	},
 
@@ -291,14 +293,14 @@ struct config_type config_table[] =
 	{
 		"TINTIN CHAR",
 		"",
-		"The character used for Tintin commands",
+		"The character used for TinTin++ commands",
 		config_tintinchar
 	},
 
 	{
 		"VERBATIM",
-		"Your keyboard input isn't modified by Tintin",
-		"Your keyboard input is parsed by Tintin",
+		"Your keyboard input isn't modified by TinTin++",
+		"Your keyboard input is parsed by TinTin++",
 		config_verbatim
 	},
 
@@ -321,6 +323,13 @@ struct config_type config_table[] =
 		"Mud output is word wrapped",
 		"Mud output is line wrapped",
 		config_wordwrap
+	},
+
+	{
+		"256 COLORS",
+		"Your terminal is 256 color capable",
+		"Your terminal is not 256 color capable",
+		config_256color
 	},
 
 	{
@@ -520,7 +529,7 @@ struct cursor_type cursor_table[] =
 		"CTRL DELETE",
 		"Delete one character, exit on an empty line",
 		"",
-		cursor_delete_exit
+		cursor_delete_or_exit
 	},
 	{
 		"DELETE",
@@ -529,10 +538,16 @@ struct cursor_type cursor_table[] =
 		cursor_delete
 	},
 	{
-		"DELETE WORD",
-		"Delete next word backward",
+		"DELETE WORD LEFT",
+		"Delete backwards till next space",
 		"",
 		cursor_delete_word_left
+	},
+	{
+		"DELETE WORD RIGHT",
+		"Delete forwards till next space",
+		"",
+		cursor_delete_word_right
 	},
 	{
 		"ECHO ON",
@@ -641,6 +656,12 @@ struct cursor_type cursor_table[] =
 		"Suspend program, return with fg",
 		"",
 		cursor_suspend
+	},
+	{
+		"TEST",
+		"Print debugging information",
+		"",
+		cursor_test
 	},
 	{
 		"TAB BACKWARD",
@@ -785,10 +806,12 @@ struct path_type path_table[] =
 	{    "END",               path_end               },
 	{    "INSERT",            path_ins               },
 	{    "LOAD",              path_load              },
-	{    "MAP",               path_map               },
+	{    "MAP",               path_show              },
 	{    "NEW",               path_new               },
 	{    "RUN",               path_run               },
 	{    "SAVE",              path_save              },
+	{    "SHOW",              path_show              },
+	{    "UNZIP",             path_unzip             },
 	{    "WALK",              path_walk              },
 	{    "ZIP",               path_zip               },
 	{    "",                  NULL                   }
@@ -797,6 +820,7 @@ struct path_type path_table[] =
 struct line_type line_table[] =
 {
 	{    "GAG",               line_gag               },
+	{    "IGNORE",            line_ignore            },
 	{    "LOG",               line_log               },
 	{    "LOGVERBATIM",       line_logverbatim       },
 	{    "SUBSTITUTE",        line_substitute        },
@@ -1091,4 +1115,10 @@ struct telopt_type telopt_table[] =
 	{    "253",               TEL_N,               NEG_U },
 	{    "254",               TEL_N,               NEG_U },
 	{    "255",               TEL_N,               NEG_U }
+};
+
+struct term_type term_table[] =
+{
+	{    "UNKNOWN",               3 }, // ANSI + VT100
+	{    "XTERM",                59 }
 };

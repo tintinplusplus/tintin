@@ -1,4 +1,78 @@
+Apr 2011       2.00.7
+
+telopt.c       Added basic low level VT100 stripping for answer back codes.
+
+telopt.c       Added MSDP array support.
+
+map.c          Added a set and get option to #map exit that stores and
+               retrieves from a data field.
+
+map.c          Added the terrain and data fields to #map set and #map get. The
+               data field is intended to contain a table, eliminating the need
+               for future extensions.
+
+system.c       When using #run followed by #zap the created child process will
+               be properly killed instead of left to hang as a zombie process.
+
+tick.c         When setting a delay the final delay time is echoed.
+
+event.c        Added some extra security to event triggers.
+
+telopt.c       Added MTTS support. On a third TTYPE request MTTS will be
+               reported followed by a bitvector that indicates whether ANSI,
+               VT100, UTF-8, and 256 colors are enabled. The UTF-8 and 256
+               color settings can be configured by the user. VT100 is reported
+               as disabled if #split mode is enabled - this because the split
+               screen mode needs to be disabled for server side VT100
+               interfaces to work.
+
+system.c       Added some extra security to the #script command.
+
+system.c       Changed the #script command to behave like a two argument
+               command in preperation of removing the rather awkward
+               single argument support.
+
+line.c         Added #line ignore option to execute a command without
+               checking any triggers.
+
+config.c       Added a 256 COLOR option. When called with auto it'll guess at
+               the terminal's 256 color capabilities.
+
+variable.c     When setting a variable the final variable definition is echoed.
+
+variable.c     Added support for BIG5 and UTF8 string formatting.
+
+cursor.c       Added support for BIG5 and UTF8 input handling.
+
+config.c       Added session based BIG5 and UTF8 #config CHARSET option.
+
+substitute.c   Fixed word boundary matching for substitutions.
+
+highlight.c    Fixed word boundary matching for highlights.
+
+nest.c         Math is no longer performed on table keys, mainly to reduce
+               annoying false positives, and because the behavior can be
+               scripted with math functions. Math is still performed when
+               looking up an index.
+
+path.c         Renamed #path map to #path show, #path map still works, but it
+               doesn't properly describe what the command does.
+
+path.c         Added #path unzip option that'll load a speedwalk.
+
+line.c         #line logverbatim is now fully verbatim.
+
+vt102.c        Removed status reports for the \eZ, \e[c, and \e[x VT codes
+               due to complaints.
+
+log.c          Added a #log off option. #log append and overwrite can now be
+               called while logging is already enabled.
+
+
 Jan 2011       2.00.6
+
+buffer.c       Added better multi-line scroll back handling when word wrap is
+               disabled.
 
 telopt.c       Braces are now properly converted in raw gmcp data.
 
@@ -96,6 +170,10 @@ vt102.c        Added proper \e[0;0r VT100 handling.
 
 telopt.c       Added IAC DONT TTYPE handling, allowing servers to reset the
                TTYPE negotiation state.
+
+telopt.c       Added support for cycling through terminal types. On the first
+               TTYPE request TINTIN++ is reported, on the second request the
+               TERM environment variable is reported.
 
 misc.c         #zap now takes an optional argument to zap a specific session.
 
