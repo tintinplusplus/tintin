@@ -144,7 +144,8 @@ struct session *newactive_session(void)
 	{
 		gtd->ses = gts;
 		dirty_screen(gtd->ses);
-		tintin_puts("#THERE'S NO ACTIVE SESSION NOW.", NULL);
+
+		tintin_printf(NULL, "#THERE'S NO ACTIVE SESSION NOW.");
 	}
 
 	return gtd->ses;

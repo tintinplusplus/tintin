@@ -71,6 +71,7 @@ RETSIGTYPE winchhandler(int no_care)
 	}
 }
 
+
 /*
 	CHANGED to get rid of double-echoing bug when tintin++ gets suspended
 */
@@ -168,13 +169,6 @@ int main(int argc, char **argv)
 		syserr("signal SIGWINCH");
 	}
 
-/*
-	if (signal(SIGALRM, tick_handler) == BADSIG)
-	{
-		syserr("signal SIGALRM");
-	}
-*/
-
 	if (getenv("HOME") != NULL)
 	{
 		if (getenv("TINTIN_HISTORY") == NULL)
@@ -247,8 +241,6 @@ void init_tintin(void)
 	initrl();
 
 	init_screen_size(gts);
-
-/*	dirty_screen(gts); */
 
 	/*
 		Set application keypad mode and  ESC 0 prefix

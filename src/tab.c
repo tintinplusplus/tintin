@@ -94,6 +94,7 @@ DO_COMMAND(do_untab)
 
 char *tab_complete(const char *str, int state)
 {
+	char buffer[BUFFER_SIZE];
 	struct listnode *node;
 
 	if (state)
@@ -103,9 +104,11 @@ char *tab_complete(const char *str, int state)
 
 	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
 	{
-		if (is_abbrev(str, node->left))
+		substitute(gtd->ses, node->left, buffer, SUB_VAR|SUB_FUN);
+
+		if (is_abbrev(str, buffer))
 		{
-			return strdup(node->left);
+			return strdup(buffer);
 		}
 	}
 	return NULL;

@@ -108,7 +108,6 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"walk",              do_walk,              CMD_FLAG_NONE    },
 	{	"write",             do_write,             CMD_FLAG_SUB     },
 	{	"writemap",          do_writemap,          CMD_FLAG_SUB     },
-	{	"writesession",      do_writesession,      CMD_FLAG_SUB     },
 	{	"zap",               do_zap,               CMD_FLAG_NONE    },
 	{	"",                  NULL,                 CMD_FLAG_NONE    }
 };

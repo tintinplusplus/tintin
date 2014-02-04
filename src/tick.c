@@ -191,9 +191,9 @@ void tick_update(void)
 			{
 				strcpy(result, node->right);
 
-				parse_input(result, ses);
-
 				deletenode_list(ses, node, LIST_DELAY);
+
+				parse_input(result, ses);
 			}
 		}
 	}

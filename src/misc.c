@@ -65,7 +65,7 @@ DO_COMMAND(do_commands)
 
 DO_COMMAND(do_cr)
 {
-	write_line_mud(" ", ses);
+	write_line_mud("\r\n", ses);
 
 	return ses;
 }
@@ -147,7 +147,7 @@ DO_COMMAND(do_end)
 {
 	if (*arg)
 	{
-		tintin_puts("#YOU HAVE TO WRITE #END - NO LESS, TO END!", ses);
+		tintin_puts("#ERROR: USE #END WITHOUT AN ARGUMENT TO END.", ses);
 	}
 	else
 	{
@@ -176,20 +176,54 @@ DO_COMMAND(do_echo)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], result[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], result[BUFFER_SIZE], output[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left, TRUE);
 	arg = get_arg_in_braces(arg, right, FALSE);
 
-	substitute(ses, left, result, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+	substitute(ses, left, result, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC|SUB_EOL);
 
 	if (*right)
 	{
 		do_one_prompt(ses, result, atoi(right));
+
+		return ses;
 	}
-	else
+	do_one_line(result, ses);
+
+	if (HAS_BIT(ses->flags, SES_FLAG_GAG) || HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
 	{
-		tintin_puts(result, ses);
+		DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
+		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
+		return ses;
+	}
+
+	if (ses != gtd->ses)
+	{
+		return ses;
+	}
+
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && HAS_BIT(gts->flags, SES_FLAG_QUIET))
+	{
+		return ses;
+	}
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		save_pos(ses);
+		goto_rowcol(ses, ses->bot_row, 1);
+	}
+
+	sprintf(output, "\033[0m\033[0K%s\033[0m", result);
+
+	add_line_buffer(ses, output, FALSE);
+
+	printline(ses, output, TRUE);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		restore_pos(ses);
 	}
 	return ses;
 }
@@ -211,7 +245,7 @@ DO_COMMAND(do_loop)
 
 	if (sscanf(left, "%d%c%d", &bound1, &temp[0], &bound2) != 3)
 	{
-		tintin_printf2(ses, "#LOOP: NEED 2 ARGUMENTS, FOUND: %s", left);
+		tintin_printf(ses, "#ERROR: #LOOP - NEED 2 ARGUMENTS, FOUND: %s", left);
 	}
 	else
 	{
@@ -252,7 +286,7 @@ DO_COMMAND(do_forall)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf2(ses, "#FORALL, PROVIDE 2 ARGUMENTS");
+		tintin_printf2(ses, "#ERROR: #FORALL - PROVIDE 2 ARGUMENTS");
 	}
 	else
 	{
@@ -274,175 +308,6 @@ DO_COMMAND(do_forall)
 	return ses;
 }
 
-
-DO_COMMAND(do_message)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	int cnt, fnd = FALSE;
-
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
-
-	if (*left == 0)
-	{
-		tintin_header(ses, " MESSAGES ");
-
-		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
-		}
-
-		tintin_header(ses, "");
-	}
-	else
-	{
-		for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			if (!is_abbrev(left, list_table[cnt].name_multi))
-			{
-				continue;
-			}
-			if (*right == 0)
-			{
-				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
-			}
-			else if (is_abbrev(right, "ON"))
-			{
-				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
-			}
-			else if (is_abbrev(right, "OFF"))
-			{
-				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
-			}
-			else
-			{
-				tintin_puts2("SYNTAX: #MESSAGE [NAME] [ON|OFF]", ses);
-				break;
-			}
-			tintin_printf2(ses, "#%s MESSAGES HAVE BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
-			fnd = TRUE;
-		}
-
-		if (fnd == FALSE)
-		{
-			tintin_printf2(ses, "#NO MATCH(es) found for {%s}", left);
-		}
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_ignore)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	int cnt, fnd = FALSE;
-
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
-
-	if (*left == 0)
-	{
-		tintin_header(ses, " IGNORES ");
-
-		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
-		}
-
-		tintin_header(ses, "");
-	}
-	else
-	{
-		for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			if (!is_abbrev(left, list_table[cnt].name_multi))
-			{
-				continue;
-			}
-			if (*right == 0)
-			{
-				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
-			}
-			else if (is_abbrev(right, "ON"))
-			{
-				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
-			}
-			else if (is_abbrev(right, "OFF"))
-			{
-				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
-			}
-			else
-			{
-				tintin_puts2("SYNTAX: #IGNORE [NAME] [ON|OFF]", ses);
-				break;
-			}
-			tintin_printf2(ses, "#%s IGNORE STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
-			fnd = TRUE;
-		}
-
-		if (fnd == FALSE)
-		{
-			tintin_printf2(ses, "#NO MATCH(es) found for {%s}", left);
-		}
-	}
-	return ses;
-}
-
-DO_COMMAND(do_debug)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	int cnt, fnd = FALSE;
-
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
-
-	if (*left == 0)
-	{
-		tintin_header(ses, " DEBUGS ");
-
-		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
-		}
-
-		tintin_header(ses, "");
-	}
-	else
-	{
-		for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
-		{
-			if (!is_abbrev(left, list_table[cnt].name_multi))
-			{
-				continue;
-			}
-			if (*right == 0)
-			{
-				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
-			}
-			else if (is_abbrev(right, "ON"))
-			{
-				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
-			}
-			else if (is_abbrev(right, "OFF"))
-			{
-				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
-			}
-			else
-			{
-				tintin_puts2("SYNTAX: #DEBUG [NAME] [ON|OFF]", ses);
-				break;
-			}
-			tintin_printf2(ses, "#%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
-			fnd = TRUE;
-		}
-
-		if (fnd == FALSE)
-		{
-			tintin_printf2(ses, "#NO MATCH(es) found for {%s}", left);
-		}
-	}
-	return ses;
-}
 
 DO_COMMAND(do_return)
 {
@@ -507,13 +372,13 @@ DO_COMMAND(do_system)
 
 	if (!*left)
 	{
-		tintin_puts2("#EXECUTE WHAT COMMAND?", ses);
+		tintin_printf(ses, "#SYNTAX: #SYSTEM {COMMAND}");
 		return ses;
 	}
 
 	if (show_message(ses, -1))
 	{
-		tintin_printf2(ses, "#OK, EXECUTING '%s'", left);
+		tintin_printf(ses, "#OK: EXECUTING '%s'", left);
 	}
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))

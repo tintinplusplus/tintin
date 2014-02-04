@@ -1,11 +1,9 @@
 
                 I'll list my changes here, it's too much to put my name on
-                everything I alter (I'm the sort of person that fixes stuff
-                that isn't broken) as well as I remove unused stuff (there
-                was almost a thousand lines of code that likely wouldn't ever
-                be used either. Removed non constructive comments as well.
-                You know, like: end_session(); /* end the session */
-                Will keep it short and brief, hopefully still leaving a good
+                everything I alter since I'm the sort of person that fixes
+                stuff that isn't broken. I also removed quite some unusued
+                stuff. 
+                I'll keep it short and brief, hopefully still leaving a good
                 gist of what I've been doing.
 
 
@@ -19,7 +17,7 @@ feb 2004
 
 - tintin.h      added the zlib library and a session buffer for mccp
 
-- tintin.h      added a 16 bit output buffer, I'll just asume that the mud
+- tintin.h      added a 64KB output buffer, I'll just asume that the mud
                 output contains a linefeed before BUFFER_SIZE is reached. This
                 should make output processing a bit smoother, and saves me
                 from fiddling too much with chopped up data.
@@ -36,6 +34,7 @@ feb 2004
                 the brackets.
 
 - main.c        switched from rand to rand48, it's seeded once upon startup
+                which is sufficient.
 
 - main.c        added a global tintin session (gts) the idea is to get rid of
                 most global variables.
@@ -56,12 +55,9 @@ feb 2004
                 is a bit tedious.
 
 - tintin.h      moved all header files into tintin.h cause the old setup with
-                40 different headerfiles was giving me a headache (literally)
-                grouped it into typedefs, globals, constants, macros,
+                40 headerfiles was giving me a headache (literally).
+                Grouped it into typedefs, globals, constants, macros,
                 structures and functions
-
-- misc.c        changed #cr to print " \n" instead of "\n" because most muds
-                strip trailing crs, #4 #cr should work now.
 
 - tintin.h      changed all commands to use the COMMAND typedef, as well as
                 all commands now use universal arguments and naming, this to
@@ -138,7 +134,7 @@ feb 2004
                 text on to check_one_action
 
 - action.c      rewrote the %0 - %9 check_one_action regexp routine, it's
-                a bit clean and slightly faster now.
+                a bit cleaner and slightly faster now.
 
 - action.c      rewrote substitute_vars, ';' is changed to : per default
 
@@ -176,7 +172,7 @@ mar 2004
 
 - ivars.c       stripped all the stuff that is now covered by math.c or
                 variables.c only leaving #ifexits. And then it occured to me
-                that #if {"$variable" != "\$variable"} {true} {false} would
+                that #if {"$variable" != "$*"} {true} {false} would
                 very well replace the 'ifexits' check. So ivars.c is no more.
 
 - llist.c       deletenode_list now properly keeps track of a global update
@@ -186,7 +182,7 @@ mar 2004
                 node. Can only use one gtd->update per program state.
 
 - rl.c          fixed up the split screen behavior, should be a stable prompt
-  tick.c        and correct text presentation in split mode now.
+                and correct text presentation in split mode now.
 
 
 -misc.c         added a higher precision to the #sleep command, you can now
@@ -588,6 +584,7 @@ variable.c     Added %G thousandgroupingstring function to format to change
                for example 1000 into 1,000.
 
 
+
 rl.c           Internal messages are now printed to both the logfile and
                scrollback buffer.
 
@@ -597,6 +594,7 @@ rl.c           Fixed internal messages bumping the screen while scrolling in
 rl.c           Fixed a bug with displaying text that slipped in.
 
 buffer.c       Added the option to use #buffer h/u/d/e for scrolling.
+
 
 
 tintin.h       Removed unused macro DEFAULT_FILE_DIR
@@ -609,6 +607,7 @@ buffer.c       No longer writing #grep output the the scrollback buffer
 main.c         Now clearing last command (often quit) when starting up tintin++
 
 
+
 config.c       Turned #debugtelnet command into a hidden config option.
 
                Added a hidden config option named CONVERT META, which turns key
@@ -617,6 +616,7 @@ config.c       Turned #debugtelnet command into a hidden config option.
 class.c        Added basic support for classes, which is grouping for real.
 
 tables.c       Set substitute priority to save correctly.
+
 
 
 log.c          Now flushing the log stream after every call so tailing a log
@@ -646,6 +646,7 @@ split.c        Using #split 0 0 will create an input line without the split
 
 
 may 2005
+
 
 
 rl.c           Fixed a bug that caused prompts to be printed twice.
@@ -684,6 +685,7 @@ prompt.c       #prompt matched lines are now written to the scrollback buffer,
                to simulate the old behavior make an #action executing #gagline.
 
 
+
 main.c         Fixed #split mode being handled correctly when suspending a
                session.
 
@@ -698,6 +700,7 @@ table.c        Added flags for commands, so far only automatically substituting
 
 rl.c           Fixed packet patch, and added a default patcher for split mode.
                Fixed the displaying of #alias, #action, etc.
+
 
 
 files.c        Added #scan {filename} which will read in a file and send it to
@@ -758,3 +761,34 @@ misc.c         Added #return which used in an #if check allows bailing out of
                a semicolon seperated command string. If used in a #function
                you can also add an argument to it to set the result, as
                opposed to setting the $result variable directly.
+
+
+
+llist.c        Added option to use 'all' in #message, #ignore, and #debug to
+               toggle everything at once.
+
+files.c        Removed the #writesession command, it's obsolete with the new
+               #class command.
+
+class.c        #class write now adds #class open/close to the begin and end
+               of the file.
+
+files.c        Cleaned up a bunch of confirmation messages and made them
+               gaggable.
+
+tab.c          Variables and functions in a #tab are now substituted at
+               evaluation time.
+
+
+
+tinexp.c       Now substituting functions and arguments (if needed) in a
+               function's argument list.
+
+tinexp.c       Ending a command with \ will escape the EOL (\r\n) which won't
+               be appended to the end of the line. Same story for #showme.
+
+telopt.c       Added negotiating of EOR (end of record)
+
+telopt.c       IAC GA and EOR will now be seen as prompt markers.
+
+files.c        Now skipping chinese characters in #read

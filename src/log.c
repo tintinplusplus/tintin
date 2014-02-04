@@ -56,11 +56,11 @@ DO_COMMAND(do_log)
 	{
 		fclose(ses->logfile);
 		ses->logfile = NULL;
-		tintin_puts("#OK. LOGGING TURNED OFF.", ses);
+		tintin_printf(ses, "#OK: LOGGING TURNED OFF.");
 	}
 	else if (*left == 0 || *right == 0 || (!is_abbrev(left, "APPEND") && !is_abbrev(left, "OVERWRITE")))
 	{
-		tintin_puts2("#SYNTAX: #LOG [<APPEND|OVERWRITE> <FILENAME>]", ses);
+		tintin_printf(ses, "#SYNTAX: #LOG [<APPEND|OVERWRITE> <FILENAME>]");
 	}
 	else
 	{
@@ -68,7 +68,7 @@ DO_COMMAND(do_log)
 		{
 			if ((ses->logfile = fopen(right, "a")))
 			{
-				tintin_printf2(ses, "#OK. LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
+				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 
 				if (ftell(ses->logfile) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
@@ -77,14 +77,14 @@ DO_COMMAND(do_log)
 			}
 			else
 			{
-				tintin_printf2(ses, "#COULDN'T OPEN FILE '%s'", right);
+				tintin_printf(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 			}
 		}
 		else
 		{
 			if ((ses->logfile = fopen(right, "w")))
 			{
-				tintin_printf2(ses, "#OK. LOGGING OUTPUT TO '%s'", right);
+				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
 
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
@@ -93,7 +93,7 @@ DO_COMMAND(do_log)
 			}
 			else
 			{
-				tintin_printf2(ses, "#COULDN'T OPEN FILE '%s'", right);
+				tintin_printf(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 			}
 		}
 	}
@@ -132,7 +132,7 @@ DO_COMMAND(do_logline)
 	}
 	else
 	{
-		tintin_printf2(ses, "#LOGLINE: COULDN'T OPEN FILE '%s'", left);
+		tintin_printf(ses, "#ERROR: #LOGLINE {%s} - COULDN'T OPEN FILE.", left);
 	}
 	return ses;
 }
@@ -146,19 +146,15 @@ DO_COMMAND(do_writebuffer)
 
 	arg = get_arg_in_braces(arg, left, FALSE);
 
-	if (ses->buffer == 0)
+	if (*left == 0)
 	{
-		tintin_printf2(ses, "#ERROR: THIS SESSION HAS NO BUFFER.");
-	}
-	else if (*left == 0)
-	{
-		tintin_printf2(ses, "#SYNTAX: #WRITEBUFFER <FILENAME>]");
+		tintin_printf(ses, "#SYNTAX: #WRITEBUFFER <FILENAME>]");
 	}
 	else
 	{
 		if ((fp = fopen(left, "w")))
 		{
-			tintin_printf2(ses, "#OK. WRITING BUFFER TO '%s'", left);
+			tintin_printf(ses, "#OK: WRITING BUFFER TO '%s'", left);
 
 			if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 			{
@@ -204,7 +200,7 @@ DO_COMMAND(do_writebuffer)
 		}
 		else
 		{
-			tintin_printf2(ses, "#WRITEBUFFER, FAILED TO OPEN '%s'", left);
+			tintin_printf(ses, "#ERROR: #WRITEBUFFER {%s} - FAILED TO OPEN FILE.", left);
 		}
 	}
 	return ses;

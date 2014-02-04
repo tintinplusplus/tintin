@@ -63,7 +63,7 @@ DO_COMMAND(do_math)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #MATH {variable} {expression}");
+		tintin_printf(ses, "#SYNTAX: #MATH {variable} {expression}");
 	}
 	else
 	{
@@ -85,7 +85,7 @@ DO_COMMAND(do_if)
 
 	if (*left == 0 || *true == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #IF {expression} {true} {false}");
+		tintin_printf(ses, "#SYNTAX: #IF {expression} {true} {false}");
 	}
 	else
 	{
@@ -117,7 +117,7 @@ long long mathexp(struct session *ses, const char *str)
 	{
 		if (ses->list[LIST_MATH]->f_node == NULL)
 		{
-			tintin_printf2(ses, "#MATH EXP: INVALID INPUT: %s", str);
+			tintin_printf(ses, "#ERROR: #MATH EXP: INVALID INPUT {%s}", str);
 		}
 		return 0;
 	}
@@ -182,8 +182,6 @@ int mathexp_tokenize(struct session *ses, const char *str)
 					case '~':
 					case '+':
 					case '-':
-					case 'T':
-					case 'F':
 						if (pta != buf3)
 						{
 							MATH_NODE(FALSE, EXP_PR_VAR, EXP_OPERATOR);
@@ -613,12 +611,6 @@ long long tintoi(const char *str)
 
 		case '-':
 			return -atoll(&str[1]);
-
-		case 'F':
-			return 0;
-
-		case 'T':
-			return 1;
 
 		default:
 			return atoll(str);

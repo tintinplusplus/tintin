@@ -50,8 +50,6 @@ void push_call(char *f, ...)
 
 	vsnprintf(debug_stack[debug_index], MAX_DEBUG_SIZE - 1, f, ap);
 
-/*	debug_stack[debug_index][MAX_DEBUG_SIZE - 1] = 0; */
-
 	debug_index++;
 }
 

@@ -74,9 +74,6 @@ DO_COMMAND(do_action)
 	return ses;
 }
 
-/*
-	the #unaction command
-*/
 
 DO_COMMAND(do_unaction)
 {
@@ -87,7 +84,7 @@ DO_COMMAND(do_unaction)
 
 	root = ses->list[LIST_ACTION];
 
-	arg = get_arg_in_braces(arg, left, 1);
+	arg = get_arg_in_braces(arg, left, TRUE);
 
 	while ((node = search_node_with_wild(root, left))) 
 	{
@@ -126,7 +123,7 @@ void check_all_actions(const char *original, char *line, struct session *ses)
 
 			if (HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_DEBUG))
 			{
-				tintin_printf2(ses, "[ACTION: %s]", buffer);
+				tintin_printf2(ses, "#ACTION DEBUG: %s", buffer);
 			}
 			parse_input(buffer, ses);
 
@@ -134,33 +131,4 @@ void check_all_actions(const char *original, char *line, struct session *ses)
 		}
 	}
 	return;
-}
-
-
-int check_postsub_actions(const char *original, char *line, struct session *ses)
-{
-	struct listnode *node;
-	struct listroot *root;
-
-	root = ses->list[LIST_ACTION];
-
-	for (node = root->update ; node ; node = root->update)
-	{
-		root->update = node->next;
-
-		if (check_one_action(line, original, node->left, ses))
-		{
-			char buffer[BUFFER_SIZE];
-
-			substitute(ses, node->right, buffer, SUB_ARG|SUB_SEC);
-
-			if (HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_DEBUG))
-			{
-				tintin_printf2(ses, "[ACTION: %s]", buffer);
-			}
-			parse_input(buffer, ses);
-			return TRUE;
-		}
-	}
-	return FALSE;
 }

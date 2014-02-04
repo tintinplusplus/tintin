@@ -117,6 +117,8 @@ DO_COMMAND(do_redit)
 		if (exit == NULL)
 		{
 			tintin_printf2(ses, "No exit with that name found");
+
+			return ses;
 		}
 
 		room = exit->vnum;

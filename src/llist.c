@@ -82,7 +82,7 @@ DO_COMMAND(do_killall)
 
 	if (arg != NULL)
 	{
-		tintin_puts2("#KILLALL: LISTS CLEARED.", ses);
+		tintin_printf(ses, "#OK: #KILLALL - ALL LISTS CLEARED.");
 	}
 	pop_call();
 	return ses;
@@ -173,7 +173,7 @@ void insertnode_list(struct session *ses, const char *ltext, const char *rtext, 
 			break;
 
 		default:
-			tintin_printf2(NULL, "insertnode_list: bad list_table mode: %d", list_table[index].mode);
+			tintin_printf2(NULL, "#BUG: insertnode_list: bad list_table mode: %d", list_table[index].mode);
 			break;
 	}
 	pop_call();
@@ -228,7 +228,7 @@ void updatenode_list(struct session *ses, const char *ltext, const char *rtext, 
 					break;
 
 				default:
-					tintin_printf2(ses, "updatenode_list: bad mode");
+					tintin_printf2(ses, "#BUG: updatenode_list: bad mode");
 					break;
 			}
 			pop_call();
@@ -247,7 +247,7 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 	if ((node->next == NULL && node != ses->list[index]->l_node)
 	||  (node->prev == NULL && node != ses->list[index]->f_node))
 	{
-		tintin_puts2("#ERROR: delete_nodelist: unlink error.", NULL);
+		tintin_printf2(NULL, "#BUG: delete_nodelist: unlink error.");
 		dump_stack();
 	}
 	else
@@ -351,13 +351,13 @@ void shownode_list(struct session *ses, struct listnode *nptr, int index)
 			sprintf(buf, "#%s <118>{<088>%s<118>}", list_table[index].name, nptr->left);
 			break;
 		default:
-			sprintf(buf, "ERROR: list_table[index].args == 0");
+			sprintf(buf, "#BUG: list_table[index].args == 0");
 			break;
 	}
 
 	substitute(ses, buf, out, SUB_COL);
 
-	tintin_puts2(out, ses);
+	tintin_printf2(ses, "%s", out);
 }
 
 /*
@@ -444,4 +444,174 @@ int count_list(struct listroot *listhead)
 		cnt++;
 	}
 	return cnt;
+}
+
+
+DO_COMMAND(do_message)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	int cnt, fnd = FALSE;
+
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 0);
+
+	if (*left == 0)
+	{
+		tintin_header(ses, " MESSAGES ");
+
+		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+		}
+
+		tintin_header(ses, "");
+	}
+	else
+	{
+		for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			if (!is_abbrev(left, list_table[cnt].name_multi) && strcasecmp(left, "ALL"))
+			{
+				continue;
+			}
+			if (*right == 0)
+			{
+				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
+			}
+			else if (is_abbrev(right, "ON"))
+			{
+				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
+			}
+			else if (is_abbrev(right, "OFF"))
+			{
+				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE);
+			}
+			else
+			{
+				tintin_printf(ses, "#SYNTAX: #MESSAGE [NAME] [ON|OFF]");
+				break;
+			}
+			tintin_printf(ses, "#OK: #%s MESSAGES HAVE BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+			fnd = TRUE;
+		}
+
+		if (fnd == FALSE)
+		{
+			tintin_printf(ses, "#ERROR: #MESSAGE {%s} - NO MATCH FOUND.", left);
+		}
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_ignore)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	int cnt, fnd = FALSE;
+
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 0);
+
+	if (*left == 0)
+	{
+		tintin_header(ses, " IGNORES ");
+
+		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+		}
+
+		tintin_header(ses, "");
+	}
+	else
+	{
+		for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			if (!is_abbrev(left, list_table[cnt].name_multi) && strcasecmp(left, "ALL"))
+			{
+				continue;
+			}
+			if (*right == 0)
+			{
+				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
+			}
+			else if (is_abbrev(right, "ON"))
+			{
+				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
+			}
+			else if (is_abbrev(right, "OFF"))
+			{
+				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE);
+			}
+			else
+			{
+				tintin_printf(ses, "#SYNTAX: #IGNORE [NAME] [ON|OFF]");
+				break;
+			}
+			tintin_printf(ses, "#OK: #%s IGNORE STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+			fnd = TRUE;
+		}
+
+		if (fnd == FALSE)
+		{
+			tintin_printf(ses, "#ERROR: #IGNORE {%s} - NO MATCH FOUND.", left);
+		}
+	}
+	return ses;
+}
+
+DO_COMMAND(do_debug)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	int cnt, fnd = FALSE;
+
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 0);
+
+	if (*left == 0)
+	{
+		tintin_header(ses, " DEBUGS ");
+
+		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			tintin_printf2(ses, "  %-20s %3s", list_table[cnt].name_multi, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+		}
+
+		tintin_header(ses, "");
+	}
+	else
+	{
+		for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			if (!is_abbrev(left, list_table[cnt].name_multi) && strcasecmp(left, "ALL"))
+			{
+				continue;
+			}
+			if (*right == 0)
+			{
+				TOG_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
+			}
+			else if (is_abbrev(right, "ON"))
+			{
+				SET_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
+			}
+			else if (is_abbrev(right, "OFF"))
+			{
+				DEL_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG);
+			}
+			else
+			{
+				tintin_printf(ses, "#SYNTAX: #DEBUG [NAME] [ON|OFF]");
+				break;
+			}
+			tintin_printf(ses, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[cnt].name, HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+			fnd = TRUE;
+		}
+
+		if (fnd == FALSE)
+		{
+			tintin_printf2(ses, "#ERROR: #DEBUG {%s} - NO MATCH FOUND.", left);
+		}
+	}
+	return ses;
 }

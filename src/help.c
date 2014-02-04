@@ -188,7 +188,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.1                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.2                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -655,6 +655,7 @@ const struct help_type help_table[81] =
 		"\n"
 		"#{name} {command} allows executing a command with the given session without\n"
 		"changing the active session.\n"
+		"The startup session is named 'gts' and can be used for auto relog scripts.\n"
 	},
 
 	{

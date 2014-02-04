@@ -50,6 +50,7 @@ void initrl(void)
 	stifle_history(gtd->history_size);
 
 	rl_variable_bind("horizontal-scroll-mode", "on");
+	rl_variable_bind("enable-keypad", "on");
 #ifdef USE_ISO_LATIN_ONE
 	rl_variable_bind("meta-flag", "on");
 	rl_variable_bind("convert-meta", "off");
@@ -277,15 +278,20 @@ void readmud(struct session *ses)
 			break;
 		}
 
+
 		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
 		{
-			if (gts->check_output)
+			if (!HAS_BIT(gtd->ses->flags, SES_FLAG_GA))
 			{
-				strcat(ses->more_output, line);
-				ses->check_output = utime() + gts->check_output;
-				break;
+				if (gts->check_output)
+				{
+					strcat(ses->more_output, line);
+					ses->check_output = utime() + gts->check_output;
+					break;
+				}
 			}
 		}
+
 
 		if (*line && ses->more_output[0])
 		{
@@ -307,6 +313,7 @@ void readmud(struct session *ses)
 
 		process_mud_output(ses, linebuf, next_line == NULL);
 	}
+	DEL_BIT(gtd->ses->flags, SES_FLAG_GA);
 
 	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
 
@@ -606,30 +613,25 @@ void tintin_puts2(const char *cptr, struct session *ses)
 
 void tintin_puts(const char *cptr, struct session *ses)
 {
-	/*
-		bug! doesn't do_one_line() sometimes send output to stdout?
-	*/
+	char buf[BUFFER_SIZE];
 
-	if (ses)
+	if (ses == NULL)
 	{
-		char buf[BUFFER_SIZE];
+		ses = gtd->ses;
+	}
 
-		sprintf(buf, "%s", cptr);
-		do_one_line(buf, ses);
+	sprintf(buf, "%s", cptr);
 
-		if (!HAS_BIT(ses->flags, SES_FLAG_GAG) && !HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
-		{
-			tintin_puts2(buf, ses);
-		}
-		else
-		{
-			DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
-			DEL_BIT(ses->flags, SES_FLAG_GAG);
-		}
+	do_one_line(buf, ses);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_GAG) && !HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
+	{
+		tintin_puts2(buf, ses);
 	}
 	else
 	{
-		tintin_puts2(cptr, ses);
+		DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
+		DEL_BIT(ses->flags, SES_FLAG_GAG);
 	}
 }
 
@@ -675,7 +677,7 @@ void quitmsg(const char *m)
 	exit(0);
 }
 
-/* quit tintin++ fast!  for use with signal() */
+/* quit tintin++ fast, for use with signal() */
 
 RETSIGTYPE myquitsig(int no_care)
 {

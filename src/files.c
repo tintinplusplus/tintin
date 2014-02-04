@@ -54,7 +54,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
-		tintin_puts("#ERROR - COULDN'T OPEN THAT FILE.", ses);
+		tintin_printf(ses, "#ERROR: #READ {%s} - COULDN'T OPEN THAT FILE.", filename);
 		return ses;
 	}
 
@@ -62,7 +62,8 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 	if (!isgraph(temp[0]))
 	{
-		tintin_puts("#ERROR - INVALID START OF FILE.", ses);
+		tintin_printf(ses, "#ERROR: #READ {%s} - INVALID START OF FILE.", filename);
+
 		fclose(fp);
 
 		return ses;
@@ -79,7 +80,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 	{
 		if (strlen(bufo) + strlen(bufi) >= FILE_SIZE)
 		{
-			tintin_printf2(ses, "#READ, FILESIZE MUST BE SMALLER THAN %d.", FILE_SIZE);
+			tintin_printf(ses, "#ERROR: #READ {%s} - FILESIZE MUST BE SMALLER THAN %d.", FILE_SIZE);
 
 			fclose(fp);
 
@@ -95,6 +96,17 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 	{
 		if (com == 0)
 		{
+#ifdef BIG5
+			if (*pti & 0x80)
+			{
+				*pto++ = *pti++;
+				if (*pti)
+				{
+					*pto++ = *pti++;
+				}
+				continue;
+			}
+#endif
 			switch (*pti)
 			{
 				case DEFAULT_OPEN:
@@ -216,7 +228,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 	if (lvl)
 	{
-		tintin_printf2(ses, "#READ '%s' MISSING %d '%c' ON OR BEFORE LINE %d.", filename, abs(lvl), lvl < 0 ? DEFAULT_OPEN : DEFAULT_CLOSE, fix == 0 ? lnc + 1 : fix);
+		tintin_printf(ses, "#ERROR: #READ {%s} - MISSING %d '%c' ON OR BEFORE LINE %d.", filename, abs(lvl), lvl < 0 ? DEFAULT_OPEN : DEFAULT_CLOSE, fix == 0 ? lnc + 1 : fix);
 
 		fclose(fp);
 
@@ -225,7 +237,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 	if (com)
 	{
-		tintin_printf2(ses, "#READ '%s' MISSING %d '%s'", filename, abs(com), com < 0 ? "/*" : "*/");
+		tintin_printf(ses, "#ERROR: #READ {%s} - MISSING %d '%s'", filename, abs(com), com < 0 ? "/*" : "*/");
 
 		fclose(fp);
 
@@ -257,7 +269,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 			bufi[20] = 0;
 
-			tintin_printf2(ses, "#READ '%s' BUFFER OVERFLOW AT COMMAND: %s.", filename, bufi);
+			tintin_printf(ses, "#ERROR: #READ {%s} - BUFFER OVERFLOW AT COMMAND: %s.", filename, bufi);
 
 			fclose(fp);
 
@@ -291,11 +303,11 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 					break;
 
 				case 1:
-					tintin_printf2(ses, "#OK %2d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
+					tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name);
 					break;
 
 				default:
-					tintin_printf2(ses, "#OK %2d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
+					tintin_printf(ses, "#OK: %3d %s LOADED.", ses->list[cnt]->count - counter[cnt], list_table[cnt].name_multi);
 					break;
 			}
 		}
@@ -304,6 +316,7 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 
 	return ses;
 }
+
 
 DO_COMMAND(do_write)
 {
@@ -316,7 +329,7 @@ DO_COMMAND(do_write)
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{
-		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", filename);
+		tintin_printf(ses, "#ERROR: #write {%s} - COULDN'T OPEN FILE TO WRITE.", filename);
 		return ses;
 	}
 
@@ -334,46 +347,8 @@ DO_COMMAND(do_write)
 
 	if (show_message(ses, -1))
 	{
-		tintin_printf2(ses, "#COMMANDO-FILE WRITTEN.");
+		tintin_printf(ses, "#OK: #WRITE {%s} - COMMANDO-FILE WRITTEN.", filename);
 	}
-	return ses;
-}
-
-
-DO_COMMAND(do_writesession)
-{
-	FILE *file;
-	char buffer[BUFFER_SIZE];
-	struct listnode *node;
-	int cnt;
-
-	get_arg_in_braces(arg, buffer, TRUE);
-
-	if (*buffer == 0 || (file = fopen(buffer, "w")) == NULL)
-	{
-		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", buffer);
-		return ses;
-	}
-
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
-		{
-			if (gts != ses && searchnode_list(gts->list[cnt], node->left))
-			{
-				continue;
-			}
-
-			prepare_for_write(cnt, node, buffer);
-
-			fputs(buffer, file);
-		}
-	}
-
-	fclose(file);
-
-	tintin_printf2(ses, "#COMMANDO-FILE WRITTEN.");
-
 	return ses;
 }
 
@@ -401,17 +376,16 @@ void prepare_for_write(int list, struct listnode *node, char *result)
 }
 
 
-
 DO_COMMAND(do_textin)
 {
 	FILE *fp;
-	char buffer[BUFFER_SIZE], *cptr;
+	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
 
-	get_arg_in_braces(arg, buffer, 1);
+	get_arg_in_braces(arg, filename, TRUE);
 
-	if ((fp = fopen(buffer, "r")) == NULL)
+	if ((fp = fopen(filename, "r")) == NULL)
 	{
-		tintin_printf2(ses, "#TEXTIN, FILE '%s' NOT FOUND.", buffer);
+		tintin_printf(ses, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", filename);
 		return ses;
 	}
 
@@ -421,19 +395,18 @@ DO_COMMAND(do_textin)
 		{
 			;
 		}
-		*cptr = '\0';
+		*cptr++ = '\r';
+		*cptr++ = '\n';
+		*cptr++ = '\0';
 
-		if (*buffer)
-		{
-			write_line_mud(buffer, ses);
-		}
-		else
-		{
-			write_line_mud(" ", ses);
-		}
+		write_line_mud(buffer, ses);
 	}
 	fclose(fp);
-	tintin_puts2("#OK, TEXTIN COMPLETED.", ses);
+
+	if (show_message(ses, -1))
+	{
+		tintin_printf(ses, "#OK: #TEXTIN {%s} - FILE READ.");
+	}
 
 	return ses;
 }
@@ -442,13 +415,13 @@ DO_COMMAND(do_textin)
 DO_COMMAND(do_scan)
 {
 	FILE *fp;
-	char buffer[BUFFER_SIZE];
+	char filename[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, buffer, 1);
+	get_arg_in_braces(arg, filename, TRUE);
 
-	if ((fp = fopen(buffer, "r")) == NULL)
+	if ((fp = fopen(filename, "r")) == NULL)
 	{
-		tintin_printf2(ses, "#SCAN, FILE '%s' NOT FOUND.", buffer);
+		tintin_printf(ses, "#ERROR: #SCAN {%s} - FILE NOT FOUND.", filename);
 		return ses;
 	}
 
@@ -467,24 +440,26 @@ DO_COMMAND(do_scan)
 
 	DEL_BIT(ses->flags, SES_FLAG_SCAN);
 
-	tintin_printf2(ses, "OK, SCANNED FILE '%s'.", buffer);
-
+	if (show_message(ses, -1))
+	{
+		tintin_printf(ses, "#OK: #SCAN {%s} - FILE READ.", filename);
+	}
 	fclose(fp);
 
 	return ses;
 }
 
+
 DO_COMMAND(do_readmap)
 {
 	FILE *myfile;
-	char buffer[BUFFER_SIZE], *cptr;
-	const char *filename = arg;
+	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
 
-	get_arg_in_braces(filename, buffer, 1);
+	get_arg_in_braces(arg, filename, TRUE);
 
-	if ((myfile = fopen(buffer, "r")) == NULL)
+	if ((myfile = fopen(filename, "r")) == NULL)
 	{
-		tintin_puts("#ERROR - COULDN'T OPEN THAT FILE.", ses);
+		tintin_printf(ses, "#ERROR: #READMAP {%s} - FILE NOT FOUND.", filename);
 		return(ses);
 	}
 
@@ -511,6 +486,10 @@ DO_COMMAND(do_readmap)
 
 	fclose(myfile);
 
+	if (show_message(ses, -1))
+	{
+		tintin_printf(ses, "#OK: #READMAP {%s} - FILE READ.", filename);
+	}
 	return(ses);
 }
 
@@ -518,15 +497,15 @@ DO_COMMAND(do_readmap)
 DO_COMMAND(do_writemap)
 {
 	FILE *file;
-	char buffer[BUFFER_SIZE];
+	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE];
 	struct exit_data *exit;
 	int vnum;
 
-	get_arg_in_braces(arg, buffer, 1);
+	get_arg_in_braces(arg, filename, TRUE);
 
-	if (*buffer == 0 || (file = fopen(buffer, "w")) == NULL)
+	if (*buffer == 0 || (file = fopen(filename, "w")) == NULL)
 	{
-		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", buffer);
+		tintin_printf(ses, "#ERROR: #WRITEMAP {%s} - COULDN'T OPEN FILE TO WRITE.", filename);
 		return ses;
 	}
 
@@ -556,7 +535,10 @@ DO_COMMAND(do_writemap)
 
 	fclose(file);
 
-	tintin_printf2(ses, "#MAP-FILE WRITTEN.");
+	if (show_message(ses, -1))
+	{
+		tintin_printf(ses, "#OK: #WRITEMAP {%s} - FILE WRITTEN.", filename);
+	}
 
 	return ses;
 }

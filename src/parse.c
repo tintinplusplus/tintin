@@ -47,30 +47,25 @@ struct session *parse_input(char *input, struct session *ses)
 
 	if (*input == 0)
 	{
-		write_line_mud("", ses);
+		write_line_mud("\r\n", ses);
 
 		pop_call();
 		return(ses);
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && ses != gts)
+	if (ses != gts)
 	{
-		if (*input != gtd->tintin_char)
+		if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) || *input == gtd->verbatim_char)
 		{
-			write_line_mud(input, ses);
+			if (*input != gtd->tintin_char)
+			{
+				sprintf(command, "%s\r\n", input);
+
+				write_line_mud(command, ses);
+			}
 			pop_call();
 			return(ses);
 		}
-	}
-
-	if (*input == gtd->verbatim_char)
-	{
-		TOG_BIT(ses->flags, SES_FLAG_VERBATIM);
-		write_line_mud(input + 1, ses);
-		TOG_BIT(ses->flags, SES_FLAG_VERBATIM);
-
-		pop_call();
-		return(ses);
 	}
 
 	pti = input;
@@ -84,8 +79,8 @@ struct session *parse_input(char *input, struct session *ses)
 				break;
 			}
 		}
-		pti = (char *)get_arg_stop_spaces(pti, temp);
-		pti = (char *)get_arg_all(pti, arg);
+		pti = (char *) get_arg_stop_spaces(pti, temp);
+		pti = (char *) get_arg_all(pti, arg);
 
 		substitute(ses, temp, command, SUB_VAR|SUB_FUN);
 
@@ -238,22 +233,15 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 		}
 	}
 
-	if (isdigit(*command))
+	if (atoi(command) > 0)
 	{
 		int i = atoi(command);
 
-		if (i > 0)
-		{
-			get_arg_in_braces(arg, arg, 1);
+		get_arg_in_braces(arg, arg, 1);
 
-			while (i-- > 0)
-			{
-				ses = parse_input(arg, ses);
-			}
-		}
-		else
+		while (i-- > 0)
 		{
-			tintin_puts("#YEAH RIGHT! GO REPEAT THAT YOURSELF DUDE.", ses);
+			ses = parse_input(arg, ses);
 		}
 		return ses;
 	}
@@ -274,7 +262,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 			}
 		}
 	}
-	tintin_printf2(ses, "#UNKNOWN TINTIN-COMMAND '%s'.", command);
+	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", command);
 
 	return ses;
 }
@@ -546,7 +534,7 @@ void write_com_arg_mud(const char *command, const char *argument, struct session
 	{
 		sprintf(temp, "%s %s", command, argument);
 	}
-	substitute(ses, temp, outtext, SUB_VAR|SUB_FUN|SUB_ESC);
+	substitute(ses, temp, outtext, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
 	write_line_mud(outtext, ses);
 }

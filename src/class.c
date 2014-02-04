@@ -199,9 +199,11 @@ DO_CLASS(class_write)
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{
-		tintin_printf2(ses, "#ERROR - COULDN'T OPEN '%s' TO WRITE.", filename);
+		tintin_printf(ses, "#ERROR: #CLASS WRITE {%s} - COULDN'T OPEN FILE TO WRITE.", filename);
 		return ses;
 	}
+
+	fprintf(file, "%cCLASS {%s} OPEN\n\n", gtd->tintin_char, arg);
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
@@ -215,6 +217,8 @@ DO_CLASS(class_write)
 			}
 		}
 	}
+
+	fprintf(file, "\n%cCLASS {%s} CLOSE\n", gtd->tintin_char, arg);
 
 	fclose(file);
 

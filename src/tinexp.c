@@ -71,10 +71,12 @@ int regexp(const char *exp, const char *str)
 				break;
 
 			default:
+
 				if (*exp != *str)
 				{
 					return FALSE;
 				}
+
 				break;
 		}
 	}
@@ -101,6 +103,11 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 		switch (*pti)
 		{
 			case '\0':
+				if (HAS_BIT(flags, SUB_EOL))
+				{
+					*pto++ = '\r';
+					*pto++ = '\n';
+				}
 				*pto = 0;
 				return;
 
@@ -236,7 +243,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 					{
 						pte = get_arg_in_braces(pte, temp, FALSE);
 
-						strcpy(gtd->cmds[i], temp);
+						substitute(ses, temp, gtd->cmds[i], HAS_BIT(flags, SUB_ARG) ? SUB_ARG|SUB_FUN : SUB_FUN);
 					}
 					substitute(ses, node->right, temp, SUB_CMD);
 
@@ -245,6 +252,10 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 					substitute(ses, "$result", temp, SUB_VAR);
 					substitute(ses, temp, pto, flags - SUB_FUN);
 
+					if (HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_DEBUG))
+					{
+						tintin_printf2(ses, "#FUNCTION DEBUG: (%s) (%s)", node->left, pto);
+					}
 					pto += strlen(pto);
 				}
 				else
@@ -356,6 +367,9 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						case ']':
 							*pto++ = '}';
 							break;
+						case '\0':
+							*pto = 0;
+							return;
 						default:
 							*pto++ = *pti;
 							break;

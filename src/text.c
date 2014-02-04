@@ -59,8 +59,18 @@ int word_wrap(struct session *ses, const char *textin, char *textout, int scroll
 
 		*pto = *pti;
 
+		if (*pti == '\r')
+		{
+			pti++;
+			continue;
+		}
+
 		if (*pti == '\n')
 		{
+			if (pti[1] == 0)
+			{
+				break;
+			}
 			pto++;
 			pti++;
 			*pto++ = '\r';

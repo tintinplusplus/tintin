@@ -12,9 +12,8 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
-#CONFIG           {VERBOSE}               {ON}
+#CONFIG           {VERBOSE}               {OFF}
 #alias {oops} {#showme <118>Problem with check %1}
-
 #class bla open
 #var bla 1
 #class bla close
@@ -42,5 +41,8 @@ oops 5
 #3 #walk
 #if {$bla != 3} {oops 9}
 
-#alias bla {#if {1} {#showme okie;#return};#showme dokie}
-#alias bli {#if {1} {#showme okie};#showme dokie}
+
+#alias {sgad}  {ÿþ\}
+#alias {sgaw}  {ÿü\}
+
+#alias {telnet} {#config {debug telnet} on;#ses x %0}

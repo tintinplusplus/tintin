@@ -134,12 +134,9 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 	Size of the telopt table
 */
 
-#define TELOPT_MAX                    18
+#define TELOPT_MAX                    21
 
 #define TELNET_PORT                   23
-
-#define TELOPT_MCCP2                  86
-
 
 /*
 	Index for lists used by tintin
@@ -185,6 +182,7 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SUB_CMD                       (1 <<  5)
 #define SUB_ANC                       (1 <<  6)
 #define SUB_SEC                       (1 <<  7)
+#define SUB_EOL                       (1 <<  8)
 
 #define SES_FLAG_NAWS                 (1 <<  0)
 #define SES_FLAG_ECHOCOMMAND          (1 <<  1)
@@ -213,6 +211,8 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_GAGPROMPT            (1 << 25)
 #define SES_FLAG_BREAK                (1 << 26)
+#define SES_FLAG_EOR                  (1 << 27)
+#define SES_FLAG_GA                   (1 << 28)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -693,7 +693,6 @@ extern int check_all_antisubstitutions(const char *original, char *line, struct 
 extern DO_COMMAND(do_read);
 extern struct session *readfile(struct session *ses, const char *arg, struct listnode *class);
 extern DO_COMMAND(do_readmap);
-extern DO_COMMAND(do_writesession);
 extern DO_COMMAND(do_write);
 extern DO_COMMAND(do_writemap);
 extern DO_COMMAND(do_session);
@@ -751,6 +750,9 @@ extern int show_node_with_wild(struct session *ses, const char *cptr, int index)
 extern struct listnode *search_node_with_wild(struct listroot *listhead, const char *cptr);
 extern void addnode_list(struct listroot *listhead, const char *ltext, const char *rtext, const char *prtext);
 extern int count_list(struct listroot *listhead);
+extern DO_COMMAND(do_message);
+extern DO_COMMAND(do_ignore);
+extern DO_COMMAND(do_debug);
 #endif
 
 
@@ -795,9 +797,7 @@ extern DO_COMMAND(do_end);
 extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_loop);
 extern DO_COMMAND(do_forall);
-extern DO_COMMAND(do_message);
-extern DO_COMMAND(do_ignore);
-extern DO_COMMAND(do_debug);
+
 extern DO_COMMAND(do_return);
 extern DO_COMMAND(do_snoop);
 extern DO_COMMAND(do_system);
@@ -820,6 +820,9 @@ extern void read_buffer_mud(struct session *ses);
 
 extern void translate_telopts(struct session *ses, unsigned char *src, int cplen);
 extern void send_will_sga(struct session *ses);
+extern void send_do_eor(struct session *ses);
+extern void set_ga(struct session *ses);
+extern void set_ga(struct session *ses);
 extern void send_will_ttype(struct session *ses);
 extern void send_will_tspeed(struct session *ses);
 extern void send_will_naws(struct session *ses);
@@ -831,7 +834,7 @@ extern void send_sb_tspeed(struct session *ses);
 extern void send_sb_ttype(struct session *ses);
 extern void send_wont_status(struct session *ses);
 extern void send_dont_status(struct session *ses);
-extern void send_do_sga(struct session *ses);
+extern void send_dont_sga(struct session *ses);
 extern void send_wont_oldenviron(struct session *ses);
 extern void send_echo_on(struct session *ses);
 extern void send_echo_off(struct session *ses);

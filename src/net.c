@@ -99,8 +99,6 @@ int connect_mud(const char *host, const char *port, struct session *ses)
 
 void write_line_mud(const char *line, struct session *ses)
 {
-	char outtext[BUFFER_SIZE];
-
 	if (ses == gts)
 	{
 		tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host port} TO START ONE.", gtd->tintin_char);
@@ -113,9 +111,7 @@ void write_line_mud(const char *line, struct session *ses)
 		return;
 	}
 
-	sprintf(outtext, "%s\r\n", line);
-
-	if (write(ses->socket, outtext, strlen(outtext)) == -1)
+	if (write(ses->socket, line, strlen(line)) == -1)
 	{
 		syserr("write in write_line_mud");
 	}

@@ -57,10 +57,6 @@ DO_COMMAND(do_configure)
 
 		tintin_header(ses, "");
 	}
-	else if (*right == 0)
-	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG <OPTION> <ARGUMENT>");
-	}
 	else
 	{
 		for (cnt = 0 ; cnt < CONFIG_MAX ; cnt++)
@@ -77,7 +73,7 @@ DO_COMMAND(do_configure)
 				return ses;
 			}
 		}
-		tintin_printf2(ses, "#CONFIG {%s} IS NOT A VALID OPTION.", capitalize(left));
+		tintin_printf(ses, "#ERROR: #CONFIG {%s} IS NOT A VALID OPTION.", capitalize(left));
 	}
 	return ses;
 }
@@ -97,7 +93,7 @@ DO_CONFIG(config_speedwalk)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -123,7 +119,7 @@ DO_CONFIG(config_verbatim)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -148,7 +144,7 @@ DO_CONFIG(config_repeatenter)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -173,7 +169,7 @@ DO_CONFIG(config_echocommand)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -198,7 +194,7 @@ DO_CONFIG(config_verbose)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -223,7 +219,7 @@ DO_CONFIG(config_wordwrap)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -255,7 +251,7 @@ DO_CONFIG(config_log)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG LOG <HTML|PLAIN|RAW>");
+		tintin_printf(ses, "#SYNTAX: #CONFIG LOG <HTML|PLAIN|RAW>");
 
 		return NULL;
 	}
@@ -272,14 +268,14 @@ DO_CONFIG(config_buffersize)
 
 	if (!is_number(arg))
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {BUFFER SIZE} <NUMBER>");
+		tintin_printf(ses, "#SYNTAX: #CONFIG {BUFFER SIZE} <NUMBER>");
 
 		return NULL;
 	}
 
 	if (atoi(arg) < 100 || atoi(arg) > 999999)
 	{
-		tintin_printf2(ses, "#ERROR: #CONFIG BUFFER: PROVIDE A NUMBER BETWEEN 100 and 999999");
+		tintin_printf(ses, "#ERROR: #CONFIG BUFFER: PROVIDE A NUMBER BETWEEN 100 and 999999");
 
 		return NULL;
 	}
@@ -307,7 +303,7 @@ DO_CONFIG(config_scrolllock)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -324,7 +320,7 @@ DO_CONFIG(config_connectretry)
 
 	if (!is_number(arg))
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {CONNECT RETRY} <NUMBER>");
+		tintin_printf(ses, "#SYNTAX: #CONFIG {CONNECT RETRY} <NUMBER>");
 
 		return NULL;
 	}
@@ -345,12 +341,12 @@ DO_CONFIG(config_packetpatch)
 
 	if (!is_number(arg))
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {PACKET PATCH} <NUMBER>");
+		tintin_printf(ses, "#SYNTAX: #CONFIG {PACKET PATCH} <NUMBER>");
 	}
 
 	if (atoi(arg) < 0 || atoi(arg) > 1000)
 	{
-		tintin_printf2(ses, "#CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0 and 1000");
+		tintin_printf(ses, "#ERROR: #CONFIG PACKET PATCH: PROVIDE A NUMBER BETWEEN 0 and 1000");
 
 		return NULL;
 	}
@@ -371,12 +367,12 @@ DO_CONFIG(config_historysize)
 
 	if (!is_number(arg))
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {HISTORY SIZE} <NUMBER>");
+		tintin_printf(ses, "#SYNTAX: #CONFIG {HISTORY SIZE} <NUMBER>");
 	}
 
 	if (atoi(arg) < 0 || atoi(arg) > 9999)
 	{
-		tintin_printf2(ses, "#CONFIG HISTORY: PROVIDE A NUMBER BETWEEN 0 and 9999");
+		tintin_printf(ses, "#ERROR: #CONFIG HISTORY: PROVIDE A NUMBER BETWEEN 0 and 9999");
 
 		return NULL;
 	}
@@ -445,7 +441,7 @@ DO_CONFIG(config_debugtelnet)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -476,7 +472,7 @@ DO_CONFIG(config_convertmeta)
 	}
 	else
 	{
-		tintin_printf2(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
 
 		return NULL;
 	}

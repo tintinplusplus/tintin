@@ -198,13 +198,13 @@ DO_COMMAND(do_loadpath)
 
 			if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 			{
-				tintin_printf2(ses, "[LOADPATH: %3d %s]", root->count, left);
+				tintin_printf2(ses, "#DEBUG #LOADPATH: %3d %s", root->count, left);
 			}
 		}
 
 		if (show_message(ses, LIST_PATH))
 		{
-			tintin_printf2(ses, "#PATH WITH %d NODES LOADED.", root->count);
+			tintin_printf(ses, "#OK: #PATH WITH %d NODES LOADED.", root->count);
 		}
 	}
 	return ses;
@@ -219,24 +219,17 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #PATH <command> <reversed command>");
+		tintin_printf(ses, "#SYNTAX: #PATH <command> <reversed command>");
 	}
-	else if (*right == 0)
+	else if (*right == 0 && searchnode_list(ses->list[LIST_PATHDIR], left))
 	{
-		if (searchnode_list(ses->list[LIST_PATHDIR], left))
-		{
-			check_insert_path(left, ses);
-		}
-		else
-		{
-			tintin_printf2(ses, "#PATH: {%s} IS NOT A PATHDIR.", left);
-		}
+		check_insert_path(left, ses);
 	}
 	else
 	{
 		addnode_list(ses->list[LIST_PATH], left, right, "0");
 
-		tintin_printf2(ses, "#OK {%s} = {%s} ADDED TO PATH.", left, right);
+		tintin_printf(ses, "#OK: #PATH - {%s} = {%s} ADDED.", left, right);
 	}
 	return ses;
 }
@@ -252,12 +245,12 @@ DO_COMMAND(do_unpath)
 
 	if (root->l_node)
 	{
-		tintin_printf2(ses, "#OK.  DELETED MOVE {%s}", root->l_node->left);
+		tintin_printf2(ses, "#OK: #UNPATH - DELETED MOVE {%s}", root->l_node->left);
 		deletenode_list(ses, root->l_node, LIST_PATH);
 	}
 	else
 	{
-		tintin_puts("#NO MOVES LEFT.", ses);
+		tintin_puts("#ERROR: #UNPATH - NO MOVES LEFT.", ses);
 	}
 	return ses;
 }
@@ -299,7 +292,7 @@ DO_COMMAND(do_walk)
 				break;
 
 			default:
-				tintin_printf2(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}");
+				tintin_printf(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}");
 				break;
 		}
 		ses->flags = flags;
@@ -338,7 +331,7 @@ DO_COMMAND(do_pathdir)
 
 		if (show_message(ses, LIST_PATHDIR))
 		{
-			tintin_printf2(ses, "#OK. DIRECTION {%s} WILL BE REVERSED AS {%s}", left, right);
+			tintin_printf2(ses, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s}", left, right);
 		}
 	}
 	return ses;
