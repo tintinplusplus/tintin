@@ -1,14 +1,14 @@
 * This is a list of new features/improvements that are planned.
 
-- auto mapper
+- auto mapper (half finished)
 
-- custom readline support
+- custom readline support (some progress has been made)
 
 - floating point calculations
 
-- code that deals with broken lines
+- code that deals with broken lines (half finished)
 
-
+- event system to deal with various situations
 
 * This is a list of new features/improvements the author of this version has
   no interest in.

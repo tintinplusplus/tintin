@@ -326,6 +326,11 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define DEL_BIT(bitvector, bit)   ((bitvector) &= (~(bit)))
 #define TOG_BIT(bitvector, bit)   ((bitvector) ^= (bit))
 
+/*
+	Compatibility
+*/
+
+#define atoll(str) (strtoll(str, NULL, 10))
 
 
 /************************ structures *********************/

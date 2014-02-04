@@ -545,7 +545,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'L':
-						sprintf(arglist[i], "%d", strlen(arglist[i]));
+						sprintf(arglist[i], "%d", (int) strlen(arglist[i]));
 						break;
 
 					case 'R':

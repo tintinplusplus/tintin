@@ -288,13 +288,49 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			{
 				case '\0':
 				case '\r':
-					cpsrc++;
 					break;
+
 				default:
-					gtd->mud_output_len++;
-					*cpdst++ = *cpsrc++;
+					if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA))
+					{
+						switch (*cpsrc)
+						{
+							case '\e':
+								*cpdst++ = '\\';
+								*cpdst++ = 'e';
+								gtd->mud_output_len += 2;
+								break;
+
+							case '\n':
+								*cpdst++ = *cpsrc;
+								gtd->mud_output_len++;
+								break;
+
+							default:
+								if (*cpsrc < 27)
+								{
+									*cpdst++ = '\\';
+									*cpdst++ = 'C';
+									*cpdst++ = '-';
+									*cpdst++ = 'a' + *cpsrc - 1;
+									gtd->mud_output_len += 4;
+								}
+								else
+								{
+									*cpdst++ = *cpsrc;
+									gtd->mud_output_len++;
+								}
+								break;
+						}
+					}
+					else
+					{
+						*cpdst++ = *cpsrc;
+						gtd->mud_output_len++;
+					}
 					break;
 			}
+			cpsrc++;
 			cplen--;
 		}
 	}

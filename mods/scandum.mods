@@ -631,3 +631,14 @@ tinexp.c       Added option to start a trigger with ~ in which case colors
 
 buffer.c       Removed the #writebuffer command, must now use:
                #buffer {write} {filename}
+
+
+tintin.h       Now using strtoll instead of atoll since old platforms only
+               support strtoll.
+
+telopt.c       With #config {CONVERT META} set to ON mud output will have
+               it's meta characters translated, this to aid in making color
+               triggers.
+
+split.c        With #split 0 0 will create an input line without the split
+               line. Useful for people who don't use #prompt.

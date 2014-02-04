@@ -142,7 +142,7 @@ int strncasecmp(const char *string1, const char *string2, size_t count)
 				return(UPPER(*string1) - UPPER(*string2));
 					if (!*string1++)
 						break;
-		string2++:
+		string2++;
 	}
 	while (--count);
 

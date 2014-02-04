@@ -162,7 +162,6 @@ int main(int argc, char **argv)
 		syserr("signal SIGINT");
 	}
 
-
 	if (signal(SIGTSTP, tstphandler) == BADSIG)
 	{
 		syserr("signal SIGTSTP");

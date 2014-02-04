@@ -156,7 +156,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 	}
 	else
 	{
-		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", strlen(temp), ses->cols);
+		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", (int) strlen(temp), ses->cols);
 	}
 
 	/*

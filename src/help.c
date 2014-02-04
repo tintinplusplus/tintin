@@ -197,9 +197,9 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Original TINTIN code by Peter Unold                <068>#\n"
 		"<068>    #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,      <068>#\n"
 		"<068>    #<078>           Jeremy C. Jack, Davin Chan, Igor van den Hoven           <068>#\n"
-		"<068>    #<078>                              1994,2004                             <068>#\n"
+		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.94.3                           <068>#\n"
+		"<068>    #<078>                           Version 1.94.4                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{

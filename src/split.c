@@ -71,9 +71,9 @@ void init_split(struct session *ses, int top, int bot)
 		top = 1;
 	}
 
-	if (bot > ses->rows - 2)
+	if (bot > ses->rows)
 	{
-		bot = ses->rows - 2;
+		bot = ses->rows;
 	}
 
 	SET_BIT(ses->flags, SES_FLAG_SPLIT);
