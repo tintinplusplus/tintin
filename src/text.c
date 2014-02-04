@@ -59,7 +59,7 @@ void printline(struct session *ses, const char *str, int prompt)
 }
 
 /*
-	Word wrapper, only wraps scrolling region, returns nr of lines - Scandum
+	Word wrapper, only wraps scrolling region, returns nr of lines - Igor
 */
 
 int word_wrap(struct session *ses, const char *textin, char *textout, int scroll)

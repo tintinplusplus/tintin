@@ -264,7 +264,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (regexp(left, ses->buffer[scroll_cnt]))
+			if (regexp(left, ses->buffer[scroll_cnt], TRUE))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -303,7 +303,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (regexp(left, ses->buffer[scroll_cnt]))
+			if (regexp(left, ses->buffer[scroll_cnt], TRUE))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -783,43 +783,91 @@ void buffer_f(const char *arg)
 
 		sprintf(left, "*%s*", right);
 
-		scroll_cnt = gtd->ses->scroll_row;
-
-		do
+		if (grep_max >= 0)
 		{
-			if (scroll_cnt == gtd->ses->scroll_max -1)
-			{
-				scroll_cnt = 0;
-			}
-			else
-			{
-				scroll_cnt++;
-			}
+			scroll_cnt = gtd->ses->scroll_row;
 
-			if (gtd->ses->buffer[scroll_cnt] == NULL)
+			do
 			{
-				break;
-			}
+				if (scroll_cnt == gtd->ses->scroll_max -1)
+				{
+					scroll_cnt = 0;
+				}
+				else
+				{
+					scroll_cnt++;
+				}
 
-			if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
-			{
-				continue;
-			}
-
-			if (regexp(left, gtd->ses->buffer[scroll_cnt]))
-			{
-				if (grep_cnt == grep_max)
+				if (gtd->ses->buffer[scroll_cnt] == NULL)
 				{
 					break;
 				}
-				grep_cnt++;
+
+				if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+				{
+					continue;
+				}
+
+				if (regexp(left, gtd->ses->buffer[scroll_cnt], TRUE))
+				{
+					if (grep_cnt == grep_max)
+					{
+						break;
+					}
+					grep_cnt++;
+				}
 			}
+			while (scroll_cnt != gtd->ses->scroll_row);
 		}
-		while (scroll_cnt != gtd->ses->scroll_row);
+		else
+		{
+			if (gtd->ses->buffer[0])
+			{
+				scroll_cnt = gtd->ses->scroll_row - 1;
+			}
+			else
+			{
+				scroll_cnt = gtd->ses->scroll_max - 1;
+			}
+
+			do
+			{
+				if (scroll_cnt == 0)
+				{
+					scroll_cnt = gtd->ses->scroll_max -1;
+				}
+				else
+				{
+					scroll_cnt--;
+				}
+
+				if (gtd->ses->buffer[scroll_cnt] == NULL)
+				{
+					break;
+				}
+
+				if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+				{
+					continue;
+				}
+
+				if (regexp(left, gtd->ses->buffer[scroll_cnt], TRUE))
+				{
+					grep_cnt--;
+
+					if (grep_cnt == grep_max)
+					{
+						break;
+					}
+
+				}
+			}
+			while (scroll_cnt != gtd->ses->scroll_row);
+		}
 
 		if (gtd->ses->buffer[scroll_cnt] == NULL || scroll_cnt == gtd->ses->scroll_row)
 		{
-			tintin_puts2("#BUFFER, NO MATCHES FOUND.", NULL);
+			tintin_puts("#BUFFER FIND, NO MATCHES FOUND.", NULL);
 		}
 		else
 		{

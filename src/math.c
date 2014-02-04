@@ -94,11 +94,11 @@ DO_COMMAND(do_if)
 
 		if (mathexp(ses, temp))
 		{
-			ses = parse_input(true, ses);
+			ses = parse_input(ses, true);
 		}
 		else if (*false)
 		{
-			ses = parse_input(false, ses);
+			ses = parse_input(ses, false);
 		}
 	}
 	return ses;
@@ -122,9 +122,9 @@ void get_number_string(struct session *ses, const char *str, char *result)
 	sprintf(result, "%.*f", precision, mathexp(ses, number));
 }
 
-/******************************************************************************
-* mathematical expression interpreter by Scandum                              *
-******************************************************************************/
+/*
+	Flexible tokenized mathematical expression interpreter - Igor
+*/
 
 double mathexp(struct session *ses, const char *str)
 {
@@ -237,7 +237,7 @@ int mathexp_tokenize(struct session *ses, const char *str)
 					case '"':
 						if (pta != buf3)
 						{
-							tintin_printf2(NULL, "MATH EXP: \" FOUND INSIDE INTEGER");
+							tintin_printf2(NULL, "MATH EXP: \" FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -247,7 +247,7 @@ int mathexp_tokenize(struct session *ses, const char *str)
 					case '(':
 						if (pta != buf3)
 						{
-							tintin_printf2(NULL, "MATH EXP: PARANTESES FOUND INSIDE INTEGER");
+							tintin_printf2(NULL, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -261,6 +261,11 @@ int mathexp_tokenize(struct session *ses, const char *str)
 
 					case '.':
 						*pta++ = *pti++;
+						if (point >= 0)
+						{
+							tintin_printf2(NULL, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
+							return FALSE;
+						}
 						point++;
 						break;
 
@@ -693,7 +698,7 @@ double tineval(const char *left, const char *right)
 	switch (left[0])
 	{
 		case '"':
-			return regexp(left, right);
+			return regexp(left, right, TRUE);
 
 		default:
 			return tintoi(left) == tintoi(right);

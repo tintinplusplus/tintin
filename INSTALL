@@ -1,6 +1,7 @@
 Installation is easy; cd to the src/ directory, then type this:
 
 ./configure
+
 make
 
 If this went without errors or serious warnings type this to start tintin:
@@ -8,19 +9,8 @@ If this went without errors or serious warnings type this to start tintin:
 ./tt++
 
 
-If you put the readline library in a non standard location, you can
-do a ./configure --includedir=<location> --libdir=<location>/readline to 
-specify it. For example, if you put the readline library in /tmp/readline, 
-you can do
-
-./configure --includedir=/tmp --libdir=/tmp/readline
-
-You need Readline 4.2 or higher in order to compile TinTin++.
-
 Options configure current supports:
---includedir    Additional include directory
---bindir        Location you want tt++ to be installed (default is the src dir)
---libdir        Addition library directory
+
 --enable-big5   To use the big5 encoding
 
 If you wish, you can edit src/Makefile.in before running ./configure.
@@ -28,9 +18,7 @@ It shouldn't be necessary unless you have some unorthodox request
 (such as wanting to install tintin++ /usr/local).
 
 If you have any trouble with installing/compiling tintin, you can use
-the gripe command in src/ directory to send email.  Please include
-the OS, compiler and the error message that you have.  Or you can email
-us at tintin@newclear.net.
+ask for assistance on the forum.
 
 
 TERMINAL EMULATION:
@@ -44,6 +32,6 @@ chmod 777 x
 ./x
 
 This will start up rxvt configured as an old school putty terminal everytime
-you type ./x  next you can run tintin in split mode.
+you type ./x  and you can run tintin in split mode.
 
 

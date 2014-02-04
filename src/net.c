@@ -122,11 +122,7 @@ void read_buffer_mud(struct session *ses)
 
 	gtd->mud_output_len = 0;
 
-	if ((size = read(ses->socket, buf, BUFFER_SIZE - 1)) == -1)
-	{
-		tintin_printf2(ses, "");
-		perror("read_buffer_mud:");
-	}
+	size = read(ses->socket, buf, BUFFER_SIZE - 1);
 
 	if (size <= 0)
 	{

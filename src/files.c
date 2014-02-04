@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 
 /*
-	read and execute a command file, supports multi lines - Scandum
+	read and execute a command file, supports multi lines - Igor
 */
 
 DO_COMMAND(do_read)
@@ -286,7 +286,7 @@ DO_COMMAND(do_read)
 
 		if (bufi[0])
 		{
-			ses = parse_input(bufi, ses);
+			ses = parse_input(ses, bufi);
 		}
 		pto = bufi;
 		pti++;

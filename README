@@ -6,7 +6,7 @@ improve the script parser. People who do not want to update their scripts
 and figure out the differences will simply have to use the old version.
 
 
-TINEXP 1.0 (tintin expressions) are as of now more clearly:
+TINEXP 1.0 (tintin expressions) are as of now more clearly defined:
 
 %0 - %9 are passed along with triggers. Actions, Aliasses, etc
 &0 - &9 are passed along with functions.
@@ -22,16 +22,16 @@ $       are used for variables
 
 If you want to convert your scripts take notice of the following changes:
 
-1) #LOOP #FORALL #FUNCTION now use &0-&9 instead of %0-%9. You can also use
-   the $loop and $forall variables which are set by these commands.
+1) #LOOP #FORALL #FUNCTION now use &0-&9 instead of %0-%9.
 
 2) #HIGHLIGHT had to be changed because this tintin version is less flexible
 when it comes to the parsing of commands as the old tintin versions. Basicly
-the old #high {color} {string} is now parsed as: #high {string} {color} you
-can load your old highlights, but they will not be added to the highlight
-list, because they'll generate a 'color code not found' error message. So
-you'll have to redo your highlights, or perhaps look into the #substite
-command combined with the new color codes, see #help colors
+the old #high {color} {string} is now parsed as: #high {string} {color} 
+(which makes much more sense don't you think?) You can load your old
+highlights, but they will not be added to the highlight list, because they'll
+generate a 'color code not found' error message. So you'll have to redo your
+highlights, or perhaps look into the #substite command combined with the new
+color codes, see #help colors
 
 Also the way highlight deals with colors has been changed. {b light green} is
 no longer valid, instead you would want to use {bold b green}, the highlights
@@ -116,7 +116,7 @@ thought it was meant to hold a direction and the specific command to use with
 that direction.
 
 15) Defaults are no longer in a .rc file, if someone wants different defaults
-they can write a command file for it I figured.
+they can write a command file for it.
 
 16) Can now set the top and bottom row of the scrolling region with #split,
 if some machines still cannot report the correct screen size I'll add a 
@@ -131,8 +131,7 @@ This stuff needs more work still, but works
 
 18) Fixed suspend for tintin sessions started using a linux script
 
-19) #sleep now takes a floating point number. #sleep 0.5 will sleep half a
-second, minimum time that can be slept is 1 milisecond
+19) #sleep has been removed, use #delay.
 
 20) Tintin is now capable of wordwrapping, fixed bug in the previous linewrap
 routine that wrapped at 79 instead of 80 columns.
@@ -152,7 +151,8 @@ session, so it's important to read in a config file if you don't want the
 defaults before starting a new session.
 
 24) Got rid of needing double %% or triple %%%, the script engine should
-behave like php now pretty much.
+behave like php now pretty much. You can still nest using %%90 %%91 for %0
+and %1 when there isn't a 9th argument.
 
 25) Added internal color codes, help color
 
@@ -165,8 +165,6 @@ behave like php now pretty much.
     a #grep command to search through the buffer added
 
 29) cursor positioning for split mode has been fixed once and for all hopefully
-
-30) readline is initilized properly now on startup
 
 31) chat has been removed, too much of a mess to deal with atm, might put
     it back if it's actually working and popular.
@@ -202,7 +200,7 @@ behave like php now pretty much.
 
   v1.9 does:
 
-  #loop {1,2000} #act lllll&0 smile
+  #loop {1 2000} #act lllll&0 smile
   #act {End of area list} {nod} {9}
 
   The area list contains about 150 areas, the characters are connected from
@@ -235,9 +233,3 @@ behave like php now pretty much.
 
 
 
-NOTE:
-
-Readline has been removed as of version 1.65pl1.  If Tintin++ does not
-install, it might be because you do not have a version of Readline installed.
-Try getting it from ftp.gnu.org, install it, then try installing tintin++ 
-again.

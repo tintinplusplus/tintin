@@ -180,7 +180,7 @@ DO_ARRAY(array_fnd)
 	{
 		arg = get_arg_in_braces(arg, temp, FALSE);
 
-		if (regexp(left, temp))
+		if (regexp(left, temp, TRUE))
 		{
 			sprintf(buf, "%d", cnt);
 			break;

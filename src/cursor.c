@@ -122,7 +122,7 @@ void cursor_clear_left(void)
 
 	memmove(&gtd->input_buf[0], &gtd->input_buf[gtd->input_cur+1], gtd->input_len - gtd->input_cur);
 
-	printf("\033[%dD\033[%dP", gtd->input_cur, gtd->input_cur);
+	input_printf("\033[%dD\033[%dP", gtd->input_cur, gtd->input_cur);
 
 	gtd->input_len -= gtd->input_cur;
 
@@ -150,11 +150,11 @@ void cursor_clear_line(void)
 
 	if (gtd->input_pos)
 	{
-		printf("\033[%dD\033[%dP", gtd->input_pos, gtd->input_len);
+		input_printf("\033[%dD\033[%dP", gtd->input_pos, gtd->input_len);
 	}
 	else
 	{
-		printf("\033[%dP", gtd->input_len);
+		input_printf("\033[%dP", gtd->input_len);
 	}
 
 	gtd->input_len = 0;
@@ -170,7 +170,7 @@ void cursor_clear_right(void)
 		return;
 	}
 
-	printf("\033[%dP", gtd->input_len - gtd->input_pos);
+	input_printf("\033[%dP", gtd->input_len - gtd->input_pos);
 
 	gtd->input_buf[gtd->input_cur] = 0;
 
@@ -198,7 +198,7 @@ void cursor_delete(void)
 
 	gtd->input_len--;
 
-	printf("\033[1P");
+	input_printf("\033[1P");
 
 	cursor_fix_line();
 }
@@ -242,7 +242,7 @@ void cursor_delete_word(void)
 
 	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], gtd->input_len - index_cur + 1);
 
-	printf("\033[%dD\033[%dP", index_pos - gtd->input_pos, index_pos - gtd->input_pos);
+	input_printf("\033[%dD\033[%dP", index_pos - gtd->input_pos, index_pos - gtd->input_pos);
 
 	gtd->input_len -= index_cur - gtd->input_cur;
 
@@ -255,8 +255,6 @@ void cursor_end(void)
 	{
 		return;
 	}
-	gtd->input_pos = 0;
-
 	gtd->input_cur = gtd->input_len;
 
 	cursor_redraw_line();
@@ -288,7 +286,7 @@ void cursor_history_next(void)
 
 		if (node)
 		{
-			printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+			input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
 
 			gtd->input_his = node;
 		}
@@ -341,7 +339,7 @@ void cursor_history_prev(void)
 
 		if (node)
 		{
-			printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+			input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
 
 			gtd->input_his = node;
 		}
@@ -394,21 +392,21 @@ void cursor_history_search(void)
 
 		cursor_clear_line();
 
-		printf("(search) [ ] \033[3D");
+		input_printf("(search) [ ] \033[3D");
 	}
 	else
 	{
-		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
-
 		strcpy(gtd->input_buf, gtd->input_tmp);
 
-		printf("\033[%dD", 10 + gtd->input_pos);
+		input_printf("\033[%dD\033[0K", 10 + gtd->input_pos);
 
 		gtd->input_len = strlen(gtd->input_buf);
 		gtd->input_cur = gtd->input_len;
 		gtd->input_pos = gtd->input_len;
 
 		gtd->input_his = NULL;
+
+		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
 		cursor_redraw_line();
 	}
@@ -434,11 +432,11 @@ void cursor_history_find(void)
 
 	if (node)
 	{
-		printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+		input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
 	}
 	else
 	{
-		printf("\033[%dC\033[0K\033[%dD", gtd->input_len - gtd->input_cur + 3, gtd->input_len - gtd->input_cur + 3);
+		input_printf("\033[%dC\033[0K\033[%dD", gtd->input_len - gtd->input_cur + 3, gtd->input_len - gtd->input_cur + 3);
 	}
 	pop_call();
 }
@@ -450,7 +448,7 @@ void cursor_home(void)
 		return;
 	}
 
-	printf("\033[%dD", gtd->input_pos);
+	input_printf("\033[%dD", gtd->input_pos);
 
 	if (gtd->input_cur != gtd->input_pos)
 	{
@@ -472,7 +470,7 @@ void cursor_left(void)
 	{
 		gtd->input_cur--;
 		gtd->input_pos--;
-		printf("\033[1D");
+		input_printf("\033[1D");
 
 		cursor_check_line();
 	}
@@ -486,7 +484,7 @@ void cursor_redraw_input(void)
 	}
 	else
 	{
-		printf("\033[1G\033[0K%s%s\033[0K", gtd->ses->more_output, gtd->input_buf);
+		input_printf("\033[1G\033[0K%s%s\033[0K", gtd->ses->more_output, gtd->input_buf);
 
 		gtd->input_cur = gtd->input_len;
 
@@ -499,11 +497,11 @@ void cursor_redraw_line(void)
 {
 	if (gtd->input_pos)
 	{
-		printf("\033[%dD\033[0K\0337", gtd->input_pos);
+		input_printf("\033[%dD\033[0K\0337", gtd->input_pos);
 	}
 	else
 	{
-		printf("\033[0K\0337");
+		input_printf("\033[0K\0337");
 	}
 
 	if (gtd->input_pos != gtd->input_cur)
@@ -534,18 +532,18 @@ void cursor_redraw_line(void)
 	}
 	if (gtd->input_cur != gtd->input_pos)
 	{
-		printf("<%.*s\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur - gtd->input_pos + 1]);
+		input_printf("<%.*s\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur - gtd->input_pos + 1]);
 	}
 	else
 	{
-		printf("%.*s\0338", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos]);
+		input_printf("%.*s\0338", gtd->ses->cols, &gtd->input_buf[gtd->input_cur - gtd->input_pos]);
 	}
 
 	cursor_fix_line();
 
 	if (gtd->input_pos)
 	{
-		printf("\033[%dC", gtd->input_pos);
+		input_printf("\033[%dC", gtd->input_pos);
 	}
 }
 
@@ -553,11 +551,11 @@ void cursor_fix_line(void)
 {
 	if (gtd->input_len - gtd->input_cur + gtd->input_pos > gtd->ses->cols)
 	{
-		printf("\0337\033[%dG%.1s>\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
+		input_printf("\0337\033[%dG%.1s>\0338", gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
 	}
 	else if (gtd->input_len - gtd->input_cur + gtd->input_pos == gtd->ses->cols)
 	{
-		printf("\0337\033[%dG%.2s\0338",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
+		input_printf("\0337\033[%dG%.2s\0338",  gtd->ses->cols - 1, &gtd->input_buf[gtd->input_cur + gtd->ses->cols - gtd->input_pos-2]);
 	}
 }
 
@@ -567,7 +565,7 @@ void cursor_right(void)
 	{
 		gtd->input_cur++;
 		gtd->input_pos++;
-		printf("\033[1C");
+		input_printf("\033[1C");
 	}
 
 	cursor_check_line();
@@ -617,11 +615,11 @@ void cursor_tab(void)
 		{
 			if (gtd->input_cur == gtd->input_len)
 			{
-				printf("\033[%dD\033[%dP%s", gtd->input_len - input_now, gtd->input_len - input_now, tab);
+				input_printf("\033[%dD\033[%dP%s", gtd->input_len - input_now, gtd->input_len - input_now, tab);
 			}
 			else
 			{
-				printf("\033[%dC\033[%dD\033[%dP%s", gtd->input_len - gtd->input_cur, gtd->input_len - input_now, gtd->input_len - input_now, tab);
+				input_printf("\033[%dC\033[%dD\033[%dP%s", gtd->input_len - gtd->input_cur, gtd->input_len - input_now, gtd->input_len - input_now, tab);
 			}
 			strcpy(&gtd->input_buf[input_now], tab);
 

@@ -32,7 +32,7 @@ struct str_hash_index_data str_hash_index[MAX_STR_HASH];
 unsigned short str_hash_len;
 
 /*
-	Performs as well as Jenkin's one-at-a-time hash.- Scandum
+	Performs as well as Jenkin's one-at-a-time hash.- Igor
 */
 
 unsigned short generate_hash_key(char *str)

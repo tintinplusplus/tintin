@@ -31,11 +31,11 @@
 /* parse input, check for TINTIN commands and aliases and send to session */
 /**************************************************************************/
 
-struct session *parse_input(const char *input, struct session *ses)
+struct session *parse_input(struct session *ses, const char *input)
 {
 	char command[BUFFER_SIZE], arg[BUFFER_SIZE];
 
-	if (push_call("[%s] parse_input(%s,%p)",ses->name,input,ses))
+	if (push_call("[%s] parse_input(%p,%s)",ses->name,ses,input))
 	{
 		pop_call();
 		return ses;
@@ -88,7 +88,7 @@ struct session *parse_input(const char *input, struct session *ses)
 		{
 			sprintf(arg, "%s%s", command, input);
 
-			ses = parse_input(arg, ses);
+			ses = parse_input(ses, arg);
 
 			pop_call();
 			return ses;
@@ -110,7 +110,7 @@ struct session *parse_input(const char *input, struct session *ses)
 			{
 				DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND); /* get rid of spam for aliasses */
 
-				ses = parse_input(command, ses);
+				ses = parse_input(ses, command);
 			}
 			else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && !*arg && is_speedwalk_dirs(command))
 			{
@@ -229,7 +229,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 			{
 				get_arg_in_braces(arg, arg, TRUE);
 				substitute(ses, arg, newcommand, SUB_VAR|SUB_FUN);
-				parse_input(newcommand, sesptr);  /* was: #sessioname commands */
+				parse_input(sesptr, newcommand);  /* was: #sessioname commands */
 				return ses;
 			}
 			else
@@ -247,7 +247,7 @@ struct session *parse_tintin_command(const char *command, char *arg, struct sess
 
 		while (i-- > 0)
 		{
-			ses = parse_input(arg, ses);
+			ses = parse_input(ses, arg);
 		}
 		return ses;
 	}
@@ -517,7 +517,7 @@ void write_mud(struct session *ses, const char *command)
 	{
 		follow_map(ses, (char *) command);
 	}
-	else if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{
 		check_insert_path(command, ses);
 	}
@@ -550,7 +550,7 @@ void do_one_line(char *line, struct session *ses)
 	{
 		if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 		{
-			check_all_prompts(line, strip, ses);
+			check_all_prompts(ses, line, strip);
 		}
 	}
 

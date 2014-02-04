@@ -64,14 +64,6 @@ struct iac_type
 	int  (* func) (struct session *ses, int cplen, unsigned char *cpsrc);
 };
 
-
-/*
-	despite the fact the first three are written, they should not run in an
-	ideal world, after we have session initialization code. - jdoiel
-
-	some muds use ttype - Scandum
-*/
-
 const struct iac_type iac_table [] =
 {
 	{   3,  iac_do_sga,           &send_will_sga           },
@@ -229,9 +221,9 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 					case GA:
 					case EOR:
-						sprintf(cpdst, "RCVD %s", TELCMD(cpsrc[os]));
-						gtd->mud_output_len += strlen(cpdst);
-						cpdst += strlen(cpdst);
+						sprintf((char *) cpdst, "RCVD %s", TELCMD(cpsrc[os])); 
+						gtd->mud_output_len += strlen((char *) cpdst);
+						cpdst += strlen((char *) cpdst);
 						break;
 
 					case DO:

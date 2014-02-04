@@ -115,7 +115,7 @@ DO_COMMAND(do_savepath)
 		}
 		strcat(result, "}");
 
-		parse_input(result, ses);
+		parse_input(ses, result);
 	}
 	return ses;
 }
@@ -260,14 +260,14 @@ DO_COMMAND(do_walk)
 		{
 			case 'b':
 				strcpy(left, root->l_node->right);
-				parse_input(left, ses);
+				parse_input(ses, left);
 				deletenode_list(ses, root->l_node, LIST_PATH);
 				break;
 
 			case '\0':
 			case 'f':
 				strcpy(left, root->f_node->left);
-				parse_input(left, ses);
+				parse_input(ses, left);
 				deletenode_list(ses, root->f_node, LIST_PATH);
 				break;
 
@@ -283,19 +283,20 @@ DO_COMMAND(do_walk)
 
 DO_COMMAND(do_pathdir)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], coord[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_PATHDIR];
 
-	arg = get_arg_in_braces(arg, left, 0);
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(arg, left,  FALSE);
+	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, coord, FALSE);
 
-	if (!*left)
+	if (*left == 0)
 	{
 		show_list(ses, root, LIST_PATHDIR);
 	}
-	else if (*left && !*right)
+	else if (*right == 0)
 	{
 		if (show_node_with_wild(ses, left, LIST_PATHDIR) == FALSE)
 		{
@@ -304,9 +305,13 @@ DO_COMMAND(do_pathdir)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, "0", LIST_PATHDIR);
+		if (*coord == 0)
+		{
+			strcpy(coord, "0");
+		}
+		updatenode_list(ses, left, right, coord, LIST_PATHDIR);
 
-		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s}", left, right);
+		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s}", left, coord, right);
 	}
 	return ses;
 }

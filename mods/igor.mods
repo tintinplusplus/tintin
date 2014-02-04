@@ -1146,6 +1146,7 @@ mapper.c       Added the void roomflag which can be used to turn rooms into
                links. This is mainly useful to fit overlapping areas on the
                same map without using the hide flag.
 
+
 December 2006  1.96.6
 
 cursor.c       Fixed behavior of ctrl-e for osx.
@@ -1154,3 +1155,49 @@ log.c          Fixed newly introduced crashbug with #logline
 
 highlight.c    Now parses <###> color codes to allow for 256 colors.
 
+function.c     Can now use undescores in function names.
+
+tables.c       Added map list for #map undo and message handling.
+
+main.c         Added pathdirs for diagonal exits and spatial coordinate info.
+
+mapper.c       Now using spatial coordinates from pathdirs. This requires
+               users to reset their saved pathdirs. If used correctly mapping
+               should work for muds with a non standard exit system.
+
+mapper.c       Added movement history for #map undo
+
+mapper.c       Updated #map undo to use the map movement history
+
+cursor.c       Fixed bug in ctrl-e behavior
+
+misc.c         Removed old debug message in #send.
+
+mapper.c       Added room symbols.
+
+mapper.c       Added #map set to set various attributes
+
+mapper.c       Added #map get to get various attributes and store them as
+               variables.
+
+mapper.c       #map walk {location} {0.5} will now run to the location with
+               0.5 second delays between commands.
+
+input.c        Added input_printf for consistent echo handling
+
+tables.c       Added generic variable and function substitution for #map
+
+input.c        Now checking for negative characters when converting meta
+               characters. Should fix issues when creating macros with
+               swedish and german characters.
+
+buffer.c       Can now use #buffer f with negative numbers to find the first
+               instead of last occurance of a string. Also made the no match
+               found string triggerable.
+
+mapper.c       Can now use case insenstive room finding with wildcards in
+               #map find and other room search related commands.
+
+tintin.h       Placed lists in alphabetical order.
+
+event.c        Added a basic event system, check #event

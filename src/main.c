@@ -215,7 +215,7 @@ int main(int argc, char **argv)
 		}
 		else if (!strcmp(argv[1], "-e") && argv[2])
 		{
-			gtd->ses = parse_input(argv[2], gtd->ses);
+			gtd->ses = parse_input(gtd->ses, argv[2]);
 		}
 		else if (!strcmp(argv[1], "-h"))
 		{
@@ -297,12 +297,17 @@ void init_tintin(void)
 	do_configure(gts, "{VERBATIM CHAR}      {\\}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
 
-	insertnode_list(gts, "n", "s", "0", LIST_PATHDIR);
-	insertnode_list(gts, "e", "w", "0", LIST_PATHDIR);
-	insertnode_list(gts, "s", "n", "0", LIST_PATHDIR);
-	insertnode_list(gts, "w", "e", "0", LIST_PATHDIR);
-	insertnode_list(gts, "u", "d", "0", LIST_PATHDIR);
-	insertnode_list(gts, "d", "u", "0", LIST_PATHDIR);
+	insertnode_list(gts,  "n",  "s",  "1", LIST_PATHDIR);
+	insertnode_list(gts,  "e",  "w",  "2", LIST_PATHDIR);
+	insertnode_list(gts,  "s",  "n",  "4", LIST_PATHDIR);
+	insertnode_list(gts,  "w",  "e",  "8", LIST_PATHDIR);
+	insertnode_list(gts,  "u",  "d", "16", LIST_PATHDIR);
+	insertnode_list(gts,  "d",  "u", "32", LIST_PATHDIR);
+
+	insertnode_list(gts, "ne", "sw",  "3", LIST_PATHDIR);
+	insertnode_list(gts, "nw", "se",  "9", LIST_PATHDIR);
+	insertnode_list(gts, "se", "nw",  "6", LIST_PATHDIR);
+	insertnode_list(gts, "sw", "ne", "12", LIST_PATHDIR);
 
 	init_terminal();
 

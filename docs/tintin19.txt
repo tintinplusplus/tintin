@@ -167,7 +167,7 @@
                      =========  TinTin++.  What's new?  =========
 
 
-     Well, some bugs have been fixed (most listed in the file MODS.scandum)
+     Well, some bugs have been fixed (most listed in the file igor.mods)
      Some new functionaly has been added, as well as the scripting engine
      has been pretty much rewritten. Actually more than 50% of the program
      has been rewritten. The goal was creating a clean, straight forward,
@@ -826,8 +826,8 @@
 
      Example:
 
-     #high {Scandum} {red underscore blink
-     highlight the name Scandum as blinking, red, underscored text
+     #high {Bubba} {red underscore blink
+     highlight the name Bubba as blinking, red, underscored text
 
      Some systems don't offer all colors/styles for vt100.
 

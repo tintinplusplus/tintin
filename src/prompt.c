@@ -92,7 +92,7 @@ DO_COMMAND(do_unprompt)
 }
 
 
-void check_all_prompts(char *original, char *line, struct session *ses)
+void check_all_prompts(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 

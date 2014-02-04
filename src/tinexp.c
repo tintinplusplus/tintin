@@ -33,7 +33,7 @@
 * Simple regexp that skips vt102 codes and supports the * and ? wildcards     *
 ******************************************************************************/
 
-int regexp(const char *exp, const char *str)
+int regexp(const char *exp, const char *str, unsigned char cs)
 {
 	short cnt;
 
@@ -67,7 +67,7 @@ int regexp(const char *exp, const char *str)
 			case '*':
 				for (cnt = strlen(str) ; cnt >= 0 ; cnt--)
 				{
-					if (regexp(exp + 1, &str[cnt]))
+					if (regexp(exp + 1, &str[cnt], cs))
 					{
 						return TRUE;
 					}
@@ -82,12 +82,20 @@ int regexp(const char *exp, const char *str)
 				break;
 
 			default:
-
-				if (*exp != *str)
+				if (cs)
 				{
-					return FALSE;
+					if (*exp != *str)
+					{
+						return FALSE;
+					}
 				}
-
+				else
+				{
+					if (tolower(*exp) != tolower(*str))
+					{
+						return FALSE;
+					}
+				}
 				break;
 		}
 	}
@@ -287,7 +295,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 			case '@':
 				if (HAS_BIT(flags, SUB_FUN))
 				{
-					for (ptt = temp, i = 1 ; isalnum(pti[i]) ; i++)
+					for (ptt = temp, i = 1 ; isalnum(pti[i]) || pti[i] == '_' ; i++)
 					{
 						*ptt++ = pti[i];
 					}
@@ -318,7 +326,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 					}
 					substitute(ses, node->right, temp, SUB_CMD);
 
-					parse_input(temp, ses);
+					parse_input(ses, temp);
 
 					DEL_BIT(ses->flags, SES_FLAG_BREAK);
 
@@ -605,7 +613,7 @@ int action_regexp(const char *exp, const char *str, unsigned char arg)
 				break;
 
 			case '[':
-				if (*str != '[' && regexp("[*|*]*", exp))
+				if (*str != '[' && regexp("[*|*]*", exp, TRUE))
 				{
 					cnt  = 1;
 					cnt2 = 0;

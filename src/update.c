@@ -300,7 +300,7 @@ void tick_update(void)
 				{
 					show_message(ses, LIST_TICKER, "#TICKER DEBUG: %s", result);
 				}
-				parse_input(result, ses);
+				parse_input(ses, result);
 			}
 		}
 	}
@@ -341,7 +341,7 @@ void delay_update(void)
 				{
 					tintin_printf2(ses, "#DELAY DEBUG: %s", result);
 				}
-				parse_input(result, ses);
+				parse_input(ses, result);
 			}
 		}
 	}

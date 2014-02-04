@@ -33,7 +33,7 @@
 
 /*
 	Now follows the standard tintin syntax because #read is not as flexible
-	as it used to be - Scandum
+	as it used to be - Igor
 */
 
 DO_COMMAND(do_highlight)

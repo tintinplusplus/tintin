@@ -44,11 +44,11 @@ DO_COMMAND(do_alias)
 		sprintf(pr, "%s", "5");
 	}
 
-	if (!*left)
+	if (*left == 0)
 	{
 		show_list(ses, root, LIST_ALIAS);
 	}
-	else if (*left && !*right)
+	else if (*right == 0)
 	{
 		if (show_node_with_wild(ses, left, LIST_ALIAS) == FALSE)
 		{

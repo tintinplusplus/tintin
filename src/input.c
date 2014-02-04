@@ -76,7 +76,7 @@ void process_input(void)
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
-	parse_input(line, gtd->ses);
+	parse_input(gtd->ses, line);
 
 	DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND);
 
@@ -114,7 +114,7 @@ void read_line(char *line)
 
 		if (!strcmp(gtd->macro_buf, node->pr))
 		{
-			parse_input(node->right, gtd->ses);
+			parse_input(gtd->ses, node->right);
 			gtd->macro_buf[0] = 0;
 
 			return;
@@ -157,7 +157,8 @@ void read_line(char *line)
 		switch (gtd->macro_buf[cnt])
 		{
 			case 10:
-				printf("\n");
+				input_printf("\n");
+
 				gtd->input_buf[gtd->input_len] = 0;
 
 				strcpy(line, gtd->input_buf);
@@ -181,15 +182,13 @@ void read_line(char *line)
 				break;
 
 			default:
-				if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO) || gtd->input_buf[0] == gtd->tintin_char)
-				{
-					printf("\033[1@%c", gtd->macro_buf[cnt]);
-				}
-
 				ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
 				gtd->input_len++;
 				gtd->input_cur++;
 				gtd->input_pos++;
+
+				input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+
 				gtd->macro_buf[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;
 
@@ -240,7 +239,7 @@ void read_key(char *line)
 
 		if (!strcmp(gtd->macro_buf, node->pr))
 		{
-			parse_input(node->right, gtd->ses);
+			parse_input(gtd->ses, node->right);
 			gtd->macro_buf[0] = 0;
 			return;
 		}
@@ -275,6 +274,7 @@ void read_key(char *line)
 					gtd->input_buf[0] = gtd->tintin_char;
 					gtd->input_len = 1;
 					gtd->input_cur = 1;
+					gtd->input_pos = 1;
 					gtd->macro_buf[0] = 0;
 					gtd->input_buf[1] = 0;
 				}
@@ -318,7 +318,7 @@ void convert_meta(char *input, char *output)
 				break;
 
 			default:
-				if (*pti < 30)
+				if (*pti > 0 && *pti < 30)
 				{
 					*pto++ = '\\';
 					*pto++ = 'C';
@@ -435,4 +435,24 @@ void echo_command(struct session *ses, char *line, int newline)
 		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 	}
 	add_line_buffer(ses, buffer, -1);
+}
+
+void input_printf(const char *format, ...)
+{
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	if (!HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+	{
+		if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO) && gtd->input_buf[0] != gtd->tintin_char)
+		{
+			return;
+		}
+	}
+
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+
+	printf("%s", buf);
 }

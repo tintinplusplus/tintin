@@ -1,6 +1,6 @@
 /******************************************************************************
 *   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   Copyright (C) 2007 (See CREDITS file)                                     *
 *                                                                             *
 *   This program is protected under the GNU GPL (See COPYING)                 *
 *                                                                             *
@@ -17,106 +17,72 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                         coded by Peter Unold 1992                           *
+*                      coded by Igor van den Hoven 2007                       *
 ******************************************************************************/
+
 
 #include "tintin.h"
 
-DO_COMMAND(do_action)
+DO_COMMAND(do_event)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listroot *root;
+	int cnt;
 
-	root = ses->list[LIST_ACTION];
+	root = ses->list[LIST_EVENT];
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, pr,    TRUE);
 
-	if (!*pr)
+	if (*left == 0)
 	{
-		sprintf(pr, "%s", "5"); 
-	}
+		tintin_header(ses, " EVENTS ");
 
-	if (!*left)
-	{
-		show_list(ses, root, LIST_ACTION);
-	}
-	else if (*left && !*right) 
-	{
-		if (show_node_with_wild(ses, left, LIST_ACTION) == FALSE) 
+		for (cnt = 0 ; *event_table[cnt].name != 0 ; cnt++)
 		{
-			show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
+			tintin_printf2(ses, "  [%-13s]  %s", event_table[cnt].name, event_table[cnt].desc);
+		}
+		tintin_header(ses, "");
+	}
+	else if (*right == 0)
+	{
+		if (show_node_with_wild(ses, left, LIST_EVENT) == FALSE)
+		{
+			show_message(ses, LIST_ALIAS, "#EVENT: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, pr, LIST_ACTION);
-
-		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", left, right, pr);
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_unaction)
-{
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int flag = FALSE;
-
-	root = ses->list[LIST_ACTION];
-
-	arg = get_arg_in_braces(arg, left, TRUE);
-
-	while ((node = search_node_with_wild(root, left))) 
-	{
-		show_message(ses, LIST_ACTION, "#OK. {%s} IS NO LONGER A TRIGGER.", node->left);
-
-		deletenode_list(ses, node, LIST_ACTION);
-
-		flag = TRUE;
-	}
-
-	if (!flag)
-	{
-		show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
-	return ses;
-}
-
-
-void check_all_actions(const char *original, char *line, struct session *ses)
-{
-	struct listnode *node;
-	struct listroot *root;
-
-	root = ses->list[LIST_ACTION];
-
-	for (node = root->update = root->f_node ; node ; node = root->update)
-	{
-		root->update = node->next;
-
-		if (check_one_action(line, original, node->left, ses))
+		for (cnt = 0 ; *event_table[cnt].name != 0 ; cnt++)
 		{
-			char buffer[BUFFER_SIZE];
-
-			substitute(ses, node->right, buffer, SUB_ARG|SUB_SEC);
-
-			if (HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_DEBUG))
+			if (is_abbrev(left, event_table[cnt].name))
 			{
-				show_message(ses, LIST_ACTION, "#ACTION DEBUG: %s", buffer);
-			}
-			parse_input(ses, buffer);
+				show_message(ses, LIST_EVENT, "#EVENT {%s} HAS BEEN SET TO {%s}.", event_table[cnt].name, right);
 
-			return;
+				updatenode_list(ses, event_table[cnt].name, right, "", LIST_EVENT);
+
+				return ses;
+			}
+		}
+		tintin_printf(ses, "#EVENT {%s} IS NOT A VALID OPTION.", capitalize(left));
+	}
+	return ses;
+}
+
+void check_all_events(struct session *ses, char *line)
+{
+	struct listnode *node;
+
+	for (node = ses->list[LIST_EVENT]->f_node ; node ; node = node->next)
+	{
+		if (!strcmp(node->left, line))
+		{
+			parse_input(ses, node->right);
 		}
 	}
-	return;
 }

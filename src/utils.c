@@ -61,7 +61,12 @@ int is_number(const char *str)
 {
 	int i;
 
-	for (i = 0 ; str[i] != 0 ; i++)
+	if (!isdigit(str[0]) && str[0] != '-' && str[0] != '+')
+	{
+		return FALSE;
+	}
+
+	for (i = 1 ; str[i] != 0 ; i++)
 	{
 		if (!isdigit(str[i]))
 		{

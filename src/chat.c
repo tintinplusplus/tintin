@@ -206,7 +206,8 @@ int chat_new(int s)
 {
 	struct chat_data *new_buddy;
 	struct sockaddr_in sock;
-	int i, fd;
+	unsigned int i;
+	int fd;
 
 	i = sizeof(sock);
 
@@ -688,8 +689,8 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 
 	push_call("get_chat_commands(%s,%d,%s)",buddy->name,len,buf);
 
-	pti = buf;
-	pto = txt;
+	pti = (unsigned char *) buf;
+	pto = (unsigned char *) txt;
 
 	/*
 		have to deal with these first
@@ -725,7 +726,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 	while (*pti && buddy)
 	{
 		ptc = *pti++;
-		pto = txt;
+		pto = (unsigned char *) txt;
 
 		while (isspace(*pti))
 		{

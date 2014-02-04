@@ -170,9 +170,9 @@ DO_COMMAND(do_replacestring)
 }
 
 
-/******************************************************************************
-* support routines for #format - Scandum                                      *
-******************************************************************************/
+/*
+	support routines for #format - Igor
+*/
 
 void colorstring(char *str)
 {
@@ -304,13 +304,6 @@ void stripspaces(char *str)
 	strcpy(str, &str[cnt]);
 }
 
-/******************************************************************************
-* #format command - Scandum                                                   *
-*******************************************************************************
-*  Syntax: #format {variable} {format} {...}                                  *
-* Example: #format {upperstr} {%-3s %u %3s)} {- muhahahaha -}                 *
-*  Result: $test will hold: -   MUHAHAHAHA   -                                *
-******************************************************************************/
 
 DO_COMMAND(do_format)
 {

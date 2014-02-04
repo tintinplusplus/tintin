@@ -40,7 +40,7 @@ DO_COMMAND(do_all)
 		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
 		{
 			next_ses = sesptr->next;
-			parse_input(left, sesptr);
+			parse_input(sesptr, left);
 		}
 	}
 	else
@@ -157,7 +157,7 @@ DO_COMMAND(do_forall)
 
 			substitute(ses, right, temp, SUB_CMD);
 
-			ses = parse_input(temp, ses);
+			ses = parse_input(ses, temp);
 		}
 	}
 	return ses;
@@ -248,7 +248,7 @@ DO_COMMAND(do_loop)
 			do_internal_variable(ses, temp);
 
 			substitute(ses, command, temp, SUB_CMD);
-			ses = parse_input(temp, ses);
+			ses = parse_input(ses, temp);
 		}
 	}
 	else
@@ -257,7 +257,7 @@ DO_COMMAND(do_loop)
 		{
 			strcpy(temp, command);
 
-			ses = parse_input(temp, ses);
+			ses = parse_input(ses, temp);
 		}
 	}
 	return ses;
@@ -304,7 +304,7 @@ DO_COMMAND(do_parse)
 			do_internal_variable(ses, temp);
 
 			substitute(ses, right, temp, SUB_CMD);
-			ses = parse_input(temp, ses);
+			ses = parse_input(ses, temp);
 		}
 	}
 	return ses;
@@ -330,8 +330,6 @@ DO_COMMAND(do_return)
 DO_COMMAND(do_send)
 {
 	char left[BUFFER_SIZE], out[BUFFER_SIZE];
-
-	printf("%s\n", arg);
 
 	get_arg_in_braces(arg, left, TRUE);
 

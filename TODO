@@ -12,7 +12,12 @@ MAPPING STUFF:
 
 - a method to mark a room on the map for corpse retreival etc.
 
-- a method to add filler rooms for mazy muds
+- a method to add a note for a room (probably scripted support with events)
+
+- a method to find the most nearby generic room.
+
+- a method to find a generic room more precisely by giving exits and other
+  identifying information.
 
 -------------------------------------------------------------------------------
 
@@ -26,7 +31,7 @@ Look into prompt handling in #split with #showme and macros.
 
 * This is a list of new features/improvements that are planned.
 
-- event system to deal with various situations
+- add more events
 
 - Buffer safe strings
 

@@ -25,7 +25,7 @@
 *                                                                             *
 *                        coded by peter unold 1992                            *
 *                       modified by Bill Reiss 1993                           *
-*                   modified by Igor van den Hoven 2004                       *
+*                    updated by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include <stdio.h>
@@ -95,76 +95,79 @@ typedef void            CURSOR  (void);
 	A bunch of constants
 */
 
-#define TRUE                    1
-#define FALSE                   0
+#define TRUE                             1
+#define FALSE                            0
 
-#define SCREEN_WIDTH            80
-#define SCREEN_HEIGHT           24
+#define SCREEN_WIDTH                    80
+#define SCREEN_HEIGHT                   24
 
-#define PRIORITY                0
-#define ALPHA                   1
-#define APPEND                  2
+#define PRIORITY                         0
+#define ALPHA                            1
+#define APPEND                           2
 
-#define DEFAULT_OPEN            '{'
-#define DEFAULT_CLOSE           '}'
+#define DEFAULT_OPEN                   '{'
+#define DEFAULT_CLOSE                  '}'
 
-#define HISTORY_FILE              ".tt_history"
+#define HISTORY_FILE         ".tt_history"
 
-#define BUFFER_SIZE               10000
-#define NUMBER_SIZE                 100
+#define BUFFER_SIZE                  10000
+#define NUMBER_SIZE                    100
 
-#define VERSION_NUM "1.96.5"
+#define VERSION_NUM               "1.96.6"
 
-#define ESCAPE                         27
+#define ESCAPE                          27
 
-#define TELNET_PORT                    23
+#define TELNET_PORT                     23
 
-#define TIMER_POLL_INPUT                0
-#define TIMER_POLL_SESSIONS             1
-#define TIMER_POLL_CHAT                 2
-#define TIMER_UPDATE_TICKS              3
-#define TIMER_UPDATE_DELAYS             4
-#define TIMER_UPDATE_PACKETS            5
-#define TIMER_UPDATE_CHAT               6
-#define TIMER_UPDATE_TERMINAL           7
-#define TIMER_STALL_PROGRAM             8
-#define TIMER_CPU                       9
+#define TIMER_POLL_INPUT                 0
+#define TIMER_POLL_SESSIONS              1
+#define TIMER_POLL_CHAT                  2
+#define TIMER_UPDATE_TICKS               3
+#define TIMER_UPDATE_DELAYS              4
+#define TIMER_UPDATE_PACKETS             5
+#define TIMER_UPDATE_CHAT                6
+#define TIMER_UPDATE_TERMINAL            7
+#define TIMER_STALL_PROGRAM              8
+#define TIMER_CPU                        9
 
-#define PULSE_PER_SECOND              20
+#define PULSE_PER_SECOND                20
 
-#define PULSE_POLL_INPUT                1
-#define PULSE_POLL_SESSIONS             1
-#define PULSE_POLL_CHAT                 2
-#define PULSE_UPDATE_TICKS              1
-#define PULSE_UPDATE_DELAYS             1
-#define PULSE_UPDATE_PACKETS            2
-#define PULSE_UPDATE_CHAT               2
-#define PULSE_UPDATE_TERMINAL           1
+#define PULSE_POLL_INPUT                 1
+#define PULSE_POLL_SESSIONS              1
+#define PULSE_POLL_CHAT                  2
+#define PULSE_UPDATE_TICKS               1
+#define PULSE_UPDATE_DELAYS              1
+#define PULSE_UPDATE_PACKETS             2
+#define PULSE_UPDATE_CHAT                2
+#define PULSE_UPDATE_TERMINAL            1
 
 /*
 	Index for lists used by tintin
 */
 
-#define LIST_CONFIG                    0
-#define LIST_ALIAS                     1
-#define LIST_ACTION                    2
-#define LIST_SUBSTITUTE                3
-#define LIST_VARIABLE                  4
-#define LIST_HIGHLIGHT                 5
-#define LIST_FUNCTION                  6
-#define LIST_PATHDIR                   7
-#define LIST_TICKER                    8
-#define LIST_MACRO                     9
-#define LIST_PROMPT                   10
-#define LIST_TAB                      11
-#define LIST_PATH                     12
-#define LIST_CLASS                    13
-#define LIST_HISTORY                  14
-#define LIST_DELAY                    15
-#define LIST_MATH                     16
-#define LIST_MAX                      17
 
-#define CLASS_MAX                      5
+#define LIST_ACTION                      0
+#define LIST_ALIAS                       1
+#define LIST_CLASS                       2
+#define LIST_CONFIG                      3
+#define LIST_DELAY                       4
+#define LIST_EVENT                       5
+#define LIST_FUNCTION                    6
+#define LIST_HIGHLIGHT                   7
+#define LIST_HISTORY                     8
+#define LIST_MACRO                       9
+#define LIST_MAP                        10
+#define LIST_MATH                       11
+#define LIST_PATH                       12
+#define LIST_PATHDIR                    13
+#define LIST_PROMPT                     14
+#define LIST_SUBSTITUTE                 15
+#define LIST_TAB                        16
+#define LIST_TICKER                     17
+#define LIST_VARIABLE                   18
+#define LIST_MAX                        19
+
+#define CLASS_MAX                        5
 
 /*
 	Various flags
@@ -290,7 +293,6 @@ typedef void            CURSOR  (void);
 #define ROOM_FLAG_LEAVE               (1 <<  2)
 #define ROOM_FLAG_VOID                (1 <<  3)
 
-
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
 #define MAP_FLAG_VTGRAPHICS           (1 <<  2)
@@ -300,12 +302,15 @@ typedef void            CURSOR  (void);
 #define MAP_EXIT_E                    (1 <<  1)
 #define MAP_EXIT_S                    (1 <<  2)
 #define MAP_EXIT_W                    (1 <<  3)
-#define MAP_EXIT_NE                   (1 <<  4)
-#define MAP_EXIT_NW                   (1 <<  5)
-#define MAP_EXIT_SE                   (1 <<  6)
-#define MAP_EXIT_SW                   (1 <<  7)
-#define MAP_EXIT_U                    (1 <<  8)
-#define MAP_EXIT_D                    (1 <<  9)
+#define MAP_EXIT_U                    (1 <<  4)
+#define MAP_EXIT_D                    (1 <<  5)
+#define MAP_EXIT_NE                   (1 <<  6)
+#define MAP_EXIT_NW                   (1 <<  7)
+#define MAP_EXIT_SE                   (1 <<  8)
+#define MAP_EXIT_SW                   (1 <<  9)
+
+#define MAP_UNDO_CREATE               (1 <<  0)
+#define MAP_UNDO_LINK                 (1 <<  1)
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
@@ -617,6 +622,12 @@ struct config_type
 	CONFIG                * config;
 };
 
+struct event_type
+{
+	char                  * name;
+	char                  * desc;
+};
+
 struct list_type
 {
 	char                  * name;
@@ -666,8 +677,6 @@ struct map_data
 	struct room_data      * room_list[MAX_ROOM];
 	int                     flags;
 	int                     in_room;
-	int                     last_room;
-	int                     prev_room;
 	unsigned char           legenda[17];
 };
 
@@ -678,8 +687,9 @@ struct room_data
 	int                       vnum;
 	short                     size;
 	short                     flags;
-	char                    * name;
 	char                    * color;
+	char                    * name;
+	char                    * symbol;
 };
 
 struct exit_data
@@ -740,7 +750,7 @@ extern void read_key(char *line);
 extern void convert_meta(char *input, char *output);
 extern void unconvert_meta(char *input, char *output);
 extern void echo_command(struct session *ses, char *line, int newline);
-
+extern void input_printf(const char *format, ...);
 #endif
 
 #ifndef __ARRAY_H__
@@ -872,6 +882,7 @@ extern DO_MAP(map_dig);
 extern DO_MAP(map_exit);
 extern DO_MAP(map_find);
 extern DO_MAP(map_flag);
+extern DO_MAP(map_get);
 extern DO_MAP(map_goto);
 extern DO_MAP(map_info);
 extern DO_MAP(map_leave);
@@ -883,6 +894,7 @@ extern DO_MAP(map_move);
 extern DO_MAP(map_name);
 extern DO_MAP(map_read);
 extern DO_MAP(map_roomflag);
+extern DO_MAP(map_set);
 extern DO_MAP(map_undo);
 extern DO_MAP(map_unlink);
 extern DO_MAP(map_walk);
@@ -891,20 +903,22 @@ extern DO_MAP(map_write);
 extern void create_map(struct session *ses);
 extern void delete_map(struct session *ses);
 extern int  create_room(struct session *ses, const char *arg);
-extern void delete_room(struct session *ses, int room);
+extern void delete_room(struct session *ses, int room, int exits);
 extern void create_exit(struct session *ses, int room, const char *arg);
 extern void delete_exit(struct session *ses, int room, struct exit_data *exit);
 extern void create_legenda(struct session *ses, const char *arg);
 extern int  find_room(struct session *ses, char *arg);
+extern void goto_room(struct session *ses, int room);
 extern struct exit_data *find_exit(struct session *ses, int room, char *arg);
-extern int  get_map_exit(char *arg);
+extern int  get_map_exit(struct session *ses, char *arg);
 extern void create_map_grid(struct session *ses, short room, short x, short y);
 extern void build_map_grid(short room, short x, short y, short z);
 extern void follow_map(struct session *ses, char *argument);
+extern void insert_undo(struct session *ses, const char *format, ...);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
 
 extern void search_path(short room, short size);
-extern void shortest_path(struct session *ses, int walk, char *arg);
+extern void shortest_path(struct session *ses, int walk, char *left, char *right);
 
 extern int find_coord(struct session *ses, char *arg);
 extern void search_coord(int vnum, short x, short y, short z);
@@ -941,7 +955,7 @@ extern void clean_screen(struct session *ses);
 extern void dirty_screen(struct session *ses);
 DO_COMMAND(do_prompt);
 DO_COMMAND(do_unprompt);
-extern void check_all_prompts(char *original, char *line, struct session *ses);
+extern void check_all_prompts(struct session *ses, char *original, char *line);
 extern void do_one_prompt(struct session *ses, char *prompt, int row);
 
 #endif
@@ -950,7 +964,7 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 #ifndef __REGEXP_H__
 #define __REGEXP_H__
 
-extern int regexp(const char *exp, const char *str);
+extern int regexp(const char *exp, const char *str, unsigned char cs);
 extern void substitute(struct session *ses, const char *string, char *result, int flags);
 extern int check_one_action(const char *line, const char *original, const char *action, struct session *ses);
 extern int action_regexp(const char *exp, const char *str, unsigned char arg);
@@ -1029,6 +1043,14 @@ extern void buffer_f(const char *arg);
 extern int push_call(char *f, ...);
 extern void pop_call(void);
 extern void dump_stack(void);
+
+#endif
+
+#ifndef __EVENT_H__
+#define __EVENT_H__
+
+extern DO_COMMAND(do_event);
+extern void check_all_events(struct session *ses, char *line);
 
 #endif
 
@@ -1237,7 +1259,7 @@ extern void init_telnet_session(struct session *ses);
 #ifndef __PARSE_H__
 #define __PARSE_H__
 
-extern struct session *parse_input(const char *input, struct session *ses);
+extern struct session *parse_input(struct session *ses, const char *input);
 extern int is_speedwalk_dirs(const char *cp);
 extern void process_speedwalk(const char *cp, struct session *ses);
 extern struct session *parse_tintin_command(const char *command, char *arg, struct session *ses);
@@ -1361,9 +1383,10 @@ extern const struct class_type class_table[];
 extern const struct color_type color_table[];
 extern const struct command_type command_table[];
 extern const struct config_type config_table[];
+extern const struct cursor_type cursor_table[];
+extern const struct event_type event_table[];
 extern const struct list_type list_table[LIST_MAX];
 extern const struct map_type map_table[];
-extern const struct cursor_type cursor_table[];
 extern const struct timer_type timer_table[];
 
 #endif

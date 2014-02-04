@@ -55,7 +55,7 @@ DO_COMMAND(do_function)
 	{
 		for (pti = left ; *pti ; pti++)
 		{
-			if (!isalnum(*pti))
+			if (!isalnum(*pti) && *pti != '_')
 			{
 				tintin_printf2(ses, "#ERROR, {%s} IS NOT A VALID FUNCTION NAME.", left);
 			}

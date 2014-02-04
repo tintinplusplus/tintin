@@ -41,11 +41,12 @@ const struct command_type command_table[] =
 	{	"commands",          do_commands,          CMD_FLAG_NONE    },
 	{	"config",            do_configure,         CMD_FLAG_SUB     },
 	{	"cr",                do_cr,                CMD_FLAG_NONE    },
-	{    "cursor",            do_cursor,            CMD_FLAG_SUB     },
+	{	"cursor",            do_cursor,            CMD_FLAG_SUB     },
 	{	"debug",             do_debug,             CMD_FLAG_SUB     },
 	{	"delay",             do_delay,             CMD_FLAG_NONE    },
 	{	"echo",              do_echo,              CMD_FLAG_SUB     },
 	{	"end",               do_end,               CMD_FLAG_NONE    },
+	{    "event",             do_event,             CMD_FLAG_NONE    },
 	{	"forall",            do_forall,            CMD_FLAG_NONE    },
 	{	"format",            do_format,            CMD_FLAG_SUB     },
 	{	"function",          do_function,          CMD_FLAG_NONE    },
@@ -54,7 +55,7 @@ const struct command_type command_table[] =
 	{	"grep",              do_grep,              CMD_FLAG_SUB     },
 	{	"help",              do_help,              CMD_FLAG_NONE    },
 	{	"highlight",         do_highlight,         CMD_FLAG_NONE    },
-	{    "history",           do_history,           CMD_FLAG_SUB     },
+	{	"history",           do_history,           CMD_FLAG_SUB     },
 	{	"if",                do_if,                CMD_FLAG_NONE    },
 	{	"ignore",            do_ignore,            CMD_FLAG_SUB     },
 	{	"info",              do_info,              CMD_FLAG_NONE    },
@@ -65,12 +66,12 @@ const struct command_type command_table[] =
 	{	"logline",           do_logline,           CMD_FLAG_SUB     },
 	{	"loop",              do_loop,              CMD_FLAG_NONE    },
 	{	"macro",             do_macro,             CMD_FLAG_NONE    },
-	{	"map",               do_map,               CMD_FLAG_NONE    },
+	{	"map",               do_map,               CMD_FLAG_SUB     },
 	{	"math",              do_math,              CMD_FLAG_SUB     },
 	{	"mark",              do_mark,              CMD_FLAG_NONE    },
 	{	"message",           do_message,           CMD_FLAG_SUB     },
 	{	"nop",               do_nop,               CMD_FLAG_NONE    },
-	{    "parse",             do_parse,             CMD_FLAG_NONE    },
+	{	"parse",             do_parse,             CMD_FLAG_NONE    },
 	{	"path",              do_path,              CMD_FLAG_NONE    },
 	{	"pathdir",           do_pathdir,           CMD_FLAG_NONE    },
 	{	"prompt",            do_prompt,            CMD_FLAG_NONE    },
@@ -113,23 +114,26 @@ const struct command_type command_table[] =
 
 const struct list_type list_table[LIST_MAX] =
 {
-	{    "CONFIG",            "CONFIGURATIONS",     PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
-	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "ACTION",            "ACTIONS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PATHDIR",           "PATHDIRS",           ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TICKER",            "TICKERS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "MACRO",             "MACROS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "CLASS",             "CLASSES",            APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
-	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "CONFIG",            "CONFIGURATIONS",     PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
 	{    "DELAY",             "DELAYS",             PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
-	{    "MATH",              "MATHEMATICS",        APPEND,      3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  }
+	{    "EVENT",             "EVENTS",             ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "MACRO",             "MACROS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "MAP",               "MAPPING",            APPEND,      3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "MATH",              "MATHEMATICS",        APPEND,      3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
+	{    "PATHDIR",           "PATHDIRS",           PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TICKER",            "TICKERS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT }
+
 };
 
 
@@ -364,6 +368,7 @@ const struct map_type map_table[] =
 	{     "EXIT",                      map_exit               },
 	{     "FIND",                      map_find               },
 	{     "FLAG",                      map_flag               },
+	{     "GET",                       map_get                },
 	{     "GOTO",                      map_goto               },
 	{     "INFO",                      map_info               },
 	{     "LEAVE",                     map_leave              },
@@ -375,6 +380,7 @@ const struct map_type map_table[] =
 	{     "NAME",                      map_name               },
 	{     "READ",                      map_read               },
 	{     "ROOMFLAG",                  map_roomflag           },
+	{     "SET",                       map_set                },
 	{     "UNDO",                      map_undo               },
 	{     "UNLINK",                    map_unlink             },
 	{     "WALK",                      map_walk               },
@@ -608,4 +614,11 @@ const struct timer_type timer_table[] =
 	{    "Update Chat Server"          },
 	{    "Update Terminal"             },
 	{    "Stall Program"               }
+};
+
+const struct event_type event_table[] =
+{
+	{    "MAP ENTER ROOM",               "Triggers when entering a map room."    },
+	{    "SESSION CONNECTED",            "Triggers when a new session connects." },
+	{    "",                             ""                                      }
 };

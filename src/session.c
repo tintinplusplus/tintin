@@ -55,12 +55,12 @@ DO_COMMAND(do_session)
 	{
 		if (*left == '+')
 		{
-			return activate_session(ses->next ? ses->next : gts->next);
+			return activate_session(ses->next ? ses->next : gts->next ? gts->next : ses);
 		}
 
 		if (*left == '-')
 		{
-			return activate_session(ses->prev ? ses->prev : gts->prev);
+			return activate_session(ses->prev ? ses->prev : gts->prev ? gts->prev : ses);
 		}
 
 		if (is_number(left))
@@ -264,12 +264,15 @@ void connect_session(struct session *ses)
 
 		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
 
-		tintin_printf2(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);
+		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);
 
 		if (atoi(ses->port) == TELNET_PORT)
 		{
 			init_telnet_session(ses);
 		}
+
+		check_all_events(ses, "SESSION CONNECTED");
+
 		return;
 	}
 
