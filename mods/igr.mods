@@ -1,3 +1,27 @@
+Sep 2009       1.99.8
+
+update.c       Fixed a potential memory overflow in the input parser.
+
+misc.c         Fixed displaying bug with semi-colons in echos.
+
+nest.c         Added support for $variable[regex] to return lists.
+
+tinexp.c       No longer required to escape literal ^ and $ signs.
+               So #regex {A ^ B} {A ^ B} returns true now instead of false.
+
+net.c          Instead of exiting, tintin tries for 1 second to write data
+               to a session before closing the session.
+
+tinexp.c       $$<string> only gets converted to $<string> if $<string> makes
+               a valid variable. Same for &&<string>.
+
+tokenize.c     Added support for using ; in #foreach.
+
+misc.c         Added support for using ; in #forall.
+
+mapper.c       Updated the map grid to allocate memory for a future
+               #map dump 99x99 <file> command.
+
 Jul 2009       1.99.7
 
 mapper.c       Added #map color <rooms|exits> <color> option.

@@ -120,7 +120,7 @@
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
-#define VERSION_NUM               "1.99.7"
+#define VERSION_NUM               "1.99.8"
 
 #define ESCAPE                          27
 
@@ -511,6 +511,7 @@ enum operators
 	Compatibility
 */
 
+
 #define atoll(str) (strtoll(str, NULL, 10))
 
 
@@ -816,11 +817,14 @@ struct str_hash_index_data
 struct map_data
 {
 	struct room_data     ** room_list;
+	struct room_data     ** grid;
 	FILE                  * logfile;
 	struct link_data      * undo_head;
 	struct link_data      * undo_tail;
 	char                  * room_color;
 	char                  * exit_color;
+	int                     max_grid_x;
+	int                     max_grid_y;
 	int                     undo_size;
 	int                     size;
 	int                     flags;
@@ -1161,15 +1165,15 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 #ifndef __TINEXP_H__
 #define __TINEXP_H__
 
+extern int substitute(struct session *ses, char *string, char *result, int flags);
+
 extern int match(struct session *ses, char *str, char *exp);
 extern int find(struct session *ses, char *str, char *exp);
 DO_COMMAND(do_regexp);
 extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int flag);
 extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
+extern int tintin_regexp_check(char *exp);
 extern int tintin_regexp(pcre *pcre, char *str, char *exp, int option, int flag);
-
-extern int substitute(struct session *ses, char *string, char *result, int flags);
-
 extern pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option);
 
 #endif

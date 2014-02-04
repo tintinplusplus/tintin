@@ -432,20 +432,22 @@ struct help_type help_table[] =
 		"FORALL",
 		"<178>Command<078>: #forall <178>{<078>list<178>}<078> <178>{<078>commands<178>}<078>\n"
 		"\n"
-		"         How this works is best shown with an example.\n"
+		"         List elements must either be separated by braces or semicolons.\n"
 		"\n"
-		"<178>Example<078>: #forall {a b c d} {say &0}\n"
-		"         This equals: say a;say b;say c;say d;\n"
-		"         Useful for whenever it's useful.\n"
+		"<178>Example<078>: #forall {a;b;c;d} {say &0}\n"
+		"<178>Example<078>: #forall {{a}{b}{c}{d}} {say &0}\n"
+		"         Both equal: say a;say b;say c;say d\n"
 	},
 	{
 		"FOREACH",
 		"<178>Command<078>: #foreach <178>{<078>list<178>} {<078>variable<178>} {<078>commands<178>}<078>\n"
 		"\n"
 		"         For each item in the provided list the foreach statement will update\n"
-		"         the given variable and execute the command part of the statement.\n"
+		"         the given variable and execute the command part of the statement. List\n"
+		"         elements must be separated by braces or semicolons.\n"
 		"\n"
-		"<178>Example<078>: #foreach {bob tim kim} {name} {tell $name Hello}\n"
+		"<178>Example<078>: #foreach {bob;tim;kim} {name} {tell $name Hello}\n"
+		"<178>Example<078>: #foreach {{bob}{tim}{kim}} {name} {tell $name Hello}\n"
 	},
 	{
 		"FORMAT",
@@ -1354,6 +1356,7 @@ struct help_type help_table[] =
 		"         You can see the first nest of a variable using $variable[+1] and the\n"
 		"         last nest using $variable[-1]. Using $variable[-2] will report the\n"
 		"         second last variable, and so on. To show all indices use $variable[].\n"
+		"         To show all values use $variable[%*] or a less generic regex.\n"
 		"\n"
 		"<178>Comment<078>: To see the internal index of a variable use &<variable name>\n"
 		"\n"

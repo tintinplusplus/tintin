@@ -81,11 +81,14 @@ DO_COMMAND(do_math)
 
 double get_number(struct session *ses, char *str)
 {
+	double val;
 	char result[BUFFER_SIZE];
 
 	mathexp(ses, str, result);
 
-	return tintoi(result);
+	val = tintoi(result);
+
+	return val;
 }
 
 void get_number_string(struct session *ses, char *str, char *result)
@@ -306,6 +309,7 @@ int mathexp_tokenize(struct session *ses, char *str)
 						break;
 
 					case ' ':
+					case '\t':
 						pti++;
 						break;
 
@@ -713,7 +717,14 @@ double tintoi(char *str)
 			return -atof(&str[1]);
 
 		default:
-			return atof(str);
+			if (isdigit(str[0]))
+			{
+				return atof(str);
+			}
+			else
+			{
+				return 0;
+			}
 	}
 }
 
@@ -734,7 +745,7 @@ double tineval(struct session *ses, char *left, char *right)
 	switch (left[0])
 	{
 		case '"':
-			return match(ses, left, right);
+			return match(NULL, left, right);
 
 		default:
 			return tintoi(left) == tintoi(right);

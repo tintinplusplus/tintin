@@ -170,6 +170,8 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 void write_line_mud(struct session *ses, char *line, int size)
 {
+	static int retry;
+
 	push_call("write_line_mud(%p,%p)",line,ses);
 
 	if (ses == gts)
@@ -190,8 +192,23 @@ void write_line_mud(struct session *ses, char *line, int size)
 
 	if (write(ses->socket, line, size) == -1)
 	{
-		syserr("write in write_line_mud");
+		if (retry++ < 10)
+		{
+			usleep(100000);
+
+			write_line_mud(ses, line, size);
+
+			pop_call();
+			return;
+		}
+		perror("write in write_line_mud");
+		cleanup_session(ses);
+
+		pop_call();
+		return;
 	}
+
+	retry = 0;
 
 	check_all_events(ses, 0, 1, "SEND OUTPUT", line);
 

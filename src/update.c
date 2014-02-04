@@ -151,20 +151,25 @@ void poll_input(void)
 	fd_set readfds;
 	static struct timeval to;
 
-	FD_ZERO(&readfds);
-
-	FD_SET(0, &readfds);
-
-	if (select(FD_SETSIZE, &readfds, NULL, NULL, &to) <= 0)
+	while (TRUE)
 	{
-		return;
-	}
+		FD_ZERO(&readfds);
 
-	if (FD_ISSET(0, &readfds))
-	{
-		process_input();
+		FD_SET(0, &readfds);
 
-		poll_input();
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, &to) <= 0)
+		{
+			return;
+		}
+
+		if (FD_ISSET(0, &readfds))
+		{
+			process_input();
+		}
+		else
+		{
+			return;
+		}
 	}
 }
 

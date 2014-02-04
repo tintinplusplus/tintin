@@ -60,6 +60,8 @@ struct scriptroot
 
 void debugtoken(struct session *ses, struct scriptnode *token)
 {
+	push_call("debugtoken(%p,%p,%d)",ses,token,token->typ);
+
 	if (debug_level)
 	{
 		switch (token->typ)
@@ -103,10 +105,19 @@ void debugtoken(struct session *ses, struct scriptnode *token)
 				break;
 
 			default:
-				tintin_printf2(ses, "[%02d] %*s\033[1;33m%s {\033[0m%s\033[1;32m}\033[0m", token->typ, token->lvl * 4, "", command_table[token->cmd].name, token->str);
+				if (token == (struct scriptnode *) ses)
+				{
+					tintin_printf2(ses, "[--] (error) token == ses");
+				}
+				else
+				{
+					tintin_printf2(ses, "[%02d] %*s\033[1;33m%d {\033[0m%s\033[1;32m}\033[0m", token->typ, token->lvl * 4, "", token->cmd, token->str);
+				}
 				break;
 		}
 	}
+	pop_call();
+	return;
 }
 
 
@@ -224,8 +235,12 @@ char *get_arg_foreach(struct scriptnode *token)
 {
 	static char buf[BUFFER_SIZE];
 
-	token->data->arg = get_arg_in_braces(token->data->arg, buf, FALSE);
+	token->data->arg = get_arg_in_braces(token->data->arg, buf, TRUE);
 
+	if (*token->data->arg == ';')
+	{
+		token->data->arg++;
+	}
 	return buf;
 }
 
@@ -781,7 +796,14 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 			token = token->next;
 		}
 	}
-	return (struct scriptnode *) root->ses;
+	if (lvl)
+	{
+		return NULL;
+	}
+	else
+	{
+		return (struct scriptnode *) root->ses;
+	}
 }
 
 

@@ -143,7 +143,7 @@
 {
 	#format utime {%U};
 
-	#format result {%t.%m} {{%Y-%m-%d %H:%M:%S} {$utime % 1000000 / 100000}}
+	#format result {%t.%m} {%Y-%m-%d %H:%M:%S} {$utime % 1000000 / 100000}
 }
 
 #event {RECEIVED LINE}

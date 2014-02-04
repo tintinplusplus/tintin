@@ -10,6 +10,12 @@
 
 GENERAL STUFF:
 
+- #buffer copy {line} {variable}
+
+- Look into fixing atoff("inf") returning a big number.
+
+- Add split pane scrollback
+
 - Add a ARG_LEN / ARG_MAX setting.
 
 - Add a #line skip option.
@@ -57,6 +63,8 @@ MAPPING STUFF:
 - Events for prompt lines.
 
 - Lua scripting
+
+- Look into using speech-dispatcher for text to speech.
 
 -------------------------------------------------------------------------------
 

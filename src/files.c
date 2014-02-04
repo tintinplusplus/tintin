@@ -46,7 +46,7 @@ DO_COMMAND(do_read)
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #READ {%s} - COULDN'T OPEN THAT FILE.", filename);
+		show_message(ses, -1, "#READ {%s} - COULDN'T OPEN THAT FILE.", filename);
 		return ses;
 	}
 
@@ -412,10 +412,10 @@ void write_node(struct session *ses, int list, struct listnode *node, FILE *file
 {
 	char result[STRING_SIZE], buffer[BUFFER_SIZE];
 
-	push_call("write_node(%d,%p,%p)",list,node,file);
-
 	int llen = UMAX(20, strlen(node->left));
 	int rlen = UMAX(25, strlen(node->right));
+
+	push_call("write_node(%d,%p,%p)",list,node,file);
 
 	switch (list)
 	{

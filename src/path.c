@@ -171,9 +171,9 @@ DO_PATH(path_save)
 		{
 			for (i = root->used - 1 ; i >= 0 ; i--)
 			{
-				strcat(result, root->list[i]->left);
+				strcat(result, root->list[i]->right);
 
-				if (i != 1)
+				if (i != 0)
 				{
 					cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 				}

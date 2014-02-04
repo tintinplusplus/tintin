@@ -39,8 +39,7 @@ DO_COMMAND(do_configure)
 	root = ses->list[LIST_CONFIG];
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{

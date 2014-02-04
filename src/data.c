@@ -508,7 +508,7 @@ int show_node_with_wild(struct session *ses, char *text, int type)
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (match(ses, root->list[i]->left, text))
+		if (match(NULL, root->list[i]->left, text))
 		{
 			show_node(root, root->list[i], 0);
 
@@ -541,7 +541,7 @@ void delete_node_with_wild(struct session *ses, int type, char *text)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (match(ses, root->list[i]->left, arg1))
+		if (match(NULL, root->list[i]->left, arg1))
 		{
 			show_message(ses, type, "#OK. {%s} IS NO LONGER %s %s.", root->list[i]->left, (*list_table[type].name == 'A' || *list_table[type].name == 'E') ? "AN" : "A", list_table[type].name);
 

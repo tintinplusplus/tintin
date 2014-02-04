@@ -26,7 +26,6 @@
 *                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
-#include <regex.h>
 #include <sys/types.h>
 #include <pcre.h>
 
@@ -35,12 +34,18 @@
 
 int match(struct session *ses, char *str, char *exp)
 {
-	char expbuf[BUFFER_SIZE], tmpbuf[BUFFER_SIZE];
+	char expbuf[BUFFER_SIZE];
 
-	substitute(ses, exp, tmpbuf, SUB_VAR|SUB_FUN);
-
-	sprintf(expbuf, "^%s$", tmpbuf);
-
+	if (ses)
+	{
+		sprintf(expbuf, "^%s$", exp);
+		
+		substitute(ses, expbuf, expbuf, SUB_VAR|SUB_FUN);
+	}
+	else
+	{
+		sprintf(expbuf, "^%s$", exp);
+	}
 	return tintin_regexp(NULL, str, expbuf, 0, 0);
 }
 
@@ -48,9 +53,16 @@ int find(struct session *ses, char *str, char *exp)
 {
 	char expbuf[BUFFER_SIZE];
 
-	substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
+	if (ses)
+	{
+		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
 
-	return tintin_regexp(NULL, str, expbuf, 0, 0);
+		return tintin_regexp(NULL, str, expbuf, 0, 0);
+	}
+	else
+	{
+		return tintin_regexp(NULL, str, exp, 0, 0);
+	}
 }
 
 DO_COMMAND(do_regexp)
@@ -249,8 +261,15 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						{
 							*pto++ = *pti++;
 						}
-						pti++;
 
+						if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]))
+						{
+							pti++;
+						}
+						else
+						{
+							*pto++ = *pti++;
+						}
 						continue;
 					}
 
@@ -583,8 +602,15 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						{
 							*pto++ = *pti++;
 						}
-						pti++;
 
+						if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]))
+						{
+							pti++;
+						}
+						else
+						{
+							*pto++ = *pti++;
+						}
 						continue;
 					}
 
@@ -730,9 +756,73 @@ int check_one_regexp(struct session *ses, struct listnode *node, char *line, cha
 }
 
 /*
-	Keep synched with tintin_regexp_compile
+	Keep synched with tintin_regexp and tintin_regexp_compile
 */
 
+int tintin_regexp_check(char *exp)
+{
+	if (*exp == '^')
+	{
+		return TRUE;
+	}
+
+	while (*exp)
+	{
+#ifdef BIG5
+		if (*exp & 0x80)
+		{
+			exp += 2;
+			continue;
+		}
+#endif		
+		switch (exp[0])
+		{
+			case '\\':
+			case '{':
+				return TRUE;
+
+			case '$':
+				if (exp[1] == 0)
+				{
+					return TRUE;
+				}
+				break;
+
+			case '%':
+				switch (exp[1])
+				{
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+					case 'd':
+					case 'D':
+					case 'i':
+					case 'I':
+					case 's':
+					case 'S':
+					case 'w':
+					case 'W':
+					case '?':
+					case '*':
+					case '+':
+					case '.':
+					case '%':
+						return TRUE;
+				}
+				break;
+		}
+		exp++;
+	}
+	return FALSE;
+}
+				
 int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 {
 	char out[BUFFER_SIZE], *pti, *pto;
@@ -740,6 +830,11 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 
 	pti = exp;
 	pto = out;
+
+	while (*pti == '^')
+	{
+		*pto++ = *pti++;
+	}
 
 	while (*pti)
 	{
@@ -775,7 +870,26 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 			case '?':
 			case '+':
 			case '*':
+			case '^':
 				*pto++ = '\\';
+				*pto++ = *pti++;
+				break;
+
+			case '$':
+				if (pti[1] != DEFAULT_OPEN && !isalnum(pti[1]))
+				{
+					int i = 0;
+
+					while (pti[++i] == '$')
+					{
+						continue;
+					}
+
+					if (pti[i])
+					{
+						*pto++ = '\\';
+					}
+				}
 				*pto++ = *pti++;
 				break;
 
@@ -916,6 +1030,11 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 		SET_BIT(node->flags, NODE_FLAG_META);
 	}
 
+	while (*pti == '^')
+	{
+		*pto++ = *pti++;
+	}
+
 	while (*pti)
 	{
 
@@ -952,11 +1071,38 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 				break;
 
 			case '&':
-			case '$':
-			case '@':
-				if (pti[1])
+				if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '&')
 				{
 					return NULL;
+				}
+				*pto++ = *pti++;
+				break;
+
+			case '@':
+				if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '@')
+				{
+					return NULL;
+				}
+				*pto++ = *pti++;
+				break;
+
+			case '$':
+				if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]))
+				{
+					return NULL;
+				}
+				{
+					int i = 0;
+
+					while (pti[++i] == '$')
+					{
+						continue;
+					}
+
+					if (pti[i])
+					{
+						*pto++ = '\\';
+					}
 				}
 				*pto++ = *pti++;
 				break;
@@ -970,6 +1116,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 			case '?':
 			case '+':
 			case '*':
+			case '^':
 				*pto++ = '\\';
 				*pto++ = *pti++;
 				break;

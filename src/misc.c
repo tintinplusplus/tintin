@@ -106,7 +106,7 @@ DO_COMMAND(do_echo)
 	char temp[BUFFER_SIZE], output[BUFFER_SIZE], left[BUFFER_SIZE];
 	int lnf;
 
-	sprintf(temp, "result %s", arg);
+	sprintf(temp, "{result} %s", arg);
 
 	set_nest_node(ses->list[LIST_VARIABLE], "result", "");
 
@@ -116,19 +116,22 @@ DO_COMMAND(do_echo)
 
 	arg = temp;
 
-	arg = get_arg_in_braces(arg, left, TRUE);
-	arg = get_arg_in_braces(arg, temp, TRUE);
-
-	if (*temp)
+	if (*arg == DEFAULT_OPEN)
 	{
-		do_one_prompt(ses, left, (int) get_number(ses, temp));
+		arg = get_arg_in_braces(arg, left, TRUE);
+		      get_arg_in_braces(arg, temp, TRUE);
 
-		return ses;
+		if (*temp)
+		{
+			do_one_prompt(ses, left, (int) get_number(ses, temp));
+
+			return ses;
+		}
 	}
 
-	lnf = !str_suffix(left, "\\");
+	lnf = !str_suffix(arg, "\\");
 
-	substitute(ses, left, temp, SUB_ESC);
+	substitute(ses, arg, temp, SUB_ESC);
 
 	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
@@ -180,10 +183,8 @@ DO_COMMAND(do_forall)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  TRUE);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, right, TRUE);
-
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -195,13 +196,18 @@ DO_COMMAND(do_forall)
 
 		while (*arg)
 		{
-			arg = get_arg_in_braces(arg, temp, FALSE);
+			arg = get_arg_in_braces(arg, temp, TRUE);
 
 			RESTRING(gtd->cmds[0], temp);
 
 			substitute(ses, right, temp, SUB_CMD);
 
 			ses = script_driver(ses, -1, temp);
+
+			if (*arg == ';')
+			{
+				arg++;
+			}
 		}
 	}
 	return ses;
@@ -322,8 +328,7 @@ DO_COMMAND(do_showme)
 
 	substitute(ses, left, temp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-	arg = get_arg_in_braces(arg, right, FALSE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
 	do_one_line(temp, ses);
 

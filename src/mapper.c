@@ -34,14 +34,9 @@
 void show_map(struct session *ses, char *arg1, char *arg2);
 void create_legend(struct session *ses, char *arg);
 
-#define MAX_MAP_X 255
-#define MAX_MAP_Y 101
-
 int                 map_grid_x;
 int                 map_grid_y;
 int                 map_grid_z;
-
-struct room_data  * map_grid[MAX_MAP_X][MAX_MAP_Y];
 
 struct session    * map_search_ses;
 struct exit_data  * map_search_exit_best;
@@ -1204,13 +1199,16 @@ DO_MAP(map_write)
 	{
 		if (ses->map->room_list[vnum])
 		{
-			fprintf(file, "\nR {%5d} {%d} {%s} {%s} {%s}\n",
+			fprintf(file, "\nR {%5d} {%d} {%s} {%s} {%s} {%s} {%s} {%s}\n",
 				ses->map->room_list[vnum]->vnum,
 				ses->map->room_list[vnum]->flags,
 				ses->map->room_list[vnum]->color,
 				ses->map->room_list[vnum]->name,
-				ses->map->room_list[vnum]->symbol);
-
+				ses->map->room_list[vnum]->symbol,
+				ses->map->room_list[vnum]->desc,
+				ses->map->room_list[vnum]->area,
+				ses->map->room_list[vnum]->note);
+                        
 			for (exit = ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
 			{
 				fprintf(file, "E {%5d} {%s} {%s} {%d}\n",
@@ -1237,10 +1235,14 @@ void create_map(struct session *ses, char *arg)
 	}
 
 	ses->map = (struct map_data *) calloc(1, sizeof(struct map_data));
-
 	ses->map->size = atoi(arg) > 0 ? atoi(arg) : 15000;
 
-	ses->map->room_list = (struct room_data **) calloc(ses->map->size, sizeof(struct room_data));
+	ses->map->room_list = (struct room_data **) calloc(ses->map->size, sizeof(struct room_data *));
+
+	ses->map->max_grid_x = 255;
+	ses->map->max_grid_y = 101;
+
+	ses->map->grid = (struct room_data **) calloc(ses->map->max_grid_x * ses->map->max_grid_y, sizeof(struct room_data *));
 
 	ses->map->flags = MAP_FLAG_ASCIIGRAPHICS;
 
@@ -1660,11 +1662,11 @@ void build_map_grid_bf(short vnum, short x, short y, short z)
 
 		room->size = node->size;
 
-		if (node->x >= 0 && node->x <= map_grid_x && node->y >= 0 && node->y <= map_grid_y && node->z == 0)
+		if (node->x >= 0 && node->x < map_grid_x && node->y >= 0 && node->y < map_grid_y && node->z == 0)
 		{
-			if (map_grid[node->x][node->y] == NULL)
+			if (map_search_ses->map->grid[node->x + map_grid_x * node->y] == NULL)
 			{
-				map_grid[node->x][node->y] = room;
+				map_search_ses->map->grid[node->x + map_grid_x * node->y] = room;
 			}
 			else
 			{
@@ -1693,9 +1695,9 @@ void build_map_grid_bf(short vnum, short x, short y, short z)
 			yy = node->y + (HAS_BIT(exit->dir, MAP_EXIT_N) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_S) ? -1 : 0);
 			zz = node->z + (HAS_BIT(exit->dir, MAP_EXIT_U) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_D) ? -1 : 0);
 
-			if (xx >= 0 && xx <= map_grid_x && yy >= 0 && yy <= map_grid_y && zz == 0)
+			if (xx >= 0 && xx < map_grid_x && yy >= 0 && yy < map_grid_y && zz == 0)
 			{
-				if (map_grid[xx][yy] && map_grid[xx][yy]->size <= room->size + 1)
+				if (map_search_ses->map->grid[xx + map_grid_x * yy] && map_search_ses->map->grid[xx + map_grid_x * yy]->size <= room->size + 1)
 				{
 					continue;
 				}
@@ -1715,52 +1717,6 @@ void build_map_grid_bf(short vnum, short x, short y, short z)
 }
 
 
-void build_map_grid(short room, short x, short y, short z)
-{
-	struct exit_data *exit;
-	short coord, xx = 0, yy = 0, zz = 0;
-
-	map_search_ses->map->room_list[room]->size = TRUE;
-
-	if (x >= 0 && x <= map_grid_x && y >= 0 && y <= map_grid_y && z == 0)
-	{
-		map_grid[x][y] = map_search_ses->map->room_list[room];
-	}
-
-	for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
-	{
-		if (map_search_ses->map->room_list[exit->vnum]->size)
-		{
-			continue;
-		}
-
-		if (HAS_BIT(map_search_ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_HIDE))
-		{
-			continue;
-		}
-
-		coord = exit->dir;
-
-		if (exit->dir == 0)
-		{
-			continue;
-		}
-
-		xx = x + (HAS_BIT(exit->dir, MAP_EXIT_E) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_W) ? -1 : 0);
-		yy = y + (HAS_BIT(exit->dir, MAP_EXIT_N) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_S) ? -1 : 0);
-		zz = z + (HAS_BIT(exit->dir, MAP_EXIT_U) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_D) ? -1 : 0);
-
-		if (xx >= 0 && xx <= map_grid_x && yy >= 0 && yy <= map_grid_y && zz == 0)
-		{
-			if (map_grid[xx][yy])
-			{
-				continue;
-			}
-		}
-
-		build_map_grid(exit->vnum, xx, yy, zz);
-	}
-}
 
 void create_map_grid(struct session *ses, short room, short x, short y)
 {
@@ -1774,7 +1730,10 @@ void create_map_grid(struct session *ses, short room, short x, short y)
 		}
 	}
 
-	memset(map_grid, 0, sizeof(map_grid));
+	for (vnum = 0 ; vnum < x * y ; vnum++)
+	{
+		ses->map->grid[vnum] = NULL;
+	}
 
 	map_search_ses = ses;
 
@@ -1799,40 +1758,52 @@ void show_map(struct session *ses, char *arg1, char *arg2)
 	{
 		logfile = fopen(arg2, "a");
 
-		map_grid_x = URANGE(1, map_grid_x, MAX_MAP_X);
-		map_grid_y = URANGE(1, map_grid_y, MAX_MAP_Y);
-
 		if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 		{
 			map_grid_y = map_grid_y / 3;
 			map_grid_x = map_grid_x / 6;
 		}
+
+		if (map_grid_x > ses->map->max_grid_x)
+		{
+			ses->map->max_grid_x = map_grid_x;
+
+			ses->map->grid = (struct room_data **) realloc(ses->map->grid, ses->map->max_grid_x * ses->map->max_grid_y);
+		}
+
+		if (map_grid_y > ses->map->max_grid_y)
+		{
+			ses->map->max_grid_y = map_grid_y;
+
+			ses->map->grid = (struct room_data **) realloc(ses->map->grid, ses->map->max_grid_x * ses->map->max_grid_y);
+		}
+
 	}
 	else if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
-		map_grid_y = (get_scroll_size(ses) / 3) - 1;
-		map_grid_x = (ses->cols / 6) - 1;
+		map_grid_y = (get_scroll_size(ses) / 3);
+		map_grid_x = (ses->cols / 6);
 
 	}
 	else
 	{
-		map_grid_y = get_scroll_size(ses) - 1;
-		map_grid_x = ses->cols - 1;
+		map_grid_y = get_scroll_size(ses);
+		map_grid_x = ses->cols;
 	}
 
 	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
-		for (y = map_grid_y ; y >= 0 ; y--)
+		for (y = map_grid_y - 1 ; y >= 0 ; y--)
 		{
 			for (line = 1 ; line <= 3 ; line++)
 			{
 				strcpy(buf, "");
 
-				for (x = 0 ; x <= map_grid_x ; x++)
+				for (x = 0 ; x < map_grid_x ; x++)
 				{
-					strcat(buf, draw_room(ses, map_grid[x][y], line));
+					strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], line));
 				}
 
 				substitute(ses, buf, out, SUB_COL);
@@ -1856,7 +1827,7 @@ void show_map(struct session *ses, char *arg1, char *arg2)
 
 			for (x = 0 ; x < map_grid_x ; x++)
 			{
-				strcat(buf, draw_room(ses, map_grid[x][y], 0));
+				strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], 0));
 			}
 
 			for (x = strlen(buf) - 1 ; x > 0 ; x--)
@@ -1914,13 +1885,13 @@ void show_vtmap(struct session *ses)
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
-		map_grid_y = (ses->top_row - 2) / 3 - 1;
-		map_grid_x = (ses->cols    - 0) / 6 - 1;
+		map_grid_y = (ses->top_row - 2) / 3;
+		map_grid_x = (ses->cols    - 0) / 6;
 	}
 	else
 	{
-		map_grid_y = (ses->top_row - 3);
-		map_grid_x = (ses->cols - 1);
+		map_grid_y = (ses->top_row - 2);
+		map_grid_x = (ses->cols);
 	}
 	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
 
@@ -1929,15 +1900,15 @@ void show_vtmap(struct session *ses)
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
-		for (y = map_grid_y ; y >= 0 ; y--)
+		for (y = map_grid_y - 1 ; y >= 0 ; y--)
 		{
 			for (line = 1 ; line <= 3 ; line++)
 			{
 				strcpy(buf, "");
 
-				for (x = 0 ; x <= map_grid_x ; x++)
+				for (x = 0 ; x < map_grid_x ; x++)
 				{
-					strcat(buf, draw_room(ses, map_grid[x][y], line));
+					strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], line));
 				}
 				substitute(ses, buf, out, SUB_COL);
 
@@ -1947,13 +1918,13 @@ void show_vtmap(struct session *ses)
 	}
 	else
 	{
-		for (y = map_grid_y ; y >= 0 ; y--)
+		for (y = map_grid_y - 1 ; y >= 0 ; y--)
 		{
 			strcpy(buf, "");
 
-			for (x = 0 ; x <= map_grid_x ; x++)
+			for (x = 0 ; x < map_grid_x ; x++)
 			{
-				strcat(buf, draw_room(ses, map_grid[x][y], 0));
+				strcat(buf, draw_room(ses, ses->map->grid[x + map_grid_x * y], 0));
 			}
 			substitute(ses, buf, out, SUB_COL);
 
@@ -2144,11 +2115,11 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
 	{
-		sprintf(buf, "%s\033[12m%s\033[10m", room->color, ses->map->legend[exits]);
+		sprintf(buf, "%s\033[12m%s\033[10m", *room->color ? room->color : ses->map->room_color, ses->map->legend[exits]);
 	}
 	else
 	{
-		sprintf(buf, "%s%s", room->color, ses->map->legend[exits]);
+		sprintf(buf, "%s%s", *room->color ? room->color : ses->map->room_color, ses->map->legend[exits]);
 	}
 	pop_call();
 	return buf;

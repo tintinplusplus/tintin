@@ -119,12 +119,9 @@ struct listroot *update_nest_root(struct listroot *root, char *arg)
 void update_nest_node(struct listroot *root, char *arg)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
-	int cnt = 0;
 
 	while (*arg)
 	{
-		cnt++;
-
 		arg = get_arg_in_braces(arg, arg1, FALSE);
 		arg = get_arg_in_braces(arg, arg2, FALSE);
 
@@ -132,7 +129,7 @@ void update_nest_node(struct listroot *root, char *arg)
 		{
 			update_nest_node(update_nest_root(root, get_alnum(root->ses, arg1)), arg2);
 		}
-		else
+		else if (*arg1)
 		{
 			update_node_list(root, get_alnum(root->ses, arg1), arg2, "");
 		}
@@ -171,10 +168,12 @@ int delete_nest_node(struct listroot *root, char *variable)
 	return FALSE;
 }
 
+// Return the number of indices of a node.
+
 int get_nest_size(struct listroot *root, char *variable, char *result)
 {
 	char name[BUFFER_SIZE], *arg;
-	int index;
+	int index, count;
 
 	arg = get_arg_to_brackets(variable, name);
 
@@ -200,8 +199,35 @@ int get_nest_size(struct listroot *root, char *variable, char *result)
 		}
 	}
 
-	while (root)
+	while (root && *name)
 	{
+		// Handle regex queries
+
+		if (search_nest_root(root, get_alnum(root->ses, name)) == NULL)
+		{
+			if (search_node_list(root, name) == NULL)
+			{
+				for (index = count = 0 ; index < root->used ; index++)
+				{
+					if (match(NULL, root->list[index]->left, name))
+					{
+//						cat_sprintf(result, "{%s}", root->list[index]->right);
+						show_nest_node(root->list[index], result, 0);
+						count++;
+					}
+				}
+
+				if (count)
+				{
+					return count + 1;
+				}
+				else
+				{
+					return tintin_regexp_check(name); // so using a regex returns "" instead of "0"
+				}
+			}
+		}
+
 		root = search_nest_root(root, get_alnum(root->ses, name));
 
 		if (root)
@@ -324,7 +350,7 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 		node->root = NULL;
 	}
 
-	if (*arg2 == DEFAULT_OPEN)
+	if (*space_out(arg2) == DEFAULT_OPEN)
 	{
 		update_nest_node(update_nest_root(root, get_alnum(root->ses, name)), arg2);
 

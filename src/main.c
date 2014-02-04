@@ -207,7 +207,13 @@ int main(int argc, char **argv)
 					break;
 
 				case 'h':
-					tintin_printf(NULL, "Usage: %s [-v] [file] [-e \"command\"] [-r file] [-t title]", argv[0]);
+					tintin_printf(NULL, "Usage: %s [OPTION]... [FILE]...", argv[0]);
+					tintin_printf(NULL, "");
+					tintin_printf(NULL, "  -e  Execute given command.");
+					tintin_printf(NULL, "  -r  Read given file.");
+					tintin_printf(NULL, "  -t  Set given title.");
+					tintin_printf(NULL, "  -v  Enable verbose mode.");
+
 					reset_terminal();
 					exit(1);
 					break;
@@ -310,7 +316,7 @@ void init_tintin(void)
 	do_configure(gts, "{CONNECT RETRY}      {15}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
-	do_configure(gts, "{PACKET PATCH}        {0}");
+	do_configure(gts, "{PACKET PATCH}     {0.01}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");

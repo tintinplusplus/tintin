@@ -66,7 +66,7 @@ DO_COMMAND(do_class)
 				{
 					if (!strcmp(ses->list[i]->list[j]->group, arg1))
 					{
-						show_node(ses->list[i], node, 0);
+						show_node(ses->list[i], ses->list[i]->list[j], 0);
 					}
 				}
 			}

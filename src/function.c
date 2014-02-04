@@ -38,7 +38,7 @@ DO_COMMAND(do_function)
 
 	if (*arg1 == 0)
 	{
-		show_list(ses->list[LIST_FUNCTION], 42);
+		show_list(ses->list[LIST_FUNCTION], 0);
 	}
 
 	else if (*arg1 && *arg2 == 0)
