@@ -145,6 +145,8 @@ struct session *newactive_session(void)
 		gtd->ses = gts;
 		dirty_screen(gtd->ses);
 
+		tintin_printf(NULL, "");
+
 		tintin_printf(NULL, "#THERE'S NO ACTIVE SESSION NOW.");
 	}
 	pop_call();
@@ -327,14 +329,16 @@ void cleanup_session(struct session *ses)
 		}
 	}
 
-	if (ses == gtd->ses)
-	{
-		gtd->ses = newactive_session();
-	}
+	check_all_events(ses, "SESSION DISCONNECTED");
 
 	tintin_printf(gtd->ses, "");
 
 	tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
+
+	if (ses == gtd->ses)
+	{
+		gtd->ses = newactive_session();
+	}
 
 	do_killall(ses, NULL);
 

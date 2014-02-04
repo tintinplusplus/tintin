@@ -93,5 +93,5 @@ clean:
 	rm -f *.o *~ ../*~ ../mods/*~ tt++*
 
 
-distclean: clean
-	rm -f *.o *~ ../*~ ../mods/*~ tt++* Makefile config.h config.status config.log config.cache
+distclean:
+	rm -f *.o *~ ../*~ ../mods/*~ tt++* Makefile config.h config.status config.log

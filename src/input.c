@@ -196,7 +196,7 @@ void read_line(char *line)
 					gtd->input_cur++;
 					gtd->input_pos++;
 					input_printf("\033[1@%c", gtd->macro_buf[cnt]);
-				}         
+				}
 
 				gtd->macro_buf[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;

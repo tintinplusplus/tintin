@@ -121,6 +121,8 @@ DO_CURSOR(cursor_clear_left)
 		return;
 	}
 
+	sprintf(gtd->input_tmp, "%.*s", gtd->input_cur, gtd->input_buf);
+
 	memmove(&gtd->input_buf[0], &gtd->input_buf[gtd->input_cur+1], gtd->input_len - gtd->input_cur);
 
 	input_printf("\033[%dD\033[%dP", gtd->input_cur, gtd->input_cur);
@@ -170,6 +172,8 @@ DO_CURSOR(cursor_clear_right)
 	{
 		return;
 	}
+
+	strcpy(gtd->input_tmp, &gtd->input_buf[gtd->input_cur]);
 
 	input_printf("\033[%dP", gtd->input_len - gtd->input_pos);
 
@@ -241,7 +245,9 @@ DO_CURSOR(cursor_delete_word)
 		}
 	}
 
-	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], gtd->input_len - index_cur + 1);
+	sprintf(gtd->input_tmp, "%.*s", index_cur - gtd->input_cur, &gtd->input_buf[gtd->input_cur]);
+
+	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], index_cur + 1);
 
 	input_printf("\033[%dD\033[%dP", index_pos - gtd->input_pos, index_pos - gtd->input_pos);
 
@@ -505,6 +511,7 @@ DO_CURSOR(cursor_insert)
 	}
 }
 
+
 DO_CURSOR(cursor_left)
 {
 	if (gtd->input_cur > 0)
@@ -516,6 +523,18 @@ DO_CURSOR(cursor_left)
 		cursor_check_line("");
 	}
 }
+
+
+DO_CURSOR(cursor_paste_buffer)
+{
+	ins_sprintf(&gtd->input_buf[gtd->input_cur], "%s", gtd->input_tmp);
+
+	gtd->input_len += strlen(gtd->input_tmp);
+	gtd->input_cur += strlen(gtd->input_tmp);
+
+	cursor_redraw_line("");
+}
+
 
 DO_CURSOR(cursor_redraw_input)
 {

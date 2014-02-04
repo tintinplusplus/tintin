@@ -1277,7 +1277,7 @@
      ===============================
      COMMAND: Session
 
-     Syntax: #session {<ses_name>} {<IP or word address> <port>}
+     Syntax: #session {<ses_name>} {<IP or word address>} {<port>}
 
      Description: This is the command you use to connect to the muds.
      The session that you startup will become the active session. That

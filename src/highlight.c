@@ -89,7 +89,7 @@ DO_COMMAND(do_unhighlight)
 }
 
 
-void check_all_highlights(struct session *ses, char *original, char *line)
+void check_all_highlights(struct session *ses, char **original, char *line)
 {
 	struct listnode *node;
 	char *pt1, *pt2, *pt3;
@@ -97,11 +97,11 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
 	{
-		if (check_one_action(line, original, node->left, ses))
+		if (check_one_action(line, *original, node->left, ses))
 		{
 			substitute(ses, node->left, &buf1, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
 
-			pt1 = strstr(original, buf1) ? original : line;
+			pt1 = strstr(*original, buf1) ? *original : line;
 			pt2 = strstr(pt1, buf1);
 
 			if (pt2 == NULL)
@@ -111,14 +111,14 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 			*pt2 = 0;
 			pt3 = pt2 + strlen(buf1);
 
-			get_highlight_codes(ses, node->right, buf2);
+			strip_non_vt102_codes(pt1, buf2);
+			strip_vt102_codes_non_graph(buf2, buf3);
 
-			strip_non_vt102_codes(pt1, temp);
-			strip_vt102_codes_non_graph(temp, buf3);
+			get_highlight_codes(ses, node->right, buf2);
 
 			sprintf(temp, "%s%s%s\033[0m%s%s", pt1, buf2, buf1, buf3, pt3);
 
-			strcpy(original, temp);
+			substitute(ses, temp, original, 0);
 		}
 	}
 }

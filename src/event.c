@@ -45,7 +45,7 @@ DO_COMMAND(do_event)
 
 		for (cnt = 0 ; *event_table[cnt].name != 0 ; cnt++)
 		{
-			tintin_printf2(ses, "  [%-13s]  %s", event_table[cnt].name, event_table[cnt].desc);
+			tintin_printf2(ses, "  [%-20s] [%s] %s", event_table[cnt].name, searchnode_list(ses->list[LIST_EVENT], event_table[cnt].name) ? "X" : " ", event_table[cnt].desc);
 		}
 		tintin_header(ses, "");
 	}
@@ -71,6 +71,13 @@ DO_COMMAND(do_event)
 		}
 		tintin_printf(ses, "#EVENT {%s} IS NOT A VALID OPTION.", capitalize(left));
 	}
+	return ses;
+}
+
+DO_COMMAND(do_unevent)
+{
+	delete_node_with_wild(ses, LIST_EVENT, arg);
+
 	return ses;
 }
 

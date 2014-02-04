@@ -307,7 +307,7 @@ void init_tintin(void)
 	do_configure(gts, "{LOG}               {RAW}");
 	do_configure(gts, "{BUFFER SIZE}      {5000}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");
-	do_configure(gts, "{HISTORY SIZE}     {1000}");
+	do_configure(gts, "{HISTORY SIZE}     {2500}");
 	do_configure(gts, "{CONNECT RETRY}      {60}");
 	do_configure(gts, "{PACKET PATCH}        {0}");
 	do_configure(gts, "{TINTIN CHAR}         {#}");
@@ -328,7 +328,22 @@ void init_tintin(void)
 
 	init_terminal();
 
-	do_help(gtd->ses, "CREDITS");
+	do_showme(gts, "");
+	do_showme(gts, "<068>      #<068>###################################################################<068>#");
+	do_showme(gts, "<068>      #<078>                                                                   <068>#");
+	do_showme(gts, "<068>      #<078>                           T I N T I N + +                         <068>#");
+	do_showme(gts, "<068>      #<078>                                                                   <068>#");
+	do_showme(gts, "<068>      #<078>            (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t           <068>#");
+	do_showme(gts, "<068>      #<078>                                                                   <068>#");
+	do_showme(gts, "<068>      #<078>                 Original TINTIN code by Peter Unold               <068>#");
+	do_showme(gts, "<068>      #<078>       new code by Bill Reiss, David A. Wagner, Rob Ellsworth,     <068>#");
+	do_showme(gts, "<068>      #<078>                 Jeremy C. Jack, Igor van den Hoven                <068>#");
+	do_showme(gts, "<068>      #<078>                             1992, 2007                            <068>#");
+	do_showme(gts, "<068>      #<078>                                                                   <068>#");
+	do_showme(gts, "<068>      #<078>                               "VERSION_NUM"                              <068>#");
+	do_showme(gts, "<068>      #<078>                                                                   <068>#");
+	do_showme(gts, "<068>      #<068>###################################################################<068>#<088>");
+	do_showme(gts, "");
 }
 
 

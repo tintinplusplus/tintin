@@ -27,7 +27,7 @@
 #if {$bla != 2}     {oops 3}
 #if {$bla == 2}     {#nop} {oops 4}
 
-#action {^Problem with check 5^} {#gagline}
+#action {^Problem with [C|c]heck 5^} {#gagline}
 oops 5
 
 #forall {bli bla blo} {#if {"$forall" != "bl?"} {oops 6}}
@@ -288,4 +288,6 @@ oops 5
 	isca: bbs.iscabbs.com 23
 }
 
-#delay 1 #showme t00t
+#highlight {t00t} {green}
+
+#delay 0.1 #showme t00t

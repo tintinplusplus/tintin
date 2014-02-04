@@ -622,9 +622,11 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 					{
 						if (action_regexp(exp + 2, &str[cnt], arg))
 						{
+							gtd->vars[exp[1] - '0'] = stringf_realloc(gtd->vars[exp[1] - '0'], "%.*s", cnt, str);
+/*
 							gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
 							gtd->vars[exp[1] - '0'][cnt] = 0;
-
+*/
 							return TRUE;
 						}
 					}
@@ -657,6 +659,7 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 							{
 								cnt--;
 								cnt2++;
+								str++;
 							}
 							gtd->vars[arg] = stringf_alloc("%.*s", cnt2, &exp[cnt+1]);
 

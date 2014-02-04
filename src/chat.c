@@ -36,7 +36,10 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <pthread.h>
+
+#ifdef HAVE_PTHREAD_H
+	#include <pthread.h>
+#endif
 
 
 #define CALL_TIMEOUT 5
@@ -559,6 +562,8 @@ void *threaded_chat_call(void *arg)
 
 #endif
 
+#ifdef HAVE_LIBPTHREAD
+
 void chat_call(char *arg)
 {
 	char buf[BUFFER_SIZE];
@@ -570,6 +575,14 @@ void chat_call(char *arg)
 	pthread_create(&thread, NULL, (void *) threaded_chat_call, (void *) buf);
 }
 	
+#else
+
+void chat_call(char *arg)
+{
+	threaded_chat_call((void *) arg);
+}
+
+#endif
 
 /*
 	Clean up and close a chat conneciton.

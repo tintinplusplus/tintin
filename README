@@ -9,9 +9,8 @@ and figure out the differences will simply have to use the old version.
 TINEXP 1.0 (tintin expressions) are as of now more clearly defined:
 
 %0 - %9 are passed along with triggers. Actions, Aliasses, etc
-&0 - &9 are passed along with functions.
 $       are used for variables
-@       are used for functions, the arguments are stored in &0 - &9
+@       are used for functions, the arguments are stored in %0 - %9
 <000>   are used for colors
 \       is used to escape a character, but doesn't always work.
 { }     are used for seperating multi word command arguments.
@@ -22,7 +21,7 @@ $       are used for variables
 
 If you want to convert your scripts take notice of the following changes:
 
-1) #LOOP #FORALL #FUNCTION now use &0-&9 instead of %0-%9.
+1) #LOOP and #FORALL now use &0 instead of %0.
 
 2) #HIGHLIGHT had to be changed because this tintin version is less flexible
 when it comes to the parsing of commands as the old tintin versions. Basicly

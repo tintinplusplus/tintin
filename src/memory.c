@@ -33,32 +33,11 @@ char *string_alloc(char *string)
 
 	mem = (struct memory_data *) calloc(1, sizeof(struct memory_data));
 
-	mem->data = strdup(string);
+	mem->data = *string ? strdup(string) : calloc(1, 1);
 
 	LINK(mem, gtd->mem->next, gtd->mem->prev);
 
 	return mem->data;
-}
-
-
-char *string_realloc(char *point, char *string)
-{
-	struct memory_data *mem;
-
-	for (mem = gtd->mem->prev ; mem ; mem = mem->prev)
-	{
-		if (mem->data == point)
-		{
-			free(mem->data);
-
-			mem->data = strdup(string);
-
-			return mem->data;
-		}
-	}
-	printf("string_realloc: %s\n", string);
-
-	return point;
 }
 
 
@@ -74,6 +53,42 @@ char *stringf_alloc(char *fmt, ...)
 
 	return string_alloc(string);
 }
+
+
+char *string_realloc(char *point, char *string)
+{
+	struct memory_data *mem;
+
+	for (mem = gtd->mem->prev ; mem ; mem = mem->prev)
+	{
+		if (mem->data == point)
+		{
+			free(mem->data);
+
+			mem->data = *string ? strdup(string) : calloc(1, 1);
+
+			return mem->data;
+		}
+	}
+	printf("string_realloc: %s\n", string);
+
+	return point;
+}
+
+
+char *stringf_realloc(char *point, char *fmt, ...)
+{
+	char string[STRING_SIZE];
+
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(string, fmt, args);
+	va_end(args);
+
+	return string_realloc(point, string);
+}
+
 
 char *string_free(char *string)
 {
@@ -95,6 +110,7 @@ char *string_free(char *string)
 
 	return NULL;
 }
+
 
 void memory_free(struct memory_data *mem)
 {

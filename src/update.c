@@ -330,7 +330,7 @@ void delay_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = gtd->time + get_number(ses, node->pr) * 1000000L;
+				node->data = get_number(ses, node->pr);
 			}
 
 			if (node->data <= gtd->time)

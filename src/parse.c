@@ -119,7 +119,6 @@ struct session *parse_input(struct session *ses, char *input)
 				if (*arg2)
 				{
 					command = stringf_alloc("%s %s", arg1, arg2);
-
 				}
 				else
 				{
@@ -766,7 +765,7 @@ void do_one_line(char **line, struct session *ses)
 
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_highlights(ses, *line, strip);
+		check_all_highlights(ses, line, strip);
 	}
 
 	pop_call();

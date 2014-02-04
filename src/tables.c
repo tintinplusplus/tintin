@@ -90,6 +90,8 @@ struct command_type command_table[] =
 	{	"ticker",            do_tick,              CMD_FLAG_NONE    },
 	{	"unaction",          do_unaction,          CMD_FLAG_NONE    },
 	{	"unalias",           do_unalias,           CMD_FLAG_NONE    },
+	{    "undelay",           do_undelay,           CMD_FLAG_NONE    },
+	{    "unevent",           do_unevent,           CMD_FLAG_NONE    },
 	{	"unfunction",        do_unfunction,        CMD_FLAG_NONE    },
 	{	"ungag",             do_ungag,             CMD_FLAG_NONE    },
 	{	"unhighlight",       do_unhighlight,       CMD_FLAG_NONE    },
@@ -602,6 +604,12 @@ struct cursor_type cursor_table[] =
 		cursor_delete_word
 	},
 	{
+		"PASTE BUFFER",
+		"Paste the previously deleted input text",
+		"",
+		cursor_paste_buffer
+	},
+	{
 		"SUSPEND",
 		"Suspend program, return with fg",
 		"",
@@ -645,6 +653,7 @@ struct event_type event_table[] =
 {
 	{    "MAP ENTER ROOM",               "Triggers when entering a map room."    },
 	{    "SESSION CONNECTED",            "Triggers when a new session connects." },
+	{    "SESSION DISCONNECTED",         "Triggers when session disconnects."    },
 	{    "",                             ""                                      }
 };
 

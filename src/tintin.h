@@ -117,7 +117,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.96.9"
+#define VERSION_NUM               "1.97.0"
 
 #define ESCAPE                          27
 
@@ -751,6 +751,7 @@ extern DO_CURSOR(cursor_history_search);
 extern DO_CURSOR(cursor_home);
 extern DO_CURSOR(cursor_insert);
 extern DO_CURSOR(cursor_left);
+extern DO_CURSOR(cursor_paste_buffer);
 extern DO_CURSOR(cursor_redraw_input);
 extern DO_CURSOR(cursor_redraw_line);
 extern DO_CURSOR(cursor_right);
@@ -1076,6 +1077,7 @@ extern void dump_stack(void);
 #define __EVENT_H__
 
 extern DO_COMMAND(do_event);
+extern DO_COMMAND(do_unevent);
 extern void check_all_events(struct session *ses, char *line);
 
 #endif
@@ -1144,7 +1146,7 @@ extern DO_COMMAND(do_help);
 extern DO_COMMAND(do_highlight);
 extern int is_high_arg(char *s);
 extern DO_COMMAND(do_unhighlight);
-extern void check_all_highlights(struct session *ses, char *original, char *line);
+extern void check_all_highlights(struct session *ses, char **original, char *line);
 extern int get_highlight_codes(struct session *ses, char *htype, char *result);
 
 #endif
@@ -1225,8 +1227,9 @@ extern void quitmsg(char *message);
 #define __MEMORY_H__
 
 extern char *string_alloc(char *string);
-extern char *string_realloc(char *point, char *string);
 extern char *stringf_alloc(char *fmt, ...);
+extern char *string_realloc(char *point, char *string);
+extern char *stringf_realloc(char *point, char *fmt, ...);
 extern char *string_free(char *string);
 extern void memory_free(struct memory_data *mem);
 
@@ -1414,6 +1417,7 @@ int word_wrap(struct session *ses, char *textin, char *textout, int scroll);
 extern DO_COMMAND(do_tick);
 extern DO_COMMAND(do_untick);
 extern DO_COMMAND(do_delay);
+extern DO_COMMAND(do_undelay);
 
 
 #endif

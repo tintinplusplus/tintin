@@ -41,11 +41,15 @@ DO_COMMAND(do_tick)
 	arg = get_arg_in_braces(arg, &right, TRUE);
 	arg = get_arg_in_braces(arg, &temp,  TRUE);
 
-	get_number_string(ses, temp, &rank);
 
-	if (*rank == 0)
+
+	if (*temp == 0)
 	{
 		rank = string_alloc("60");
+	}
+	else
+	{
+		get_number_string(ses, temp, &rank);
 	}
 
 	if (!*left)
@@ -79,32 +83,45 @@ DO_COMMAND(do_untick)
 
 DO_COMMAND(do_delay)
 {
-	char *left, *right, *temp;
+	char *arg1, *arg2, *arg3, *time;
 	struct listroot *root;
 
 	root = ses->list[LIST_DELAY];
 
-	arg = get_arg_in_braces(arg, &left,  FALSE);
-	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, &arg1, 0);
+	arg = get_arg_in_braces(arg, &arg2, 1);
+	arg = get_arg_in_braces(arg, &arg3, 1);
 
-	if (*right == 0)
+	if (*arg1 == 0)
 	{
 		show_list(ses, root, LIST_DELAY);
 	}
-	else if (*left && *right == 0)
+	else if (*arg2 == 0)
 	{
-		tintin_puts2(ses, "#SYNTAX: #DELAY {seconds} {command}");
+		if (show_node_with_wild(ses, arg1, LIST_DELAY) == FALSE)
+		{
+			show_message(ses, LIST_DELAY, "#DELAY: NO MATCH(ES) FOUND FOR {%s}.", arg1);
+		}
 	}
 	else
 	{
-		get_number_string(ses, left, &temp);
+		time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));
 
-		left = stringf_alloc("%lld", utime());
+		if (*arg3 == 0)
+		{
+			arg3 = time;
+		}
 
-		updatenode_list(ses, left, right, temp, LIST_DELAY);
+		updatenode_list(ses, arg3, arg2, time, LIST_DELAY);
 
-		show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", temp, right);
+		show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg1, arg2);
 	}
 	return ses;
 }
 
+DO_COMMAND(do_undelay)
+{
+	delete_node_with_wild(ses, LIST_DELAY, arg);
+
+	return ses;
+}
