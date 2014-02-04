@@ -29,6 +29,11 @@
 
 void init_screen_size(struct session *ses)
 {
+	int top, bot;
+
+	top = ses->top_row == 0 ? 1 : ses->top_row;
+	bot = ses->bot_row == 0 ? 0 : ses->rows - ses->bot_row;
+
 	rl_resize_terminal();
 
 	rl_get_screen_size(&ses->rows, &ses->cols);
@@ -37,13 +42,19 @@ void init_screen_size(struct session *ses)
 	{
 		ses->rows = SCREEN_HEIGHT;
 	}
+
 	if (ses->cols <= 0)
 	{
 		ses->cols = SCREEN_WIDTH;
 	}
-	ses->top_row = 1;
-	ses->bot_row = ses->rows;
 
+	ses->top_row = top;
+	ses->bot_row = ses->rows - bot;
+
+	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	{
+		init_split(ses, ses->top_row, ses->bot_row);
+	}
 	SET_BIT(gts->flags, SES_FLAG_RESETBUFFER);
 }
 

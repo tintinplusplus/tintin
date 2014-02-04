@@ -78,15 +78,16 @@ void init_split(struct session *ses, int top, int bot)
 
 	SET_BIT(ses->flags, SES_FLAG_SPLIT);
 
-	init_screen_size(ses);
-
 	scroll_region(ses, top, bot);
 
-	do_one_prompt(ses, "", 1);
-
-	if (ses->top_row > 1)
+	for (bot = 1 ; ses->rows - bot > ses->bot_row ; bot++)
 	{
-		do_one_prompt(ses, "", -1);
+		do_one_prompt(ses, "", +bot);
+	}
+
+	for (top = 1 ; top < ses->top_row ; top++)
+	{
+		do_one_prompt(ses, "", -top);
 	}
 
 	goto_rowcol(ses, ses->rows, 1);

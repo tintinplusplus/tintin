@@ -126,7 +126,7 @@ void check_all_highlights(char *original, char *line, struct session *ses)
 	{
 		if (check_one_action(line, original, node->left, ses))
 		{
-			substitute(ses, node->left, buf1, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC);
+			substitute(ses, node->left, buf1, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
 
 			pt1 = strstr(original, buf1) ? original : line;
 			pt2 = strstr(pt1, buf1);

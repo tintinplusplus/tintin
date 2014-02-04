@@ -709,3 +709,25 @@ files.c        Added #scan {filename} which will read in a file and send it to
 
 llist.c        updatenode_list was acting odd, fiddled with it till it stopped
                crashing. Not sure what the problem was.
+
+macro.c        Added prompt handling for macro's. Still not perfect.
+
+scrsize.c      Fixed resetting of split data when resizing the screen.
+
+split.c        Now drawing split lines on all static regions to increase
+               clarity for newbies.
+
+misc.c         Can now use #showme {text} {row}, with a row number given
+               #showme will act like #prompt.
+
+misc.c         Can use #echo {{format} {row}} {{arguments}} as well.
+
+rl.c           Fixed #snoop messing up in #split mode.
+
+parse.c        Got rid of the code seperating high and low priority actions,
+               no longer valid with the #gagline command.
+
+antisubstitute Removed antisubstitutions since there seems little reason to
+               ever need them.
+
+rl.c           Checking internal messages for prompt gags now

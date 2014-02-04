@@ -174,14 +174,21 @@ DO_COMMAND(do_echo)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], result[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], result[BUFFER_SIZE];
 
-	get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, right, FALSE);
 
 	substitute(ses, left, result, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-	tintin_puts(result, ses);
-
+	if (*right)
+	{
+		do_one_prompt(ses, result, atoi(right));
+	}
+	else
+	{
+		tintin_puts(result, ses);
+	}
 	return ses;
 }
 

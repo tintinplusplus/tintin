@@ -59,11 +59,6 @@ RETSIGTYPE winchhandler(int no_care)
 		{
 			send_sb_naws(ses);
 		}
-
-		if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
-		{
-			init_split(ses, ses->top_row, ses->bot_row);
-		}
 	}
 
 	/*
@@ -253,9 +248,7 @@ void init_tintin(void)
 
 	init_screen_size(gts);
 
-
-	clean_screen(gts);
-	dirty_screen(gts);
+/*	dirty_screen(gts); */
 
 	/*
 		Set application keypad mode and  ESC 0 prefix

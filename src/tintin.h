@@ -664,8 +664,7 @@ extern void dump_stack(void);
 extern struct session *do_action(struct session *ses, const char *arg);
 extern struct session *do_unaction(struct session *ses, const char *arg);
 
-extern int check_presub_actions(const char *original, char *line, struct session *ses);
-extern int check_postsub_actions(const char *original, char *line, struct session *ses);
+extern void check_all_actions(const char *original, char *line, struct session *ses);
 
 #endif
 

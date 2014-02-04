@@ -107,7 +107,7 @@ DO_COMMAND(do_unaction)
 }
 
 
-int check_presub_actions(const char *original, char *line, struct session *ses)
+void check_all_actions(const char *original, char *line, struct session *ses)
 {
 	struct listnode *node;
 	struct listroot *root;
@@ -116,11 +116,6 @@ int check_presub_actions(const char *original, char *line, struct session *ses)
 
 	for (node = root->update = root->f_node ; node ; node = root->update)
 	{
-		if (atoi(node->pr) >= 5)
-		{
-			return FALSE;
-		}
-
 		root->update = node->next;
 
 		if (check_one_action(line, original, node->left, ses))
@@ -134,10 +129,11 @@ int check_presub_actions(const char *original, char *line, struct session *ses)
 				tintin_printf2(ses, "[ACTION: %s]", buffer);
 			}
 			parse_input(buffer, ses);
-			return TRUE;
+
+			return;
 		}
 	}
-	return FALSE;
+	return;
 }
 
 

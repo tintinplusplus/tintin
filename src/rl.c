@@ -248,13 +248,13 @@ void readmud(struct session *ses)
 
 	/* separate into lines and print away */
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
-		save_pos(ses);
-		goto_rowcol(ses, ses->bot_row, 1);
+		save_pos(gtd->ses);
+		goto_rowcol(gtd->ses, gtd->ses->bot_row, 1);
 	}
 
-	SET_BIT(ses->flags, SES_FLAG_READMUD);
+	SET_BIT(gtd->ses->flags, SES_FLAG_READMUD);
 
 	for (line = gtd->mud_output_buf ; line && *line ; line = next_line)
 	{
@@ -280,7 +280,7 @@ void readmud(struct session *ses)
 			}
 		}
 
-		if (ses->more_output[0])
+		if (*line && ses->more_output[0])
 		{
 			if (ses->check_output || HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 			{
@@ -301,11 +301,11 @@ void readmud(struct session *ses)
 		process_mud_output(ses, linebuf, next_line == NULL);
 	}
 
-	DEL_BIT(ses->flags, SES_FLAG_READMUD);
+	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
-		restore_pos(ses);
+		restore_pos(gtd->ses);
 	}
 
 	fflush(stdout);
@@ -610,12 +610,13 @@ void tintin_puts(const char *cptr, struct session *ses)
 		sprintf(buf, "%s", cptr);
 		do_one_line(buf, ses);
 
-		if (!HAS_BIT(ses->flags, SES_FLAG_GAG))
+		if (!HAS_BIT(ses->flags, SES_FLAG_GAG) && !HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
 		{
 			tintin_puts2(buf, ses);
 		}
 		else
 		{
+			DEL_BIT(ses->flags, SES_FLAG_GAGPROMPT);
 			DEL_BIT(ses->flags, SES_FLAG_GAG);
 		}
 	}

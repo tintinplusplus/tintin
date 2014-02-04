@@ -185,6 +185,10 @@ struct session *new_session(const char *name, const char *address, struct sessio
 
 	init_screen_size(newsession);
 
+	if (HAS_BIT(gts->flags, SES_FLAG_SPLIT))
+	{
+		init_split(newsession, gts->top_row, gts->bot_row);
+	}
 	init_buffer(newsession, gts->scroll_max);
 
 	connect_session(newsession);
@@ -220,11 +224,6 @@ void connect_session(struct session *ses)
 		ses->socket = sock;
 
 		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
-
-		if (IS_SPLIT(gts))
-		{
-			init_split(ses, gts->top_row, gts->bot_row);
-		}
 
 		tintin_printf2(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);
 

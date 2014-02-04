@@ -559,45 +559,33 @@ void write_com_arg_mud(const char *command, const char *argument, struct session
 
 void do_one_line(char *line, struct session *ses)
 {
-	char temp[BUFFER_SIZE];
-	int antisub = TRUE;
-	int postact = TRUE;
+	char strip[BUFFER_SIZE];
 
 	push_call("[%s] do_one_line(%p,%p)",ses->name,line,ses);
 
-	strip_vt102_codes(line, temp);
+	strip_vt102_codes(line, strip);
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{
-		postact = !check_presub_actions(line, temp, ses);
+		check_all_actions(line, strip, ses);
 	}
 
-	if (!HAS_BIT(ses->list[LIST_ANTISUBSTITUTE]->flags, LIST_FLAG_IGNORE))
-	{
-		antisub = !check_all_antisubstitutions(line, temp, ses);
-	}
-
-	if (antisub && !HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
+	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
 	{
 		if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 		{
-			check_all_prompts(line, temp, ses);
+			check_all_prompts(line, strip, ses);
 		}
 	}
 
-	if (antisub && !HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
+	if (!HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_substitutions(line, temp, ses);
-	}
-
-	if (postact && !HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
-	{
-		check_postsub_actions(line, temp, ses);
+		check_all_substitutions(line, strip, ses);
 	}
 
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_highlights(line, temp, ses);
+		check_all_highlights(line, strip, ses);
 	}
 	pop_call();
 	return;
