@@ -199,7 +199,7 @@ void write_line_mud(struct session *ses, char *line, int size)
 
 int read_buffer_mud(struct session *ses)
 {
-	char buffer[BUFFER_SIZE];
+	unsigned char buffer[BUFFER_SIZE];
 	int size;
 
 	push_call("read_buffer_mud(%p)",ses);

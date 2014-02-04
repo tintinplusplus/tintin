@@ -205,14 +205,14 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		}
 	}
 
-	newsession                = calloc(1, sizeof(struct session));
+	newsession                = (struct session *) calloc(1, sizeof(struct session));
 
 	newsession->name          = strdup(name);
 	newsession->host          = strdup(host);
 	newsession->ip            = strdup("");
 	newsession->port          = strdup(port);
 
-	newsession->class         = strdup(gts->class);
+	newsession->group         = strdup(gts->group);
 	newsession->flags         = gts->flags;
 	newsession->telopts       = gts->telopts;
 	newsession->auto_tab      = gts->auto_tab;
@@ -220,7 +220,7 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 	newsession->cmd_color     = strdup(gts->cmd_color);
 
 	newsession->read_max      = gts->read_max;
-	newsession->read_buf      = calloc(1, gts->read_max);
+	newsession->read_buf      = (unsigned char *) calloc(1, gts->read_max);
 
 	gtd->ses                  = newsession;
 
@@ -399,7 +399,7 @@ void dispose_session(struct session *ses)
 	free(ses->host);
 	free(ses->ip);
 	free(ses->port);
-	free(ses->class);
+	free(ses->group);
 	free(ses->read_buf);
 
 	free(ses);

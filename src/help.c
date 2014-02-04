@@ -320,15 +320,17 @@ struct help_type help_table[] =
 		"         the same result.\n"
 	},
 	{
-		"ESCAPE",
+		"ESCAPE CODES",
 		"         You may use the escape character \\ for various special characters.\n"
 		"\n"
 		"         \\a   will beep the terminal.\n"
+		"         \\c   will send a control character, \\ca for ctrl-a.\n"
+		"         \\d   will send a decimal character, \\d255 for example.\n"
 		"         \\e   will start an escape sequence.\n"
 		"         \\n   will send a line feed.\n"
 		"         \\r   will send a carriage return.\n"
 		"         \\t   will send a tab.\n"
-		"         \\x   will print a hexadecimal value, \xFF for example.\n"
+		"         \\x   will print a hexadecimal value, \\xFF for example.\n"
 		"         \\x7B will send the '{' character.\n"
 		"         \\x7D will send the '}' character.\n"
 		"\n"
@@ -347,6 +349,9 @@ struct help_type help_table[] =
 		"         END OF PATH\n"
 		"         IAC <VAR> <VAR>\n"
 		"         IAC SB MSSP          %0 variable %1 value\n"
+		"         IAC SB MSDP          %0 variable %1 value\n"
+		"         IAC SB NEW-ENVIRON   %0 variable %1 value\n"
+		"         IAC SB ZMP <VAR>     %0 value\n"
 		"         IAC SB <VAR>         %0 raw text %1 raw data\n"
 		"         MAP ENTER ROOM       %0 vnum\n"
 		"         PROGRAM TERMINATION\n"
@@ -699,6 +704,7 @@ struct help_type help_table[] =
 		"         #map goto <room name>: Takes you to the given room name.\n"
 		"\n"
 		"         #map get <option> <variable>: Store a map value into a variable.\n"
+		"         #map get roomexits <variable>: Store all room exits into variable.\n"
 		"\n"
 		"         #map info: Gives information about the map and room you are in.\n"
 		"\n"
@@ -1116,9 +1122,11 @@ struct help_type help_table[] =
 		"\n"
 		"         If no argument is given, all subs are displayed.\n"
 		"\n"
-		"<178>Example<078>: #sub {^Zoe%0} {ZOE%0}\n"
-		"         Any line that starts with the name Zoe will be replaced by a line that\n"
-		"         starts with 'ZOE'.\n"
+		"<178>Example<078>: #sub {Zoe} {ZOE}\n"
+		"         Any instance of Zoe will be replaced with ZOE.\n"
+		"\n"
+		"<178>Example<078>: #sub {~\\e[0;34m} {\\e[1;34m}\n"
+		"         Replace generic dark blue color codes with bright blue ones.\n"
 		"\n"
 		"<178>Example<078>: #sub {%0massacres%1} {<<888>018>%0<<888>118>MASSACRES<<888>018>%1}\n"
 		"         Replaces all occurrences of 'massacres' with 'MASSACRES' in red.\n"
@@ -1160,11 +1168,12 @@ struct help_type help_table[] =
 	},
 	{
 		"TEXTIN",
-		"<178>Command<078>: #textin <178>{<078>filename<178>}<078>\n"
+		"<178>Command<078>: #textin <178>{<078>filename<178>}<078> <178>{<078>delay<178>}<078>\n"
 		"\n"
-		"         Textin now allows the user to read in a file, and send its contents\n"
+		"         Textin allows the user to read in a file, and send its contents\n"
 		"         directly to the mud.  Useful for doing online creation, or message\n"
-		"         writing.\n"
+		"         writing. The delay has a micro second precision and is cumulatively\n"
+		"         applied to each outgoing line.\n"
 	},
 	{
 		"TICKER",
@@ -1254,7 +1263,7 @@ DO_COMMAND(do_help)
 
 		for (cnt = add[0] = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if (strlen(add) + 19 > ses->cols)
+			if ((int) strlen(add) + 19 > ses->cols)
 			{
 				tintin_puts2(ses, add);
 				add[0] = 0;

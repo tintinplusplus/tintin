@@ -137,14 +137,14 @@ int glob(char *str, char *exp)
 
 DO_COMMAND(do_regexp)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], true[BUFFER_SIZE], false[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], is_true[BUFFER_SIZE], is_false[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 0);
-	arg = get_arg_in_braces(arg, true,  1);
-	arg = get_arg_in_braces(arg, false, 1);
+	arg = get_arg_in_braces(arg, is_true,  1);
+	arg = get_arg_in_braces(arg, is_false, 1);
 
-	if (*right == 0 || *true == 0)
+	if (*right == 0 || *is_true == 0)
 	{
 		tintin_printf2(ses, "SYNTAX: #REGEXP {string} {expression} {true} {false}.");
 	}
@@ -155,13 +155,13 @@ DO_COMMAND(do_regexp)
 
 		if (regexp_compare(NULL, left, right, 0, SUB_CMD))
 		{
-			substitute(ses, true, true, SUB_CMD);
+			substitute(ses, is_true, is_true, SUB_CMD);
 
-			ses = script_driver(ses, -1, true);
+			ses = script_driver(ses, -1, is_true);
 		}
-		else if (*false)
+		else if (*is_false)
 		{
-			ses = script_driver(ses, -1, false);
+			ses = script_driver(ses, -1, is_false);
 		}
 	}
 	return ses;
@@ -766,7 +766,7 @@ int check_one_regexp(struct session *ses, struct listnode *node, char *line, cha
 {
 	char *exp, *str;
 
-	if (node->pcre == NULL)
+	if (node->regex == NULL)
 	{
 		char result[BUFFER_SIZE];
 
@@ -789,7 +789,7 @@ int check_one_regexp(struct session *ses, struct listnode *node, char *line, cha
 		str = line;
 	}	
 
-	return tintin_regexp(node->pcre, str, exp, option);
+	return tintin_regexp(node->regex, str, exp, option);
 }
 
 /*
@@ -990,7 +990,17 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 			case '{':
 				*pto++ = '(';
 				pti = get_arg_in_braces(pti, pto, TRUE);
-				pto += strlen(pto);
+				while (*pto)
+				{
+					if (pto[0] == '$' || pto[0] == '@')
+					{
+						if (pto[1])
+						{
+							return NULL;
+						}
+					}
+					pto++;
+				}
 				*pto++ = ')';
 				break;
 

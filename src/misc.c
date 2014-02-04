@@ -75,7 +75,7 @@ DO_COMMAND(do_commands)
 		{
 			continue;
 		}
-		if (strlen(buf) + 20 > ses->cols)
+		if ((int) strlen(buf) + 20 > ses->cols)
 		{
 			tintin_puts2(ses, buf);
 			buf[0] = 0;

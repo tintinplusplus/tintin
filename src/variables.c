@@ -135,46 +135,46 @@ void internal_variable(struct session *ses, char *format, ...)
 
 DO_COMMAND(do_replace)
 {
-	char var[BUFFER_SIZE], old[BUFFER_SIZE], new[BUFFER_SIZE], buf[STRING_SIZE], *pti, *ptr, *pto;
+	char var[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], buf[STRING_SIZE], *pti, *ptr, *pto;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_VARIABLE];
 
 	arg = get_arg_in_braces(arg, var, FALSE);
-	arg = get_arg_in_braces(arg, old, FALSE);
-	substitute(ses, old, old, SUB_VAR|SUB_FUN|SUB_ESC);
-	arg = get_arg_in_braces(arg, new, TRUE);
-	substitute(ses, new, new, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN|SUB_ESC);
+	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-	if (*var == 0 || *old == 0)
+	if (*var == 0 || *left == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#Syntax: #replace <var> <oldtext> <newtext>", ses);
+		show_message(ses, LIST_VARIABLE, "#Syntax: #replace <var> <old text> <new text>", ses);
 	}
 	else	if ((node = searchnode_list(root, var)) == NULL)
 	{
 		show_message(ses, LIST_VARIABLE, "#REPLACE: VARIABLE {%s} NOT FOUND.", var);
 	}
-	else if ((ptr = strstr(node->right, old)) == NULL)
+	else if ((ptr = strstr(node->right, left)) == NULL)
 	{
-		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", old, node->right);
+		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", left, node->right);
 	}
 	else
 	{
 		pti = node->right;
 		pto = buf;
 
-		while ((ptr = strstr(pti, old)) != NULL)
+		while ((ptr = strstr(pti, left)) != NULL)
 		{
 			while (pti != ptr)
 			{
 				*pto++ = *pti++;
 			}
 
-			strcpy(pto, new);
-			pto += strlen(new);
+			strcpy(pto, right);
+			pto += strlen(right);
 
-			pti += strlen(old);
+			pti += strlen(left);
 		}
 
 		while (*pti)
@@ -221,7 +221,7 @@ void headerstring(char *str)
 {
 	char buf[BUFFER_SIZE];
 
-	if (strlen(str) > gtd->ses->cols - 2)
+	if ((int) strlen(str) > gtd->ses->cols - 2)
 	{
 		str[gtd->ses->cols - 2] = 0;
 	}

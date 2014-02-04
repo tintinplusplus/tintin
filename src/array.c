@@ -99,7 +99,7 @@ int get_list_index(struct session *ses, struct listnode *node, char *arg)
 {
 	int index, size;
 
-	index = get_number(ses, arg);
+	index = (int) get_number(ses, arg);
 	size  = get_list_length(node);
 
 	if (size == 0 && (index == -1 || index == 1))

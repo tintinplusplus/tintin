@@ -66,7 +66,7 @@ char *str_hash(char *str, int lines)
 			return (char *) hash_ptr + gtd->str_hash_size;
 		}
 	}
-	hash_ptr = calloc(1, str_hash_len + 1 + gtd->str_hash_size);
+	hash_ptr = (struct str_hash_data *) calloc(1, str_hash_len + 1 + gtd->str_hash_size);
 
 	hash_ptr->count = 1;
 	hash_ptr->lines = lines;

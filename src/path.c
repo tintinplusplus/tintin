@@ -114,7 +114,7 @@ DO_PATH(path_map)
 
 		for (node = root->f_node ; node ; node = node->next)
 		{
-			if (strlen(buf) + strlen(node->left) > ses->cols)
+			if ((int) strlen(buf) + (int) strlen(node->left) > ses->cols)
 			{
 				tintin_puts2(ses, buf);
 

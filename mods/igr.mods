@@ -1,3 +1,16 @@
+April 2009     1.99.5
+
+*.c            Made code c++ compatible.
+
+system.c       Added 2nd argument to textin for a cumulative per line delay.
+
+telopt.c       Added event handlers for MSDP, NEW-ENVIRON, and ZMP.
+
+substitute.c   #sub {trigger} {.} no longer gags text, use #gag instead.
+
+substitute.c   Now allowing multiple substitutions per line which are
+               automatically substring substitutions.
+
 March 2009     1.99.4
 
 utils.c        Fixed 100 move map crash bug.

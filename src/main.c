@@ -246,7 +246,7 @@ void init_tintin(void)
 {
 	int ref, cnt;
 
-	gts = calloc(1, sizeof(struct session));
+	gts = (struct session *) calloc(1, sizeof(struct session));
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
 	{
@@ -254,7 +254,7 @@ void init_tintin(void)
 	}
 
 	gts->name           = strdup("gts");
-	gts->class          = strdup("");
+	gts->group          = strdup("");
 	gts->host           = strdup("");
 	gts->port           = strdup("");
 	gts->cmd_color      = strdup("");
@@ -263,17 +263,17 @@ void init_tintin(void)
 	gts->socket         = 1;
 	gts->read_max       = 4096;
 
-	gtd                 = calloc(1, sizeof(struct tintin_data));
+	gtd                 = (struct tintin_data *) calloc(1, sizeof(struct tintin_data));
 
 	gtd->ses            = gts;
 
 	gtd->str_hash_size  = sizeof(struct str_hash_data);
 
 	gtd->mccp_len       = 4096;
-	gtd->mccp_buf       = calloc(1, gtd->mccp_len);
+	gtd->mccp_buf       = (unsigned char *) calloc(1, gtd->mccp_len);
 
 	gtd->mud_output_max = 4096;
-	gtd->mud_output_buf = calloc(1, gtd->mud_output_max);
+	gtd->mud_output_buf = (char *) calloc(1, gtd->mud_output_max);
 
 	gtd->input_off      = 1;
 

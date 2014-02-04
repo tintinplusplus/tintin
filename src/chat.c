@@ -174,7 +174,7 @@ DO_CHAT(chat_initialize)
 
 		return;
 	}
-	gtd->chat = calloc(1, sizeof(struct chat_data));
+	gtd->chat = (struct chat_data *) calloc(1, sizeof(struct chat_data));
 
 	gtd->chat->fd       = sock;
 	gtd->chat->port     = port;
@@ -213,7 +213,7 @@ int chat_new(int s)
 {
 	struct chat_data *new_buddy;
 	struct sockaddr_in sock;
-	unsigned int i;
+	socklen_t i;
 	int fd;
 
 	i = sizeof(sock);
@@ -239,7 +239,7 @@ int chat_new(int s)
 		return -1;
 	}
 
-	new_buddy = calloc(1, sizeof(struct chat_data));
+	new_buddy = (struct chat_data *) calloc(1, sizeof(struct chat_data));
 
 	new_buddy->fd       = fd;
 
@@ -517,7 +517,7 @@ void *threaded_chat_call(void *arg)
 		return NULL;
 	}
 
-	new_buddy = calloc(1, sizeof(struct chat_data));
+	new_buddy = (struct chat_data *) calloc(1, sizeof(struct chat_data));
 
 	new_buddy->fd       = sock;
 	new_buddy->port     = atoi(port);
@@ -585,7 +585,7 @@ DO_CHAT(chat_call)
 
 	sprintf(buf, "{%s} {%s}", left, right);
 
-	pthread_create(&thread, NULL, (void *) threaded_chat_call, (void *) buf);
+	pthread_create(&thread, NULL, threaded_chat_call, (void *) buf);
 }
 	
 #else

@@ -73,7 +73,7 @@ DO_COMMAND(do_read)
 
 	stat(filename, &filedata);
 
-	if ((bufi = calloc(1, filedata.st_size + 2)) == NULL || (bufo = calloc(1, filedata.st_size + 2)) == NULL)
+	if ((bufi = (char *) calloc(1, filedata.st_size + 2)) == NULL || (bufo = (char *) calloc(1, filedata.st_size + 2)) == NULL)
 	{
 		tintin_printf(ses, "#ERROR: #READ {%s} - FAILED TO ALLOCATE MEMORY.", filename);
 

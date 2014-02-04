@@ -89,6 +89,7 @@
 #define     TELOPT_ENCRYPT       38
 #define     TELOPT_NEW_ENVIRON   39
 #define     TELOPT_STARTTLS      46
+#define     TELOPT_MSDP          69  /* Mud Server Data Protocol */
 #define     TELOPT_MSSP          70  /* Mud Server Status Protocol */
 #define     TELOPT_MCCP1         85
 #define     TELOPT_MCCP2         86  /* Mud Client Compression Protocol */
@@ -113,8 +114,14 @@ char *telcmds[] =
         Sub negotiation
 */
 
-#define	    VAR_IS                0
-#define	    VAR_SEND              1
+#define	    ENV_IS                0
+#define	    ENV_SEND              1
+#define     ENV_INFO              2
+
+#define     ENV_VAR               0
+#define     ENV_VAL               1
+#define     ENV_ESC               2 /* Not implemented in tintin */
+#define     ENV_USR               3
 
 #define     MSSP_VAR              1
 #define     MSSP_VAL              2

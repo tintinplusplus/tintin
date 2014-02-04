@@ -50,7 +50,7 @@ DO_COMMAND(do_class)
 
 		for (node = root->f_node ; node ; node = node->next)
 		{
-			tintin_printf2(ses, "%-20s %3d %s", node->left, count_class(ses, node), !strcmp(ses->class, node->left) ? "OPEN" : "CLOSED");
+			tintin_printf2(ses, "%-20s %3d %s", node->left, count_class(ses, node), !strcmp(ses->group, node->left) ? "OPEN" : "CLOSED");
 		}
 	}
 	else if (*right == 0)
@@ -63,7 +63,7 @@ DO_COMMAND(do_class)
 			{
 				for (node = ses->list[cnt]->f_node ; node ; node = node->next)
 				{
-					if (!strcmp(node->class, left))
+					if (!strcmp(node->group, left))
 					{
 						shownode_list(ses, node, cnt);
 					}
@@ -96,14 +96,14 @@ DO_COMMAND(do_class)
 			{
 				updatenode_list(ses, left, right, third, LIST_CLASS);
 			}
-			class_table[cnt].class(ses, left, third);
+			class_table[cnt].group(ses, left, third);
 		}
 	}
 	return ses;
 }
 
 
-int count_class(struct session *ses, struct listnode *class)
+int count_class(struct session *ses, struct listnode *group)
 {
 	struct listnode *node;
 	int list, cnt;
@@ -117,7 +117,7 @@ int count_class(struct session *ses, struct listnode *class)
 
 		for (node = ses->list[list]->f_node ; node ; node = node->next)
 		{
-			if (!strcmp(node->class, class->left))
+			if (!strcmp(node->group, group->left))
 			{
 				cnt++;
 			}
@@ -133,7 +133,7 @@ DO_CLASS(class_open)
 
 	node = search_node_with_wild(ses, left, LIST_CLASS);
 
-	RESTRING(ses->class, left);
+	RESTRING(ses->group, left);
 
 	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED.", left);
 
@@ -147,9 +147,9 @@ DO_CLASS(class_close)
 
 	node = search_node_with_wild(ses, left, LIST_CLASS);
 
-	if (!strcmp(ses->class, left))
+	if (!strcmp(ses->group, left))
 	{
-		RESTRING(ses->class, "");
+		RESTRING(ses->group, "");
 
 		show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", left);
 	}
@@ -198,7 +198,7 @@ DO_CLASS(class_write)
 
 		for (node = ses->list[cnt]->f_node ; node ; node = node->next)
 		{
-			if (!strcmp(node->class, left))
+			if (!strcmp(node->group, left))
 			{
 				prepare_for_write(cnt, node, temp);
 
@@ -218,14 +218,14 @@ DO_CLASS(class_write)
 
 DO_CLASS(class_kill)
 {
-	struct listnode *node, *node_next, *class;
+	struct listnode *node, *node_next, *group;
 	int cnt;
 
-	class = search_node_with_wild(ses, left, LIST_CLASS);
+	group = search_node_with_wild(ses, left, LIST_CLASS);
 
-	if (!strcmp(ses->class, left))
+	if (!strcmp(ses->group, left))
 	{
-		RESTRING(ses->class, "");
+		RESTRING(ses->group, "");
 	}
 
 	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
@@ -239,7 +239,7 @@ DO_CLASS(class_kill)
 		{
 			node_next = node->next;
 
-			if (!strcmp(node->class, left))
+			if (!strcmp(node->group, left))
 			{
 				deletenode_list(ses, node, cnt);
 			}
@@ -247,7 +247,7 @@ DO_CLASS(class_kill)
 	}
 	show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLEARED.", left);
 
-	deletenode_list(ses, class, LIST_CLASS);
+	deletenode_list(ses, group, LIST_CLASS);
 
 	return ses;
 }

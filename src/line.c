@@ -103,3 +103,40 @@ DO_LINE(line_log)
 		tintin_printf(ses, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
 	}
 }
+
+DO_LINE(line_lograw)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+
+	if (ses->logline)
+	{
+		return;
+	}
+
+	if ((ses->logline = fopen(left, "a")))
+	{
+		fseek(ses->logline, 0, SEEK_END);
+
+		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		{
+			write_html_header(ses->logline);
+		}
+
+		if (*right)
+		{
+			substitute(ses, right, right, SUB_ESC|SUB_LNF);
+
+			logit(ses, right, ses->logline, FALSE);
+
+			fclose(ses->logline);
+			ses->logline = NULL;
+		}
+	}
+	else
+	{
+		tintin_printf(ses, "#ERROR: #LINE LOGRAW {%s} - COULDN'T OPEN FILE.", left);
+	}
+}

@@ -46,9 +46,9 @@ DO_COMMAND(do_run)
 	char *argv[4] = {"sh", "-c", "", NULL};
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(arg, right, TRUE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, right, TRUE);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -98,7 +98,7 @@ DO_COMMAND(do_scan)
 	if (STRING_SIZE > gtd->mud_output_max)
 	{
 		gtd->mud_output_max  = STRING_SIZE;
-		gtd->mud_output_buf  = realloc(gtd->mud_output_buf, gtd->mud_output_max);
+		gtd->mud_output_buf  = (char *) realloc(gtd->mud_output_buf, gtd->mud_output_max);
 	}
 
 	while (fgets(gtd->mud_output_buf, STRING_SIZE, fp))
@@ -211,14 +211,16 @@ DO_COMMAND(do_system)
 DO_COMMAND(do_textin)
 {
 	FILE *fp;
-	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
 
-	get_arg_in_braces(arg, filename, TRUE);
-	substitute(ses, filename, filename, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, left, FALSE);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	if ((fp = fopen(filename, "r")) == NULL)
+	arg = get_arg_in_braces(arg, right, TRUE);
+
+	if ((fp = fopen(left, "r")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", filename);
+		tintin_printf(ses, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", left);
 		return ses;
 	}
 
@@ -232,6 +234,11 @@ DO_COMMAND(do_textin)
 		}
 
 		write_mud(ses, buffer, SUB_EOL);
+
+		if (*right)
+		{
+			usleep((long long) (get_number(ses, right) * 1000000));
+		}
 	}
 	fclose(fp);
 

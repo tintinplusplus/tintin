@@ -6,8 +6,6 @@ GENERAL STUFF:
 
 - look into auto tabbing
 
-- fix double enter in #run bla bash
-
 - Add a ARG_LEN / ARG_MAX setting.
 
 - Add a #line skip option.
@@ -61,6 +59,8 @@ MAPPING STUFF:
 - See if it's possible to add better #path run support.
 
 - Events for prompt lines.
+
+- Lua scripting
 
 -------------------------------------------------------------------------------
 

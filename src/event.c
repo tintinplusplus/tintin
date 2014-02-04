@@ -81,7 +81,7 @@ DO_COMMAND(do_unevent)
 	return ses;
 }
 
-void check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
+int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 {
 	char buf[BUFFER_SIZE];
 	struct listnode *node;
@@ -109,8 +109,14 @@ void check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 			substitute(ses, node->right, buf, SUB_ARG|SUB_SEC);
 
 			script_driver(ses, LIST_EVENT, buf);
+
+			va_end(list);
+
+			return 1;
 		}
 	}
 
 	va_end(list);
+
+	return 0;
 }

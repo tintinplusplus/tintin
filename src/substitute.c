@@ -30,13 +30,13 @@
 
 DO_COMMAND(do_substitute)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE], *str;
 	struct listroot *root;
 
 	root = ses->list[LIST_SUBSTITUTE];
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
+	str = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(str, right, 1);
 	arg = get_arg_in_braces(arg, rank,  1);
 
 	if (*rank == 0)
@@ -48,7 +48,7 @@ DO_COMMAND(do_substitute)
 	{
 		show_list(ses, root, LIST_SUBSTITUTE);
 	}
-	else if (*left && !*right)
+	else if (*str == 0)
 	{
 		if (show_node_with_wild(ses, left, LIST_SUBSTITUTE) == FALSE)
 		{
@@ -75,23 +75,37 @@ DO_COMMAND(do_unsubstitute)
 void check_all_substitutions(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
+	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *pt1, *pt2;
 
 	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
 	{
 		if (check_one_regexp(ses, node, line, original, 0))
 		{
-			if (strcmp(node->right, "."))
+			if (*gtd->vars[0] == 0)
 			{
-				substitute(ses, node->right, original, SUB_ARG);
-				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+				continue;
+			}
+			strcpy(match, gtd->vars[0]);
 
-				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s}", node->left);
-			}
-			else
+			*output = 0;
+
+			substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+
+			pt1 = original;
+
+			while ((pt2 = strstr(pt1, match)) != NULL)
 			{
-				SET_BIT(ses->flags, SES_FLAG_GAG);
+				*pt2 = 0;
+
+				cat_sprintf(output, "%s%s", pt1, subst);
+
+				pt1 = pt2 + strlen(match);
 			}
-			return;
+			strcat(output, pt1);
+
+			strcpy(original, output);
+
+			show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
 		}
 	}
 }

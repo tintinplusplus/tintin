@@ -69,7 +69,7 @@ void addtoken(struct scripttoken *root, int lvl, int opr, int cmd, char *str)
 {
 	struct scripttoken *token;
 
-	token = calloc(1, sizeof(struct scripttoken));
+	token = (struct scripttoken *) calloc(1, sizeof(struct scripttoken));
 
 	token->lvl = lvl;
 	token->opr = opr;
@@ -119,7 +119,7 @@ void tokenize_script(struct session *ses, struct scripttoken *root, int lvl, cha
 		return;
 	}
 
-	line = calloc(1, BUFFER_SIZE);
+	line = (char *) calloc(1, BUFFER_SIZE);
 
 	while (*str)
 	{
@@ -338,7 +338,7 @@ struct session *script_driver(struct session *ses, int list, char *str)
 	struct scripttoken *root;
 	int level;
 
-	root = calloc(1, sizeof(struct scripttoken));
+	root = (struct scripttoken *) calloc(1, sizeof(struct scripttoken));
 
 	tokenize_script(ses, root, 0, str);
 
@@ -365,7 +365,7 @@ char *script_writer(struct session *ses, char *str)
 {
 	struct scripttoken *root;
 
-	root = calloc(1, sizeof(struct scripttoken));
+	root = (struct scripttoken *) calloc(1, sizeof(struct scripttoken));
 
 	tokenize_script(ses, root, 1, str);
 

@@ -35,95 +35,104 @@
 #PATHDIR          {u}                     {d}                          {16}
 #PATHDIR          {d}                     {u}                          {32}
 
-#var bla {}
+#nop zmp stuff
 
-#forall {a b c d e f}
+#event {IAC WILL ZMP}
 {
-	#forall {a b c d e f}
+	#showme {<118>SEND IAC WILL ZMP};
+	#send {\xFF\xFD\x5D\};
+
+	#showme {<118>ZMP SEND zmp.ident (TinTin++ ZMP parser) (1.0) (Script for handling ZMP core commands.)};
+	#send {\xFF\xFA\x5Dzmp.ident\x00TinTin++ ZMP parser\x001.0\x00Script for handling ZMP core commands.\x00\xFF\xF0\};
+
+	#unevent {IAC WILL ZMP}
+}
+
+#event {IAC SB ZMP zmp.ident}
+{
+	#list zmp_ident ins -1 %0;
+}
+
+#event {IAC SB ZMP zmp.ident IAC SE}
+{
+	#showme <118>ZMP RECV zmp_ident ($zmp_ident[1]) ($zmp_ident[2]) ($zmp_ident[3]);
+
+	#unevent {IAC SB ZMP zmp.ident};
+
+	#unvar {zmp_ident}
+}
+
+#event {IAC SB ZMP zmp.ping IAC SE}
+{
+	#showme <118>ZMP RECV zmp.ping IAC SE;
+
+	#format temp {%t} {{%F %T}};
+	#showme <118>ZMP SEND zmp.time ($temp);
+	#send {\xFF\xFA\x5Dzmp.time\x00$zmp_temp\xFF\xF0\}
+}
+
+#event {IAC SB ZMP zmp.time}
+{
+	#showme <118>ZMP RECV zmp.time (%0)
+}
+
+#event {IAC SB ZMP zmp.check}
+{
+	#showme <118>ZMP RECV zmp.check (%0);
+
+	#regex {%0} {zmp.ident|zmp.ping|zmp.time|zmp.check}
 	{
-		#forall {a b c d e f}
-		{
-			#var bla {$bla <&0&&0&&&0>(&0&&0&&&0)}
-		};
-		#showme $bla;
-		#var bla {}
+		zmp.support %0
+	}
+	{
+		zmp.no-support %0
 	}
 }
 
-#loop {0 23}
+#event {IAC SB ZMP zmp.input}
 {
-	#format tmp {g%+02s} {{&0}};
-	#var bla $bla <$tmp>($tmp)
+	#showme <118>ZMP RECV zmp.input (%0)
 }
 
-#showme $bla
-
-
-#var bla {}
-
-#forall {A B C D E F}
+#alias {zmp.ping}
 {
-	#forall {A B C D E F}
-	{
-		#forall {A B C D E F}
-		{
-			#var bla {$bla <&0&&0&&&0>(&0&&0&&&0)}
-		};
-		#showme $bla;
-		#var bla {}
-	}
+	#showme <118>ZMP SEND zmp.ping;
+
+	#send {\xFF\xFA\x5Dzmp.ping\x00\xFF\xF0\}
 }
 
-#loop {0 23}
+#alias {zmp.support}
 {
-	#format tmp {G%+02s} {{&0}};
-	#var bla $bla <$tmp>($tmp)
+	#showme <118>ZMP SEND zmp.support (%0);
+	#send {\xFF\xFA\x5Dzmp.support\x00%1\xFF\xF0\}
 }
 
-#showme $bla
-
-#alias {bla}
+#alias {zmp.no-support}
 {
-	#math {hp_percent}{100 * %1 / %2};
-	#math {hpbars1}   {$hp_percent / 5};
-	#math {hpbars2}   {20 - $hpbars1};
-
-	#format {hpbar} {<011>%+${hpbars1}s<099><000>%+${hpbars2}s<099> };
-
-	#showme [$hpbar][$hpbar]
+	#showme <118>ZMP SEND zmp.no-support (%0);
+	#send {\xFF\xFA\x5Dzmp.no-support\x00%1\xFF\xF0\}
 }
 
-#function {hpbars}
+#alias {zmp.debug}
 {
-  #math result %1 / 100;
-  #format result {%+${result}s};
-  #replace result { } {-}
+	#ungag {^ZMP {SEND|RECV}}
 }
 
-#showme @hpbars{500}
-
-#map read x.map
-
-#MACRO {\eOA}
+#alias {zmp.no-debug}
 {
-	n
+	#gag {^ZMP {SEND|RECV}}
 }
 
-#MACRO {\eOB}
+#nop new-environ stuff
+
+#event {IAC DO NEW-ENVIRON}
 {
-	s
+	#send {\xFF\xFC\x27\};
+	#send {\xFF\xFD\x27\}
 }
 
-#MACRO {\eOC}
+#event {IAC SB NEW-ENVIRON SEND}
 {
-	e
+	#send {\xFF\xFA\x27\x00\xFF\xF0\}
 }
 
-#MACRO {\eOD}
-{
-	w
-}
-
-#split 31 1
-#map flag vtmap
-#map goto 10

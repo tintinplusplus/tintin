@@ -68,7 +68,7 @@ void init_buffer(struct session *ses, int size)
 
 	if (size)
 	{
-		ses->buffer = calloc(size, sizeof(char *));
+		ses->buffer = (char **) calloc(size, sizeof(char *));
 
 		ses->scroll_max  = size;
 		ses->scroll_row  = size - 1;

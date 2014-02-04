@@ -32,7 +32,7 @@ struct listroot *init_list(int index)
 {
 	struct listroot *listhead;
 
-	if ((listhead = calloc(1, sizeof(struct listroot))) == NULL)
+	if ((listhead = (struct listroot *) calloc(1, sizeof(struct listroot))) == NULL)
 	{
 		fprintf(stderr, "couldn't alloc listhead\n");
 		exit(1);
@@ -64,17 +64,17 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 	{
 		for (node = sourcelist->f_node ; node ; node = node->next)
 		{
-			newnode = calloc(1, sizeof(struct listnode));
+			newnode = (struct listnode *) calloc(1, sizeof(struct listnode));
 
 			newnode->left  = strdup(node->left);
 			newnode->right = strdup(node->right);
 			newnode->pr    = strdup(node->pr);
-			newnode->class = strdup(node->class);
+			newnode->group = strdup(node->group);
 
 			switch (index)
 			{
 				case LIST_ALIAS:
-					newnode->pcre = tintin_regexp_compile(newnode, newnode->left, PCRE_ANCHORED);
+					newnode->regex = tintin_regexp_compile(newnode, newnode->left, PCRE_ANCHORED);
 					break;
 
 				case LIST_ACTION:
@@ -82,7 +82,7 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 				case LIST_HIGHLIGHT:
 				case LIST_PROMPT:
 				case LIST_SUBSTITUTE:
-					newnode->pcre = tintin_regexp_compile(newnode, newnode->left, 0);
+					newnode->regex = tintin_regexp_compile(newnode, newnode->left, 0);
 					break;
 			}
 
@@ -106,19 +106,19 @@ void insertnode_list(struct session *ses, char *ltext, char *rtext, char *prtext
 
 	push_call("insertnode_list(%p,%p,%p)",ses,ltext,rtext);
 
-	newnode = calloc(1, sizeof(struct listnode));
+	newnode = (struct listnode *) calloc(1, sizeof(struct listnode));
 
 	newnode->left  = strdup(ltext);
 	newnode->right = strdup(rtext);
 	newnode->pr    = strdup(prtext);
-	newnode->class = HAS_BIT(ses->list[index]->flags, LIST_FLAG_CLASS) ? strdup(ses->class) : strdup("");
+	newnode->group = HAS_BIT(ses->list[index]->flags, LIST_FLAG_CLASS) ? strdup(ses->group) : strdup("");
 
 	ses->list[index]->count++;
 
 	switch (index)
 	{
 		case LIST_ALIAS:
-			newnode->pcre = tintin_regexp_compile(newnode, newnode->left, PCRE_ANCHORED);
+			newnode->regex = tintin_regexp_compile(newnode, newnode->left, PCRE_ANCHORED);
 			break;
 
 		case LIST_ACTION:
@@ -126,7 +126,7 @@ void insertnode_list(struct session *ses, char *ltext, char *rtext, char *prtext
 		case LIST_HIGHLIGHT:
 		case LIST_PROMPT:
 		case LIST_SUBSTITUTE:
-			newnode->pcre = tintin_regexp_compile(newnode, newnode->left, 0);
+			newnode->regex = tintin_regexp_compile(newnode, newnode->left, 0);
 			break;
 	}
 
@@ -251,18 +251,18 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 
 		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node);
 
-		if (index == LIST_CLASS && !strcmp(ses->class, node->left))
+		if (index == LIST_CLASS && !strcmp(ses->group, node->left))
 		{
-			RESTRING(ses->class, "");
+			RESTRING(ses->group, "");
 		}
 		free(node->left);
 		free(node->right);
 		free(node->pr);
-		free(node->class);
+		free(node->group);
 
-		if (node->pcre)
+		if (node->regex)
 		{
-			free(node->pcre);
+			free(node->regex);
 		}
 		free(node);
 
@@ -424,14 +424,14 @@ void addnode_list(struct listroot *listhead, char *ltext, char *rtext, char *prt
 {
 	struct listnode *newnode;
 
-	if ((newnode = calloc(1, sizeof(struct listnode))) == NULL)
+	if ((newnode = (struct listnode *) calloc(1, sizeof(struct listnode))) == NULL)
 	{
 		fprintf(stderr, "couldn't calloc listhead");
 		exit(1);
 	}
-	newnode->left  = calloc(1, strlen(ltext)  + 1);
-	newnode->right = calloc(1, strlen(rtext)  + 1);
-	newnode->pr    = calloc(1, strlen(prtext) + 1);
+	newnode->left  = (char *) calloc(1, strlen(ltext)  + 1);
+	newnode->right = (char *) calloc(1, strlen(rtext)  + 1);
+	newnode->pr    = (char *) calloc(1, strlen(prtext) + 1);
 
 	sprintf(newnode->left,  "%s", ltext);
 	sprintf(newnode->right, "%s", rtext);

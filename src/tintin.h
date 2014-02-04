@@ -82,19 +82,9 @@
 /*
 	Typedefs
 */
-typedef struct listnode LNODE;
 
-typedef struct session *ARRAY   (struct session *ses, LNODE *list, char *left, char *right);
-typedef void            CHAT    (char *left, char *right);
-typedef struct session *CLASS   (struct session *ses, char *left, char *right);
-typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
-typedef struct session *COMMAND (struct session *ses, char *arg);
-typedef void            MAP     (struct session *ses, char *left, char *right);
-typedef void            CURSOR  (char *arg);
-typedef void            PATH    (struct session *ses, char *arg);
-typedef void            LINE    (struct session *ses, char *arg);
-typedef void            HISTORY (struct session *ses, char *arg);
-typedef void            BUFFER  (struct session *ses, char *arg);
+// typedef struct listnode LNODE;
+
 
 /*
 	A bunch of constants
@@ -105,6 +95,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 
 #define TEL_N                            0
 #define TEL_Y                            1
+#define TEL_I                            2
 
 #define SCREEN_WIDTH                    80
 #define SCREEN_HEIGHT                   24
@@ -124,7 +115,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.99.4"
+#define VERSION_NUM               "1.99.5"
 
 #define ESCAPE                          27
 
@@ -311,7 +302,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define TELOPT_FLAG_NAWS              (1 <<  2) 
 #define TELOPT_FLAG_PROMPT            (1 <<  3) 
 #define TELOPT_FLAG_DEBUG             (1 <<  4)
-
+#define TELOPT_FLAG_TSPEED            (1 <<  5)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -518,11 +509,13 @@ struct listnode
 	char              * left;
 	char              * right;
 	char              * pr;
-	char              * class;
-	pcre              * pcre;
+	char              * group;
+	pcre              * regex;
 	long long           data;
 	short               flags;
 };
+
+
 
 struct session
 {
@@ -532,7 +525,7 @@ struct session
 	z_stream              * mccp;
 	char                 ** buffer;
 	char                  * name;
-	char                  * class;
+	char                  * group;
 	FILE                  * logfile;
 	FILE                  * logline;
 	struct listroot       * list[LIST_MAX];
@@ -639,6 +632,22 @@ struct chat_data
 };
 
 /*
+	Typedefs
+*/
+
+typedef struct session *ARRAY   (struct session *ses, struct listnode *list, char *left, char *right);
+typedef void            CHAT    (char *left, char *right);
+typedef struct session *CLASS   (struct session *ses, char *left, char *right);
+typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
+typedef struct session *COMMAND (struct session *ses, char *arg);
+typedef void            MAP     (struct session *ses, char *left, char *right);
+typedef void            CURSOR  (char *arg);
+typedef void            PATH    (struct session *ses, char *arg);
+typedef void            LINE    (struct session *ses, char *arg);
+typedef void            HISTORY (struct session *ses, char *arg);
+typedef void            BUFFER  (struct session *ses, char *arg);
+
+/*
 	Structures for tables.c
 */
 
@@ -662,7 +671,7 @@ struct chat_type
 struct class_type
 {
 	char                  * name;
-	CLASS                 * class;
+	CLASS                 * group;
 };
 
 struct color_type
@@ -804,6 +813,7 @@ struct exit_data
 	char                    * name;
 	char                    * cmd;
 };
+
 
 #endif
 
@@ -981,13 +991,13 @@ extern int get_scroll_size(struct session *ses);
 #define __CLASS_H__
 
 extern DO_COMMAND(do_class);
-extern int count_class(struct session *ses, struct listnode *class);
+extern int count_class(struct session *ses, struct listnode *group);
 extern DO_CLASS(class_open);
 extern DO_CLASS(class_close);
 extern DO_CLASS(class_read);
 extern DO_CLASS(class_write);
 extern DO_CLASS(class_kill);
-extern void parse_class(struct session *ses, char *input, struct listnode *class);
+extern void parse_class(struct session *ses, char *input, struct listnode *group);
 
 #endif
 
@@ -1196,7 +1206,7 @@ extern void dump_full_stack(void);
 
 extern DO_COMMAND(do_event);
 extern DO_COMMAND(do_unevent);
-extern void check_all_events(struct session *ses, int args, int vars, char *fmt, ...);
+extern int check_all_events(struct session *ses, int args, int vars, char *fmt, ...);
 
 #endif
 
@@ -1295,6 +1305,7 @@ DO_HISTORY(history_write);
 extern DO_COMMAND(do_line);
 extern DO_LINE(line_gag);
 extern DO_LINE(line_log);
+extern DO_LINE(line_lograw);
 extern DO_LINE(line_skipgags);
 
 #endif
@@ -1410,15 +1421,10 @@ extern int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 extern int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_eor(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_will_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_will_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_will_naws(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_wont_xdisploc(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_wont_new_environ(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_wont_lflow(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
-extern int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_wont_status(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_status(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_sga(struct session *ses, int cplen, unsigned char *cpsrc);
@@ -1433,7 +1439,9 @@ extern int send_dont_telopt(struct session *ses, int cplen, unsigned char *cpsrc
 extern int send_will_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src);
-extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src);
+extern int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src);
+extern int recv_sb_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);

@@ -297,12 +297,12 @@ void tick_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = gtd->time + get_number(ses, node->pr) * 1000000L;
+				node->data = gtd->time + (long long) (get_number(ses, node->pr) * 1000000LL);
 			}
 
 			if (node->data <= gtd->time)
 			{
-				node->data += atof(node->pr) * 1000000LL;
+				node->data += (long long) (get_number(ses, node->pr) * 1000000LL);
 
 				show_debug(ses, LIST_TICKER, "#DEBUG TICKER {%s}", node->right);
 
@@ -333,7 +333,7 @@ void delay_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = get_number(ses, node->pr);
+				node->data = gtd->time + (long long) (get_number(ses, node->pr) * 1000000LL);
 			}
 
 			if (node->data <= gtd->time)

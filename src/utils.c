@@ -358,7 +358,7 @@ void tintin_header(struct session *ses, char *format, ...)
 	vsprintf(arg, format, args);
 	va_end(args);
 
-	if (strlen(arg) > gtd->ses->cols - 2)
+	if ((int) strlen(arg) > gtd->ses->cols - 2)
 	{
 		arg[gtd->ses->cols - 2] = 0;
 	}
@@ -540,8 +540,6 @@ void tintin_puts(struct session *ses, char *string)
 
 void syserr(char *msg)
 {
-	extern int errno;
-
 	char s[128], *syserrmsg;
 
 	syserrmsg = strerror(errno);

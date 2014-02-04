@@ -424,6 +424,9 @@ DO_MAP(map_flag)
 
 DO_MAP(map_get)
 {
+	struct exit_data *exit;
+	char buf[BUFFER_SIZE];
+
 	CHECK_INSIDE();
 
 	if (*right == 0)
@@ -456,9 +459,20 @@ DO_MAP(map_get)
 		{
 			internal_variable(ses, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->vnum);
 		}
+		else if (is_abbrev(left, "roomexits"))
+		{
+			internal_variable(ses, "{%s}", right);
+
+			for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
+			{
+				sprintf(buf, "{%s} {ins} {-1} {%s}", right, exit->name);
+
+				do_list(ses, buf);
+			}
+		}
 		else
 		{
-			show_message(ses, LIST_MAP, "#MAP SET: unknown option: %s.", left);
+			show_message(ses, LIST_MAP, "#MAP GET: unknown option: %s.", left);
 		}
 	}
 }
@@ -773,7 +787,7 @@ DO_MAP(map_read)
 
 	if (ses->map == NULL)
 	{
-		ses->map = calloc(1, sizeof(struct map_data));
+		ses->map = (struct map_data *) calloc(1, sizeof(struct map_data));
 	}
 
 	while (fgets(buffer, BUFFER_SIZE - 1, myfile))
@@ -1176,11 +1190,11 @@ void create_map(struct session *ses, char *arg)
 		delete_map(ses);
 	}
 
-	ses->map = calloc(1, sizeof(struct map_data));
+	ses->map = (struct map_data *) calloc(1, sizeof(struct map_data));
 
 	ses->map->size = atoi(arg) > 0 ? atoi(arg) : 15000;
 
-	ses->map->room_list = calloc(ses->map->size, sizeof(struct room_data));
+	ses->map->room_list = (struct room_data **) calloc(ses->map->size, sizeof(struct room_data));
 
 	ses->map->flags = MAP_FLAG_ASCIIGRAPHICS;
 
@@ -1249,7 +1263,7 @@ int create_room(struct session *ses, char *arg)
 	if (*symbol == 0) { strcpy(symbol, " "); }
 
 
-	newroom         = calloc(1, sizeof(struct room_data));
+	newroom         = (struct room_data *) calloc(1, sizeof(struct room_data));
 
 	newroom->color  = strdup(color);
 	newroom->name   = strdup(name);
@@ -1313,7 +1327,7 @@ void create_exit(struct session *ses, int room, char *arg)
 	arg = get_arg_in_braces(arg, cmd,  TRUE);
 	arg = get_arg_in_braces(arg, dir,  FALSE);
 
-	newexit       = calloc(1, sizeof(struct exit_data));
+	newexit       = (struct exit_data *) calloc(1, sizeof(struct exit_data));
 	newexit->vnum = atoi(vnum);
 	newexit->name = strdup(name);
 	newexit->cmd  = strdup(cmd);

@@ -49,7 +49,7 @@ struct session *parse_input(struct session *ses, char *input)
 		return ses;
 	}
 
-	line = malloc(BUFFER_SIZE);
+	line = (char *) malloc(BUFFER_SIZE);
 
 	while (*input)
 	{
@@ -252,6 +252,17 @@ char *get_arg_all(char *string, char *result)
 
 	pti = space_out(string);
 	pto = result;
+
+	if (*pti == gtd->verbatim_char)
+	{
+		while (*pti)
+		{
+			*pto++ = *pti++;
+		}
+		*pto = 0;
+
+		return pti;
+	}
 
 	while (*pti)
 	{

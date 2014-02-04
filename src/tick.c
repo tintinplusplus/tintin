@@ -106,17 +106,17 @@ DO_COMMAND(do_delay)
 	{
 		if (*arg3 == 0)
 		{
-			sprintf(time, "%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));
+			sprintf(time, "%lld", utime());
 
-			updatenode_list(ses, time, arg2, time, LIST_DELAY);
+			updatenode_list(ses, time, arg2, arg1, LIST_DELAY);
 
 			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg1, arg2);
 		}
 		else
 		{
-			sprintf(time, "%lld", utime() + (long long) (get_number(ses, arg3) * 1000000LL));
+			sprintf(time, "%lld", utime());
 
-			updatenode_list(ses, arg1, arg2, time, LIST_DELAY);
+			updatenode_list(ses, arg1, arg2, arg3, LIST_DELAY);
 
 			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg3, arg2);
 		}

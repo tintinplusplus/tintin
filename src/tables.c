@@ -121,7 +121,7 @@ struct list_type list_table[LIST_MAX] =
 	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "CLASS",             "CLASSES",            APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
 	{    "CONFIG",            "CONFIGURATIONS",     PRIORITY,    2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
-	{    "DELAY",             "DELAYS",             PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
+	{    "DELAY",             "DELAYS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
 	{    "EVENT",             "EVENTS",             ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "GAG",               "GAGS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
@@ -135,7 +135,7 @@ struct list_type list_table[LIST_MAX] =
 	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TICKER",            "TICKERS",            PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TICKER",            "TICKERS",            ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT }
 
 };
@@ -761,6 +761,7 @@ struct line_type line_table[] =
 {
 	{    "GAG",               line_gag               },
 	{    "LOG",               line_log               },
+	{    "LOGRAW",            line_lograw            },
 	{    "",                  NULL                   }
 };
 
@@ -796,14 +797,14 @@ struct telopt_type telopt_table[] =
 	{    "BINARY",            TEL_N,               NEG_U },
 	{    "ECHO",              TEL_Y,               NEG_U },
 	{    "RCP",               TEL_N,               NEG_U },
-	{    "SUPPRESS GA",       TEL_Y,               NEG_U },
+	{    "SGA",               TEL_Y,               NEG_U },
 	{    "NAME",              TEL_N,               NEG_U },
 	{    "STATUS",            TEL_N,               NEG_U },
 	{    "TIMING MARK",       TEL_N,               NEG_U },
 	{    "RCTE",              TEL_N,               NEG_U },
 	{    "NAOL",              TEL_N,               NEG_U },
 	{    "NAOP",              TEL_N,               NEG_U },
-	{    "NAORCD",            TEL_N,               NEG_U },
+	{    "NAORCD",            TEL_N,               NEG_U }, /* 10 */
 	{    "NAOHTS",            TEL_N,               NEG_U },
 	{    "NAOHTD",            TEL_N,               NEG_U },
 	{    "NAOFFD",            TEL_N,               NEG_U },
@@ -813,27 +814,27 @@ struct telopt_type telopt_table[] =
 	{    "EXTEND ASCII",      TEL_N,               NEG_U },
 	{    "LOGOUT",            TEL_N,               NEG_U },
 	{    "BYTE MACRO",        TEL_N,               NEG_U },
-	{    "DATA ENTRY TERML",  TEL_N,               NEG_U },
+	{    "DATA ENTRY TERML",  TEL_N,               NEG_U }, /* 20 */
 	{    "SUPDUP",            TEL_N,               NEG_U },
 	{    "SUPDUP OUTPUT",     TEL_N,               NEG_U },
 	{    "SEND LOCATION",     TEL_N,               NEG_U },
-	{    "TERMINAL TYPE",     TEL_Y,               NEG_U },
+	{    "TTYPE",             TEL_Y,               NEG_U },
 	{    "EOR",               TEL_Y,               NEG_U },
 	{    "TACACS UID",        TEL_N,               NEG_U },
 	{    "OUTPUT MARKING",    TEL_N,               NEG_U },
 	{    "TTYLOC",            TEL_N,               NEG_U },
 	{    "3270 REGIME",       TEL_N,               NEG_U },
-	{    "X.3 PAD",           TEL_N,               NEG_U },
+	{    "X.3 PAD",           TEL_N,               NEG_U }, /* 30 */
 	{    "NAWS",              TEL_Y,               NEG_U },
 	{    "TSPEED",            TEL_Y,               NEG_U },
 	{    "LFLOW",             TEL_N,               NEG_U },
 	{    "LINEMODE",          TEL_N,               NEG_U },
 	{    "XDISPLOC",          TEL_N,               NEG_U },
-	{    "OLD_ENVIRON",       TEL_N,               NEG_U },
+	{    "OLD-ENVIRON",       TEL_N,               NEG_U },
 	{    "AUTH",              TEL_N,               NEG_U },
 	{    "ENCRYPT",           TEL_N,               NEG_U },
-	{    "NEW_ENVIRON",       TEL_N,               NEG_U },
-	{    "TN3270E",           TEL_N,               NEG_U },
+	{    "NEW-ENVIRON",       TEL_N,               NEG_U },
+	{    "TN3270E",           TEL_N,               NEG_U }, /* 40 */
 	{    "XAUTH",             TEL_N,               NEG_U },
 	{    "CHARSET",           TEL_N,               NEG_U },
 	{    "RSP",               TEL_N,               NEG_U },
@@ -862,7 +863,7 @@ struct telopt_type telopt_table[] =
 	{    "66",                TEL_N,               NEG_U },
 	{    "67",                TEL_N,               NEG_U },
 	{    "68",                TEL_N,               NEG_U },
-	{    "69",                TEL_N,               NEG_U },
+	{    "MSDP",              TEL_N,               NEG_U },
 	{    "MSSP",              TEL_N,               NEG_U },
 	{    "71",                TEL_N,               NEG_U },
 	{    "72",                TEL_N,               NEG_U },
@@ -885,8 +886,8 @@ struct telopt_type telopt_table[] =
 	{    "89",                TEL_N,               NEG_U },
 	{    "MSP",               TEL_N,               NEG_U },
 	{    "MXP",               TEL_N,               NEG_U },
-	{    "MSP2",              TEL_N,               NEG_U }, /* Might have no actual implementation */
-	{    "ZMP",               TEL_N,               NEG_U }, /* Might have no actual implementation */
+	{    "92",                TEL_N,               NEG_U }, /* MSP2 draft */
+	{    "ZMP",               TEL_N,               NEG_U },
 	{    "94",                TEL_N,               NEG_U },
 	{    "95",                TEL_N,               NEG_U },
 	{    "96",                TEL_N,               NEG_U },
@@ -895,7 +896,7 @@ struct telopt_type telopt_table[] =
 	{    "99",                TEL_N,               NEG_U },
 	{    "100",               TEL_N,               NEG_U },
 	{    "101",               TEL_N,               NEG_U },
-	{    "102",               TEL_N,               NEG_U },
+	{    "102",               TEL_N,               NEG_U }, /* Used by Aardwolf */
 	{    "103",               TEL_N,               NEG_U },
 	{    "104",               TEL_N,               NEG_U },
 	{    "105",               TEL_N,               NEG_U },
@@ -993,7 +994,7 @@ struct telopt_type telopt_table[] =
 	{    "197",               TEL_N,               NEG_U },
 	{    "198",               TEL_N,               NEG_U },
 	{    "199",               TEL_N,               NEG_U },
-	{    "ATCP",              TEL_N,               NEG_U },
+	{    "200",               TEL_N,               NEG_U }, /* Used by Achaea */
 	{    "201",               TEL_N,               NEG_U },
 	{    "202",               TEL_N,               NEG_U },
 	{    "203",               TEL_N,               NEG_U },
