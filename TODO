@@ -8,11 +8,12 @@ GENERAL STUFF:
 
 - add line substitute option, to substitute variables and functions.
 
-- add a #line gag/skip/log command.
+- add a #line skip command.
 
 - tab completion based on scroll back history
 
 - global regexp switch with #config
+
 
 -------------------------------------------------------------------------------
 

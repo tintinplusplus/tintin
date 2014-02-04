@@ -290,7 +290,9 @@ DO_COMMAND(do_parse)
 #ifdef BIG5
 			if (left[cnt] & 0x80 && left[cnt+1] != 0)
 			{
-				sprintf(temp, "%c%c", left[cnt], left[++cnt]));
+				sprintf(temp, "%c%c", left[cnt], left[cnt+1]);
+
+				cnt++;
 			}
 			else
 			{

@@ -333,7 +333,9 @@ void convert_meta(char *input, char *output)
 				break;
 
 			case 127:
-				*pto++ = *pti++;
+				*pto++ = '\\';
+				*pto++ = 'b';
+				pti++;
 				break;
 
 			case '\n':
@@ -375,13 +377,8 @@ void unconvert_meta(char *input, char *output)
 			case '\\':
 				switch (pti[1])
 				{
-					case 'e':
-						*pto++  = ESCAPE;
-						pti    += 2;
-						break;
-
 					case 'C':
-						if (pti[2] == '-')
+						if (pti[2] == '-' && pti[3])
 						{
 							*pto++  = pti[3] - 'a' + 1;
 							pti    += 4;
@@ -392,6 +389,32 @@ void unconvert_meta(char *input, char *output)
 						}
 						break;
 
+					case 'b':
+						*pto++  = 127;
+						pti    += 2;
+						break;
+
+					case 'e':
+						*pto++  = ESCAPE;
+						pti    += 2;
+						break;
+
+					case 't':
+						*pto++  = '\t';
+						pti    += 2;
+						break;
+
+					case 'x':
+						if (pti[2] && pti[3])
+						{
+							*pto++ = hex_number(&pti[2]);
+							pti += 4;
+						}
+						else
+						{
+							*pto++ = *pti++;
+						}
+						break;
 					default:
 						*pto++ = *pti++;
 						break;
@@ -437,7 +460,7 @@ void echo_command(struct session *ses, char *line, int newline)
 			}
 			else
 			{
-				tintin_printf2(ses, "%s%s", buffer);
+				tintin_printf2(ses, "%s", buffer);
 			}
 
 			DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
@@ -457,14 +480,7 @@ void echo_command(struct session *ses, char *line, int newline)
 		}
 		else
 		{
-			if (ses->more_output[0])
-			{
-				sprintf(result, "%s\033[0;37m%s", ses->more_output, line);
-			}
-			else
-			{
-				sprintf(result, "\033[0;37m%s", line);
-			}
+			sprintf(result, "%s%s", ses->more_output, buffer);
 		}
 		add_line_buffer(ses, buffer, -1);
 

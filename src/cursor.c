@@ -211,7 +211,6 @@ DO_CURSOR(cursor_delete)
 DO_CURSOR(cursor_delete_word)
 {
 	int index_cur;
-	int index_pos;
 
 	if (gtd->input_cur == 0)
 	{
@@ -219,37 +218,24 @@ DO_CURSOR(cursor_delete_word)
 	}
 
 	index_cur = gtd->input_cur;
-	index_pos = gtd->input_pos;
 
-	gtd->input_cur--;
-	gtd->input_pos--;
-
-	while (gtd->input_cur && gtd->input_buf[gtd->input_cur] == ' ')
+	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] == ' ')
 	{
 		gtd->input_cur--;
 		gtd->input_pos--;
 	}
 
-	if (gtd->input_cur)
+	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
-		while (gtd->input_cur && gtd->input_buf[gtd->input_cur] != ' ')
-		{
-			gtd->input_cur--;
-			gtd->input_pos--;
-		}
-
-		if (gtd->input_buf[gtd->input_cur] == ' ')
-		{
-			gtd->input_cur++;
-			gtd->input_pos++;
-		}
+		gtd->input_cur--;
+		gtd->input_pos--;
 	}
 
 	sprintf(gtd->paste_buf, "%.*s", index_cur - gtd->input_cur, &gtd->input_buf[gtd->input_cur]);
 
 	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], index_cur + 1);
 
-	input_printf("\033[%dD\033[%dP", index_pos - gtd->input_pos, index_pos - gtd->input_pos);
+	input_printf("\033[%dD\033[%dP", index_cur - gtd->input_cur, index_cur - gtd->input_cur);
 
 	gtd->input_len -= index_cur - gtd->input_cur;
 
@@ -469,19 +455,38 @@ DO_CURSOR(cursor_history_search)
 	}
 	else
 	{
-		strcpy(gtd->input_buf, gtd->input_tmp);
+		if (gtd->input_his)
+		{
+			strcpy(gtd->input_buf, gtd->input_his->left);
 
-		input_printf("\033[%dD\033[0K", 10 + gtd->input_pos);
+			input_printf("\033[1G\033[0K");
 
-		gtd->input_len = strlen(gtd->input_buf);
-		gtd->input_cur = gtd->input_len;
-		gtd->input_pos = gtd->input_len;
+			gtd->input_len = strlen(gtd->input_buf);
+			gtd->input_cur = gtd->input_len;
+			gtd->input_pos = gtd->input_len;
 
-		gtd->input_his = NULL;
+			gtd->input_his = NULL;
 
-		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+			DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
 
-		cursor_redraw_line("");
+			cursor_redraw_line("");
+		}
+		else
+		{
+			strcpy(gtd->input_buf, gtd->input_tmp);
+
+			input_printf("\033[%dD\033[0K", 10 + gtd->input_pos);
+
+			gtd->input_len = strlen(gtd->input_buf);
+			gtd->input_cur = gtd->input_len;
+			gtd->input_pos = gtd->input_len;
+
+			gtd->input_his = NULL;
+
+			DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
+
+			cursor_redraw_line("");
+		}
 	}
 }
 
@@ -582,6 +587,34 @@ DO_CURSOR(cursor_left)
 
 		cursor_check_line("");
 	}
+}
+
+DO_CURSOR(cursor_left_word)
+{
+	int index_cur;
+
+	if (gtd->input_cur == 0)
+	{
+		return;
+	}
+
+	index_cur = gtd->input_cur;
+
+	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] == ' ')
+	{
+		gtd->input_cur--;
+		gtd->input_pos--;
+	}
+
+	while (gtd->input_cur && gtd->input_buf[gtd->input_cur - 1] != ' ')
+	{
+		gtd->input_cur--;
+		gtd->input_pos--;
+	}
+
+	input_printf("\033[%dD", index_cur - gtd->input_cur);
+
+	cursor_check_line("");
 }
 
 
@@ -691,7 +724,33 @@ DO_CURSOR(cursor_right)
 	cursor_check_line("");
 }
 
+DO_CURSOR(cursor_right_word)
+{
+	int index_cur;
 
+	if (gtd->input_cur == gtd->input_len)
+	{
+		return;
+	}
+
+	index_cur = gtd->input_cur;
+
+	while (gtd->input_cur < gtd->input_len && gtd->input_buf[gtd->input_cur] == ' ')
+	{
+		gtd->input_cur++;
+		gtd->input_pos++;
+	}
+
+	while (gtd->input_cur < gtd->input_len && gtd->input_buf[gtd->input_cur] != ' ')
+	{
+		gtd->input_cur++;
+		gtd->input_pos++;
+	}
+
+	input_printf("\033[%dC", index_cur - gtd->input_cur);
+
+	cursor_check_line("");
+}
 
 DO_CURSOR(cursor_suspend)
 {

@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.1"
+#define VERSION_NUM               "1.98.2"
 
 #define ESCAPE                          27
 
@@ -777,10 +777,12 @@ extern DO_CURSOR(cursor_history_search);
 extern DO_CURSOR(cursor_home);
 extern DO_CURSOR(cursor_insert);
 extern DO_CURSOR(cursor_left);
+extern DO_CURSOR(cursor_left_word);
 extern DO_CURSOR(cursor_paste_buffer);
 extern DO_CURSOR(cursor_redraw_input);
 extern DO_CURSOR(cursor_redraw_line);
 extern DO_CURSOR(cursor_right);
+extern DO_CURSOR(cursor_right_word);
 extern DO_CURSOR(cursor_suspend);
 extern DO_CURSOR(cursor_tab);
 

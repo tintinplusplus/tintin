@@ -126,7 +126,7 @@ struct list_type list_table[LIST_MAX] =
 	{    "GAG",               "GAGS",               ALPHA,       1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
-	{    "MACRO",             "MACROS",             ALPHA,       3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "MACRO",             "MACROS",             ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "MAP",               "MAPPING",            APPEND,      3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
 	{    "MATH",              "MATHEMATICS",        APPEND,      3,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
 	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE                                                                  },
@@ -420,42 +420,7 @@ struct cursor_type cursor_table[] =
 		"[6~",
 		buffer_d
 	},
-	{
-		"",
-		"",
-		"[7~",
-		buffer_h
-	},
-	{
-		"",
-		"",
-		"[1~",
-		buffer_h
-	},
-	{
-		"",
-		"",
-		"OH",
-		buffer_h
-	},
-	{
-		"",
-		"",
-		"[8~",
-		buffer_e
-	},
-	{
-		"",
-		"",
-		"[4~",
-		buffer_e
-	},
-	{
-		"",
-		"",
-		"OF",
-		buffer_e
-	},
+
 	{
 		"",
 		"",
@@ -480,12 +445,26 @@ struct cursor_type cursor_table[] =
 		"",
 		cursor_home
 	},
+
 	{
 		"",
 		"",
-		"b",
+		"[7~",
 		cursor_home
 	},
+	{
+		"",
+		"",
+		"[1~",
+		cursor_home
+	},
+	{
+		"",
+		"",
+		"OH",
+		cursor_home
+	},
+
 	{
 		"BACKWARD",
 		"Move cursor backward",
@@ -525,7 +504,19 @@ struct cursor_type cursor_table[] =
 	{
 		"",
 		"",
-		"f",
+		"[8~",
+		cursor_end
+	},
+	{
+		"",
+		"",
+		"[4~",
+		cursor_end
+	},
+	{
+		"",
+		"",
+		"OF",
 		cursor_end
 	},
 	{
@@ -540,6 +531,7 @@ struct cursor_type cursor_table[] =
 		"OC",
 		cursor_right
 	},
+
 	{
 		"BACKSPACE",
 		"Delete backward character",
@@ -625,6 +617,12 @@ struct cursor_type cursor_table[] =
 		cursor_delete_word
 	},
 	{
+		"",
+		"",
+		"",
+		cursor_delete_word
+	},
+	{
 		"PASTE BUFFER",
 		"Paste the previously deleted input text",
 		"",
@@ -647,6 +645,18 @@ struct cursor_type cursor_table[] =
 		"Turn insert mode on or off",
 		"",
 		cursor_insert
+	},
+	{
+		"PREV WORD",
+		"Move cursor to the previous word",
+		"b",
+		cursor_left_word
+	},
+	{
+		"NEXT WORD",
+		"Move cursor to the next word",
+		"f",
+		cursor_right_word
 	},
 	{
 		"",

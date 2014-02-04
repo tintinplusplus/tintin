@@ -954,3 +954,16 @@ line.c         Added the line command to group #gagline and #logline.
 
 tables.c       Added the 'program termination' and 'received line' events.
 
+May 2008       1.98.2
+
+tables.c       Home and End now use cursor home and end.
+
+input.c        Added support for \x and \b in macros.
+
+net.c          Fixed a bug with stacking prompts.
+
+cursor.c       Pressing ctrl-r (history search) while searching will place
+               the found search in the input field.
+
+cursor.c       Added left_word and right_word for alt b and f behavior.
+
