@@ -188,7 +188,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.95.3                           <068>#\n"
+		"<068>    #<078>                           Version 1.95.4                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -605,8 +605,14 @@ const struct help_type help_table[81] =
 		"READ",
 		"Command: #read {filename}\n"
 		"\n"
-		"Reads a coms file into memory.  The coms file is merged in with the\n"
-		"currently loaded commands.  Duplicate commands are overwritten.\n"
+		"         Reads a coms file into memory.  The coms file is merged in with the\n"
+		"         currently loaded commands.  Duplicate commands are overwritten.\n"
+		"\n"
+		"         If you uses braces, { and } you can use several lines for 1 commands.\n"
+		"         This however means you must always match every { with a } for the read\n"
+		"         command to work.\n"
+		"\n"
+		"         You can comment text using /* test */\n"
 	},
 	{
 		"REDIT",
@@ -955,15 +961,17 @@ const struct help_type help_table[81] =
 		"\n"
 		"#alias {target} {#var target %0}\n"
 		"#alias {x}      {flame $target}\n"
-		"#alias {xx}     {flash $target}\n"
-		"#alias {xxx}    {harm  $target}\n"
 		"\n"
 		"The name of a variable must exist of only letters and numbers in\n"
 		"order to be substituted. If you do not meet these requirements do\n"
 		"not panic, simply encapsulate the variable in braces:\n"
 		"\n"
 		"#variable {cool website} {http://tintin.sourceforge.net}\n"
-		"#chat I was on a ${cool website} yesterday!.\n"
+		"#chat I was on ${cool website} yesterday!.\n"
+		"\n"
+		"In order to check if a variable exists you can use regexp:\n"
+		"\n"
+		"#if {\"$target\" == \"?target\"} {#showme variable is not defined}\n"
 	},
 	{
 		"WALK",

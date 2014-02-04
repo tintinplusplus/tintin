@@ -246,6 +246,8 @@ void init_tintin(void)
 		Set application keypad mode and  ESC 0 prefix
 	*/
 
+/*	chat_init(""); */
+
 	printf("\e=\e[?1h");
 
 	SET_BIT(gts->flags, SES_FLAG_VERBOSE);

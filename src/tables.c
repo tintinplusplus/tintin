@@ -36,8 +36,8 @@ const struct command_type command_table[MAX_COMMAND] =
 	{	"all",               do_all,               CMD_FLAG_SUB     },
 	{	"bell",              do_bell,              CMD_FLAG_NONE    },
 	{	"boss",              do_boss,              CMD_FLAG_NONE    },
-
 	{	"buffer",            do_buffer,            CMD_FLAG_SUB     },
+	{	"chat",              do_chat,              CMD_FLAG_SUB     },
 	{	"class",             do_class,             CMD_FLAG_SUB     },
 	{	"commands",          do_commands,          CMD_FLAG_NONE    },
 	{	"config",            do_configure,         CMD_FLAG_SUB     },
@@ -403,4 +403,27 @@ const struct class_type class_table[CLASS_MAX] =
 		"KILL",
 		class_kill
 	}
+};
+
+const struct chat_type chat_table[CHAT_MAX] =
+{
+/*	{     "AUTOACCEPT",                chat_autoaccept        }, */
+	{     "CALL",                      chat_call              },
+	{     "CANCELFILE",                chat_cancelfile        },
+	{     "EMOTE",                     chat_emote             },
+	{     "FILESTAT",                  chat_filestat          },
+	{     "IGNORE",                    chat_ignore            },
+	{     "INITIALIZE",                chat_initialize        },
+	{     "INFO",                      chat_info              },
+	{     "IP",                        chat_ip                },
+	{     "MESSAGE",                   chat_message           },
+	{     "NAME",                      chat_name              },
+	{     "PEEK",                      chat_peek              },
+	{     "PING",                      chat_ping              },
+	{     "REQUEST",                   chat_request           },
+	{     "SENDFILE",                  chat_sendfile          },
+	{     "SERVE",                     chat_serve             },
+	{     "TRANSFER",                  chat_transfer          },
+	{     "WHO",                       chat_who               },
+	{     "ZAP",                       chat_zap               }
 };

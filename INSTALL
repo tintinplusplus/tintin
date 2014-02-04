@@ -21,7 +21,7 @@ Options configure current supports:
 --includedir    Additional include directory
 --bindir        Location you want tt++ to be installed (default is the src dir)
 --libdir        Addition library directory
---enable-big5   To use the big5 encoding
+--big5          To use the big5 encoding
 
 If you wish, you can edit src/Makefile.in before running ./configure.
 It shouldn't be necessary unless you have some unorthodox request
@@ -45,3 +45,5 @@ chmod 777 x
 
 This will start up rxvt configured as an old school putty terminal everytime
 you type ./x  next you can run tintin in split mode.
+
+

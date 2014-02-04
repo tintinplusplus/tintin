@@ -171,3 +171,7 @@ A17) Use %%90 %%91 %%92. When the alias is parsed %9 will be replaced with the
 
      Another way to go about it is using classes which you can read from file
      and are easy to delete when you want them removed.
+
+Q18) How to enable support for chinese muds?
+
+A18  Try: ./configure --big5 to use the big5 encoding

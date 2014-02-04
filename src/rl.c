@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <errno.h>
-#include <stdarg.h>
 
 /*
 	some readline stuff
@@ -77,7 +76,7 @@ void printline(struct session *ses, const char *str, int prompt)
 		return;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SCAN))
+	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
 	{
 		return;
 	}
@@ -98,6 +97,7 @@ void bait(void)
 {
 	fd_set readfds, excfds;
 	struct session *ses;
+	struct chat_data *buddy;
 	struct timeval to;
 	int rv;
 
@@ -112,11 +112,25 @@ void bait(void)
 			FD_ZERO(&excfds);
 			FD_SET(0, &readfds);	/* stdin */
 
+			if (gtd->chat)
+			{
+				FD_SET(gtd->chat->fd, &readfds);
+			}
+
 			for (ses = gts->next ; ses ; ses = ses->next)
 			{
 				if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 				{
 					FD_SET(ses->socket, &readfds);
+				}
+			}
+
+			if (gtd->chat)
+			{
+				for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)
+				{
+					FD_SET(buddy->fd, &readfds);
+					FD_SET(buddy->fd, &excfds);
 				}
 			}
 
@@ -131,7 +145,11 @@ void bait(void)
 					return;
 				}
 				syserr("select");
-				
+			}
+
+			if (gtd->chat)
+			{
+				process_chat_connections(&readfds, &excfds);
 			}
 
 			for (ses = gts->next ; ses ; ses = gtd->update)
@@ -681,5 +699,12 @@ void quitmsg(const char *m)
 
 RETSIGTYPE myquitsig(int no_care)
 {
-	quitmsg(NULL);
+	if (gtd->ses->connect_retry > utime())
+	{
+		gtd->ses->connect_retry = 0;
+	}
+	else
+	{
+		quitmsg(NULL);
+	}
 }

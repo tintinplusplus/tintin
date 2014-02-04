@@ -247,6 +247,8 @@ void connect_session(struct session *ses)
 		gtd->ses    = ses;
 		ses->socket = sock;
 
+		ses->connect_retry = 0;
+
 		SET_BIT(ses->flags, SES_FLAG_CONNECTED);
 
 		tintin_printf2(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'\n\r", ses->name, ses->host, ses->port);

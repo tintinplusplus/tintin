@@ -33,6 +33,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 /******************************************************************************
 *   Autoconf patching by David Hedbor, neotron@lysator.liu.se                 *
@@ -84,6 +85,8 @@
 typedef struct session *COMMAND (struct session *ses, const char *arg);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
 typedef struct session *CLASS   (struct session *ses, char *arg);
+
+typedef void CHAT (const char *arg);
 
 /*
 	A bunch of constants
@@ -169,9 +172,54 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 
 #define CLASS_MAX                      5
 
+#define CHAT_MAX                      18
+
 /*
 	Various flags
 */
+
+#define CHAT_NAME_CHANGE                 1
+#define CHAT_REQUEST_CONNECTIONS         2
+#define CHAT_CONNECTION_LIST             3
+#define CHAT_TEXT_EVERYBODY              4
+#define CHAT_TEXT_PERSONAL               5
+#define CHAT_TEXT_GROUP                  6
+#define CHAT_MESSAGE                     7
+#define CHAT_DO_NOT_DISTURB              8
+
+#define CHAT_SEND_ACTION                 9
+#define CHAT_SEND_ALIAS                 10
+#define CHAT_SEND_MACRO                 11
+#define CHAT_SEND_VARIABLE              12
+#define CHAT_SEND_EVENT                 13
+#define CHAT_SEND_GAG                   14
+#define CHAT_SEND_HIGHLIGHT             15
+#define CHAT_SEND_LIST                  16
+#define CHAT_SEND_ARRAY                 17
+#define CHAT_SEND_BARITEM               18
+
+#define CHAT_VERSION                    19
+#define CHAT_FILE_START                 20
+#define CHAT_FILE_DENY                  21
+#define CHAT_FILE_BLOCK_REQUEST         22
+#define CHAT_FILE_BLOCK                 23     
+#define CHAT_FILE_END                   24
+#define CHAT_FILE_CANCEL                25
+#define CHAT_PING_REQUEST               26 
+#define CHAT_PING_RESPONSE              27 
+#define CHAT_PEEK_CONNECTIONS           28
+#define CHAT_PEEK_LIST                  29
+
+#define CHAT_END_OF_COMMAND            255
+
+#define CHAT_FLAG_TRANSFER            (1 <<  0)
+#define CHAT_FLAG_PRIVATE             (1 <<  1)
+#define CHAT_FLAG_REBIND              (1 <<  2)
+#define CHAT_FLAG_AUTOACCEPT          (1 <<  3)
+#define CHAT_FLAG_REQUEST             (1 <<  4)
+#define CHAT_FLAG_PEEK                (1 <<  5)
+#define CHAT_FLAG_SERVE               (1 <<  6)
+#define CHAT_FLAG_IGNORE              (1 <<  7)
 
 #define SUB_NONE                      0
 #define SUB_ARG                       (1 <<  0)
@@ -210,9 +258,9 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define SES_FLAG_SCROLLSTOP           (1 << 23)
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_GAGPROMPT            (1 << 25)
-#define SES_FLAG_BREAK                (1 << 26)
-#define SES_FLAG_EOR                  (1 << 27)
-#define SES_FLAG_GA                   (1 << 28)
+#define SES_FLAG_EOR                  (1 << 26)
+#define SES_FLAG_GA                   (1 << 27)
+#define SES_FLAG_BREAK                (1 << 28)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -321,6 +369,8 @@ typedef struct session *CLASS   (struct session *ses, char *arg);
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
 #define DO_CLASS(class) struct session *class (struct session *ses, char *arg)
 
+#define DO_CHAT(chat) void chat (const char *arg)
+
 /*
 	Bit operations
 */
@@ -400,6 +450,7 @@ struct tintin_data
 {
 	struct session        * ses;
 	struct session        * update;
+	struct chat_data      * chat;
 	char                  * mud_output_buf;
 	int                     mud_output_max;
 	int                     mud_output_len;
@@ -414,6 +465,25 @@ struct tintin_data
 	char                    repeat_char;
 	char                    vars[10][BUFFER_SIZE];
 	char                    cmds[10][BUFFER_SIZE];
+};
+
+struct chat_data
+{
+	struct chat_data      * next;
+	struct chat_data      * prev;
+	char                  * name;
+	char                  * ip;
+	int                     port;
+	int                     fd;
+	char                  * version;
+	int                     flags;
+	char                  * download;
+	FILE                  * file_pt;
+	char                  * file_name;
+	int                     file_size;
+	int                     file_block_cnt;
+	int                     file_block_tot;
+	long long               file_start_time;
 };
 
 struct command_type
@@ -453,6 +523,11 @@ struct class_type
 	CLASS                 * class;
 };
 
+struct chat_type
+{
+	char                  * name;
+	CHAT                  * chat;
+};
 
 struct str_hash_data
 {
@@ -504,6 +579,70 @@ extern int readline_echoing_p;
 	Function declarations
 */
 
+#ifndef __CHAT_H__
+#define __CHAT_H__
+
+extern DO_COMMAND(do_chat);
+
+extern DO_CHAT(chat_transfer);
+extern DO_CHAT(chat_autoaccept);
+extern DO_CHAT(chat_call);
+extern DO_CHAT(chat_cancelfile);
+extern DO_CHAT(chat_emote);
+extern DO_CHAT(chat_filestat);
+extern DO_CHAT(chat_ignore);
+extern DO_CHAT(chat_initialize);
+extern DO_CHAT(chat_info);
+extern DO_CHAT(chat_ip);
+extern DO_CHAT(chat_message);
+extern DO_CHAT(chat_name);
+extern DO_CHAT(chat_peek);
+extern DO_CHAT(chat_ping);
+extern DO_CHAT(chat_request);
+extern DO_CHAT(chat_sendfile);
+extern DO_CHAT(chat_serve);
+extern DO_CHAT(chat_who);
+extern DO_CHAT(chat_zap);
+
+extern  int chat_new(int s);
+extern void chat_call(const char *ip);
+extern void close_chat(struct chat_data *buddy);
+extern void nonblock(int s);
+extern void block(int s);
+extern void process_chat_connections(fd_set *input_set, fd_set *exc_set);
+extern void chat_socket_printf(struct chat_data *buddy, const char *format, ...);
+extern void chat_printf(const char *format, ...);
+extern  int process_chat_input(struct chat_data *buddy);
+extern void get_chat_commands(struct chat_data *buddy, char *buf);
+extern void chat_receive_text_everybody(struct chat_data *buddy, char *txt);
+extern void chat_receive_text_personal(struct chat_data *buddy, char *txt);
+extern void chat_receive_message(struct chat_data *buddy, char *txt);
+
+extern void ping_response(struct chat_data *ch, char *time);
+
+extern void request_response(struct chat_data *requester);
+extern void parse_requested_connections(struct chat_data *buddy, char *txt);
+
+extern void peek_response(struct chat_data *peeker);
+extern void parse_peeked_connections(struct chat_data *buddy, char *txt);
+
+
+extern void chat_receive_file(char *arg, struct chat_data *ch);
+extern void send_block(struct chat_data *ch);
+extern void receive_block(unsigned char *s, struct chat_data *ch);
+extern void deny_file(struct chat_data *ch, char *arg);
+extern void file_denied(struct chat_data *ch, char *txt);
+
+extern int get_file_size(char *fpath);
+
+extern void chat_puts(char *arg);
+extern struct chat_data *find_buddy(const char *arg);
+extern char *fix_file_name(char *name);
+
+
+
+#endif
+ 
 #ifndef __ECHO_H__
 #define __ECHO_H__
 
@@ -988,6 +1127,7 @@ extern const struct list_type list_table[LIST_ALL];
 extern const struct config_type config_table[CONFIG_MAX];
 extern const struct color_type color_table[COLOR_MAX];
 extern const struct class_type class_table[CLASS_MAX];
+extern const struct chat_type chat_table[CHAT_MAX];
 
 #endif
 
@@ -1016,6 +1156,8 @@ extern int is_abbrev(const char *s1, const char *s2);
 extern int is_number(const char *str);
 extern long long utime(void);
 extern char *capitalize(const char *str);
+extern char *restring(char *old, const char *new);
+extern void cat_sprintf(char *dest, const char *fmt, ...);
 extern void syserr(const char *msg);
 
 #endif

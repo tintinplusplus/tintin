@@ -1,0 +1,41 @@
+chat.c
+
+This module by: Sean Butler, sbutler@deveast.com - January 10, 1998
+
+An extension to Tintin that allows users to connect their clients together in
+a chat session.  Multiple sessions are supported.  The chat protocol used is
+compatible with MudMaster chat and was designed by the maker of MudMaster.
+
+All code is however of my creation and therefore direct all complaints, 
+comments or praise to me.
+
+The following new commands have been added to tintin for chat purposes:
+
+#call               #chat            #chatall         #emote
+#emoteall           #unchat          #sendfile        #filecancel
+#request            #chattransfer    #ping
+
+The scheme used to implement this is a linked list of structures
+containing data about each connection.  This structure was placed
+in tintin.h  
+
+This is an alpha release and is not yet complete.  There are many
+holes in the parsing of commands.  The most glaring is the failure
+to adhere to the standard tintin syntax.  In this release you may
+not use {} around the arguments to a chat command.  ie.
+
+#chat {soandso} {Hi there}
+
+Next release this problem will be fixed.
+
+The only code that needed to be changed to add this module were these:
+
+parse.c  -- to add the user commands
+rl.c     -- added a call to chat_process_connections() and added
+            the chat sockets to the call to select() in bait.
+main.c   -- added the call to init_chat()
+misc.c   -- added cleanup call in function end_command.
+
+Kindly accept my appologies for those of you who are forced to use
+80 column displays, since I regularly go over 80 columns when writing
+this code.

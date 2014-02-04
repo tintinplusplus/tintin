@@ -84,7 +84,8 @@ OFILES = action.o alias.o files.o help.o highlight.o strhash.o \
          rlhist.o tab.o vt102.o scrsize.o session.o function.o \
          text.o substitute.o tick.o math.o variables.o debug.o \
          tinexp.o mapper.o tables.o buffer.o prompt.o telopt.o \
-         class.o split.o echo.o utils.o macro.o config.o       
+         class.o split.o echo.o utils.o macro.o config.o       \
+         chat.o      
 
 
 

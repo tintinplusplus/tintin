@@ -29,9 +29,6 @@
 #include "tintin.h"
 #include "telnet.h"
 
-#include <stdarg.h>
-
-
 /* what we see from the remote end */
 
 char iac_do_ttype[]           = { IAC, DO,    TELOPT_TTYPE           };
@@ -186,6 +183,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 	while (cplen > 0)
 	{
+
 		if (*cpsrc == IAC)
 		{
 			if (HAS_BIT(ses->flags, SES_FLAG_DEBUGTELNET))
@@ -293,6 +291,21 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			cplen -= skip;
 			cpsrc += skip;
 		}
+#ifdef BIG5
+		else if (*cpsrc & 0x80)
+		{
+			*cpdst++ = *cpsrc++;
+			gtd->mud_output_len++;
+			cplen--;
+
+			if (*cpsrc)
+			{
+				*cpdst++ = *cpsrc++;
+				gtd->mud_output_len++;
+				cplen--;
+			}
+		}
+#endif
 		else
 		{
 			/*

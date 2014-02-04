@@ -98,6 +98,25 @@ char *capitalize(const char *str)
 	return outbuf;
 }
 
+char *restring(char *old, const char *new)
+{
+	free(old);
+
+	return strdup(new);
+}
+
+void cat_sprintf(char *dest, const char *fmt, ...)
+{
+	char buf[BUFFER_SIZE];
+
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(buf, fmt, args);
+	va_end(args);
+
+	strcat(dest, buf);
+}
 
 /*************************************************/
 /* print system call error message and terminate */

@@ -28,8 +28,6 @@
 
 #include "tintin.h"
 
-#include <stdarg.h>
-
 #define MAX_STACK_SIZE     200
 #define MAX_DEBUG_SIZE     500
 

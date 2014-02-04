@@ -262,6 +262,9 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 			if (node->data >= NODE_FLAG_MAX)
 			{
 				class_kill(ses, node->left);
+
+				pop_call();
+				return;
 			}
 		}
 
@@ -269,17 +272,18 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 		{
 			ses->class = NULL;
 		}
+
+		if (node->class)
+		{
+			node->class->data -= NODE_FLAG_MAX;
+		}
+
 		UNLINK(node, ses->list[index]->f_node, ses->list[index]->l_node, next, prev);
 
 		free(node->left);
 		free(node->right);
 		free(node->pr);
 		free(node);
-
-		if (node->class)
-		{
-			node->class->data -= NODE_FLAG_MAX;
-		}
 
 		ses->list[index]->count--;
 	}

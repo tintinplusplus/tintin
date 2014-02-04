@@ -1,0 +1,13 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:565: checking for gcc
+configure:678: checking whether the C compiler (gcc -Wall  ) works
+configure:694: gcc -Wall -o conftest    conftest.c  1>&5
+configure:691: warning: return type defaults to `int'
+configure:720: checking whether the C compiler (gcc -Wall  ) is a cross-compiler
+configure:725: checking whether we are using GNU C
+configure:734: gcc -Wall -E conftest.c
+configure:753: checking whether gcc -Wall accepts -g
+configure:785: checking how to run the C preprocessor
+configure:806: gcc -Wall -E  conftest.c >/dev/null 2>conftest.out

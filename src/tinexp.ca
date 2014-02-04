@@ -292,7 +292,7 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 			case '%':
 				if (HAS_BIT(flags, SUB_ARG) && isdigit(pti[1]))
 				{
-					ptt = gtd->vars[pti[1] - '0'];
+					ptt = gtd->vars[pti[i] - '0'];
 
 					while (*ptt)
 					{

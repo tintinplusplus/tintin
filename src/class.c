@@ -236,8 +236,12 @@ DO_CLASS(class_kill)
 
 	class = search_node_with_wild(ses->list[LIST_CLASS], arg);
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	for (cnt = 0 ; cnt < LIST_ALL ; cnt++)
 	{
+		if (cnt == LIST_CLASS)
+		{
+			continue;
+		}
 		for (node = ses->list[cnt]->f_node ; node ; node = ses->list[cnt]->update)
 		{
 			ses->list[cnt]->update = node->next;
@@ -297,7 +301,9 @@ void parse_class(struct session *ses, char *input, struct listnode *class)
 			{
 				continue;
 			}
-			if (!is_abbrev(class->left, arg))
+			get_arg_in_braces(temp, arg, TRUE);
+
+			if (!is_abbrev(class->left, temp))
 			{
 				continue;
 			}

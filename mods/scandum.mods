@@ -798,3 +798,19 @@ files.c        Now skipping chinese characters in #read
 tinexp.c       Fixed some bugs in substitute that slipped in.
 
 tinexp.c       Added skipping of chinese characters in regexp functions.
+
+llist.c        Fixed crash bug with killing classes
+
+function.c     Fixed an issue with #return in fuctions stopping the execution
+               of multiple commands.
+
+rl.c           pressing control-c while connecting will abort the connection
+               instead of exiting the program.
+
+chat.c         Added back the chat module that was originally included with
+               version 1.86. I pretty much rewrote it while at it.
+
+configure      BIG5 configuration was giving me issues on slackware.
+               Since I didn't feel like figuring out how the script works
+               I changed it from --enable-big5 to --big5 and fiddled with
+               the script till it seemed to work again.
