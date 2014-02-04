@@ -202,6 +202,8 @@ void commandloop(void)
 
 				if (gtd->ses->more_output[0] && gtd->ses->list[LIST_PROMPT]->f_node == NULL)
 				{
+					gtd->ses->check_output = 0;
+
 					tintin_printf2(gtd->ses, "%s%s", gtd->ses->more_output, buffer);
 				}
 				else
@@ -296,21 +298,24 @@ void readmud(struct session *ses)
 			}
 		}
 
-		strcpy(linebuf, line);
-/*
-		if (next_line && gts->check_output && ses->more_output[0])
+		if (ses->more_output[0])
 		{
-			sprintf(linebuf, "%s%s", ses->more_output, line);
+			if (ses->check_output || HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+			{
+				sprintf(linebuf, "%s%s", ses->more_output, line);
+
+				ses->more_output[0] = 0;
+			}
+			else
+			{
+				strcpy(linebuf, line);
+			}
 		}
 		else
 		{
-			if (ses->more_output[0])
-			{
-				add_line_buffer(ses, ses->more_output, TRUE);
-			}
-			sprintf(linebuf, "%s", line);
+			strcpy(linebuf, line);
 		}
-*/
+
 		process_mud_output(ses, linebuf, next_line == NULL);
 	}
 
@@ -351,7 +356,7 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		return;
 	}
-
+/*
 	if (!HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
 	{
 		if (ses == gtd->ses || HAS_BIT(ses->flags, SES_FLAG_SNOOP))
@@ -368,7 +373,7 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 			}
 		}
 	}
-
+*/
 	add_line_buffer(ses, linebuf, prompt);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAGPROMPT))
@@ -554,7 +559,7 @@ void tintin_puts2(const char *cptr, struct session *ses)
 		goto_rowcol(ses, ses->bot_row, 1);
 	}
 
-	sprintf(output, "\033[0m%s\033[0m", cptr);
+	sprintf(output, "\033[0m\033[0K%s\033[0m", cptr);
 
 	add_line_buffer(ses, output, FALSE);
 

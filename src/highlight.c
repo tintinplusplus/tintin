@@ -58,7 +58,7 @@ DO_COMMAND(do_highlight)
 	}
 	else if (*left && *right == 0)
 	{
-		if (show_node_with_wild(ses, root, left, PRIORITY) == FALSE)
+		if (show_node_with_wild(ses, left, LIST_HIGHLIGHT) == FALSE)
 		{
 			if (show_message(ses, LIST_HIGHLIGHT))
 			{

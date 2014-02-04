@@ -15,3 +15,4 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
+#macro {\e[11~}{#showme bla\n}

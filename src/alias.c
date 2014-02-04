@@ -45,7 +45,7 @@ DO_COMMAND(do_alias)
 	}
 	else if (*left && !*right)
 	{
-		if (show_node_with_wild(ses, root, left, ALPHA) == FALSE)
+		if (show_node_with_wild(ses, left, LIST_ALIAS) == FALSE)
 		{
 			if (show_message(ses, LIST_ALIAS))
 			{

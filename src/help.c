@@ -199,7 +199,7 @@ const struct help_type help_table[81] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                              1994,2005                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.94.6                           <068>#\n"
+		"<068>    #<078>                           Version 1.94.8                           <068>#\n"
 		"<068>    ######################################################################<088>\n"
 	},
 	{
@@ -604,6 +604,19 @@ const struct help_type help_table[81] =
 		"\n"
 		"Reads a coms file into memory.  The coms file is merged in with the\n"
 		"currently loaded commands.  Duplicate commands are overwritten.\n"
+	},
+	{
+		"REDIT",
+		"Commands: #redit {firstroom|goto|create|map|vmap|find|color|name} {argument}\n"
+		"\n"
+		"#redit firstroom (will create the first room)\n"
+		"#redit goto firstroom (will put you into the room named 'firstroom')\n"
+		"#redit create n (will create a room to the north)\n"
+		"#redit map (will show a little map, 2 rooms big)\n"
+		"#redit vmap (will show a vt map, required #split 5)\n"
+		"#redit find firstroom (searches the shortest path, see #path)\n"
+		"#redit color <code> will set the room's color, see #help colors for info.\n"
+		"#redit link <direction> <room name> will link to an already mapped room\n"
 	},
 	{
 		"REPLACESTRING",

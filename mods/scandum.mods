@@ -694,3 +694,7 @@ rl.c           No longer clearing the screen when exiting tintin++.
 
 table.c        Added flags for commands, so far only automatically substituting
                variables and functions for commands that have the sub flag.
+
+
+rl.c           Fixed packet patch, and added a default patcher for split mode.
+               Fixed the displaying of #alias, #action, etc.

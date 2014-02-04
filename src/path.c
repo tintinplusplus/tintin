@@ -304,7 +304,7 @@ DO_COMMAND(do_pathdir)
 	}
 	else if (*left && !*right)
 	{
-		if (show_node_with_wild(ses, root, left, ALPHA) == FALSE)
+		if (show_node_with_wild(ses, left, LIST_PATHDIR) == FALSE)
 		{
 			if (show_message(ses, LIST_PATHDIR))
 			{

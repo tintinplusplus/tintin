@@ -45,7 +45,7 @@ DO_COMMAND(do_macro)
 	}
 	else if (*left && *right == 0)
 	{
-		if (show_node_with_wild(ses, root, left, ALPHA) == FALSE)
+		if (show_node_with_wild(ses, left, LIST_MACRO) == FALSE)
 		{
 			tintin_printf2(ses, "#MACRO, NO MATCH(ES) FOUND FOR {%s}", left);
 		}

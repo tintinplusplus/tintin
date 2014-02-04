@@ -51,7 +51,7 @@ DO_COMMAND(do_prompt)
 	}
 	else if (*left && !*right)
 	{
-		if (show_node_with_wild(ses, root, left, PRIORITY) == FALSE)
+		if (show_node_with_wild(ses, left, LIST_PROMPT) == FALSE)
 		{
 			tintin_printf2(ses, "#THAT PROMPT IS NOT DEFINED.");
 		}

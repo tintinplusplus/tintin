@@ -112,13 +112,11 @@ void trap_handler(int signal)
 	}
 	crashed = TRUE;
 
-/*	reset_scroll_region(gtd->ses); */
+	clean_screen(gtd->ses);
 
 	dump_stack();
 
 	fflush(NULL);
-
-	system("stty echo");
 
 	exit(-1);
 }

@@ -54,7 +54,7 @@ DO_COMMAND(do_action)
 	}
 	else if (*left && !*right) 
 	{
-		if (show_node_with_wild(ses, root, left, PRIORITY) == FALSE) 
+		if (show_node_with_wild(ses, left, LIST_ACTION) == FALSE) 
 		{
 			if (show_message(ses, LIST_ACTION))
 			{

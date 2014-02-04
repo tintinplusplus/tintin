@@ -61,7 +61,7 @@ DO_COMMAND(do_math)
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	arg = get_arg_in_braces(arg, right, TRUE);
 
-	if (*left == 0 || *result == 0)
+	if (*left == 0 || *right == 0)
 	{
 		tintin_printf2(ses, "#SYNTAX: #MATH {variable} {expression}");
 	}

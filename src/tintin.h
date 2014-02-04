@@ -746,7 +746,7 @@ extern struct listnode *searchnode_list(struct listroot *listhead, const char *c
 extern struct listnode *searchnode_list_begin(struct listroot *listhead, const char *cptr, int mode);
 extern void shownode_list(struct session *ses, struct listnode *node, int index);
 extern void show_list(struct session *ses, struct listroot *listhead, int index);
-extern int show_node_with_wild(struct session *ses, struct listroot *listhead, const char *cptr, int mode);
+extern int show_node_with_wild(struct session *ses, const char *cptr, int index);
 extern struct listnode *search_node_with_wild(struct listroot *listhead, const char *cptr);
 extern void addnode_list(struct listroot *listhead, const char *ltext, const char *rtext, const char *prtext);
 extern int count_list(struct listroot *listhead);

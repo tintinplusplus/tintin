@@ -54,7 +54,7 @@ DO_COMMAND(do_tick)
 	}
 	else if (*left && *right == 0)
 	{
-		if (show_node_with_wild(ses, root, left, PRIORITY) == FALSE) 
+		if (show_node_with_wild(ses, left, LIST_TICKER) == FALSE) 
 		{
 			tintin_printf2(ses, "#TICK, NO MATCH(ES) found for {%s}", left);
 		}
@@ -213,6 +213,7 @@ void tick_update(void)
 			SET_BIT(ses->flags, SES_FLAG_READMUD);
 
 			strcpy(result, ses->more_output);
+
 			ses->more_output[0] = 0;
 
 			process_mud_output(ses, result, TRUE);

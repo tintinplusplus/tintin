@@ -119,6 +119,10 @@ struct session *readfile(struct session *ses, const char *arg, struct listnode *
 					}
 					break;
 
+				case '\r':
+					pti++;
+					break;
+
 				case '\n':
 					lnc++;
 

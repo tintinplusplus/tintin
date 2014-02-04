@@ -350,7 +350,7 @@ void show_list(struct session *ses, struct listroot *listhead, int index)
 	struct listnode *node;
 
 	tintin_header(ses, " %s ", list_table[index].name_multi);
-          
+
 	for (node = listhead->f_node ; node ; node = node->next)
 	{
 		shownode_list(ses, node, index);
@@ -358,16 +358,16 @@ void show_list(struct session *ses, struct listroot *listhead, int index)
 }
 
 
-int show_node_with_wild(struct session *ses, struct listroot *listhead, const char *cptr, int mode)
+int show_node_with_wild(struct session *ses, const char *cptr, int index)
 {
 	struct listnode *node;
 	int flag = FALSE;
 
-	for (node = listhead->f_node ; node ; node = node->next)
+	for (node = ses->list[index]->f_node ; node ; node = node->next)
 	{
 		if (regexp(cptr, node->left))
 		{
-			shownode_list(ses, node, mode);
+			shownode_list(ses, node, index);
 			flag = TRUE;
 		}
 	}
