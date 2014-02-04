@@ -84,7 +84,7 @@ void check_all_actions(struct session *ses, char *original, char *line)
 	{
 		root->update = node->next;
 
-		if (check_one_action(line, original, node->left, ses))
+		if (check_one_regexp(ses, node, line, original, 0))
 		{
 			show_debug(ses, LIST_ACTION, "#DEBUG ACTION {%s}", node->left);
 

@@ -100,6 +100,21 @@ void insertnode_list(struct session *ses, char *ltext, char *rtext, char *prtext
 
 	ses->list[index]->count++;
 
+	switch (index)
+	{
+		case LIST_ALIAS:
+			newnode->pcre = tintin_regexp_compile(newnode, newnode->left, PCRE_ANCHORED);
+			break;
+
+		case LIST_ACTION:
+		case LIST_GAG:
+		case LIST_HIGHLIGHT:
+		case LIST_PROMPT:
+		case LIST_SUBSTITUTE:
+			newnode->pcre = tintin_regexp_compile(newnode, newnode->left, 0);
+			break;
+	}
+
 	switch (list_table[index].mode)
 	{
 		case PRIORITY:
@@ -229,6 +244,11 @@ void deletenode_list(struct session *ses, struct listnode *node, int index)
 		free(node->right);
 		free(node->pr);
 		free(node->class);
+
+		if (node->pcre)
+		{
+			free(node->pcre);
+		}
 		free(node);
 
 		ses->list[index]->count--;

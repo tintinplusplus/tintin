@@ -166,7 +166,7 @@ void write_line_mud(char *line, struct session *ses)
 
 	if (ses == gts)
 	{
-		tintin_printf(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
+		tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
 
 		pop_call();
 		return;

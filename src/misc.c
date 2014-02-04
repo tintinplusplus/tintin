@@ -350,10 +350,13 @@ DO_COMMAND(do_send)
 {
 	char left[BUFFER_SIZE];
 
+	push_call("do_send(%p,%p)",ses,arg);
+
 	get_arg_in_braces(arg, left, TRUE);
 
 	write_mud(ses, left, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
+	pop_call();
 	return ses;
 }
 

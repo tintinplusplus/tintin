@@ -8,17 +8,22 @@ If this went without errors or serious warnings type this to start tintin:
 
 ./tt++
 
+You might need to compile and install the following libraries:
 
-Options configure current supports:
+pcre: http://pcre.org
+zlib: http://zlib.net
 
---enable-big5   To use the big5 encoding
+
+Options configure currently supports:
+
+--enable-big5   To use the big5 encoding for Chinese characters.
 
 If you wish, you can edit src/Makefile.in before running ./configure.
 It shouldn't be necessary unless you have some unorthodox request
 (such as wanting to install tintin++ /usr/local).
 
-If you have any trouble with installing/compiling tintin, you can use
-ask for assistance on the forum.
+If you have any trouble with installing/compiling tintin, you can ask for
+assistance on the forum.
 
 
 TERMINAL EMULATION:

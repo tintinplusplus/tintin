@@ -862,7 +862,7 @@ struct telopt_type telopt_table[] =
 	{    "67",                TEL_N,               NEG_U },
 	{    "68",                TEL_N,               NEG_U },
 	{    "69",                TEL_N,               NEG_U },
-	{    "MSSP",              TEL_Y,               NEG_U },
+	{    "MSSP",              TEL_N,               NEG_U },
 	{    "71",                TEL_N,               NEG_U },
 	{    "72",                TEL_N,               NEG_U },
 	{    "73",                TEL_N,               NEG_U },

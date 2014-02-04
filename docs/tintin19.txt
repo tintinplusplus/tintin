@@ -172,9 +172,9 @@
 
      To delete an alias use the #unalias command.
 
-     WARNING! TinTin++ doesn't baby sit, and hence does not check for recursive
-     aliases! You can avoid recursion by escaping the entire line so it is
-     send directly to the mud.
+     TinTin++ doesn't baby sit, and will not check for recursive aliases! You
+     can avoid recursion by escaping the entire line so it is send directly to
+     the mud.
 
      Example: #alias put \put %1 in %2
 
@@ -189,20 +189,20 @@
      Usage: #action {action-text} {commands}
 
      Actions, also known as triggers, are used to define an action to take
-     place when a particular text appears on your screen. There are 10
+     place when a particular text appears on your screen. There are 99
      variables you can use as wildcards in the action-text. These variables
-     are %0, %1, %2....%9.
+     are %1, %2....%9, %10....%98, %99.
 
      Examples:
 
      #action {You are hungry} {get bread bag;eat bread}
 
-     #action {%0 has arrived.} shake %0 -- shake hands with people arriving.
+     #action {%1 has arrived.} shake %1 -- shake hands with people arriving.
 
-     #action {%0 tells you '%1'} {tell bob %0 told me '%1'} -- forward tells
+     #action {%1 tells you '%2'} {tell bob %1 told me '%2'} -- forward tells
      to Bob.
 
-     #action {tells you} #bell -- beep when you get a tell.
+     #action {tells you} #bell -- beep the terminal when you get a tell.
 
      You can have tintin ignore the actions if you type '#ignore action on'.
 
@@ -230,7 +230,7 @@
 
      #high {Snowy} {light yellow} -- colors the word Snowy.
 
-     #high {%0Snowy%1} {light yellow} -- colors a line containing Snowy
+     #high {%1Snowy%2} {light yellow} -- colors a line containing Snowy
 
      Use #unhigh to delete highlights.
 

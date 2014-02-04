@@ -61,6 +61,7 @@ DO_COMMAND(do_log)
 
 	arg = get_arg_in_braces(arg, left,  FALSE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+
 	arg = get_arg_in_braces(arg, right, TRUE);
 	substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
@@ -68,7 +69,7 @@ DO_COMMAND(do_log)
 	{
 		fclose(ses->logfile);
 		ses->logfile = NULL;
-		tintin_printf(ses, "#OK: LOGGING TURNED OFF.");
+		tintin_printf2(ses, "#OK: LOGGING TURNED OFF.");
 	}
 	else if (*left == 0 || *right == 0 || (!is_abbrev(left, "APPEND") && !is_abbrev(left, "OVERWRITE")))
 	{
@@ -86,11 +87,11 @@ DO_COMMAND(do_log)
 				{
 					write_html_header(ses->logfile);
 				}
-				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
+				tintin_printf2(ses, "#OK: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 			}
 			else
 			{
-				tintin_printf(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
+				tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 			}
 		}
 		else
@@ -101,11 +102,11 @@ DO_COMMAND(do_log)
 				{
 					write_html_header(ses->logfile);
 				}
-				tintin_printf(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
+				tintin_printf2(ses, "#OK: LOGGING OUTPUT TO '%s'", right);
 			}
 			else
 			{
-				tintin_printf(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
+				tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 			}
 		}
 	}

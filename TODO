@@ -1,7 +1,5 @@
 * Stuff that needs to be done
 
-- Look into [A|An] parsing bug.
-
 -------------------------------------------------------------------------------
 
 GENERAL STUFF:
@@ -12,16 +10,11 @@ GENERAL STUFF:
 
 - Add a #line skip option.
 
-- Add a pre-parser to determine whether a trigger is a regex or color
-  trigger.
-
-- Leave unmatched backslashes untouched? - double escapes required in regex.
-
 -------------------------------------------------------------------------------
 
 READLINE:
 
-Use \e[ X to erase an amount of characters to deal with ctrl-r and redraw line functionality.
+- Debug end of screen input drawing.
 
 -------------------------------------------------------------------------------
 
@@ -51,8 +44,6 @@ MAPPING STUFF:
 
 - auto create coord flag for pathdirs.
 
-- Perl compatible regular expressions.
-
 - Buffer safe strings.
 
 - Fix up ipv6 support in chat.
@@ -62,8 +53,6 @@ MAPPING STUFF:
 - Color code compression, particularly useful with vt map drawing.
 
 - link http://www.lauzet.com/argon on webpage
-
-- look into %0^ not working.
 
 -------------------------------------------------------------------------------
 

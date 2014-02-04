@@ -34,6 +34,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <termios.h>
+#include <pcre.h>
 
 /******************************************************************************
 *   Autoconf patching by David Hedbor                                         *
@@ -123,7 +124,7 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.99.1"
+#define VERSION_NUM               "1.99.2"
 
 #define ESCAPE                          27
 
@@ -303,8 +304,6 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define SES_FLAG_CONVERTMETA          (1 << 24)
 #define SES_FLAG_RUN                  (1 << 25)
 
-#define SES_FLAG_BREAK                (1 << 28) /* wasn't the greatest idea */
-
 
 #define TELOPT_FLAG_SGA               (1 <<  0)
 #define TELOPT_FLAG_ECHO              (1 <<  1)
@@ -324,7 +323,10 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define LIST_FLAG_INHERIT             (1 <<  8)
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
-#define NODE_FLAG_MAX                 (1 <<  0)
+#define NODE_FLAG_META                (1 <<  0)
+#define NODE_FLAG_PCRE                (1 <<  1)
+#define NODE_FLAG_VARS                (1 <<  2)
+
 
 #define ROOM_FLAG_AVOID               (1 <<  0)
 #define ROOM_FLAG_HIDE                (1 <<  1)
@@ -355,8 +357,6 @@ typedef void            BUFFER  (struct session *ses, char *arg);
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
 #define MAX_STR_HASH                  10000
-
-#define MAX_ROOM                      15000
 
 /*
 	Some macros to deal with double linked lists
@@ -514,6 +514,7 @@ struct listnode
 	char              * right;
 	char              * pr;
 	char              * class;
+	pcre              * pcre;
 	long long           data;
 	short               flags;
 };
@@ -764,8 +765,9 @@ struct str_hash_index_data
 
 struct map_data
 {
-	struct room_data      * room_list[MAX_ROOM];
+	struct room_data     ** room_list;
 	FILE                  * logfile;
+	int                     size;
 	int                     flags;
 	int                     in_room;
 	int                     last_room;
@@ -1017,7 +1019,7 @@ extern DO_MAP(map_undo);
 extern DO_MAP(map_unlink);
 extern DO_MAP(map_write);
 
-extern void create_map(struct session *ses);
+extern void create_map(struct session *ses, char *arg);
 extern void delete_map(struct session *ses);
 extern int  create_room(struct session *ses, char *arg);
 extern void delete_room(struct session *ses, int room, int exits);
@@ -1085,10 +1087,12 @@ extern int match(struct session *ses, char *str, char *exp);
 extern int find(struct session *ses, char *str, char *exp);
 extern int glob(char *str, char *exp);
 DO_COMMAND(do_regexp);
-extern int regexp_cmds(char *str, char *exp);
 extern int regexp(char *str, char *exp);
-extern int action_regexp(char *str, char *exp);
-extern int tintin_regexp(char *str, char *exp);
+extern int regexp_compare(pcre *regex, char *str, char *exp, int option, int flag);
+extern int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option);
+extern int tintin_regexp(pcre *pcre, char *str, char *exp, int option);
+extern pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option);
+
 
 extern void substitute(struct session *ses, char *string, char *result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
@@ -1423,6 +1427,7 @@ extern int send_will_telopt(struct session *ses, int cplen, unsigned char *cpsrc
 extern int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src);
 extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp1(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);

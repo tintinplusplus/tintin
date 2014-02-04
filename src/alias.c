@@ -23,6 +23,7 @@
 *               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
 *                                                                             *
 *                        coded by Peter Unold 1992                            *
+*                   recoded by Igor van den hoven 2009                        *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -118,7 +119,7 @@ int alias_glob(char *str, char *exp)
 				}
 				break;
 
-			case '^':
+			case '$':
 				if (exp[1] == 0)
 				{
 					return (exp[1] == str[0]);
@@ -145,71 +146,56 @@ int check_all_aliases(struct session *ses, char *input)
 {
 	struct listnode *node;
 	struct listroot *root;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
+	char line[BUFFER_SIZE], tmp[BUFFER_SIZE], *arg;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
 
-	substitute(ses, input, left, SUB_VAR|SUB_FUN);
+	substitute(ses, input, line, SUB_VAR|SUB_FUN);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
+	for (node = root->update = root->f_node ; node ; node = root->update)
 	{
-		for (node = root->update = root->f_node ; node ; node = root->update)
+		root->update = node->next;
+
+		if (check_one_regexp(ses, node, line, line, PCRE_ANCHORED))
 		{
-			root->update = node->next;
+			i = strlen(node->left);
 
-			substitute(ses, node->left, right, SUB_VAR|SUB_FUN);
-
-			if (tintin_regexp(left, right))
+			if (!strncmp(node->left, line, i))
 			{
-				substitute(ses, node->right, input, SUB_ARG);
+				if (line[i] && line[i] != ' ')
+				{
+					continue;
+				}
+				
+				arg = get_arg_in_braces(line, tmp, FALSE);
 
-				show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
+				RESTRING(gtd->vars[0], arg)
 
-				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
+				for (i = 1 ; 1 < 100 && *arg ; i++)
+				{
+					arg = get_arg_in_braces(arg, tmp, FALSE);
 
-				return TRUE;
+					RESTRING(gtd->vars[i], tmp);
+				}
 			}
-		}
-	}
-	else
-	{
-		arg = get_arg_in_braces(left, right, FALSE);
 
-		RESTRING(gtd->vars[0], arg);
+			substitute(ses, node->right, tmp, SUB_ARG);
 
-		for (i = 1 ; i < 100 ; i++)
-		{
-			arg = get_arg_in_braces(arg, right, FALSE);
-
-			RESTRING(gtd->vars[i], right);
-		}
-
-		for (node = root->update = root->f_node ; node ; node = root->update)
-		{
-			root->update = node->next;
-
-			substitute(ses, node->left, right, SUB_VAR|SUB_FUN);
-
-			if (alias_glob(left, right))
+			if (!strncmp(node->left, line, i) && !strcmp(node->right, tmp) && *gtd->vars[0])
 			{
-				substitute(ses, node->right, right, SUB_ARG);
-
-				if (!strcmp(node->right, right) && *gtd->vars[0])
-				{
-					sprintf(input, "%s %s", right, gtd->vars[0]);
-				}
-				else
-				{
-					sprintf(input, "%s", right);
-				}
-
-				show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
-
-				DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
-
-				return TRUE;
+				sprintf(input, "%s %s", tmp, gtd->vars[0]);
 			}
+			else
+			{
+				sprintf(input, "%s", tmp);
+			}
+
+			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s}", node->left);
+
+			DEL_BIT(gtd->flags, TINTIN_FLAG_SHOWMESSAGE);
+
+			return TRUE;
 		}
 	}
 	return FALSE;

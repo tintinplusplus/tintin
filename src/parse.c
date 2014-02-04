@@ -169,8 +169,6 @@ void process_speedwalk(struct session *ses, char *input)
 	char dir[2];
 	int cnt, i;
 
-	push_call("do_speedwalk(%s,%p)",input,ses);
-
 	for (dir[1] = 0 ; *input ; input++)
 	{
 		if (isdigit(*input))
@@ -194,7 +192,6 @@ void process_speedwalk(struct session *ses, char *input)
 			write_mud(ses, dir, SUB_EOL);
 		}
 	}
-	pop_call();
 	return;
 }
 

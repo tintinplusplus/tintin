@@ -153,7 +153,7 @@ DO_COMMAND(do_regexp)
 		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
 		substitute(ses, right, right, SUB_VAR|SUB_FUN);
 
-		if (regexp_cmds(left, right))
+		if (regexp_compare(NULL, left, right, 0, SUB_CMD))
 		{
 			substitute(ses, true, true, SUB_CMD);
 
@@ -167,13 +167,20 @@ DO_COMMAND(do_regexp)
 	return ses;
 }
 
-int regexp_comp(char *str, char *exp, int option, int flag)
+int regexp_compare(pcre *nodepcre, char *str, char *exp, int option, int flag)
 {
 	pcre *regex;
 	const char *error;
 	int i, j, matches, match[303];
 
-	regex = pcre_compile(exp, option, &error, &i, NULL);
+	if (nodepcre == NULL)
+	{
+		regex = pcre_compile(exp, option, &error, &i, NULL);
+	}
+	else
+	{
+		regex = nodepcre;
+	}
 
 	if (regex == NULL)
 	{
@@ -184,8 +191,10 @@ int regexp_comp(char *str, char *exp, int option, int flag)
 
 	if (matches <= 0)
 	{
-		free(regex);
-
+		if (nodepcre == NULL)
+		{
+			free(regex);
+		}
 		return FALSE;
 	}
 
@@ -203,24 +212,30 @@ int regexp_comp(char *str, char *exp, int option, int flag)
 			{
 				j = gtd->args[i];
 
-				gtd->vars[i] = refstring(gtd->vars[i], "%.*s", match[j*2+1] - match[j*2], &str[match[j*2]]);
+				gtd->vars[j] = refstring(gtd->vars[j], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
 			}
 			break;
 	}
 
-	free(regex);
+	if (nodepcre == NULL)
+	{
+		free(regex);
+	}
 
 	return TRUE;
 }
 
-int regexp_cmds(char *str, char *exp)
+pcre *regexp_compile(char *exp, int option)
 {
-	return regexp_comp(str, exp, 0, SUB_CMD);
+	const char *error;
+	int i;
+
+	return pcre_compile(exp, option, &error, &i, NULL);
 }
 
 int regexp(char *str, char *exp)
 {
-	return regexp_comp(str, exp, 0, 0);
+	return regexp_compare(NULL, str, exp, 0, 0);
 }
 
 /******************************************************************************
@@ -760,16 +775,24 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 * in the text represented by the wildcards on success.                        *
 ******************************************************************************/
 
-int check_one_action(char *line, char *original, char *action, struct session *ses)
+int check_one_regexp(struct session *ses, struct listnode *node, char *line, char *original, int option)
 {
-	char result[BUFFER_SIZE];
 	char *exp, *str;
 
-	substitute(ses, action, result, SUB_VAR|SUB_FUN);
+	if (node->pcre == NULL)
+	{
+		char result[BUFFER_SIZE];
 
-	exp = result;
+		substitute(ses, node->left, result, SUB_VAR|SUB_FUN);
 
-	if (*exp == '~')
+		exp = result;
+	}
+	else
+	{
+		exp = node->left;
+	}
+
+	if (HAS_BIT(node->flags, NODE_FLAG_META))
 	{
 		exp++;
 		str = original;
@@ -779,27 +802,23 @@ int check_one_action(char *line, char *original, char *action, struct session *s
 		str = line;
 	}
 
-	return tintin_regexp(str, exp);
+	return tintin_regexp(node->pcre, str, exp, option);
 }
 
-int tintin_regexp(char *str, char *exp)
+/*
+	Keep synched with tintin_regexp_compile
+*/
+
+int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option)
 {
 	char out[BUFFER_SIZE], *pti, *pto;
-	int arg, var, cnt;
+	int arg, var;
 
 	arg = 1;
 	var = 1;
 
 	pti = exp;
 	pto = out;
-
-	if (*pti == '{')
-	{
-		for (cnt = 0 ; cnt < 100 ; cnt++)
-		{
-			gtd->args[cnt] = cnt;
-		}
-	}
 
 	while (*pti)
 	{
@@ -820,7 +839,7 @@ int tintin_regexp(char *str, char *exp)
 				break;
 
 			case '{':
-				gtd->args[arg++ % 100] = var++ % 100;
+				gtd->args[var++ % 100] = arg++ % 100;
 				*pto++ = '(';
 				pti = get_arg_in_braces(pti, pto, TRUE);
 				pto += strlen(pto);
@@ -854,79 +873,79 @@ int tintin_regexp(char *str, char *exp)
 					case '8':
 					case '9':
 						arg = isdigit(pti[2]) ? (pti[1] - '0') * 10 + (pti[2] - '0') : pti[1] - '0';
-						gtd->args[arg++ % 100] = var++ % 100;
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += isdigit(pti[2]) ? 3 : 2;
 						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'w':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "([a-zA-Z]*?)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'W':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "([^a-zA-Z]*?)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'd':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "([0-9]*?)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "([0-9]*)" : "([0-9]*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'D':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "([^0-9]*?)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "([^0-9]*)" : "([^0-9]*?)");
 						pto += strlen(pto);
 						break;
 
 					case 's':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "\\s*?");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "(\\s*)" : "(\\s*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'S':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "\\S*?");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "(\\S*)" : "(\\S*?)");
 						pto += strlen(pto);
 						break;
 
 					case '?':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "(.??)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "(.?)" : "(.??)");
 						pto += strlen(pto);
 						break;
 
 					case '*':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "(.*?)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
 						pto += strlen(pto);
 						break;
 
 					case '+':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "(.+?)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, *pti == 0 ? "(.+)" : "(.+?)");
 						pto += strlen(pto);
 						break;
 
 					case '.':
-						gtd->args[arg++ % 100] = var++ % 100;
-						strcpy(pto, "(.)");
+						gtd->args[var++ % 100] = arg++ % 100;
 						pti += 2;
+						strcpy(pto, "(.)");
 						pto += strlen(pto);
 						break;
 
@@ -943,5 +962,159 @@ int tintin_regexp(char *str, char *exp)
 	}
 	*pto = 0;
 
-	return regexp_comp(str, out, 0, SUB_ARG);
+	return regexp_compare(nodepcre, str, out, option, SUB_ARG);
+}
+
+pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
+{
+	char out[BUFFER_SIZE], *pti, *pto;
+
+	pti = exp;
+	pto = out;
+
+	if (*pti == '~')
+	{
+		pti++;
+		SET_BIT(node->flags, NODE_FLAG_META);
+	}
+
+	while (*pti)
+	{
+
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+			*pto++ = *pti++;
+			continue;
+		}
+#endif
+		switch (pti[0])
+		{
+			case '\\':
+				*pto++ = *pti++;
+				*pto++ = *pti++;
+				break;
+
+			case '{':
+				*pto++ = '(';
+				pti = get_arg_in_braces(pti, pto, TRUE);
+				pto += strlen(pto);
+				*pto++ = ')';
+				break;
+
+			case '$':
+			case '@':
+				if (pti[1])
+				{
+					return NULL;
+				}
+				*pto++ = *pti++;
+				break;
+
+			case '[':
+			case ']':
+			case '(':
+			case ')':
+			case '|':
+			case '.':
+			case '?':
+			case '+':
+			case '*':
+				*pto++ = '\\';
+				*pto++ = *pti++;
+				break;
+
+			case '%':
+				switch (pti[1])
+				{
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						pti += isdigit(pti[2]) ? 3 : 2;
+						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'w':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'W':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'd':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([0-9]*)" : "([0-9]*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'D':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "([^0-9]*)" : "([^0-9]*?)");
+						pto += strlen(pto);
+						break;
+
+					case 's':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "(\\s*)" : "(\\s*?)");
+						pto += strlen(pto);
+						break;
+
+					case 'S':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "(\\S*)" : "(\\S*?)");
+						pto += strlen(pto);
+						break;
+
+					case '?':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "(.?)" : "(.??)");
+						pto += strlen(pto);
+						break;
+
+					case '*':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
+						pto += strlen(pto);
+						break;
+
+					case '+':
+						pti += 2;
+						strcpy(pto, *pti == 0 ? "(.+)" : "(.+?)");
+						pto += strlen(pto);
+						break;
+
+					case '.':
+						pti += 2;
+						strcpy(pto, "(.)");
+						pto += strlen(pto);
+						break;
+
+					default:
+						*pto++ = *pti++;
+						break;
+				}
+				break;
+
+			default:
+				*pto++ = *pti++;
+				break;
+		}
+	}
+	*pto = 0;
+
+	return regexp_compile(out, option);
 }

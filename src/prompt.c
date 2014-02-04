@@ -79,7 +79,7 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 
 	for (node = ses->list[LIST_PROMPT]->f_node ; node ; node = node->next)
 	{
-		if (check_one_action(line, original, node->left, ses))
+		if (check_one_regexp(ses, node, line, original, 0))
 		{
 			if (*node->right)
 			{

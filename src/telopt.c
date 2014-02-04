@@ -43,6 +43,7 @@ char iac_do_echo[]            = { IAC, DO,    TELOPT_ECHO            };
 char iac_wont_echo[]          = { IAC, WONT,  TELOPT_ECHO            };
 char iac_will_echo[]          = { IAC, WILL,  TELOPT_ECHO            };
 
+char iac_will_mssp[]          = { IAC, WILL,  TELOPT_MSSP            };
 char iac_sb_mssp[]            = { IAC, SB,    TELOPT_MSSP            };
 
 char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
@@ -74,6 +75,7 @@ struct iac_type iac_table [] =
 	{   3,  iac_will_echo,        &send_echo_off           },
 	{   3,  iac_wont_echo,        &send_echo_on            },
 	{   3,  iac_will_mccp2,       &send_do_mccp2           },
+	{   3,  iac_will_mssp,        &send_do_mssp            },
 	{   3,  iac_sb_mssp,          &recv_sb_mssp            },
 	{   5,  iac_sb_mccp1,         &init_mccp               },
 	{   5,  iac_sb_mccp2,         &init_mccp               },
@@ -95,7 +97,7 @@ void telopt_debug(struct session *ses, char *format, ...)
 		vsprintf(buf, format, args);
 		va_end(args);
 
-		tintin_puts2(ses, buf);
+		tintin_puts(ses, buf);
 	}
 }
 
@@ -238,7 +240,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case SB:
 						if (cplen > 2)
 						{
-							tintin_printf2(ses, "RCVD IAC SB %s", telopt_table[cpsrc[2]].name);
+							tintin_printf2(ses, "RCVD IAC SB %s (%d)", telopt_table[cpsrc[2]].name, cplen);
 						}
 						break;
 
@@ -660,8 +662,19 @@ int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 }
 
 /*
-	MSSP \xFF\xFD\x46
+	MSSP
 */
+
+int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MSSP);
+
+		telopt_debug(ses, "SENT IAC DO MSSP");
+	}
+	return 3;
+}
 
 int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 {
@@ -671,6 +684,11 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 
 	var[0] = val[0] = i = 0;
 
+	if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+	{
+		tintin_header(ses, " MSSP %d", cplen);
+	}
+
 	while (i < cplen && src[i] != SE)
 	{
 		switch (src[i])
@@ -679,7 +697,7 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 				i++;
 				pto = var;
 
-				while (i < cplen && src[i] >= 32 && src[i] != IAC)
+				while (i < cplen && src[i] >= 3 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
@@ -690,7 +708,7 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 				i++;
 				pto = val;
 
-				while (i < cplen && src[i] >= 32 && src[i] != IAC)
+				while (i < cplen && src[i] >= 3 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
@@ -704,6 +722,12 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 				break;
 		}
 	}
+
+	if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+	{
+		tintin_header(ses, "");
+	}
+
 	return UMIN(i + 1, cplen);
 }
 

@@ -344,11 +344,10 @@ void convert_meta(char *input, char *output)
 				break;
 
 			default:
-				if (*pti > 0 && *pti < 32)
+				if (*pti < 32)
 				{
 					*pto++ = '\\';
-					*pto++ = 'C';
-					*pto++ = '-';
+					*pto++ = 'c';
 					*pto++ = 'a' + *pti - 1;
 					pti++;
 					break;
@@ -387,6 +386,11 @@ void unconvert_meta(char *input, char *output)
 						{
 							*pto++ = *pti++;
 						}
+						break;
+
+					case 'c':
+						*pto++ = pti[2] % 32;
+						pti += 3;
 						break;
 
 					case 'b':

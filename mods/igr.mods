@@ -1,7 +1,21 @@
+March 2009     1.99.2
+--------------------------------------------------------------------------------
+tinexp.c       Added pre-compiler for triggers, making them execute much faster.
+
+input.c        Macros now default to \ca to \cz for control characters instead
+               of readline's \C-a to \C-z. This because PCRE uses \c and it
+               makes sense to use a universal system. Old control codes still
+               work.
+
+mapper.c       Can now use #map create {number of rooms}, by default the number
+               of rooms is set to 15000. World size is stored as C <number> in
+               map files.
+
 February 2009  1.99.1
 --------------------------------------------------------------------------------
 
-telopt.c       Added passive MSSP support. To trigger use: #send \xFF\xFD\x46
+telopt.c       Added MSSP support, use: #config {debug telnet} on, to see the
+               output from a MUD server supporting MSSP.
 
 tinexp.c       Added pre-parser to convert tintin globs to regexps.
 

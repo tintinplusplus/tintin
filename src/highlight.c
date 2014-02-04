@@ -99,7 +99,7 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
 	{
-		if (check_one_action(line, original, node->left, ses))
+		if (check_one_regexp(ses, node, line, original, 0))
 		{
 			substitute(ses, node->left, match, SUB_ARG);
 			substitute(ses, match, match, SUB_VAR|SUB_FUN|SUB_ANC|SUB_ESC);

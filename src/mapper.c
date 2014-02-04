@@ -172,9 +172,9 @@ DO_MAP(map_color)
 
 DO_MAP(map_create)
 {
-	create_map(ses);
+	create_map(ses, left);
 
-	tintin_printf2(ses, "#MAP: Map created, use #map goto 1, to proceed");
+	tintin_printf2(ses, "#MAP: %d room map created, use #map goto 1, to proceed", ses->map->size);
 }
 
 DO_MAP(map_delete)
@@ -218,7 +218,7 @@ DO_MAP(map_dig)
 
 	CHECK_INSIDE();
 
-	for (room = 1 ; room < MAX_ROOM ; room++)
+	for (room = 1 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room] == NULL)
 		{
@@ -235,9 +235,9 @@ DO_MAP(map_dig)
 		return;
 	}
 
-	if (room == MAX_ROOM)
+	if (room == ses->map->size)
 	{
-		tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached.", MAX_ROOM);
+		tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached.", ses->map->size);
 		return;
 	}
 
@@ -491,7 +491,7 @@ DO_MAP(map_info)
 
 	CHECK_MAP();
 
-	for (room = cnt = exits = 0 ; room < MAX_ROOM ; room++)
+	for (room = cnt = exits = 0 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room])
 		{
@@ -501,7 +501,7 @@ DO_MAP(map_info)
 		}
 	}
 
-	tintin_printf2(ses, "%-20s %d", "Total rooms:",    cnt);
+	tintin_printf2(ses, "%-20s %d/%d", "Total rooms:",    cnt, ses->map->size);
 	tintin_printf2(ses, "%-20s %d", "Total exits:",    exits);
 	tintin_printf2(ses, "%-20s %s", "Vtmap:",          HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
 	tintin_printf2(ses, "%-20s %s", "Static:",         HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
@@ -532,7 +532,7 @@ DO_MAP(map_insert)
 
 	CHECK_INSIDE();
 
-	for (room = 1 ; room < MAX_ROOM ; room++)
+	for (room = 1 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room] == NULL)
 		{
@@ -551,9 +551,9 @@ DO_MAP(map_insert)
 		return;
 	}
 
-	if (room == MAX_ROOM)
+	if (room == ses->map->size)
 	{
-		tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached.", MAX_ROOM);
+		tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached.", ses->map->size);
 		return;
 	}
 
@@ -605,7 +605,7 @@ DO_MAP(map_jump)
 	map_grid_x += atoi(left);
 	map_grid_y += atoi(right);
 
-	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
@@ -709,7 +709,7 @@ DO_MAP(map_list)
 
 	CHECK_MAP();
 
-	for (room = 0 ; room < MAX_ROOM ; room++)
+	for (room = 0 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room])
 		{
@@ -788,7 +788,7 @@ DO_MAP(map_read)
 		switch (buffer[0])
 		{
 			case 'C':
-				create_map(ses);
+				create_map(ses, &buffer [2]);
 				break;
 
 			case 'E':
@@ -836,7 +836,7 @@ DO_MAP(map_read)
 
 	fclose(myfile);
 
-	for (room = 0 ; room < MAX_ROOM ; room++)
+	for (room = 0 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room] == NULL)
 		{
@@ -1126,7 +1126,7 @@ DO_MAP(map_write)
 		return;
 	}
 
-	fprintf(file, "C %d\n\n", MAX_ROOM);
+	fprintf(file, "C %d\n\n", ses->map->size);
 
 	fprintf(file, "F %d\n\n", ses->map->flags);
 
@@ -1140,7 +1140,7 @@ DO_MAP(map_write)
 		ses->map->legend[12], ses->map->legend[13], ses->map->legend[14],
 		ses->map->legend[15], ses->map->legend[16]);
 
-	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
@@ -1167,7 +1167,7 @@ DO_MAP(map_write)
 	show_message(ses, LIST_MAP, "#MAP: Map file written to {%s}.", left);
 }
 
-void create_map(struct session *ses)
+void create_map(struct session *ses, char *arg)
 {
 	int index;
 
@@ -1177,6 +1177,10 @@ void create_map(struct session *ses)
 	}
 
 	ses->map = calloc(1, sizeof(struct map_data));
+
+	ses->map->size = atoi(arg) > 0 ? atoi(arg) : 15000;
+
+	ses->map->room_list = calloc(ses->map->size, sizeof(struct room_data));
 
 	ses->map->flags = MAP_FLAG_ASCIIGRAPHICS;
 
@@ -1192,13 +1196,15 @@ void delete_map(struct session *ses)
 {
 	int index;
 
-	for (index = 1 ; index < MAX_ROOM ; index++)
+	for (index = 1 ; index < ses->map->size ; index++)
 	{
 		if (ses->map->room_list[index])
 		{
 			delete_room(ses, index, FALSE);
 		}
 	}
+	free(ses->map->room_list);
+
 	free(ses->map);
 
 	ses->map = NULL;
@@ -1277,7 +1283,7 @@ void delete_room(struct session *ses, int room, int exits)
 
 	if (exits)
 	{
-		for (cnt = 0 ; cnt < MAX_ROOM ; cnt++)
+		for (cnt = 0 ; cnt < ses->map->size ; cnt++)
 		{
 			if (ses->map->room_list[cnt])
 			{
@@ -1424,7 +1430,7 @@ void follow_map(struct session *ses, char *argument)
 			return;
 		}
 
-		for (room = 1 ; room < MAX_ROOM ; room++)
+		for (room = 1 ; room < ses->map->size ; room++)
 		{
 			if (ses->map->room_list[room] == NULL)
 			{
@@ -1432,9 +1438,9 @@ void follow_map(struct session *ses, char *argument)
 			}
 		}
 
-		if (room == MAX_ROOM)
+		if (room == ses->map->size)
 		{
-			tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached. Consider updating MAX_ROOM in tintin.h", MAX_ROOM);
+			tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached. Consider updating updating the C value in your map file.", ses->map->size);
 
 			return;
 		}
@@ -1646,7 +1652,7 @@ void create_map_grid(struct session *ses, short room, short x, short y)
 {
 	short vnum;
 
-	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
@@ -2030,7 +2036,7 @@ int find_room(struct session *ses, char *arg)
 
 	room = atoi(arg);
 
-	if (room > 0 && room < MAX_ROOM)
+	if (room > 0 && room < ses->map->size)
 	{
 		if (ses->map->room_list[room])
 		{
@@ -2044,7 +2050,7 @@ int find_room(struct session *ses, char *arg)
 	vnum = -1;
 	size = MAP_SEARCH_SIZE + 1;
 
-	for (room = 0 ; room < MAX_ROOM ; room++)
+	for (room = 0 ; room < ses->map->size ; room++)
 	{
 		if (ses->map->room_list[room] && match(ses, ses->map->room_list[room]->name, arg))
 		{
@@ -2239,7 +2245,7 @@ void fill_map(struct session *ses)
 	map_search_tar_room  = -1;
 	map_search_max_size  = MAP_SEARCH_SIZE;
 
-	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
@@ -2301,7 +2307,7 @@ void shortest_path(struct session *ses, int run, char *left, char *right)
 	map_search_tar_room  = room;
 	map_search_max_size  = MAP_SEARCH_SIZE;
 
-	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
@@ -2419,7 +2425,7 @@ int find_coord(struct session *ses, char *arg)
 	map_grid_x += (HAS_BIT(coord, MAP_EXIT_E) ? 1 : HAS_BIT(coord, MAP_EXIT_W) ? -1 : 0);
 	map_grid_z += (HAS_BIT(coord, MAP_EXIT_U) ? 1 : HAS_BIT(coord, MAP_EXIT_D) ? -1 : 0);
 
-	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
+	for (vnum = 0 ; vnum < ses->map->size ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
