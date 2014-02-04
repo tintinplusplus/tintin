@@ -12,6 +12,8 @@
 #CONFIG           {TINTIN CHAR}           {#}
 #CONFIG           {VERBATIM CHAR}         {\\}
 #CONFIG           {REPEAT CHAR}           {!}
+#CONFIG           {VERBOSE}               {OFF}
+
 #alias {oops} {#showme <118>Problem with check %1}
 #unvar bla
 #class bla open
@@ -30,6 +32,8 @@ oops 5
 
 #forall {bli bla blo} {#if {"$forall" != "bl?"} {oops 6}}
 #loop {1 3} {#if {$loop != &0} {oops 7}}
+
+#showme working so far
 
 #logline x.tmp #var bla 3
 #read x.tmp
@@ -284,4 +288,4 @@ oops 5
 	isca: bbs.iscabbs.com 23
 }
 
-#delay 0 #showme t00t
+#delay 1 #showme t00t

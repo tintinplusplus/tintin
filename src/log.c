@@ -30,7 +30,7 @@
 
 void logit(struct session *ses, char *txt, FILE *file)
 {
-	char out[BUFFER_SIZE];
+	char out[STRING_SIZE];
 
 	if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
 	{
@@ -53,12 +53,11 @@ void logit(struct session *ses, char *txt, FILE *file)
 
 DO_COMMAND(do_log)
 {
+	char *left, *right;
 	FILE *logfile;
 
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (ses->logfile)
 	{
@@ -115,12 +114,12 @@ DO_COMMAND(do_log)
 
 DO_COMMAND(do_logline)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *left, *right, *temp;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
-	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, right, SUB_ESC|SUB_COL);
+	arg = get_arg_in_braces(arg, &temp, TRUE);
+	substitute(ses, temp, &right, SUB_ESC|SUB_COL);
 
 	if (ses->logline)
 	{
@@ -153,10 +152,10 @@ DO_COMMAND(do_logline)
 DO_COMMAND(do_writebuffer)
 {
 	FILE *fp;
-	char left[BUFFER_SIZE], out[BUFFER_SIZE];
+	char *left, out[STRING_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	if (*left == 0)
 	{

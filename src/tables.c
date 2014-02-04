@@ -101,7 +101,7 @@ struct command_type command_table[] =
 	{	"untab",             do_untab,             CMD_FLAG_NONE    },
 	{	"unticker",          do_untick,            CMD_FLAG_NONE    },
 	{	"unvariable",        do_unvariable,        CMD_FLAG_NONE    },
-	{	"variable",          do_variable,          CMD_FLAG_NONE    },
+	{	"variable",          do_variable,          CMD_FLAG_SUB     },
 	{	"write",             do_write,             CMD_FLAG_SUB     },
 	{	"zap",               do_zap,               CMD_FLAG_NONE    },
 	{	"",                  NULL,                 CMD_FLAG_NONE    }
@@ -347,12 +347,14 @@ struct chat_type chat_table[] =
 
 struct array_type array_table[] =
 {
+	{     "CLR",                       array_clr              },
 	{     "DEL",                       array_del              },
 	{     "FND",                       array_fnd              },
 	{     "GET",                       array_get              },
 	{     "INS",                       array_ins              },
 	{     "LEN",                       array_len              },
 	{     "SET",                       array_set              },
+	{     "SRT",                       array_srt              },
 	{     "",                          NULL                   }
 };
 
@@ -635,6 +637,7 @@ struct timer_type timer_table[] =
 	{    "Update Packet Patcher"       },
 	{    "Update Chat Server"          },
 	{    "Update Terminal"             },
+	{    "Update Memory"               },
 	{    "Stall Program"               }
 };
 

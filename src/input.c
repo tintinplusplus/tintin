@@ -29,7 +29,7 @@
 
 void process_input(void)
 {
-	char line[BUFFER_SIZE];
+	char line[STRING_SIZE];
 
 	line[0] = 127;
 
@@ -88,7 +88,7 @@ void process_input(void)
 
 void read_line(char *line)
 {
-	char buffer[BUFFER_SIZE];
+	char buffer[STRING_SIZE];
 	struct listnode *node;
 	struct listroot *root;
 	int len, cnt, match;
@@ -393,7 +393,7 @@ void unconvert_meta(char *input, char *output)
 
 void echo_command(struct session *ses, char *line, int newline)
 {
-	char buffer[BUFFER_SIZE];
+	char buffer[STRING_SIZE];
 
 	if (IS_SPLIT(ses) && ses->more_output[0] == 0)
 	{
@@ -448,7 +448,7 @@ void echo_command(struct session *ses, char *line, int newline)
 
 void input_printf(char *format, ...)
 {
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	if (!HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))

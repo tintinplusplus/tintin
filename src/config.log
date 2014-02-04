@@ -999,8 +999,8 @@ configure:5421: $? = 0
 configure:5435: result: yes
 configure:5442: checking for _doprnt
 configure:5498: gcc -o conftest.exe -g -O2   conftest.c  >&5
-/cygdrive/c/DOCUME~1/Scandum/LOCALS~1/Temp/ccKh5Egv.o: In function `main':
-/home/Scandum/dev/tt/src/conftest.c:85: undefined reference to `__doprnt'
+/cygdrive/c/DOCUME~1/Scandum/LOCALS~1/Temp/ccKRHpQY.o: In function `main':
+/home/Scandum/dev/tt/beta/conftest.c:85: undefined reference to `__doprnt'
 collect2: ld returned 1 exit status
 configure:5504: $? = 1
 configure: failed program was:
@@ -1213,8 +1213,8 @@ configure:5652: $? = 0
 configure:5666: result: yes
 configure:5570: checking for getaddrinfo
 configure:5626: gcc -o conftest.exe -g -O2   conftest.c  >&5
-/cygdrive/c/DOCUME~1/Scandum/LOCALS~1/Temp/ccYDuRyo.o: In function `main':
-/home/Scandum/dev/tt/src/conftest.c:100: undefined reference to `_getaddrinfo'
+/cygdrive/c/DOCUME~1/Scandum/LOCALS~1/Temp/ccmtfzi1.o: In function `main':
+/home/Scandum/dev/tt/beta/conftest.c:100: undefined reference to `_getaddrinfo'
 collect2: ld returned 1 exit status
 configure:5632: $? = 1
 configure: failed program was:
@@ -1492,6 +1492,7 @@ on firelight
 
 config.status:585: creating Makefile
 config.status:585: creating config.h
+config.status:859: config.h is unchanged
 
 ## ---------------- ##
 ## Cache variables. ##

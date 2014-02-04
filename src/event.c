@@ -30,14 +30,14 @@
 
 DO_COMMAND(do_event)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	struct listroot *root;
 	int cnt;
 
 	root = ses->list[LIST_EVENT];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0)
 	{

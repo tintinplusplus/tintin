@@ -35,30 +35,22 @@
 struct session *gts;
 struct tintin_data *gtd;
 
-RETSIGTYPE pipe_handler(int no_care)
+
+
+void pipe_handler(int signal)
 {
 	tintin_printf(NULL, "broken_pipe: dumping stack");
 
 	dump_stack();
-
-	if (signal(SIGPIPE, pipe_handler) == BADSIG)
-	{
-		syserr("signal SIGPIPE");
-	}
-
 }
 
 /*
 	when the screen size changes, take note of it
 */
 
-RETSIGTYPE winch_handler(int no_care)
+void winch_handler(int signal)
 {
 	struct session *ses;
-
-	/*
-		select() will see a "syscall interrupted" error; remember not to worry
-	*/
 
 	for (ses = gts ; ses ; ses = ses->next)
 	{
@@ -71,17 +63,17 @@ RETSIGTYPE winch_handler(int no_care)
 	}
 
 	/*
-		we haveta reinitialize the signals for sysv machines
-	*/
+		we have to reinitialize the signals for sysv machines
 
 	if (signal(SIGWINCH, winch_handler) == BADSIG)
 	{
 		syserr("signal SIGWINCH");
 	}
+	*/
 }
 
 
-RETSIGTYPE abort_handler(int signal)
+void abort_handler(int signal)
 {
 	if (gtd->ses->connect_retry > utime())
 	{
@@ -101,7 +93,7 @@ RETSIGTYPE abort_handler(int signal)
 	}
 }
 
-RETSIGTYPE suspend_handler(int signal)
+void suspend_handler(int signal)
 {
 	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
 
@@ -115,7 +107,7 @@ RETSIGTYPE suspend_handler(int signal)
 
 	init_terminal();
 
-	tintin_puts("#RETURNING BACK TO TINTIN++.", NULL);
+	tintin_puts(NULL, "#RETURNING BACK TO TINTIN++.");
 }
 
 void trap_handler(int signal)
@@ -275,6 +267,9 @@ void init_tintin(void)
 	gtd                 = calloc(1, sizeof(struct tintin_data));
 
 	gtd->ses            = gts;
+
+	gtd->mem            = calloc(1, sizeof(struct memory_data));
+
 	gtd->str_hash_size  = sizeof(struct str_hash_data);
 
 	gtd->mccp_buf_max   = 64;

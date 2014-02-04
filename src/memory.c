@@ -1,6 +1,6 @@
 /******************************************************************************
 *   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   Copyright (C) 2007 (See CREDITS file)                                     *
 *                                                                             *
 *   This program is protected under the GNU GPL (See COPYING)                 *
 *                                                                             *
@@ -17,44 +17,89 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                      coded by Igor van den Hoven 2006                       *
+*                      coded by Igor van den Hoven 2007                       *
 ******************************************************************************/
-
 
 #include "tintin.h"
 
-
-DO_COMMAND(do_tab)
+char *string_alloc(char *string)
 {
-	char *left;
-	struct listroot *root;
+	struct memory_data *mem;
 
-	root = ses->list[LIST_TAB];
+	mem = (struct memory_data *) calloc(1, sizeof(struct memory_data));
 
-	get_arg_in_braces(arg, &left, TRUE);
+	mem->data = strdup(string);
 
-	if (*left == 0)
-	{
-		show_list(ses, root, LIST_TAB);
-	}
-	else
-	{
-		updatenode_list(ses, left, "", "0", LIST_TAB);
+	LINK(mem, gtd->mem->next, gtd->mem->prev);
 
-		show_message(ses, LIST_TAB, "#OK. {%s} IS NOW A TAB.", left);
-	}
-	return ses;
+	return mem->data;
 }
 
 
-DO_COMMAND(do_untab)
+char *string_realloc(char *point, char *string)
 {
-	delete_node_with_wild(ses, LIST_TAB, arg);
+	struct memory_data *mem;
 
-	return ses;
+	for (mem = gtd->mem->prev ; mem ; mem = mem->prev)
+	{
+		if (mem->data == point)
+		{
+			free(mem->data);
+
+			mem->data = strdup(string);
+
+			return mem->data;
+		}
+	}
+	printf("string_realloc: %s\n", string);
+
+	return point;
+}
+
+
+char *stringf_alloc(char *fmt, ...)
+{
+	char string[STRING_SIZE];
+
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(string, fmt, args);
+	va_end(args);
+
+	return string_alloc(string);
+}
+
+char *string_free(char *string)
+{
+	struct memory_data *mem;
+
+	while (TRUE)
+	{
+		mem = gtd->mem->prev;
+
+		if (mem->data == string)
+		{
+			memory_free(mem);
+
+			return NULL;
+		}
+		memory_free(mem);
+	}
+	printf("failed to free string: %s\n", string);
+
+	return NULL;
+}
+
+void memory_free(struct memory_data *mem)
+{
+	UNLINK(mem, gtd->mem->next, gtd->mem->prev);
+
+	free(mem->data);
+	free(mem);
 }

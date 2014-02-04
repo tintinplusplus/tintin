@@ -287,25 +287,25 @@ struct listnode *searchnode_list_begin(struct listroot *listhead, char *cptr, in
 
 void shownode_list(struct session *ses, struct listnode *nptr, int index)
 {
-	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
+	char *buf, *out;
 
 	switch (list_table[index].args)
 	{
 		case 3:
-			sprintf(buf, "#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>} <168>@ <118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right, nptr->pr);
+			buf = stringf_alloc("#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>} <168>@ <118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right, nptr->pr);
 			break;
 		case 2:
-			sprintf(buf, "#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right);
+			buf = stringf_alloc("#%s <118>{<088>%s<118>}<168>=<118>{<088>%s<118>}", list_table[index].name, nptr->left, nptr->right);
 			break;
 		case 1:
-			sprintf(buf, "#%s <118>{<088>%s<118>}", list_table[index].name, nptr->left);
+			buf = stringf_alloc("#%s <118>{<088>%s<118>}", list_table[index].name, nptr->left);
 			break;
 		default:
-			sprintf(buf, "#BUG: list_table[index].args == 0");
+			buf = stringf_alloc("#BUG: list_table[index].args == 0");
 			break;
 	}
 
-	substitute(ses, buf, out, SUB_COL);
+	substitute(ses, buf, &out, SUB_COL);
 
 	tintin_printf2(ses, "%s", out);
 }
@@ -357,6 +357,28 @@ struct listnode *search_node_with_wild(struct listroot *listhead, char *cptr)
 	return NULL;
 }
 
+void delete_node_with_wild(struct session *ses, int index, char *string)
+{
+	char *left;
+	struct listnode *node;
+	int found = FALSE;
+
+	get_arg_in_braces(string, &left, TRUE);
+
+	while ((node = search_node_with_wild(ses->list[index], left)))
+	{
+		show_message(ses, index, "#OK. {%s} IS NO LONGER %s %s.", node->left, (*list_table[index].name == 'A' || *list_table[index].name == 'E') ? "AN" : "A", list_table[index].name);
+
+		deletenode_list(ses, node, index);
+
+		found = TRUE;
+	}
+
+	if (found == 0)
+	{
+		show_message(ses, index, "#%s: NO MATCH(ES) FOUND FOR {%s}.", list_table[index].name, left);
+	}
+}
 
 /*
 	create a node containing the ltext, rtext fields and place at the
@@ -399,7 +421,7 @@ int count_list(struct listroot *listhead)
 
 DO_COMMAND(do_killall)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 	int cnt, fnd = FALSE;
 
 	if (arg == NULL || *arg == 0) 
@@ -420,7 +442,7 @@ DO_COMMAND(do_killall)
 		return ses;
 	}
 
-	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, &left,  0);
 
 	for (cnt = fnd = 0 ; cnt < LIST_MAX ; cnt++)
 	{
@@ -443,11 +465,11 @@ DO_COMMAND(do_killall)
 
 DO_COMMAND(do_message)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	int cnt, fnd = FALSE;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, FALSE);
 
 	if (*left == 0)
 	{
@@ -500,11 +522,11 @@ DO_COMMAND(do_message)
 
 DO_COMMAND(do_ignore)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	int cnt, fnd = FALSE;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &right, 0);
 
 	if (*left == 0)
 	{
@@ -557,11 +579,11 @@ DO_COMMAND(do_ignore)
 
 DO_COMMAND(do_debug)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	int cnt, fnd = FALSE;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &right, 0);
 
 	if (*left == 0)
 	{

@@ -543,16 +543,18 @@ struct help_type help_table[] =
 	{
 		"LIST",
 		"\n"
-		"Command: #list {variable} {del|ins|get|set|len} {argument}\n"
+		"Command: #list {variable} {clr|del|ins|get|len|set|srt} {argument}\n"
 		"\n"
+		"         #list {list} {clr}                     Empty the given list\n"
 		"         #list {list} {del} {index}             Delete an item from the list\n"
 		"         #list {list} {ins} {index} {string}    Insert {string} at given index\n"
 		"         #list {list} {fnd} {string} {variable} Return index if {string} is\n"
 		"                                                found\n"
+		"         #list {list} {len} {variable}          Copy list length to {variable}\n"
 		"         #list {list} {get} {index} {variable}  Copy an item to {variable}\n"
 		"         #list {list} {set} {index} {string}    Change an item at the given\n"
 		"                                                index\n"
-		"         #list {list} {len} {variable}          Copy list length to {variable}\n"
+		"         #list {list} {srt} {string}            Insert item in alphabetic order\n"
 		"\n"
 		"         The index should be between 1 and the list's length. You can also give\n"
 		"         a negative value, in which case -1 equals the last item in the list, -2\n"
@@ -1300,40 +1302,42 @@ struct help_type help_table[] =
 
 DO_COMMAND(do_help)
 {
-	char buf[BUFFER_SIZE] = { 0 }, add[BUFFER_SIZE], *ptf, *pto;
+	char *left, add[BUFFER_SIZE], *ptf, *pto;
 	int cnt;
 
-	if (*arg == 0)
+	arg = get_arg_in_braces(arg, &left, TRUE);
+
+	if (*left == 0)
 	{
 		tintin_header(ses, " HELP LIST ");
 
-		for (cnt = 0 ; *help_table[cnt].name != 0 ; cnt++)
+		for (cnt = add[0] = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if (strlen(buf) + 19 > ses->cols)
+			if (strlen(add) + 19 > ses->cols)
 			{
-				tintin_puts2(buf, ses);
-				buf[0] = 0;
+				tintin_puts2(ses, add);
+				add[0] = 0;
 			}
-			sprintf(add, "%19s", help_table[cnt].name);
-			strcat(buf, add);
+			cat_sprintf(add, "%19s", help_table[cnt].name);
 		}
-		tintin_puts2(buf, ses);
+		tintin_puts2(ses, add);
+
 		tintin_header(ses, "");
 	}
 	else
 	{
 		for (cnt = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if (is_abbrev(arg, help_table[cnt].name) || atoi(arg) == cnt + 1)
+			if (is_abbrev(left, help_table[cnt].name) || atoi(left) == cnt + 1)
 			{
-				substitute(ses, help_table[cnt].text, buf, SUB_COL);
+				substitute(ses, help_table[cnt].text, &pto, SUB_COL);
 
 				if (ses != gts)
 				{
 					tintin_header(ses, " %s ", help_table[cnt].name);
 				}
 
-				for (pto = buf ; *pto ; pto = ptf)
+				while (*pto)
 				{
 					ptf = strchr(pto, '\n');
 
@@ -1344,6 +1348,8 @@ DO_COMMAND(do_help)
 					*ptf++ = 0;
 
 					tintin_printf2(ses, "%s", pto);
+
+					pto = ptf;
 				}
 
 				if (ses != gts)

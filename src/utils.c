@@ -143,7 +143,7 @@ char *capitalize(char *str)
 
 void cat_sprintf(char *dest, char *fmt, ...)
 {
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 
 	va_list args;
 
@@ -156,7 +156,7 @@ void cat_sprintf(char *dest, char *fmt, ...)
 
 void ins_sprintf(char *dest, char *fmt, ...)
 {
-	char buf[BUFFER_SIZE], tmp[BUFFER_SIZE];
+	char buf[STRING_SIZE], tmp[STRING_SIZE];
 
 	va_list args;
 
@@ -165,17 +165,14 @@ void ins_sprintf(char *dest, char *fmt, ...)
 	va_end(args);
 
 	strcpy(tmp, dest);
-
-	*dest = 0;
-
-	strcat(dest, buf);
+	strcpy(dest, buf);
 	strcat(dest, tmp);
 }
 
 void show_message(struct session *ses, int index, char *format, ...)
 {
 	struct listroot *root;
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	push_call("show_message(%p,%p,%p)",ses,index,format);
@@ -190,7 +187,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	{
 		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 		{
-			tintin_puts2(buf, ses);
+			tintin_puts2(ses, buf);
 		}
 		pop_call();
 		return;
@@ -200,7 +197,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 	{
-		tintin_puts2(buf, ses);
+		tintin_puts2(ses, buf);
 
 		pop_call();
 		return;
@@ -210,7 +207,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	{
 		if (HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 		{
-			tintin_puts2(buf, ses);
+			tintin_puts2(ses, buf);
 
 			pop_call();
 			return;
@@ -231,7 +228,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 void show_debug(struct session *ses, int index, char *format, ...)
 {
 	struct listroot *root;
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	root = ses->list[index];
@@ -251,7 +248,7 @@ void show_debug(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 	{
-		tintin_puts2(buf, ses);
+		tintin_puts2(ses, buf);
 
 		pop_call();
 		return;
@@ -288,13 +285,13 @@ void tintin_header(struct session *ses, char *format, ...)
 
 	buf[gtd->ses->cols] = 0;
 
-	tintin_puts2(buf, ses);
+	tintin_puts2(ses, buf);
 }
 
 
 void socket_printf(struct session *ses, size_t length, char *format, ...)
 {
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	va_start(args, format);
@@ -309,26 +306,26 @@ void socket_printf(struct session *ses, size_t length, char *format, ...)
 
 void tintin_printf2(struct session *ses, char *format, ...)
 {
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
 	va_end(args);
 
-	tintin_puts2(buf, ses);
+	tintin_puts2(ses, buf);
 }
 
 void tintin_printf(struct session *ses, char *format, ...)
 {
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
 	va_end(args);
 
-	tintin_puts(buf, ses);
+	tintin_puts(ses, buf);
 }
 
 /*
@@ -336,9 +333,9 @@ void tintin_printf(struct session *ses, char *format, ...)
 	the output is NOT checked for actions or anything
 */
 
-void tintin_puts2(char *cptr, struct session *ses)
+void tintin_puts2(struct session *ses, char *string)
 {
-	char output[BUFFER_SIZE];
+	char output[STRING_SIZE];
 
 	if (ses == NULL)
 	{
@@ -350,7 +347,14 @@ void tintin_puts2(char *cptr, struct session *ses)
 		return;
 	}
 
-	sprintf(output, "\033[0m%s\033[0m", cptr);
+	if (strip_vt102_strlen(ses->more_output) != 0)
+	{
+		sprintf(output, "\r\n\033[0m%s\033[0m", string);
+	}
+	else
+	{
+		sprintf(output, "\033[0m%s\033[0m", string);
+	}
 
 	add_line_buffer(ses, output, FALSE);
 
@@ -378,22 +382,18 @@ void tintin_puts2(char *cptr, struct session *ses)
 	the output IS treated as though it came from the mud
 */
 
-void tintin_puts(char *cptr, struct session *ses)
+void tintin_puts(struct session *ses, char *string)
 {
-	char buf[BUFFER_SIZE];
-
 	if (ses == NULL)
 	{
 		ses = gtd->ses;
 	}
 
-	sprintf(buf, "%s", cptr);
-
-	do_one_line(buf, ses);
+	do_one_line(&string, ses);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
-		tintin_puts2(buf, ses);
+		tintin_puts2(ses, string);
 	}
 	else
 	{

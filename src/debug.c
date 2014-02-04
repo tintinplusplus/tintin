@@ -28,26 +28,27 @@
 
 #include "tintin.h"
 
-#define MAX_STACK_SIZE     50
-#define MAX_DEBUG_SIZE     500
+#define MAX_STACK_SIZE     101
+#define MAX_DEBUG_SIZE     400
 
 char          debug_stack[MAX_STACK_SIZE][MAX_DEBUG_SIZE];
 
-unsigned char debug_index;
+short debug_index;
 
 int push_call(char *f, ...)
 {
 	va_list ap;
 
-	va_start(ap, f);
+	if (debug_index <= 100)
+	{
+		va_start(ap, f);
 
-	vsnprintf(debug_stack[debug_index], MAX_DEBUG_SIZE - 1, f, ap);
+		vsnprintf(debug_stack[debug_index], MAX_DEBUG_SIZE - 1, f, ap);
 
-	va_end(ap);
+		va_end(ap);
+	}
 
-	debug_index++;
-
-	if (debug_index == MAX_STACK_SIZE - 10)
+	if (++debug_index == 10000)
 	{
 		dump_stack();
 
@@ -75,7 +76,7 @@ void dump_stack(void)
 
 	tintin_header(gtd->ses, " DEBUG STACK ");
 
-	for (i = 0 ; i < debug_index ; i++)
+	for (i = 0 ; i < debug_index && i < MAX_STACK_SIZE ; i++)
 	{
 		tintin_printf2(gtd->ses, "\033[1;31mDEBUG_STACK[%03d] = %s", i, debug_stack[i]);
 	}

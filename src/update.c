@@ -46,8 +46,9 @@ void mainloop(void)
 	short int pulse_update_packets  = PULSE_UPDATE_PACKETS;
 	short int pulse_update_chat     = PULSE_UPDATE_CHAT;
 	short int pulse_update_terminal = PULSE_UPDATE_TERMINAL;
+	short int pulse_update_memory   = PULSE_UPDATE_MEMORY;
 
-	wait_time.tv_sec  = 0;
+	wait_time.tv_sec = 0;
 
 	while (TRUE)
 	{
@@ -111,6 +112,13 @@ void mainloop(void)
 			pulse_update_terminal = PULSE_UPDATE_TERMINAL;
 
 			terminal_update();
+		}
+
+		if (--pulse_update_memory == 0)
+		{
+			pulse_update_memory = PULSE_UPDATE_MEMORY;
+
+			memory_update();
 		}
 
 		gettimeofday(&curr_time, NULL);
@@ -266,7 +274,6 @@ void poll_chat(void)
 
 void tick_update(void)
 {
-	char result[BUFFER_SIZE];
 	struct session *ses;
 	struct listnode *node;
 	struct listroot *root;
@@ -294,11 +301,9 @@ void tick_update(void)
 			{
 				node->data += atof(node->pr) * 1000000LL;
 
-				strcpy(result, node->right);
+				show_debug(ses, LIST_TICKER, "#TICKER DEBUG: %s", node->right);
 
-				show_debug(ses, LIST_TICKER, "#TICKER DEBUG: %s", result);
-
-				parse_input(ses, result);
+				parse_input(ses, node->right);
 			}
 		}
 	}
@@ -307,7 +312,6 @@ void tick_update(void)
 
 void delay_update(void)
 {
-	char result[BUFFER_SIZE];
 	struct session *ses;
 	struct listnode *node;
 	struct listroot *root;
@@ -331,13 +335,11 @@ void delay_update(void)
 
 			if (node->data <= gtd->time)
 			{
-				strcpy(result, node->right);
+				show_debug(ses, LIST_DELAY, "#DELAY DEBUG: %s", node->right);
+
+				parse_input(ses, node->right);
 
 				deletenode_list(ses, node, LIST_DELAY);
-
-				show_debug(ses, LIST_DELAY, "#DELAY DEBUG: %s", result);
-
-				parse_input(ses, result);
 			}
 		}
 	}
@@ -346,7 +348,7 @@ void delay_update(void)
 
 void packet_update(void)
 {
-	char result[BUFFER_SIZE];
+	char result[STRING_SIZE];
 	struct session *ses;
 
 	open_timer(TIMER_UPDATE_PACKETS);
@@ -430,3 +432,15 @@ void terminal_update(void)
 	close_timer(TIMER_UPDATE_TERMINAL);
 }
 
+void memory_update(void)
+{
+	open_timer(TIMER_UPDATE_MEMORY);
+
+	while (gtd->mem->next)
+	{
+/*		printf("---freeing string: %s\n", gtd->mem->next->data); */
+
+		memory_free(gtd->mem->next);
+	}
+	close_timer(TIMER_UPDATE_MEMORY);
+}

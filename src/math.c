@@ -54,13 +54,13 @@ int precision;
 
 DO_COMMAND(do_math)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], result[BUFFER_SIZE];
+	char *left, *right;
 	struct listroot *root;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -68,9 +68,7 @@ DO_COMMAND(do_math)
 	}
 	else
 	{
-		sprintf(result, "{%s} {%.*f}", left, precision, mathexp(ses, right));
-
-		do_internal_variable(ses, result);
+		internal_variable(ses, "{%s} {%.*f}", left, precision, mathexp(ses, right));
 	}
 	return ses;
 }
@@ -78,11 +76,11 @@ DO_COMMAND(do_math)
 
 DO_COMMAND(do_if)
 {
-	char left[BUFFER_SIZE], true[BUFFER_SIZE], false[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *left, *true, *false, *temp;
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, true,  1);
-	arg = get_arg_in_braces(arg, false, 1);
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &true,  1);
+	arg = get_arg_in_braces(arg, &false, 1);
 
 	if (*left == 0 || *true == 0)
 	{
@@ -90,7 +88,7 @@ DO_COMMAND(do_if)
 	}
 	else
 	{
-		substitute(ses, left, temp, SUB_VAR|SUB_FUN);
+		substitute(ses, left, &temp, SUB_VAR|SUB_FUN);
 
 		if (mathexp(ses, temp))
 		{
@@ -106,20 +104,20 @@ DO_COMMAND(do_if)
 
 double get_number(struct session *ses, char *str)
 {
-	char number[BUFFER_SIZE];
+	char *number;
 
-	substitute(ses, str, number, SUB_VAR|SUB_FUN);
+	substitute(ses, str, &number, SUB_VAR|SUB_FUN);
 
 	return mathexp(ses, number);
 }
 
-void get_number_string(struct session *ses, char *str, char *result)
+void get_number_string(struct session *ses, char *str, char **result)
 {
-	char number[BUFFER_SIZE];
+	char *number;
 
-	substitute(ses, str, number, SUB_VAR|SUB_FUN);
+	substitute(ses, str, &number, SUB_VAR|SUB_FUN);
 
-	sprintf(result, "%.*f", precision, mathexp(ses, number));
+	*result = stringf_alloc("%.*f", precision, mathexp(ses, number));
 }
 
 /*
@@ -175,7 +173,7 @@ double mathexp(struct session *ses, char *str)
 
 int mathexp_tokenize(struct session *ses, char *str)
 {
-	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[BUFFER_SIZE], *pti, *pta;
+	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[STRING_SIZE], *pti, *pta;
 	int level, status, valid, point;
 
 	level     = 0;

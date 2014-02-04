@@ -30,12 +30,12 @@
 
 DO_COMMAND(do_gag)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 	struct listroot *root;
 
 	root = ses->list[LIST_GAG];
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left == 0)
 	{
@@ -53,27 +53,8 @@ DO_COMMAND(do_gag)
 
 DO_COMMAND(do_ungag)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
+	delete_node_with_wild(ses, LIST_GAG, arg);
 
-	root = ses->list[LIST_GAG];
-
-	arg = get_arg_in_braces(arg, left, 1);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NO LONGER GAGGED.", node->left);
-
-		deletenode_list(ses, node, LIST_SUBSTITUTE);
-
-		found = TRUE;
-	}
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_SUBSTITUTE, "#UNGAG: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }
 

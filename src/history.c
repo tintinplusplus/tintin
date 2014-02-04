@@ -29,15 +29,15 @@
 
 DO_COMMAND(do_history)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	int cnt;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = gts->list[LIST_HISTORY];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	switch (left[0])
 	{

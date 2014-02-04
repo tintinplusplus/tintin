@@ -107,15 +107,15 @@ int regexp(char *exp, char *str, unsigned char cs)
 * values they stand for.                                                      *
 ******************************************************************************/
 
-void substitute(struct session *ses, char *string, char *result, int flags)
+void substitute(struct session *ses, char *string, char **result, int flags)
 {
 	struct listnode *node;
-	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], *pti, *pto, *ptt;
+	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[STRING_SIZE], *pti, *pto, *ptt, *tmp;
 	char *pte;
 	int i, cnt, flags_neol = flags;
 
 	pti = string;
-	pto = result;
+	pto = buffer;
 
 	DEL_BIT(flags_neol, SUB_EOL);
 
@@ -143,6 +143,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 					*pto++ = '\n';
 				}
 				*pto = 0;
+
+				*result = string_alloc(buffer);
+
 				return;
 
 			case '$':
@@ -158,11 +161,12 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						if (pti[i] == DEFAULT_CLOSE)
 						{
 							*ptt = 0;
-							substitute(ses, buf, temp, flags_neol);
+							substitute(ses, buf, &tmp, flags_neol);
+							strcpy(temp, tmp);
 						}
 						else
 						{
-							temp[0] = 0;
+							strcpy(temp, "");
 						}
 						i++;
 					}
@@ -178,7 +182,8 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 					if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) != NULL)
 					{
-						substitute(ses, node->right, pto, flags_neol - SUB_VAR);
+						substitute(ses, node->right, &tmp, flags_neol - SUB_VAR);
+						strcpy(pto, tmp);
 
 						if (pti[1] == DEFAULT_OPEN)
 						{
@@ -201,9 +206,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 							{
 								pti += 2 + strlen(temp);
 
-								substitute(ses, temp, buf, SUB_VAR|SUB_FUN);
+								substitute(ses, temp, &tmp, SUB_VAR|SUB_FUN);
 
-								strcpy(pto, get_list_item(ses, node, buf));
+								strcpy(pto, get_list_item(ses, node, tmp));
 							}
 						}
 						pto += strlen(pto);
@@ -328,25 +333,33 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						continue;
 					}
 
-					pti = get_arg_in_braces(&pti[i], temp, FALSE);
+					pti = get_arg_in_braces(&pti[i], &tmp, FALSE);
 
-					substitute(ses, temp, buf, flags_neol);
+					substitute(ses, tmp, &pte, flags_neol);
 
-					pte = buf;
+					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, pte);
 
-					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, temp);
+					gtd->vars[0] = string_alloc(pte);
 
 					for (i = 0 ; i < 10 ; i++)
 					{
-						pte = get_arg_in_braces(pte, gtd->cmds[i], FALSE);
+						pte = get_arg_in_braces(pte, &gtd->cmds[i], FALSE);
 					}
-					substitute(ses, node->right, temp, SUB_CMD);
 
-					parse_input(ses, temp);
+					for (i = 0 ; i < 9 ; i++)
+					{
+						gtd->vars[i+1] = gtd->cmds[i];
+					}
+
+					substitute(ses, node->right, &tmp, SUB_CMD|SUB_ARG);
+
+					parse_input(ses, tmp);
 
 					DEL_BIT(ses->flags, SES_FLAG_BREAK);
 
-					substitute(ses, "$result", pto, SUB_VAR);
+					substitute(ses, "$result", &tmp, SUB_VAR);
+
+					strcpy(pto, tmp);
 
 					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, pto);
 
@@ -380,9 +393,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 						{
 							switch (*ptt)
 							{
-								case ';':
+								case COMMAND_SEPARATOR:
 									*pto++ = '\\';
-									*pto++ = ';';
+									*pto++ = COMMAND_SEPARATOR;
 									break;
 
 								case '\\':
@@ -493,8 +506,8 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 							*pto++ = '}';
 							break;
 						case '\0':
-							*pto = 0;
-							return;
+							DEL_BIT(flags, SUB_EOL);
+							continue;
 						default:
 							*pto++ = *pti;
 							break;
@@ -523,10 +536,16 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 int check_one_action(char *line, char *original, char *action, struct session *ses)
 {
-	char result[BUFFER_SIZE], *ptr;
+	char *result, *ptr;
 	char *ptl;
+	int cnt;
 
-	substitute(ses, action, result, SUB_VAR|SUB_FUN|SUB_ESC);
+	for (cnt = 0 ; cnt < 10 ; cnt++)
+	{
+		gtd->vars[cnt] = string_alloc("");
+	}
+
+	substitute(ses, action, &result, SUB_VAR|SUB_FUN|SUB_ESC);
 
 	ptr = result;
 
@@ -567,16 +586,10 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 {
 	short cnt, cnt2;
 
-	for (cnt = 0 ; cnt < 10 ; cnt++)
-	{
-		gtd->vars[cnt][0] = 0;
-	}
-
 	thestart:
 
 	while (*exp)
 	{
-
 
 #ifdef BIG5
 		if (*exp & 0x80 && *str & 0x80)
@@ -600,7 +613,7 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 
 					if (exp[2] == 0)
 					{
-						strcpy(gtd->vars[exp[1] - '0'], str);
+						gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
 
 						return TRUE;
 					}
@@ -609,7 +622,7 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 					{
 						if (action_regexp(exp + 2, &str[cnt], arg))
 						{
-							memcpy(gtd->vars[exp[1] - '0'], str, cnt);
+							gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
 							gtd->vars[exp[1] - '0'][cnt] = 0;
 
 							return TRUE;
@@ -643,9 +656,9 @@ int action_regexp(char *exp, char *str, unsigned char arg)
 							while (exp[cnt] != '|' && exp[cnt] != '[')
 							{
 								cnt--;
-								gtd->vars[arg][cnt2++] = *str++;
+								cnt2++;
 							}
-							gtd->vars[arg][cnt2] = 0;
+							gtd->vars[arg] = stringf_alloc("%.*s", cnt2, &exp[cnt+1]);
 
 							while (*exp != ']')
 							{

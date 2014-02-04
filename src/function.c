@@ -31,13 +31,13 @@
 
 DO_COMMAND(do_function)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], *pti;
+	char *left, *right, *pti;
 	struct listroot *root;
 
 	root = ses->list[LIST_FUNCTION];
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &right, 1);
 
 	if (*left == 0)
 	{
@@ -59,14 +59,10 @@ DO_COMMAND(do_function)
 			{
 				tintin_printf2(ses, "#ERROR, {%s} IS NOT A VALID FUNCTION NAME.", left);
 			}
-			if (pti[1] == DEFAULT_OPEN)
-			{
-				break;
-			}
 		}
 		updatenode_list(ses, left, right, "0", LIST_FUNCTION);
 
-		show_message(ses, LIST_FUNCTION, "#OK. {%s} IS NOW A FUNCTION.", left);
+		show_message(ses, LIST_FUNCTION, "#OK. FUNCTION {%s} HAS BEEN SET TO {%s}.", left, right);
 	}
 	return ses;
 }
@@ -74,26 +70,7 @@ DO_COMMAND(do_function)
 
 DO_COMMAND(do_unfunction)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
+	delete_node_with_wild(ses, LIST_FUNCTION, arg);
 
-	root = ses->list[LIST_FUNCTION];
-
-	arg = get_arg_in_braces(arg,left,1);
-
-	while ((node = search_node_with_wild(root, left)) != NULL)
-	{
-		show_message(ses, LIST_FUNCTION, "#OK. {%s} IS NO LONGER A FUNCTION.", node->left);
-
-		deletenode_list(ses, node, LIST_FUNCTION);
-
-		found = TRUE;
-	}
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_FUNCTION, "#FUNCTION: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }

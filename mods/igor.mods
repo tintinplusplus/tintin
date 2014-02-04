@@ -1239,3 +1239,20 @@ cursor.c       Added cursor_insert function to toggle insert mode.
 tinexp.c       Using $variable[index] now works with lists.
 
 variable.c     Can set list indexes with #var {variable[index]} {text}
+
+
+March 2007     1.96.9
+
+
+array.c        Added #list {list} clr option to empty a list.
+
+array.c        Added #list {list} srt option to insert in alphabetic order.
+
+parse.c        Defined a COMMAND_SEPARATOR variable instead of ';' checks.
+
+utils.c        Fixed some display issues for #showme and untriggered prompts
+               in split mode.
+
+session.c      Now uses #session {name} {host} {port}
+
+tinexp.c       Can now use %0 (all args) and %1 to %9 in functions.

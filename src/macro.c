@@ -30,13 +30,13 @@
 
 DO_COMMAND(do_macro)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char *left, *right, buf[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_MACRO];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0)
 	{
@@ -51,11 +51,11 @@ DO_COMMAND(do_macro)
 	}
 	else
 	{
-		unconvert_meta(left, pr);
+		unconvert_meta(left, buf);
 
-		updatenode_list(ses, left, right, pr, LIST_MACRO);
+		updatenode_list(ses, left, right, buf, LIST_MACRO);
 
-		show_message(ses, LIST_MACRO, "#OK. {%s} MACROS {%s}.", left, right);
+		show_message(ses, LIST_MACRO, "#OK. MACRO {%s} HAS BEEN SET TO {%s}.", left, right);
 	}
 	return ses;
 }
@@ -63,27 +63,8 @@ DO_COMMAND(do_macro)
 
 DO_COMMAND(do_unmacro)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
+	delete_node_with_wild(ses, LIST_MACRO, arg);
 
-	root = ses->list[LIST_MACRO];
-
-	arg = get_arg_in_braces(arg, left, TRUE);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_MACRO, "#OK {%s} IS NO LONGER A MACRO.", node->left);
-
-		deletenode_list(ses, node, LIST_MACRO);
-
-		found = TRUE;
-	}
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_MACRO, "UNMACRO: #NO MATCH(ES) FOUND FOR {%s}", left);
-	}
 	return ses;
 }
 

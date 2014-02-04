@@ -106,7 +106,7 @@ void telopt_debug(struct session *ses, char *format, ...)
 		vsprintf(buf, format, args);
 		va_end(args);
 
-		tintin_puts2(buf, ses);
+		tintin_puts2(ses, buf);
 	}
 }
 
@@ -150,7 +150,8 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				break;
 
 			case Z_STREAM_END:
-				tintin_puts2("\n\r#COMPRESSION END, DISABLING MCCP.", ses);
+				tintin_puts2(ses, "");
+				tintin_puts2(ses, "#COMPRESSION END, DISABLING MCCP.");
 				cplen = ses->mccp->next_out - gtd->mccp_buf;
 				cpsrc = gtd->mccp_buf;
 				inflateEnd(ses->mccp);
@@ -159,7 +160,8 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				break;
 
 			default:
-				tintin_puts2("\n\r#COMPRESSION ERROR, RESETTING MCCP.", ses);
+				tintin_puts2(ses, "");
+				tintin_puts2(ses, "#COMPRESSION ERROR, RESETTING MCCP.");
 				send_dont_mccp2(ses, 0, NULL);
 				send_do_mccp2(ses, 0, NULL);
 				inflateEnd(ses->mccp);
@@ -313,7 +315,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 						}
 						else
 						{
-							tintin_puts("#IAC BAD TELOPT", NULL);
+							tintin_puts(NULL, "#IAC BAD TELOPT");
 							skip = 1;
 						}
 						break;
@@ -603,8 +605,10 @@ int send_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 	}
 	else
 	{
-		socket_printf(ses, 14, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
-
+		socket_printf(ses, 15, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
+/*
+		socket_printf(ses, 21, "%c%c%c%c%s %s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TinTin++", VERSION_NUM, IAC, SE);
+*/
 		telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
 	}
 
@@ -773,7 +777,7 @@ int init_mccp(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	if (inflateInit(ses->mccp) != Z_OK)
 	{
-		tintin_puts2("#FAILED TO INITIALIZE MCCP2.", ses);
+		tintin_puts2(ses, "#FAILED TO INITIALIZE MCCP2.");
 		send_dont_mccp2(ses, 0, NULL);
 		free(ses->mccp);
 		ses->mccp = NULL;

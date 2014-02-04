@@ -4,11 +4,11 @@
 
 GENERAL STUFF:
 
-Get rid of the const crap
+- look into making input_buf pointer based.
 
-Add changable command seperator.
+- events for text and input and prompt lines
 
-Look into prompt handling in #split with #showme and macros.
+- add BB log writing
 
 -------------------------------------------------------------------------------
 
@@ -37,9 +37,7 @@ MAPPING STUFF:
 
 -------------------------------------------------------------------------------
 
-* This is a list of new features/improvements that are planned.
-
-- add more events
+* This is a list of improvements that are planned for a rainy day.
 
 - Buffer safe strings
 
@@ -54,11 +52,9 @@ MAPPING STUFF:
 - allow actions to use ! to repeat commands, possibly use #history 1, not as
   easy at it seems.
 
-- fix up macro usage in character mode.
-
 - Add color bleeding for #split. Bloats the code though.
 
-- upgrade the #write command to format. Format should be up to the user.
+- upgrade the #write command to format. Format should be up to the user though.
 
 - place #grep output in the buffer. This is not desirable however.
 
@@ -88,5 +84,6 @@ MAPPING STUFF:
   tintin's scripting language instead. You can use external scripts with
   the #system command, write the scripts output to a file, and use #read to
   execute it. 
+
 
 ---

@@ -38,18 +38,18 @@
 
 DO_COMMAND(do_highlight)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *left, *right, *rank, buf[BUFFER_SIZE];
 	struct listroot *root;
 
 	root = ses->list[LIST_HIGHLIGHT];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, pr,    TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, &rank,  TRUE);
 
-	if (*pr == 0)
+	if (*rank == 0)
 	{
-		sprintf(pr, "%s", "5");
+		rank = string_alloc("5");
 	}
 
 	if (*left == 0)
@@ -65,16 +65,16 @@ DO_COMMAND(do_highlight)
 	}
 	else
 	{
-		if (get_highlight_codes(ses, right, temp) == FALSE)
+		if (get_highlight_codes(ses, right, buf) == FALSE)
 		{
 			tintin_printf2(ses, "#HIGHLIGHT: VALID COLORS ARE:\r\n");
 			tintin_printf2(ses, "reset, bold, faint, underscore, blink, reverse, dim, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 		}
 		else
 		{
-			updatenode_list(ses, left, right, pr, LIST_HIGHLIGHT);
+			updatenode_list(ses, left, right, rank, LIST_HIGHLIGHT);
 
-			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}", left, right, pr);
+			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}", left, right, rank);
 		}
 	}
 	return ses;
@@ -83,28 +83,8 @@ DO_COMMAND(do_highlight)
 
 DO_COMMAND(do_unhighlight)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
+	delete_node_with_wild(ses, LIST_HIGHLIGHT, arg);
 
-	root = ses->list[LIST_HIGHLIGHT];
-
-	arg = get_arg_in_braces(arg, left, TRUE);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} IS NO LONGER A HIGHLIGHT.", node->left);
-
-		deletenode_list(ses, node, LIST_HIGHLIGHT);
-
-		found = TRUE;
-	}
-
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_HIGHLIGHT, "#HIGHLIGHT: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }
 
@@ -113,13 +93,13 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
 	char *pt1, *pt2, *pt3;
-	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *buf1, buf2[BUFFER_SIZE], buf3[BUFFER_SIZE], temp[BUFFER_SIZE];
 
 	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
 	{
 		if (check_one_action(line, original, node->left, ses))
 		{
-			substitute(ses, node->left, buf1, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
+			substitute(ses, node->left, &buf1, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
 
 			pt1 = strstr(original, buf1) ? original : line;
 			pt2 = strstr(pt1, buf1);
@@ -145,11 +125,13 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 int get_highlight_codes(struct session *ses, char *string, char *result)
 {
+	char *str;
 	int cnt;
 
 	if (*string == '<')
 	{
-		substitute(ses, string, result, SUB_COL);
+		substitute(ses, string, &str, SUB_COL);
+		strcpy(result, str);
 
 		return TRUE;
 	}

@@ -31,10 +31,10 @@
 
 DO_COMMAND(do_path)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	if (*left == 0)
 	{
@@ -98,7 +98,7 @@ DO_PATH(path_map)
 {
 	struct listroot *root;
 	struct listnode *node;
-	char left[BUFFER_SIZE];
+	char buf[BUFFER_SIZE];
 
 	root = ses->list[LIST_PATH];
 
@@ -108,48 +108,48 @@ DO_PATH(path_map)
 	}
 	else
 	{
-		sprintf(left, "%-8s", "#PATH:");
+		sprintf(buf, "%-8s", "#PATH:");
 
 		for (node = root->f_node ; node ; node = node->next)
 		{
-			if (strlen(left) + strlen(node->left) > ses->cols)
+			if (strlen(buf) + strlen(node->left) > ses->cols)
 			{
-				tintin_puts2(left, ses);
-				sprintf(left, "%-8s", "");
+				tintin_puts2(ses, buf);
+
+				sprintf(buf, "%-8s", "");
 			}
-			strcat(left, node->left);
-			strcat(left, " ");
+			cat_sprintf(buf, "%s ", node->left);
 		}
 
-		if (strlen(left) > 8)
+		if (strlen(buf) > 8)
 		{
-			tintin_puts2(left, ses);
+			tintin_puts2(ses, buf);
 		}
 	}
 }
 
 DO_PATH(path_save)
 {
-	char result[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char result[STRING_SIZE], *left, *right;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, FALSE);
 
 	if (!is_abbrev(left, "FORWARD") && !is_abbrev(left, "BACKWARD"))
 	{
-		tintin_puts2("#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <ALIAS NAME>", ses);
+		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <ALIAS NAME>");
 	}
 	else if (root->f_node == NULL)
 	{
-		tintin_puts2("#PATH SAVE: LOAD OR CREATE A PATH FIRST.", ses);
+		tintin_puts2(ses, "#PATH SAVE: LOAD OR CREATE A PATH FIRST.");
 	}
 	else if (*right == 0)
 	{
-		tintin_puts2("#PATH SAVE: YOU MUST PROVIDE AN ALIAS TO SAVE THE PATH TO.", ses);
+		tintin_puts2(ses, "#PATH SAVE: YOU MUST PROVIDE AN ALIAS TO SAVE THE PATH TO.");
 	}
 	else
 	{
@@ -159,18 +159,18 @@ DO_PATH(path_save)
 		{
 			for (node = root->f_node ; node ; node = node->next)
 			{
-				if (strlen(result) + strlen(node->left) < BUFFER_SIZE - 10)
+				if (strlen(result) + strlen(node->left) < STRING_SIZE - 10)
 				{
 					strcat(result, node->left);
 
 					if (node->next)
 					{
-						strcat(result, ";");
+						cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 					}
 				}
 				else
 				{
-					tintin_puts("#ERROR, PATH TOO LONG FOR BUFFER, PARTIAL SAVE.", ses);
+					tintin_puts(ses, "#ERROR, PATH TOO LONG FOR BUFFER, PARTIAL SAVE.");
 					break;
 				}
 			}
@@ -179,18 +179,18 @@ DO_PATH(path_save)
 		{
 			for (node = root->l_node ; node ; node = node->prev)
 			{
-				if (strlen(result) + strlen(node->left) < BUFFER_SIZE - 10)
+				if (strlen(result) + strlen(node->left) < STRING_SIZE - 10)
 				{
 					strcat(result, node->right);
 
 					if (node->prev)
 					{
-						strcat(result, ";");
+						cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 					}
 				}
 				else
 				{
-					tintin_puts("#ERROR, PATH TOO LONG FOR BUFFER, PARTIAL SAVE.", ses);
+					tintin_puts(ses, "#ERROR, PATH TOO LONG FOR BUFFER, PARTIAL SAVE.");
 					break;
 				}
 			}
@@ -204,13 +204,13 @@ DO_PATH(path_save)
 
 DO_PATH(path_load)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	if ((node = searchnode_list(ses->list[LIST_ALIAS], left)) == NULL)
 	{
@@ -229,7 +229,7 @@ DO_PATH(path_load)
 				arg++;
 			}
 
-			arg = get_arg_in_braces(arg, left, TRUE);
+			arg = get_arg_in_braces(arg, &left, TRUE);
 
 			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)))
 			{
@@ -262,16 +262,16 @@ DO_PATH(path_del)
 	}
 	else
 	{
-		tintin_puts("#PATH DEL: NO MOVES LEFT.", ses);
+		tintin_puts(ses, "#PATH DEL: NO MOVES LEFT.");
 	}
 }
 
 DO_PATH(path_ins)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, FALSE);
 
 	if (*left == 0)
 	{
@@ -291,17 +291,17 @@ DO_PATH(path_ins)
 
 DO_PATH(path_walk)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 	struct listroot *root;
 	long long flags;
 
 	root = ses->list[LIST_PATH];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	if (root->f_node == NULL)
 	{
-		tintin_puts("#END OF PATH.", ses);
+		tintin_puts(ses, "#END OF PATH.");
 	}
 	else
 	{
@@ -312,15 +312,13 @@ DO_PATH(path_walk)
 		switch (tolower(*left))
 		{
 			case 'b':
-				strcpy(left, root->l_node->right);
-				parse_input(ses, left);
+				parse_input(ses, root->l_node->right);
 				deletenode_list(ses, root->l_node, LIST_PATH);
 				break;
 
 			case '\0':
 			case 'f':
-				strcpy(left, root->f_node->left);
-				parse_input(ses, left);
+				parse_input(ses, root->f_node->left);
 				deletenode_list(ses, root->f_node, LIST_PATH);
 				break;
 
@@ -346,14 +344,14 @@ void check_insert_path(char *command, struct session *ses)
 
 DO_COMMAND(do_pathdir)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], coord[BUFFER_SIZE];
+	char *left, *right, *coord;
 	struct listroot *root;
 
 	root = ses->list[LIST_PATHDIR];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
-	arg = get_arg_in_braces(arg, coord, FALSE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, &coord, FALSE);
 
 	if (*left == 0)
 	{
@@ -370,11 +368,11 @@ DO_COMMAND(do_pathdir)
 	{
 		if (*coord == 0)
 		{
-			strcpy(coord, "0");
+			coord = string_alloc("0");
 		}
 		updatenode_list(ses, left, right, coord, LIST_PATHDIR);
 
-		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s}", left, coord, right);
+		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}", left, right, coord);
 	}
 	return ses;
 }
@@ -382,25 +380,7 @@ DO_COMMAND(do_pathdir)
 
 DO_COMMAND(do_unpathdir)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int flag = FALSE;
+	delete_node_with_wild(ses, LIST_PATHDIR, arg);
 
-	root = ses->list[LIST_PATHDIR];
-
-	arg = get_arg_in_braces(arg, left,  TRUE);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_PATHDIR, "#OK. {%s} IS NO LONGER A PATHDIR.", node->left);
-
-		deletenode_list(ses, node, LIST_PATHDIR);
-		flag = TRUE;
-	}
-	if (!flag)
-	{
-		show_message(ses, LIST_PATHDIR, "#UNPATHDIR: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }

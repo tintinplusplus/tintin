@@ -30,25 +30,25 @@
 
 DO_COMMAND(do_prompt)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char *left, *right, *line;
 	struct listroot *root;
 
 	root = ses->list[LIST_PROMPT];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, pr,    TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, &line,    TRUE);
 
-	if (!*pr)
+	if (*line == 0)
 	{
-		sprintf(pr, "%d", 1);
+		line = string_alloc("1");
 	}
 
 	if (*left == 0)
 	{
 		show_list(ses, root, LIST_PROMPT);
 	}
-	else if (*left && !*right)
+	else if (*left && *right == 0)
 	{
 		if (show_node_with_wild(ses, left, LIST_PROMPT) == FALSE)
 		{
@@ -57,9 +57,9 @@ DO_COMMAND(do_prompt)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, pr, LIST_PROMPT);
+		updatenode_list(ses, left, right, line, LIST_PROMPT);
 
-		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s}.", left, right);
+		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s}.", left, right, line);
 	}
 	return ses;
 }
@@ -67,27 +67,8 @@ DO_COMMAND(do_prompt)
 
 DO_COMMAND(do_unprompt)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
+	delete_node_with_wild(ses, LIST_PROMPT, arg);
 
-	root = ses->list[LIST_PROMPT];
-
-	arg = get_arg_in_braces(arg, left, 1);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_PROMPT, "#OK. {%s} IS NO LONGER A PROMPT.", node->left);
-
-		deletenode_list(ses, node, LIST_PROMPT);
-
-		found = TRUE;
-	}
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_PROMPT, "#UNPROMPT: NO MATCH(ES) FOUND FOR.", ses);
-	}
 	return ses;
 }
 
@@ -102,7 +83,7 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 		{
 			if (*node->right)
 			{
-				substitute(ses, node->right, original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL);
+				substitute(ses, node->right, &original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL);
 			}
 
 			show_debug(ses, LIST_PROMPT, "#PROMPT DEBUG: %s", original);

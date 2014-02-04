@@ -24,9 +24,6 @@
 *               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
 *                                                                             *
 *                        coded by Peter Unold 1992                            *
-*                       New code by Bill Reiss 1993                           *
-*                    New code by Joann Ellsworth 1994                         *
-*                   New code by Igor van den Hoven 1994                       *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -40,11 +37,11 @@ DO_COMMAND(do_read)
 {
 	FILE *fp;
 	struct stat filedata;
-	char *bufi, *bufo, filename[BUFFER_SIZE], temp[BUFFER_SIZE], *pti, *pto;
+	char *bufi, *bufo, *filename, temp[BUFFER_SIZE], *pti, *pto;
 	int lvl, cnt, com, lnc, fix, ok;
 	int counter[LIST_MAX];
 
-	get_arg_in_braces(arg, filename, TRUE);
+	get_arg_in_braces(arg, &filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -353,11 +350,11 @@ DO_COMMAND(do_read)
 DO_COMMAND(do_write)
 {
 	FILE *file;
-	char temp[BUFFER_SIZE], filename[BUFFER_SIZE];
+	char temp[STRING_SIZE], *filename;
 	struct listnode *node;
 	int cnt;
 
-	get_arg_in_braces(arg, filename, TRUE);
+	get_arg_in_braces(arg, &filename, TRUE);
 
 	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
 	{
@@ -414,9 +411,9 @@ void prepare_for_write(int list, struct listnode *node, char *result)
 DO_COMMAND(do_textin)
 {
 	FILE *fp;
-	char filename[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
+	char *filename, buffer[BUFFER_SIZE], *cptr;
 
-	get_arg_in_braces(arg, filename, TRUE);
+	get_arg_in_braces(arg, &filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -447,9 +444,9 @@ DO_COMMAND(do_textin)
 DO_COMMAND(do_scan)
 {
 	FILE *fp;
-	char filename[BUFFER_SIZE];
+	char *filename;
 
-	get_arg_in_braces(arg, filename, TRUE);
+	get_arg_in_braces(arg, &filename, TRUE);
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
@@ -459,13 +456,13 @@ DO_COMMAND(do_scan)
 
 	SET_BIT(ses->flags, SES_FLAG_SCAN);
 
-	while (BUFFER_SIZE >= gtd->mud_output_max)
+	if (STRING_SIZE > gtd->mud_output_max)
 	{
-		gtd->mud_output_max *= 2;
+		gtd->mud_output_max  = STRING_SIZE;
 		gtd->mud_output_buf  = realloc(gtd->mud_output_buf, gtd->mud_output_max);
 	}
 
-	while (fgets(gtd->mud_output_buf, BUFFER_SIZE, fp))
+	while (fgets(gtd->mud_output_buf, STRING_SIZE, fp))
 	{
 		readmud(ses);
 	}

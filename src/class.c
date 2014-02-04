@@ -20,8 +20,8 @@
 *******************************************************************************/
 
 /******************************************************************************
-*   file: class.c - funtions related to the scroll back buffer                *
 *              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
+*                                                                             *
 *                     coded by Igor van den Hoven 2004                        *
 ******************************************************************************/
 
@@ -31,16 +31,16 @@
 
 DO_COMMAND(do_class)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char *left, *right, *pr;
 	struct listroot *root;
 	struct listnode *node;
 	int cnt;
 
 	root = ses->list[LIST_CLASS];
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, FALSE);
-	arg = get_arg_in_braces(arg, pr, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, FALSE);
+	arg = get_arg_in_braces(arg, &pr, FALSE);
 
 	if (*left == 0)
 	{
@@ -48,10 +48,7 @@ DO_COMMAND(do_class)
 
 		for (node = root->f_node ; node ; node = node->next)
 		{
-			tintin_printf2(ses, "%-20s %3d %s",
-			node->left,
-			count_class(ses, node),
-			!strcmp(ses->class, node->left) ? "OPEN" : "CLOSED");
+			tintin_printf2(ses, "%-20s %3d %s", node->left, count_class(ses, node), !strcmp(ses->class, node->left) ? "OPEN" : "CLOSED");
 		}
 	}
 	else if (*right == 0)
@@ -103,37 +100,6 @@ DO_COMMAND(do_class)
 	return ses;
 }
 
-/*
-	Not needed with #class <name> kill
-
-DO_COMMAND(do_unclass)
-{
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
-
-	root = ses->list[LIST_CLASS];
-
-	arg = get_arg_in_braces(arg, left, TRUE);
-
-	while ((node = search_node_with_wild(root, left)) != NULL)
-	{
-		show_message(ses, LIST_CLASS, "#OK. {%s} IS NO LONGER A CLASS.", left);
-
-		deletenode_list(ses, node, LIST_CLASS);
-
-		found = TRUE;
-	}
-
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_CLASS, "#UNCLASS: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
-	return ses;
-}
-
-*/
 
 int count_class(struct session *ses, struct listnode *class)
 {
@@ -172,6 +138,7 @@ DO_CLASS(class_open)
 	return ses;
 }
 
+
 DO_CLASS(class_close)
 {
 	struct listnode *node;
@@ -191,6 +158,7 @@ DO_CLASS(class_close)
 	return ses;
 }
 
+
 DO_CLASS(class_read)
 {
 	class_open(ses, left, right);
@@ -202,10 +170,11 @@ DO_CLASS(class_read)
 	return ses;
 }
 
+
 DO_CLASS(class_write)
 {
 	FILE *file;
-	char temp[BUFFER_SIZE];
+	char temp[STRING_SIZE];
 	struct listnode *node;
 	int cnt;
 

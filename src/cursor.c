@@ -30,11 +30,11 @@
 
 DO_COMMAND(do_cursor)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *left, *right, temp[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0)
 	{
@@ -621,7 +621,7 @@ DO_CURSOR(cursor_suspend)
 
 DO_CURSOR(cursor_tab)
 {
-	char tab[BUFFER_SIZE];
+	char *tab;
 	struct listnode *node;
 
 	int input_now;
@@ -650,7 +650,7 @@ DO_CURSOR(cursor_tab)
 
 	for (node = gtd->ses->list[LIST_TAB]->f_node ; node ; node = node->next)
 	{
-		substitute(gtd->ses, node->left, tab, SUB_VAR|SUB_FUN);
+		substitute(gtd->ses, node->left, &tab, SUB_VAR|SUB_FUN);
 
 		if (is_abbrev(&gtd->input_buf[input_now], tab))
 		{

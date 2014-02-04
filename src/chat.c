@@ -45,11 +45,11 @@
 
 DO_COMMAND(do_chat)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0)
 	{
@@ -270,8 +270,8 @@ void *threaded_chat_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	arg = (void *) get_arg_in_braces((char *) arg, host, FALSE);
-	arg = (void *) get_arg_in_braces((char *) arg, port, FALSE);
+	arg = (void *) cpy_arg_in_braces((char *) arg, host, FALSE);
+	arg = (void *) cpy_arg_in_braces((char *) arg, port, FALSE);
 
 	if (*port == 0)
 	{
@@ -409,7 +409,7 @@ void *threaded_chat_call(void *arg)
 void *threaded_chat_call(void *arg)
 {
 	int sock, dig;
-	char ip[BUFFER_SIZE], pn[BUFFER_SIZE], name[BUFFER_SIZE];
+	char host[BUFFER_SIZE], port[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct sockaddr_in dest_addr;
 	struct chat_data *new_buddy;
 	struct timeval to;
@@ -420,26 +420,26 @@ void *threaded_chat_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	arg = (void *) get_arg_in_braces((char *) arg, ip, FALSE);
-	arg = (void *) get_arg_in_braces((char *) arg, pn, FALSE);
+	arg = (void *) cpy_arg_in_braces((char *) arg, host, FALSE);
+	arg = (void *) cpy_arg_in_braces((char *) arg, port, FALSE);
 
-	if (*pn == 0)
+	if (*port == 0)
 	{
-		sprintf(pn, "%d", DEFAULT_PORT);
+		sprintf(port, "%d", DEFAULT_PORT);
 	}
 
-	if (sscanf(ip, "%d.%d.%d.%d", &dig, &dig, &dig, &dig) == 4)
+	if (sscanf(host, "%d.%d.%d.%d", &dig, &dig, &dig, &dig) == 4)
 	{
-		dest_addr.sin_addr.s_addr = inet_addr(ip);
+		dest_addr.sin_addr.s_addr = inet_addr(host);
 	}
 	else
 	{
 		struct hostent *hp;
 		int addr, address[4];
 
-		if ((hp = gethostbyname(ip)) == NULL)
+		if ((hp = gethostbyname(host)) == NULL)
 		{
-			chat_printf("Failed to call %s, unknown host.", ip);
+			chat_printf("Failed to call %s, unknown host.", host);
 
 			return NULL;
 		}
@@ -452,12 +452,12 @@ void *threaded_chat_call(void *arg)
 		address[2] = ( addr >>  8 ) & 0xFF ;
 		address[3] = ( addr       ) & 0xFF ;
 
-		sprintf(ip, "%d.%d.%d.%d", address[0], address[1], address[2], address[3]);
+		sprintf(host, "%d.%d.%d.%d", address[0], address[1], address[2], address[3]);
 	}
 
-	if (is_number(pn))
+	if (is_number(port))
 	{
-		dest_addr.sin_port = htons(atoi(pn));
+		dest_addr.sin_port = htons(atoi(port));
 	}
 	else
 	{
@@ -475,7 +475,7 @@ void *threaded_chat_call(void *arg)
 
 	if (connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) != 0)
 	{
-		chat_printf("Failed to connect to %s:%s", ip, pn);
+		chat_printf("Failed to connect to %s:%s", host, port);
 
 		close(sock);
 
@@ -488,7 +488,7 @@ void *threaded_chat_call(void *arg)
 
 	if (select(FD_SETSIZE, NULL, &wds, NULL, &to) == -1)
 	{
-		chat_printf("Failed to connect to %s %s", ip, pn);
+		chat_printf("Failed to connect to %s %s", host, port);
 
 		close(sock);
 
@@ -506,8 +506,8 @@ void *threaded_chat_call(void *arg)
 
 	new_buddy = calloc(1, sizeof(struct chat_data));
 
-	new_buddy->ip    = strdup(ip);
-	new_buddy->port  = atoi(pn);
+	new_buddy->ip    = strdup(host);
+	new_buddy->port  = atoi(port);
 	new_buddy->fd    = sock;
 	new_buddy->name  = strdup("");
 	new_buddy->group = strdup("");
@@ -561,9 +561,13 @@ void *threaded_chat_call(void *arg)
 
 void chat_call(char *arg)
 {
+	char buf[BUFFER_SIZE];
+
 	pthread_t thread;
 
-	pthread_create(&thread, NULL, (void *) threaded_chat_call, (void *) arg);
+	strcpy(buf, arg);
+
+	pthread_create(&thread, NULL, (void *) threaded_chat_call, (void *) buf);
 }
 	
 
@@ -653,7 +657,7 @@ void process_chat_connections(fd_set *read_set, fd_set *write_set, fd_set *exc_s
 
 void chat_socket_printf(struct chat_data *buddy, char *format, ...)
 {
-	char buf[BUFFER_SIZE];
+	char buf[STRING_SIZE];
 	va_list args;
 
 	va_start(args, format);
@@ -674,7 +678,7 @@ void chat_socket_printf(struct chat_data *buddy, char *format, ...)
 void chat_printf(char *format, ...)
 {
 	struct chat_data *buddy;
-	char buf[BUFFER_SIZE], tmp[BUFFER_SIZE];
+	char buf[STRING_SIZE], tmp[STRING_SIZE];
 	va_list args;
 
 	va_start(args, format);
@@ -703,7 +707,7 @@ void chat_printf(char *format, ...)
 	}
 	sprintf(tmp, "%s%s%s", gtd->chat->color, buf, "\033[0m");
 
-	tintin_puts(tmp, NULL);
+	tintin_puts(NULL, tmp);
 }
 
 /*
@@ -1349,12 +1353,12 @@ DO_CHAT(chat_downloaddir)
 DO_CHAT(chat_emote)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *temp, *left, *right;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, temp,  TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &temp,  TRUE);
 
-	substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, temp, &right, SUB_COL|SUB_ESC);
 
 	if (!strcasecmp(left, "ALL"))
 	{
@@ -1418,12 +1422,12 @@ DO_CHAT(chat_ip)
 DO_CHAT(chat_message)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *temp, *left, *right;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, temp, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &temp, TRUE);
 
-	substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, temp, &right, SUB_COL|SUB_ESC);
 
 	if (!strcasecmp(left, "ALL"))
 	{
@@ -1464,10 +1468,10 @@ DO_CHAT(chat_message)
 
 DO_CHAT(chat_name)
 {
-	char name[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *name, temp[BUFFER_SIZE];
 	struct chat_data *buddy;
 
-	substitute(gtd->ses, arg, name, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, arg, &name, SUB_COL|SUB_ESC);
 
 	if (!strcmp(gtd->chat->name, name))
 	{
@@ -1495,7 +1499,7 @@ DO_CHAT(chat_name)
 DO_CHAT(chat_paste)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], *left, *right;
 
 	if (arg == NULL)
 	{
@@ -1508,11 +1512,11 @@ DO_CHAT(chat_paste)
 			cursor_clear_line("");
 		}
 
-		arg = get_arg_in_braces(gtd->chat->paste_buf, left, FALSE);
+		arg = get_arg_in_braces(gtd->chat->paste_buf, &left, FALSE);
 
 		sprintf(temp, "%s\n<078>======================================================================", arg);
 
-		substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+		substitute(gtd->ses, temp, &right, SUB_COL|SUB_ESC);
 
 		RESTRING(gtd->chat->paste_buf, right);
 
@@ -1570,8 +1574,8 @@ DO_CHAT(chat_paste)
 		return;
 	}
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	gtd->chat->paste_time = 400000LL + utime();
 
@@ -1615,11 +1619,11 @@ void chat_ping(char *arg)
 DO_CHAT(chat_reply)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE];
+	char *temp, *left;
 
-	arg = get_arg_in_braces(arg, temp, TRUE);
+	arg = get_arg_in_braces(arg, &temp, TRUE);
 
-	substitute(gtd->ses, temp, left, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, temp, &left, SUB_COL|SUB_ESC);
 
 	if ((buddy = find_buddy(gtd->chat->reply)) != NULL)
 	{
@@ -1656,12 +1660,12 @@ DO_CHAT(chat_request)
 DO_CHAT(chat_send)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *temp, *left, *right;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, temp, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &temp, TRUE);
 
-	substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, temp, &right, SUB_COL|SUB_ESC);
 
 	if (!strcasecmp(left, "ALL"))
 	{
@@ -1779,10 +1783,10 @@ DO_CHAT(chat_zap)
 
 DO_CHAT(chat_accept)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	struct chat_data *buddy;
 
@@ -1852,16 +1856,16 @@ DO_CHAT(chat_decline)
 
 DO_CHAT(chat_sendfile)
 {
-	char left[BUFFER_SIZE];
-	char right[BUFFER_SIZE];
+	char *left;
+	char *right;
 	struct chat_data *buddy;
 
 	/*
 		Determine the chat connection refered to
 	*/
 
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 0);
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &right, 0);
 
 	if (*left == 0 || *right == 0)
 	{
@@ -2218,9 +2222,9 @@ DO_CHAT(chat_cancelfile)
 
 DO_CHAT(chat_color)
 {
-	char left[BUFFER_SIZE], color[BUFFER_SIZE];
+	char *left, color[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left == 0 || get_highlight_codes(gtd->ses, left, color) == FALSE)
 	{
@@ -2280,11 +2284,11 @@ DO_CHAT(chat_filestat)
 DO_CHAT(chat_group)
 {
 	struct chat_data *buddy;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 	int cnt = 0;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0)
 	{
@@ -2441,12 +2445,12 @@ DO_CHAT(chat_ignore)
 DO_CHAT(chat_private)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *temp, *left, *right;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, temp,  TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &temp,  TRUE);
 
-	substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, temp, &right, SUB_COL|SUB_ESC);
 
 	if (!strcasecmp(left, "ALL"))
 	{
@@ -2485,12 +2489,12 @@ DO_CHAT(chat_private)
 DO_CHAT(chat_public)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *temp, *left, *right;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, temp,  TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &temp,  TRUE);
 
-	substitute(gtd->ses, temp, right, SUB_COL|SUB_ESC);
+	substitute(gtd->ses, temp, &right, SUB_COL|SUB_ESC);
 
 	if (!strcasecmp(left, "ALL"))
 	{

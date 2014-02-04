@@ -35,23 +35,22 @@
 
 DO_COMMAND(do_session)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left;
 	struct session *sesptr;
 	int cnt;
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
 
 	if (!*left)
 	{
-		tintin_puts("#THESE SESSIONS HAVE BEEN DEFINED:", ses);
+		tintin_puts(ses, "#THESE SESSIONS HAVE BEEN DEFINED:");
 
 		for (sesptr = gts->next ; sesptr ; sesptr = sesptr->next)
 		{
 			show_session(ses, sesptr);
 		}
 	}
-	else if (*left && *right == 0)
+	else if (*left && *arg == 0)
 	{
 		if (*left == '+')
 		{
@@ -74,7 +73,7 @@ DO_COMMAND(do_session)
 			}
 		}
 
-		tintin_puts("#THAT SESSION IS NOT DEFINED.", ses);
+		tintin_puts(ses, "#THAT SESSION IS NOT DEFINED.");
 	}
 	else
 	{
@@ -82,11 +81,11 @@ DO_COMMAND(do_session)
 		{
 			if (!strcmp(sesptr->name, left))
 			{
-				tintin_puts("#THERE'S A SESSION WITH THAT NAME ALREADY.", ses);
+				tintin_puts(ses, "#THERE'S A SESSION WITH THAT NAME ALREADY.");
 				return ses;
 			}
 		}
-		ses = new_session(left, right, ses);
+		ses = new_session(left, arg, ses);
 	}
 	return gtd->ses;
 }
@@ -126,7 +125,7 @@ void show_session(struct session *ses, struct session *ptr)
 		strcat(temp, " (logging)");
 	}
 
-	tintin_puts2(temp, ses);
+	tintin_puts2(ses, temp);
 }
 
 /**********************************/
@@ -170,24 +169,26 @@ struct session *activate_session(struct session *ses)
 struct session *new_session(char *name, char *address, struct session *ses)
 {
 	int cnt = 0;
-	char host[BUFFER_SIZE], port[BUFFER_SIZE];
+	char *host, *port;
 	struct session *newsession;
 
 	if (name)
 	{
-		address = get_arg_in_braces(address, host, FALSE);
-		address = get_arg_in_braces(address, port, FALSE);
+		address = get_arg_in_braces(address, &host, FALSE);
+		address = get_arg_in_braces(address, &port, FALSE);
 
 		if (*host == 0)
 		{
-			tintin_puts("#HEY! SPECIFY AN ADDRESS WILL YOU?", ses);
-			return(ses);
+			tintin_puts(ses, "#HEY! SPECIFY AN ADDRESS WILL YOU?");
+
+			return ses;
 		}
 
 		if (*port == 0)
 		{
-			tintin_puts("#HEY! SPECIFY A PORT NUMBER WILL YOU?", ses);
-			return(ses);
+			tintin_puts(ses, "#HEY! SPECIFY A PORT NUMBER WILL YOU?");
+
+			return ses;
 		}
 	}
 
@@ -284,19 +285,19 @@ void connect_session(struct session *ses)
 	switch (ses->connect_error)
 	{
 		case EINTR:
-			tintin_puts("#COULD NOT CONNECT - CONNECTION TIMED OUT.", ses);
+			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION TIMED OUT.");
 			break;
 
 		case ECONNREFUSED:
-			tintin_puts("#COULD NOT CONNECT - CONNECTION REFUSED.", ses);
+			tintin_puts(ses, "#COULD NOT CONNECT - CONNECTION REFUSED.");
 			break;
 
 		case ENETUNREACH:
-			tintin_puts("#COULD NOT CONNECT - THE NETWORK IS NOT REACHABLE FROM THIS HOST.", ses);
+			tintin_puts(ses, "#COULD NOT CONNECT - THE NETWORK IS NOT REACHABLE FROM THIS HOST.");
 			break;
 
 		default:
-			tintin_puts("#COULD NOT CONNECT", ses);
+			tintin_puts(ses, "#COULD NOT CONNECT");
 			break;
 	}
 
@@ -360,6 +361,7 @@ void cleanup_session(struct session *ses)
 	free(ses->name);
 	free(ses->host);
 	free(ses->port);
+	free(ses->class);
 
 	free(ses);
 

@@ -31,7 +31,7 @@
 
 void printline(struct session *ses, char *str, int prompt)
 {
-	char wrapped_str[BUFFER_SIZE];
+	char wrapped_str[STRING_SIZE];
 
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
  	{

@@ -31,22 +31,19 @@
 
 DO_COMMAND(do_variable)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *left, *right;
 	struct listroot *root;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, temp,  FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
-	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, right, SUB_VAR|SUB_FUN);
-
-	if (!*left)
+	if (*left == 0)
 	{
 		show_list(ses, root, LIST_VARIABLE);
 	}
-	else if (*left && !*right)
+	else if (*left && *right == 0)
 	{
 		if (show_node_with_wild(ses, left, LIST_VARIABLE) == FALSE)
 		{
@@ -55,29 +52,41 @@ DO_COMMAND(do_variable)
 	}
 	else
 	{
-		sprintf(temp, "{%s} {%s}", left, right);
-
-		do_internal_variable(ses, temp);
-
-		show_message(ses, LIST_VARIABLE, "#OK. $%s IS NOW SET TO {%s}.", left, right);
+		internal_variable(ses, "{%s} {%s}", left, right);
 	}
 	return ses;
 }
 
 
-DO_COMMAND(do_internal_variable)
+DO_COMMAND(do_unvariable)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], index[BUFFER_SIZE], *pti, *pto;
+	delete_node_with_wild(ses, LIST_VARIABLE, arg);
+
+	return ses;
+}
+
+
+void internal_variable(struct session *ses, char *format, ...)
+{
+	char *left, *right, *temp, *arg, buf[STRING_SIZE], name[BUFFER_SIZE], index[BUFFER_SIZE], *pti, *pto;
 	struct listnode *node;
 
-	arg = get_arg_in_braces(arg, temp,  FALSE);
-	substitute(ses, temp, left, SUB_VAR|SUB_FUN);
+	va_list args;
 
-	arg = get_arg_in_braces(arg, temp, TRUE);
-	substitute(ses, temp, right, SUB_VAR|SUB_FUN);
+	va_start(args, format);
+	vsprintf(buf, format, args);
+	va_end(args);
+
+	arg = buf;
+
+	arg = get_arg_in_braces(arg, &temp,  FALSE);
+	substitute(ses, temp, &left, SUB_VAR|SUB_FUN);
+
+	arg = get_arg_in_braces(arg, &temp, TRUE);
+	substitute(ses, temp, &right, SUB_VAR|SUB_FUN);
 
 	pti = left;
-	pto = temp;
+	pto = name;
 
 	while (*pti && *pti != '[')
 	{
@@ -101,60 +110,35 @@ DO_COMMAND(do_internal_variable)
 
 	if (*index && *pti == ']')
 	{
-		if ((node = searchnode_list(ses->list[LIST_VARIABLE], temp)) == NULL)
+		if ((node = searchnode_list(ses->list[LIST_VARIABLE], name)) == NULL)
 		{
-			updatenode_list(ses, temp, "", "0", LIST_VARIABLE);
+			updatenode_list(ses, name, "", "", LIST_VARIABLE);
 
-			node = searchnode_list(ses->list[LIST_VARIABLE], temp);
+			node = searchnode_list(ses->list[LIST_VARIABLE], name);
 		}
 		set_list_item(ses, node, index, right);
 	}
 	else if (*left)
 	{
-		updatenode_list(ses, left, right, "0", LIST_VARIABLE);
+		updatenode_list(ses, left, right, "", LIST_VARIABLE);
 	}
-	return ses;
+
+	show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", left, right);
 }
 
-
-DO_COMMAND(do_unvariable)
-{
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
-
-	root = ses->list[LIST_VARIABLE];
-
-	arg = get_arg_in_braces(arg,left,1);
-
-	while ((node = search_node_with_wild(root, left)) != NULL)
-	{
-		show_message(ses, LIST_VARIABLE, "#OK. $%s IS NO LONGER A VARIABLE.", node->left);
-
-		deletenode_list(ses, node, LIST_VARIABLE);
-
-		found = TRUE;
-	}
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_VARIABLE, "#UNVARIABLE: NO MATCH(ES) FOUND FOR {%s}.", ses);
-	}
-	return ses;
-}
 
 
 DO_COMMAND(do_replacestring)
 {
-	char var[BUFFER_SIZE], old[BUFFER_SIZE], new[BUFFER_SIZE], result[BUFFER_SIZE], *pti, *ptr, *pto;
+	char *var, *old, *new, buf[STRING_SIZE], *pti, *ptr, *pto;
 	struct listroot *root;
 	struct listnode *node;
 
 	root = ses->list[LIST_VARIABLE];
 
-	arg = get_arg_in_braces(arg, var, FALSE);
-	arg = get_arg_in_braces(arg, old, FALSE);
-	arg = get_arg_in_braces(arg, new, TRUE);
+	arg = get_arg_in_braces(arg, &var, FALSE);
+	arg = get_arg_in_braces(arg, &old, FALSE);
+	arg = get_arg_in_braces(arg, &new, TRUE);
 
 	if (*var == 0 || *old == 0)
 	{
@@ -171,7 +155,7 @@ DO_COMMAND(do_replacestring)
 	else
 	{
 		pti = node->right;
-		pto = var;
+		pto = buf;
 
 		while ((ptr = strstr(pti, old)) != NULL)
 		{
@@ -193,11 +177,7 @@ DO_COMMAND(do_replacestring)
 
 		*pto = 0;
 
-		sprintf(result, "{%s} {%s}", node->left, var);
-
-		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: $%s IS NOW SET TO {%s}", node->left, var);
-
-		do_internal_variable(ses, result);
+		internal_variable(ses, "{%s} {%s}", node->left, buf);
 	}
 	return ses;
 }
@@ -209,10 +189,10 @@ DO_COMMAND(do_replacestring)
 
 void colorstring(char *str)
 {
-	char result[BUFFER_SIZE] = { 0 }, *pti;
+	char result[BUFFER_SIZE], *pti;
 	int cnt;
 
-	pti = str;
+	result[0] = 0;
 
 	for (pti = str ; *pti ; pti++)
 	{
@@ -221,7 +201,8 @@ void colorstring(char *str)
 			if (is_abbrev(color_table[cnt].name, pti))
 			{
 				strcat(result, color_table[cnt].code);
-				pti += strlen(color_table[cnt].name);
+				pti += strlen(color_table[cnt].name) - 1;
+
 				break;
 			}
 		}
@@ -282,7 +263,11 @@ void reversestring(char *str)
 
 void mathstring(struct session *ses, char *str)
 {
-	get_number_string(ses, str, str);
+	char *temp;
+
+	get_number_string(ses, str, &temp);
+
+	strcpy(str, temp);
 }
 
 void thousandgroupingstring(char *str)
@@ -340,14 +325,14 @@ void stripspaces(char *str)
 
 DO_COMMAND(do_format)
 {
-	char destvar[BUFFER_SIZE], format[BUFFER_SIZE], argument[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf;
+	char *destvar, *format, *argument, arglist[20][BUFFER_SIZE], *ptf;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
 
-	arg = get_arg_in_braces(arg, destvar,  FALSE);
-	arg = get_arg_in_braces(arg, format,   FALSE);
-	arg = get_arg_in_braces(arg, argument, TRUE);
+	arg = get_arg_in_braces(arg, &destvar,  FALSE);
+	arg = get_arg_in_braces(arg, &format,   FALSE);
+	arg = get_arg_in_braces(arg, &argument, TRUE);
 
 	if (*destvar == 0 || *format == 0)
 	{
@@ -360,7 +345,7 @@ DO_COMMAND(do_format)
 
 	for (i = 0 ; i < 20 ; i++)
 	{
-		arg = get_arg_in_braces(arg, arglist[i], FALSE);
+		arg = cpy_arg_in_braces(arg, arglist[i], FALSE);
 	}
 
 	i = 0;
@@ -502,13 +487,11 @@ DO_COMMAND(do_format)
 		}
 	}
 
-	sprintf(argument, format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
-
-	sprintf(format, "{%s} {%s}", destvar, argument);
+	argument = stringf_alloc(format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
 
 	show_message(ses, LIST_VARIABLE, "#FORMAT: $%s IS NOW SET TO {%s}", destvar, argument);
 
-	do_internal_variable(ses, format);
+	internal_variable(ses, "{%s} {%s}", destvar, argument);
 
 	return ses;
 }

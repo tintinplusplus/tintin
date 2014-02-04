@@ -30,18 +30,18 @@
 
 DO_COMMAND(do_substitute)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char *left, *right, *rank;
 	struct listroot *root;
 
 	root = ses->list[LIST_SUBSTITUTE];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, pr,    TRUE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, &rank,  TRUE);
 
-	if (*pr == 0)
+	if (*rank == 0)
 	{
-		sprintf(pr, "%s", "5");
+		rank = string_alloc("5");
 	}
 
 	if (*left == 0)
@@ -57,9 +57,9 @@ DO_COMMAND(do_substitute)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, pr, LIST_SUBSTITUTE);
+		updatenode_list(ses, left, right, rank, LIST_SUBSTITUTE);
 
-		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", left, right, pr);
+		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", left, right, rank);
 	}
 	return ses;
 }
@@ -67,41 +67,24 @@ DO_COMMAND(do_substitute)
 
 DO_COMMAND(do_unsubstitute)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int found = FALSE;
+	delete_node_with_wild(ses, LIST_SUBSTITUTE, arg);
 
-	root = ses->list[LIST_SUBSTITUTE];
-
-	arg = get_arg_in_braces(arg, left, 1);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NO LONGER A SUBSTITUTION.", node->left);
-
-		deletenode_list(ses, node, LIST_SUBSTITUTE);
-
-		found = TRUE;
-	}
-	if (found == FALSE)
-	{
-		show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }
 
-void check_all_substitutions(struct session *ses, char *original, char *line)
+void check_all_substitutions(struct session *ses, char **original, char *line)
 {
 	struct listnode *node;
 
 	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
 	{
-		if (check_one_action(line, original, node->left, ses))
+		if (check_one_action(line, *original, node->left, ses))
 		{
 			if (strcmp(node->right, "."))
 			{
-				substitute(ses, node->right, original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+				substitute(ses, node->right, &*original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+
+				show_debug(ses, LIST_SUBSTITUTE, "#SUBSTITUTE DEBUG: %s : %s", line, *original);
 			}
 			else
 			{

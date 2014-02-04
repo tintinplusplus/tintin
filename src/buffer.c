@@ -20,11 +20,10 @@
 ******************************************************************************/
 
 /******************************************************************************
-*   file: buffer.c - funtions related to the scroll back buffer               *
 *              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
+*                                                                             *
 *                     coded by Igor van den Hoven 2004                        *
 ******************************************************************************/
-
 
 #include "tintin.h"
 
@@ -82,7 +81,7 @@ void init_buffer(struct session *ses, int size)
 
 void add_line_buffer(struct session *ses, char *line, int more_output)
 {
-	char linebuf[BUFFER_SIZE], linelog[BUFFER_SIZE];
+	char linebuf[STRING_SIZE];
 	char *pti, *pto;
 	int lines;
 	int sav_row, sav_col, cur_row, cur_col, top_row, bot_row;
@@ -99,13 +98,11 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		return;
 	}
 
-	strcat(ses->more_output, line);
+	line = stringf_alloc("%s%s", ses->more_output, line);
 
 	if (more_output == TRUE)
 	{
-		ses->more_outlen = strlen(ses->more_output);
-
-		if (ses->more_outlen < BUFFER_SIZE / 2)
+		if (strlen(line) < STRING_SIZE - BUFFER_SIZE)
 		{
 			return;
 		}
@@ -118,8 +115,8 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 		reset_hash_table();
 	}
 
-	pti = ses->more_output;
-	pto = linebuf;
+	pti = line;
+	pto = ses->more_output;
 
 	while (*pti != 0)
 	{
@@ -144,9 +141,11 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 			pti++;
 		}
 	}
-	*pto = ses->more_output[0] = 0;
+	*pto = 0;
 
-	lines = word_wrap(ses, linebuf, linelog, FALSE);
+	lines = word_wrap(ses, ses->more_output, linebuf, FALSE);
+
+	ses->more_output[0] = 0;
 
 	ses->buffer[ses->scroll_row] = str_hash(linebuf, lines);
 
@@ -159,18 +158,18 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 	{
 		if (ses->logfile)
 		{
-			logit(ses, linelog, ses->logfile);
+			logit(ses, linebuf, ses->logfile);
 		}
 	}
 
 	if (gtd->chat)
 	{
-		chat_forward_session(ses, linelog);
+		chat_forward_session(ses, linebuf);
 	}
 
 	if (ses->logline)
 	{
-		logit(ses, linelog, ses->logline);
+		logit(ses, linebuf, ses->logline);
 
 		fclose(ses->logline);
 		ses->logline = NULL;
@@ -198,28 +197,28 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 
 DO_COMMAND(do_grep)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right, *str;
 	int scroll_cnt, grep_cnt, grep_min, grep_max, grep_add;
 
 	grep_cnt = grep_add = scroll_cnt = grep_min = 0;
 	grep_max = ses->bot_row - ses->top_row - 2;
 
-	get_arg_in_braces(arg, left,  FALSE);
+	get_arg_in_braces(arg, &left,  FALSE);
 
 	if (ses->buffer == NULL)
 	{
-		tintin_puts2("#GREP, NO SCROLL BUFFER AVAILABLE.", ses);
+		tintin_puts2(ses, "#GREP, NO SCROLL BUFFER AVAILABLE.");
 	}
 	else if (*left == 0)
 	{
-		tintin_puts2("#GREP WHAT?", ses);
+		tintin_puts2(ses, "#GREP WHAT?");
 	}
 	else
 	{
 		if (is_number(left))
 		{
-			arg = get_arg_in_braces(arg, left,  FALSE);
-			arg = get_arg_in_braces(arg, right, TRUE);
+			arg = get_arg_in_braces(arg, &left,  FALSE);
+			arg = get_arg_in_braces(arg, &right, TRUE);
 
 			if (*right == 0)
 			{
@@ -232,12 +231,12 @@ DO_COMMAND(do_grep)
 		}
 		else
 		{
-			arg = get_arg_in_braces(arg, right, TRUE);
+			arg = get_arg_in_braces(arg, &right, TRUE);
 		}
 
 		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
 
-		sprintf(left, "*%s*", right);
+		str = stringf_alloc("*%s*", right);
 
 		tintin_header(ses, " GREP %s ", right);
 
@@ -264,7 +263,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (regexp(left, ses->buffer[scroll_cnt], TRUE))
+			if (regexp(str, ses->buffer[scroll_cnt], TRUE))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -280,7 +279,7 @@ DO_COMMAND(do_grep)
 
 		if (grep_cnt <= grep_min)
 		{
-			tintin_puts2("#NO MATCHES FOUND.", ses);
+			tintin_puts2(ses, "#NO MATCHES FOUND.");
 		}
 		else do
 		{
@@ -303,7 +302,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (regexp(left, ses->buffer[scroll_cnt], TRUE))
+			if (regexp(str, ses->buffer[scroll_cnt], TRUE))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -314,7 +313,7 @@ DO_COMMAND(do_grep)
 
 				grep_cnt -= grep_add;
 
-				tintin_puts2(ses->buffer[scroll_cnt], ses);
+				tintin_puts2(ses, ses->buffer[scroll_cnt]);
 			}
 		}
 		while (scroll_cnt != ses->scroll_row);
@@ -330,7 +329,7 @@ DO_COMMAND(do_grep)
 
 int show_buffer(struct session *ses)
 {
-	char temp[BUFFER_SIZE], wrap[BUFFER_SIZE], *temp_ptr, *wrap_ptr;
+	char temp[STRING_SIZE], wrap[STRING_SIZE], *temp_ptr, *wrap_ptr;
 	int scroll_size, scroll_cnt, scroll_tmp, scroll_add, skip;
 
 	if (ses != gtd->ses)
@@ -518,10 +517,10 @@ int show_buffer(struct session *ses)
 
 DO_COMMAND(do_buffer)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	switch (left[0])
 	{
@@ -746,27 +745,27 @@ DO_CURSOR(buffer_l)
 
 void buffer_f(char *arg)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right, *str;
 	int scroll_cnt, grep_cnt, grep_max;
 
 	grep_cnt = grep_max = scroll_cnt = 0;
 
-	get_arg_in_braces(arg, left,  FALSE);
+	get_arg_in_braces(arg, &left, FALSE);
 
 	if (gtd->ses->buffer == NULL)
 	{
-		tintin_puts2("#BUFFER, NO SCROLL BUFFER AVAILABLE.", NULL);
+		tintin_puts2(NULL, "#BUFFER, NO SCROLL BUFFER AVAILABLE.");
 	}
 	else if (*left == 0)
 	{
-		tintin_puts2("#BUFFER, FIND WHAT?", NULL);
+		tintin_puts2(NULL, "#BUFFER, FIND WHAT?");
 	}
 	else
 	{
 		if (is_number(left))
 		{
-			arg = get_arg_in_braces(arg, left,  FALSE);
-			arg = get_arg_in_braces(arg, right, TRUE);
+			arg = get_arg_in_braces(arg, &left,  FALSE);
+			arg = get_arg_in_braces(arg, &right, TRUE);
 
 			if (*right == 0)
 			{
@@ -778,10 +777,10 @@ void buffer_f(char *arg)
 		}
 		else
 		{
-			arg = get_arg_in_braces(arg, right, TRUE);
+			arg = get_arg_in_braces(arg, &right, TRUE);
 		}
 
-		sprintf(left, "*%s*", right);
+		str = stringf_alloc("*%s*", right);
 
 		if (grep_max >= 0)
 		{
@@ -808,7 +807,7 @@ void buffer_f(char *arg)
 					continue;
 				}
 
-				if (regexp(left, gtd->ses->buffer[scroll_cnt], TRUE))
+				if (regexp(str, gtd->ses->buffer[scroll_cnt], TRUE))
 				{
 					if (grep_cnt == grep_max)
 					{
@@ -851,7 +850,7 @@ void buffer_f(char *arg)
 					continue;
 				}
 
-				if (regexp(left, gtd->ses->buffer[scroll_cnt], TRUE))
+				if (regexp(str, gtd->ses->buffer[scroll_cnt], TRUE))
 				{
 					grep_cnt--;
 
@@ -867,7 +866,7 @@ void buffer_f(char *arg)
 
 		if (gtd->ses->buffer[scroll_cnt] == NULL || scroll_cnt == gtd->ses->scroll_row)
 		{
-			tintin_puts("#BUFFER FIND, NO MATCHES FOUND.", NULL);
+			tintin_puts(NULL, "#BUFFER FIND, NO MATCHES FOUND.");
 		}
 		else
 		{

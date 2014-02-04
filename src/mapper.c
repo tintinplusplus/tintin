@@ -29,7 +29,6 @@
 
 /*
 	todo:
-
 */
 
 void show_map(struct session *ses, char *argument);
@@ -62,7 +61,7 @@ unsigned char	map_palet1[]	= {126,247,247,109,247,120,108,116,247,106,113,118,10
 {                                                                                                                  \
 	if (ses->map == NULL)                                                                                         \
 	{                                                                                                             \
-		tintin_printf2(ses, "#MAP: This session has no map data. Use #map create or #map load to create on.");   \
+		tintin_printf2(ses, "#MAP: This session has no map data. Use #map create or #map read to create one.");  \
                                                                                                                    \
 		return;                                                                                                  \
 	}                                                                                                             \
@@ -72,13 +71,13 @@ unsigned char	map_palet1[]	= {126,247,247,109,247,120,108,116,247,106,113,118,10
 {                                                                                                                  \
 	if (ses->map == NULL)                                                                                         \
 	{                                                                                                             \
-		tintin_printf2(ses, "#MAP: This session has no map data. Use #map create or #map load to create on.");   \
+		tintin_printf2(ses, "#MAP: This session has no map data. Use #map create or #map read to create one.");  \
                                                                                                                    \
 		return;                                                                                                  \
 	}                                                                                                             \
 	if (ses->map->room_list[ses->map->in_room] == NULL)                                                           \
 	{                                                                                                             \
-		tintin_printf2(ses, "#MAP: You are not inside the map. Use #map goto first to enter it.");               \
+		tintin_printf2(ses, "#MAP: You are not inside the map. Use #map goto to enter it.");                     \
                                                                                                                    \
 		return;                                                                                                  \
 	}                                                                                                             \
@@ -87,9 +86,9 @@ unsigned char	map_palet1[]	= {126,247,247,109,247,120,108,116,247,106,113,118,10
 DO_COMMAND(do_map)
 {
 	int cnt;
-	char cmd[BUFFER_SIZE];
+	char *cmd;
 
-	arg = get_arg_in_braces(arg, cmd, FALSE);
+	arg = get_arg_in_braces(arg, &cmd, FALSE);
 
 	if (*cmd == 0)
 	{
@@ -146,11 +145,11 @@ DO_COMMAND(do_map)
 
 DO_MAP(map_color)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	free(ses->map->room_list[ses->map->in_room]->color);
 	ses->map->room_list[ses->map->in_room]->color = strdup(left);
@@ -168,12 +167,12 @@ DO_MAP(map_create)
 DO_MAP(map_delete)
 {
 	int room;
-	char left[BUFFER_SIZE];
+	char *left;
 	struct exit_data *exit;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, FALSE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
 
 	exit = find_exit(ses, ses->map->in_room, left);
 
@@ -206,11 +205,11 @@ DO_MAP(map_dig)
 	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	struct listnode *node;
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	for (room = 1 ; room < MAX_ROOM ; room++)
 	{
@@ -262,12 +261,12 @@ DO_MAP(map_exit)
 {
 	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	exit = find_exit(ses, ses->map->in_room, left);
 
@@ -289,22 +288,22 @@ DO_MAP(map_exit)
 
 DO_MAP(map_find)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	shortest_path(ses, FALSE, left, "");
 }
 
 DO_MAP(map_flag)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_MAP();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left)
 	{
@@ -349,12 +348,12 @@ DO_MAP(map_flag)
 
 DO_MAP(map_get)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*right == 0)
 	{
@@ -368,33 +367,23 @@ DO_MAP(map_get)
 	{
 		if (is_abbrev(left, "roomcolor"))
 		{
-			sprintf(left, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->color);
-
-			do_internal_variable(ses, left);
+			internal_variable(ses, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->color);
 		}
 		else if (is_abbrev(left, "roomflags"))
 		{
-			sprintf(left, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->flags);
-
-			do_internal_variable(ses, left);			
+			internal_variable(ses, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->flags);
 		}
 		else if (is_abbrev(left, "roomname"))
 		{
-			sprintf(left, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->name);
-
-			do_internal_variable(ses, left);
+			internal_variable(ses, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->name);
 		}
 		else if (is_abbrev(left, "roomsymbol"))
 		{
-			sprintf(left, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->symbol);
-
-			do_internal_variable(ses, left);
+			internal_variable(ses, "{%s} {%s}", right, ses->map->room_list[ses->map->in_room]->symbol);
 		}
 		else if (is_abbrev(left, "roomvnum"))
 		{
-			sprintf(left, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->vnum);
-
-			do_internal_variable(ses, left);
+			internal_variable(ses, "{%s} {%d}", right, ses->map->room_list[ses->map->in_room]->vnum);
 		}
 		else
 		{
@@ -406,11 +395,11 @@ DO_MAP(map_get)
 DO_MAP(map_goto)
 {
 	int room;
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_MAP();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	room = find_room(ses, left);
 
@@ -478,11 +467,11 @@ DO_MAP(map_leave)
 
 DO_MAP(map_legenda)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_MAP();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left == 0)
 	{
@@ -502,13 +491,13 @@ DO_MAP(map_legenda)
 
 DO_MAP(map_link)
 {
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], *left, *right;
 	struct listnode *node;
 	struct exit_data *exit;
 	int room;
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	CHECK_INSIDE();
 
@@ -563,11 +552,11 @@ DO_MAP(map_list)
 
 DO_MAP(map_map)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (!strcasecmp("vt", left))
 	{
@@ -581,22 +570,22 @@ DO_MAP(map_map)
 
 DO_MAP(map_move)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	follow_map(ses, left);
 }
 
 DO_MAP(map_name)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	free(ses->map->room_list[ses->map->in_room]->name);
 	ses->map->room_list[ses->map->in_room]->name = strdup(left);
@@ -605,10 +594,10 @@ DO_MAP(map_name)
 DO_MAP(map_read)
 {
 	FILE *myfile;
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE], *cptr;
+	char temp[BUFFER_SIZE], *left, *cptr;
 	int room = 0;
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if ((myfile = fopen(left, "r")) == NULL)
 	{
@@ -681,11 +670,11 @@ DO_MAP(map_read)
 
 DO_MAP(map_roomflag)
 {
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left)
 	{
@@ -725,12 +714,12 @@ DO_MAP(map_roomflag)
 
 DO_MAP(map_set)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*right == 0)
 	{
@@ -826,11 +815,11 @@ DO_MAP(map_undo)
 DO_MAP(map_unlink)
 {
 	struct exit_data *exit;
-	char left[BUFFER_SIZE];
+	char *left;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	exit = find_exit(ses, ses->map->in_room, left);
 
@@ -848,12 +837,12 @@ DO_MAP(map_unlink)
 
 DO_MAP(map_walk)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char *left, *right;
 
 	CHECK_INSIDE();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
-	arg = get_arg_in_braces(arg, right, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	shortest_path(ses, TRUE, left, right);
 }
@@ -861,13 +850,13 @@ DO_MAP(map_walk)
 DO_MAP(map_write)
 {
 	FILE *file;
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char *left, temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	int vnum;
 
 	CHECK_MAP();
 
-	arg = get_arg_in_braces(arg, left, TRUE);
+	arg = get_arg_in_braces(arg, &left, TRUE);
 
 	if (*left == 0 || (file = fopen(left, "w")) == NULL)
 	{
@@ -959,11 +948,11 @@ void delete_map(struct session *ses)
 void create_legenda(struct session *ses, char *arg)
 {
 	int cnt;
-	char buf[BUFFER_SIZE];
+	char *buf;
 
 	for (cnt = 0 ; cnt < 17 ; cnt++)
 	{
-		arg = get_arg_in_braces(arg, buf,  FALSE);
+		arg = get_arg_in_braces(arg, &buf, FALSE);
 
 		if (*buf)
 		{
@@ -975,14 +964,14 @@ void create_legenda(struct session *ses, char *arg)
 
 int create_room(struct session *ses, char *arg)
 {
-	char vnum[BUFFER_SIZE], flags[BUFFER_SIZE], color[BUFFER_SIZE], name[BUFFER_SIZE], symbol[BUFFER_SIZE];
+	char *vnum, *flags, *color, *name, *symbol;
 	struct room_data *newroom;
 
-	arg = get_arg_in_braces(arg, vnum,   FALSE);
-	arg = get_arg_in_braces(arg, flags,  FALSE);
-	arg = get_arg_in_braces(arg, color,  FALSE);
-	arg = get_arg_in_braces(arg, name,   FALSE);
-	arg = get_arg_in_braces(arg, symbol, FALSE);
+	arg = get_arg_in_braces(arg, &vnum,   FALSE);
+	arg = get_arg_in_braces(arg, &flags,  FALSE);
+	arg = get_arg_in_braces(arg, &color,  FALSE);
+	arg = get_arg_in_braces(arg, &name,   FALSE);
+	arg = get_arg_in_braces(arg, &symbol, FALSE);
 
 	/* Backward compatbility 1.96.5 */
 
@@ -1044,11 +1033,11 @@ void delete_room(struct session *ses, int room, int exits)
 void create_exit(struct session *ses, int room, char *arg)
 {
 	struct exit_data *newexit;
-	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE];
+	char *vnum, *name, *cmd;
 
-	arg = get_arg_in_braces(arg, vnum, FALSE);
-	arg = get_arg_in_braces(arg, name, FALSE);
-	arg = get_arg_in_braces(arg, cmd,  TRUE);
+	arg = get_arg_in_braces(arg, &vnum, FALSE);
+	arg = get_arg_in_braces(arg, &name, FALSE);
+	arg = get_arg_in_braces(arg, &cmd,  TRUE);
 
 	newexit       = calloc(1, sizeof(struct exit_data));
 	newexit->vnum = atoi(vnum);
@@ -1187,17 +1176,16 @@ void follow_map(struct session *ses, char *argument)
 
 void insert_undo(struct session *ses, char *format, ...)
 {
-	char buf[BUFFER_SIZE], dir[BUFFER_SIZE], rev[BUFFER_SIZE], flag[BUFFER_SIZE];
-	char *arg;
+	char buf[BUFFER_SIZE], *arg, *dir, *rev, *flag;
 	va_list args;
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
 	va_end(args);
 
-	arg = get_arg_in_braces(buf, dir, FALSE);
-	arg = get_arg_in_braces(arg, rev, FALSE);
-	arg = get_arg_in_braces(arg, flag, FALSE);
+	arg = get_arg_in_braces(buf, &dir, FALSE);
+	arg = get_arg_in_braces(arg, &rev, FALSE);
+	arg = get_arg_in_braces(arg, &flag, FALSE);
 
 	addnode_list(ses->list[LIST_MAP], dir, rev, flag);
 
@@ -1282,7 +1270,7 @@ void create_map_grid(struct session *ses, short room, short x, short y)
 
 void show_map(struct session *ses, char *argument)
 {
-	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], *out;
 	int x, y, line, size;
 
 	push_call("show_map(%p,%p)",ses,argument);
@@ -1315,9 +1303,9 @@ void show_map(struct session *ses, char *argument)
 					strcat(buf, draw_room(ses, map_grid[x][y], line));
 				}
 
-				substitute(ses, buf, out, SUB_COL);
+				substitute(ses, buf, &out, SUB_COL);
 
-				tintin_printf2(ses, "%s", out);
+				tintin_puts2(ses, out);
 			}
 		}
 		pop_call();
@@ -1333,9 +1321,9 @@ void show_map(struct session *ses, char *argument)
 			strcat(buf, draw_room(ses, map_grid[x][y], 0));
 		}
 
-		substitute(ses, buf, out, SUB_COL);
+		substitute(ses, buf, &out, SUB_COL);
 
-		tintin_printf2(ses, "%s", out);
+		tintin_puts2(ses, out);
 	}
 
 	pop_call();
@@ -1345,10 +1333,10 @@ void show_map(struct session *ses, char *argument)
 
 void show_vtmap(struct session *ses)
 {
-	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], *out;
 	int x, y, line;
 
-	push_call("show_vtmap(%p,%p)",ses);
+	push_call("show_vtmap(%p)",ses);
 
 	if (ses->map == NULL || !HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
 	{
@@ -1390,7 +1378,7 @@ void show_vtmap(struct session *ses)
 				{
 					strcat(buf, draw_room(ses, map_grid[x][y], line));
 				}
-				substitute(ses, buf, out, SUB_COL);
+				substitute(ses, buf, &out, SUB_COL);
 
 				printf("%s\033[0K\r\n", out);
 			}
@@ -1406,7 +1394,7 @@ void show_vtmap(struct session *ses)
 			{
 				strcat(buf, draw_room(ses, map_grid[x][y], 0));
 			}
-			substitute(ses, buf, out, SUB_COL);
+			substitute(ses, buf, &out, SUB_COL);
 
 			printf("%s\r\n", out);
 		}
@@ -1702,7 +1690,7 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 {
 	char time[BUFFER_SIZE], delay[BUFFER_SIZE];
 	struct exit_data *exit;
-	int room, vnum;
+	int room, vnum, wait;
 
 	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
 	{
@@ -1796,14 +1784,15 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 	{
 		if (*right)
 		{
-			strcpy(delay, "0");
+			wait = 0;
 
 			while (ses->list[LIST_PATH]->f_node)
 			{
 				sprintf(time, "%lld", utime());
 
-				cat_sprintf(delay, " + %s", right);
-				get_number_string(ses, delay, delay);
+				wait += atoi(right);
+
+				sprintf(delay, "%d", wait);
 
 				updatenode_list(ses, time, ses->list[LIST_PATH]->f_node->left, delay, LIST_DELAY);
 

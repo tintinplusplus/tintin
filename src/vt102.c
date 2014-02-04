@@ -272,8 +272,8 @@ void strip_vt102_codes(char *str, char *buf)
 {
 	char *pti, *pto;
 
-	pti = str;
-	pto = buf;
+	pti = (char *) str;
+	pto = (char *) buf;
 
 	while (*pti)
 	{
@@ -289,6 +289,7 @@ void strip_vt102_codes(char *str, char *buf)
 	}
 	*pto = 0;
 }
+
 
 void strip_vt102_codes_non_graph(char *str, char *buf)
 {

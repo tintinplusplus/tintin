@@ -33,7 +33,7 @@
 
 struct session *parse_input(struct session *ses, char *input)
 {
-	char command[BUFFER_SIZE], arg[BUFFER_SIZE];
+	char *command, *arg1, *arg2, *unwind;
 
 	if (push_call("[%s] parse_input(%p,%s)",ses->name,ses,input))
 	{
@@ -53,9 +53,11 @@ struct session *parse_input(struct session *ses, char *input)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_VERBATIM) && *input != gtd->tintin_char)
 	{
-		sprintf(command, "%s\r\n", input);
+		substitute(ses, input, &command, SUB_EOL);
 
 		write_line_mud(command, ses);
+
+		string_free(command);
 
 		pop_call();
 		return(ses);
@@ -63,9 +65,11 @@ struct session *parse_input(struct session *ses, char *input)
 
 	if (*input == gtd->verbatim_char)
 	{
-		sprintf(command, "%s\r\n", &input[1]);
+		substitute(ses, &input[1], &command, SUB_EOL);
 
 		write_line_mud(command, ses);
+
+		string_free(command);
 
 		pop_call();
 		return ses;
@@ -73,59 +77,73 @@ struct session *parse_input(struct session *ses, char *input)
 
 	while (*input)
 	{
-		if (*input == ';')
+		unwind = string_alloc("");
+
+		if (*input == COMMAND_SEPARATOR)
 		{
 			if (*++input == 0)
 			{
 				break;
 			}
 		}
-		input = get_arg_stop_spaces(input, arg);
+		input = get_arg_stop_spaces(input, &command);
 
-		substitute(ses, arg, command, SUB_VAR|SUB_FUN);
+		substitute(ses, command, &arg1, SUB_VAR|SUB_FUN);
 
-		if (strcmp(arg, command))
+		if (strcmp(arg1, command))
 		{
-			sprintf(arg, "%s%s", command, input);
+			command = stringf_alloc("%s%s", arg1, input);
 
-			ses = parse_input(ses, arg);
+			ses = parse_input(ses, command);
 
 			pop_call();
 			return ses;
 		}
-		input = get_arg_all(input, arg);
 
-		if (*command == gtd->tintin_char)
+		input = get_arg_all(input, &arg2);
+
+		if (*arg1 == gtd->tintin_char)
 		{
-			ses = parse_tintin_command(command + 1, arg, ses);
+			ses = parse_tintin_command(ses, arg1 + 1, arg2);
 		}
 		else
 		{
-			if (*arg)
-			{
-				cat_sprintf(command, " %s", arg);
-			}
-
-			if (check_all_aliases(ses, command, arg))
+			if (check_all_aliases(ses, arg1, arg2, &command))
 			{
 				DEL_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND); /* get rid of spam for aliasses */
 
 				ses = parse_input(ses, command);
 			}
-			else if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && !*arg && is_speedwalk_dirs(command))
-			{
-				process_speedwalk(command, ses);
-			}
 			else
 			{
-				write_mud(ses, command);
+				if (*arg2)
+				{
+					command = stringf_alloc("%s %s", arg1, arg2);
+
+				}
+				else
+				{
+					command = string_alloc(arg1);
+				}
+			
+				if (HAS_BIT(ses->flags, SES_FLAG_SPEEDWALK) && *arg2 == 0 && is_speedwalk_dirs(command))
+				{
+					process_speedwalk(command, ses);
+				}
+				else
+				{
+					write_mud(ses, command);
+				}
 			}
 		}
+
+		string_free(unwind);
+
 		if (HAS_BIT(ses->flags, SES_FLAG_BREAK))
 		{
 			break;
 		}
-  	}
+	}
 
 	pop_call();
 	return ses;
@@ -215,9 +233,9 @@ void process_speedwalk(char *cp, struct session *ses)
 /* parse most of the tintin-commands */
 /*************************************/
 
-struct session *parse_tintin_command(char *command, char *arg, struct session *ses)
+struct session *parse_tintin_command(struct session *ses, char *command, char *arg)
 {
-	char newcommand[BUFFER_SIZE], argument[BUFFER_SIZE];
+	char *temp;
 	int cmd;
 	struct session *sesptr;
 
@@ -227,9 +245,12 @@ struct session *parse_tintin_command(char *command, char *arg, struct session *s
 		{
 			if (*arg)
 			{
-				get_arg_in_braces(arg, arg, TRUE);
-				substitute(ses, arg, newcommand, SUB_VAR|SUB_FUN);
-				parse_input(sesptr, newcommand);  /* was: #sessioname commands */
+				get_arg_in_braces(arg, &temp, TRUE);
+
+				substitute(ses, temp, &command, SUB_VAR|SUB_FUN);
+
+				parse_input(sesptr, command);
+
 				return ses;
 			}
 			else
@@ -243,11 +264,11 @@ struct session *parse_tintin_command(char *command, char *arg, struct session *s
 	{
 		int i = atoi(command);
 
-		get_arg_in_braces(arg, arg, TRUE);
+		get_arg_in_braces(arg, &command, TRUE);
 
 		while (i-- > 0)
 		{
-			ses = parse_input(ses, arg);
+			ses = parse_input(ses, command);
 		}
 		return ses;
 	}
@@ -262,14 +283,9 @@ struct session *parse_tintin_command(char *command, char *arg, struct session *s
 			{
 				if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
 				{
-					substitute(ses, arg, argument, SUB_VAR|SUB_FUN);
-
-					return (ses = (*command_table[cmd].command) (ses, argument));
+					substitute(ses, arg, &arg, SUB_VAR|SUB_FUN);
 				}
-				else
-				{
-					return (ses = (*command_table[cmd].command) (ses, arg));
-				}
+				return (ses = (*command_table[cmd].command) (ses, arg));
 			}
 		}
 	}
@@ -280,85 +296,90 @@ struct session *parse_tintin_command(char *command, char *arg, struct session *s
 
 
 /*
-	get all arguments - only check for unescaped ';'
+	get all arguments - only check for unescaped command separators
 */
 
-char *get_arg_all(char *s, char *arg)
+char *get_arg_all(char *string, char **result)
 {
+	char *pto, *pti, buffer[STRING_SIZE];
 	int nest = 0;
 
-	s = space_out(s);
+	pti = space_out(string);
+	pto = buffer;
 
-	while (*s)
+	while (*pti)
 	{
 #ifdef BIG5
-		if (*s & 0x80)
+		if (*pti & 0x80)
 		{
-			*arg++ = *s++;
+			*pto++ = *pti++;
 
-			if (*s)
+			if (*pti)
 			{
-				*arg++ = *s++;
+				*pto++ = *pti++;
 			}
 			continue;
 		}
 #endif
-
-		if (*s == '\\' && s[1] == ';')
+		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
 		{
-			*arg++ = *s++;
+			*pto++ = *pti++;
 		}
-		else if (*s == ';' && nest == 0)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
 		{
 			break;
 		}
-		else if (*s == DEFAULT_OPEN)
+		else if (*pti == DEFAULT_OPEN)
 		{
 			nest++;
 		}
-		else if (*s == DEFAULT_CLOSE)
+		else if (*pti == DEFAULT_CLOSE)
 		{
 			nest--;
 		}
-		*arg++ = *s++;
+		*pto++ = *pti++;
 	}
-	*arg = '\0';
-	return s;
+	*pto = '\0';
+
+	*result = string_alloc(buffer);
+
+	return pti;
 }
 
 /*
 	Braces are stripped in braced arguments leaving all else as is.
 */
 
-char *get_arg_in_braces(char *s, char *arg, int flag)
+char *get_arg_in_braces(char *string, char **result, int flag)
 {
+	char *pti, *pto, buffer[STRING_SIZE];
 	int nest = 1;
-	char *ptr;
 
-	s = space_out(s);
-	ptr = s;
+	pti = space_out(string);
+	pto = buffer;
 
-	if (*s != DEFAULT_OPEN)
+	if (*pti != DEFAULT_OPEN)
 	{
 		if (flag == FALSE)
 		{
-			s = get_arg_stop_spaces(ptr, arg);
+			pti = get_arg_stop_spaces(pti, result);
 		}
 		else
 		{
-			s = get_arg_with_spaces(ptr, arg);
+			pti = get_arg_with_spaces(pti, result);
 		}
-		return s;
+		return pti;
 	}
-	s++;
 
-	while (*s)
+	pti++;
+
+	while (*pti)
 	{
 #ifdef BIG5
-		if (*s & 0x80)
+		if (*pti & 0x80)
 		{
-			*arg++ = *s++;
-			if (*s == 0)
+			*pto++ = *pti++;
+			if (*pti == 0)
 			{
 				break;
 			}
@@ -366,11 +387,11 @@ char *get_arg_in_braces(char *s, char *arg, int flag)
 		}
 #endif
 
-		if (*s == DEFAULT_OPEN)
+		if (*pti == DEFAULT_OPEN)
 		{
 			nest++;
 		}
-		else if (*s == DEFAULT_CLOSE)
+		else if (*pti == DEFAULT_CLOSE)
 		{
 			nest--;
 
@@ -379,39 +400,44 @@ char *get_arg_in_braces(char *s, char *arg, int flag)
 				break;
 			}
 		}
-		*arg++ = *s++;
+		*pto++ = *pti++;
 	}
 
-	if (*s == 0)
+	if (*pti == 0)
 	{
 		tintin_printf2(NULL, "#Unmatched braces error!");
 	}
 	else
 	{
-		s++;
+		pti++;
 	}
-	*arg = '\0';
+	*pto = '\0';
 
-	return s;
+	*result = string_alloc(buffer);
+
+	return pti;
 }
 
-/**************************************/
-/* get all arguments                  */
-/**************************************/
 
-char *get_arg_with_spaces(char *s, char *arg)
+/*
+	get all arguments
+*/
+
+char *get_arg_with_spaces(char *string, char **result)
 {
+	char *pto, *pti, buffer[STRING_SIZE];
 	int nest = 0;
 
-	s = space_out(s);
+	pti = space_out(string);
+	pto = buffer;
 
-	while (*s)
+	while (*pti)
 	{
 #ifdef BIG5
-		if (*s & 0x80)
+		if (*pti & 0x80)
 		{
-			*arg++ = *s++;
-			if (*s == 0)
+			*pto++ = *pti++;
+			if (*pti == 0)
 			{
 				break;
 			}
@@ -419,90 +445,264 @@ char *get_arg_with_spaces(char *s, char *arg)
 		}
 #endif
 
-		if (*s == '\\' && s[1] == ';')
+		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
 		{
-			*arg++ = *s++;
+			*pto++ = *pti++;
 		}
-		else if (*s == ';' && nest == 0)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
 		{
 			break;
 		}
-		else if (*s == DEFAULT_OPEN)
+		else if (*pti == DEFAULT_OPEN)
 		{
 			nest++;
 		}
-		else if (*s == DEFAULT_CLOSE)
+		else if (*pti == DEFAULT_CLOSE)
 		{
 			nest--;
 		}
-		*arg++ = *s++;
+		*pto++ = *pti++;
 	}
-	*arg = '\0'; 
-	return s;
+	*pto = '\0'; 
+
+	*result = string_alloc(buffer);
+
+	return pti;
 }
 
 /*
 	get one arg, stop at spaces
 */
 
-char *get_arg_stop_spaces(char *s, char *arg)
+char *get_arg_stop_spaces(char *string, char **result)
 {
+	char *pto, *pti, buffer[STRING_SIZE];
 	int nest = 0;
 
-	s = space_out(s);
+	pti = space_out(string);
+	pto = buffer;
 
-	while (*s)
+	while (*pti)
 	{
 #ifdef BIG5
-		if(*s & 0x80)
+		if(*pti & 0x80)
 		{
-			*arg++ = *s++;
-			if (*s)
+			*pto++ = *pti++;
+			if (*pti)
 			{
-				*arg++ = *s++;
+				*pto++ = *pti++;
 			}
 			continue;
 		}
 #endif
 
-		if (*s == '\\' && s[1] == ';')
+		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
 		{
-			*arg++ = *s++;
+			*pto++ = *pti++;
 		}
-		else if (*s == ';' && nest == 0)
-		{
-			break;
-		}
-		else if (*s == ' ' && nest == 0)
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
 		{
 			break;
 		}
-		else if (*s == DEFAULT_OPEN)
+		else if (*pti == ' ' && nest == 0)
+		{
+			break;
+		}
+		else if (*pti == DEFAULT_OPEN)
 		{
 			nest++;
 		}
-		else if (*s == DEFAULT_CLOSE)
+		else if (*pti == DEFAULT_CLOSE)
 		{
 			nest--;
 		}
-		*arg++ = *s++;
+		*pto++ = *pti++;
 	}
-	*arg = '\0';
+	*pto = '\0';
 
-	return s;
+	*result = string_alloc(buffer);
+
+	return pti;
 }
 
 /*
-	spaceout - advance ptr to next none-space
+	get_arg_in_braces for threaded and old school routine.
 */
 
-char *space_out(char *s)
+char *cpy_arg_in_braces(char *pti, char *pto, int flag)
 {
-	while (isspace(*s))
+	int nest = 1;
+
+	pti = space_out(pti);
+
+	if (*pti != DEFAULT_OPEN)
 	{
-		s++;
+		if (flag == FALSE)
+		{
+			pti = cpy_arg_stop_spaces(pti, pto);
+		}
+		else
+		{
+			pti = cpy_arg_with_spaces(pti, pto);
+		}
+		return pti;
 	}
-	return(s);
+
+	pti++;
+
+	while (*pti)
+	{
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+			if (*pti == 0)
+			{
+				break;
+			}
+			continue;
+		}
+#endif
+
+		if (*pti == DEFAULT_OPEN)
+		{
+			nest++;
+		}
+		else if (*pti == DEFAULT_CLOSE)
+		{
+			nest--;
+
+			if (nest == 0)
+			{
+				break;
+			}
+		}
+		*pto++ = *pti++;
+	}
+
+	if (*pti == 0)
+	{
+		tintin_printf2(NULL, "#Unmatched braces error!");
+	}
+	else
+	{
+		pti++;
+	}
+	*pto = '\0';
+
+	return pti;
+}
+
+
+/*
+	get all arguments
+*/
+
+char *cpy_arg_with_spaces(char *pti, char *pto)
+{
+	int nest = 0;
+
+	pti = space_out(pti);
+
+	while (*pti)
+	{
+#ifdef BIG5
+		if (*pti & 0x80)
+		{
+			*pto++ = *pti++;
+			if (*pti == 0)
+			{
+				break;
+			}
+			continue;
+		}
+#endif
+
+		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
+		{
+			*pto++ = *pti++;
+		}
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
+		{
+			break;
+		}
+		else if (*pti == DEFAULT_OPEN)
+		{
+			nest++;
+		}
+		else if (*pti == DEFAULT_CLOSE)
+		{
+			nest--;
+		}
+		*pto++ = *pti++;
+	}
+	*pto = '\0'; 
+
+	return pti;
+}
+
+/*
+	get one arg, stop at spaces
+*/
+
+char *cpy_arg_stop_spaces(char *pti, char *pto)
+{
+	int nest = 0;
+
+	pti = space_out(pti);
+
+	while (*pti)
+	{
+#ifdef BIG5
+		if(*pti & 0x80)
+		{
+			*pto++ = *pti++;
+			if (*pti)
+			{
+				*pto++ = *pti++;
+			}
+			continue;
+		}
+#endif
+
+		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
+		{
+			*pto++ = *pti++;
+		}
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
+		{
+			break;
+		}
+		else if (*pti == ' ' && nest == 0)
+		{
+			break;
+		}
+		else if (*pti == DEFAULT_OPEN)
+		{
+			nest++;
+		}
+		else if (*pti == DEFAULT_CLOSE)
+		{
+			nest--;
+		}
+		*pto++ = *pti++;
+	}
+	*pto = '\0';
+
+	return pti;
+}
+
+/*
+	advance ptr to next none-space
+*/
+
+char *space_out(char *string)
+{
+	while (isspace(*string))
+	{
+		string++;
+	}
+	return string;
 }
 
 /*
@@ -511,7 +711,7 @@ char *space_out(char *s)
 
 void write_mud(struct session *ses, char *command)
 {
-	char output[BUFFER_SIZE];
+	char *output;
 
 	if (ses->map && ses->map->in_room)
 	{
@@ -522,7 +722,7 @@ void write_mud(struct session *ses, char *command)
 		check_insert_path(command, ses);
 	}
 
-	substitute(ses, command, output, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
+	substitute(ses, command, &output, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
 	write_line_mud(output, ses);
 }
@@ -533,30 +733,30 @@ void write_mud(struct session *ses, char *command)
 * substituted beforehand                                                      *
 ******************************************************************************/
 
-void do_one_line(char *line, struct session *ses)
+void do_one_line(char **line, struct session *ses)
 {
-	char strip[BUFFER_SIZE];
+	char strip[STRING_SIZE];
 
-	push_call("[%s] do_one_line(%p,%p)",ses->name,line,ses);
+	push_call("[%s] do_one_line(%p,%p)",ses->name,*line,ses);
 
-	strip_vt102_codes(line, strip);
+	strip_vt102_codes(*line, strip);
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_actions(ses, line, strip);
+		check_all_actions(ses, *line, strip);
 	}
 
 	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
 	{
 		if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 		{
-			check_all_prompts(ses, line, strip);
+			check_all_prompts(ses, *line, strip);
 		}
 	}
 
 	if (!HAS_BIT(ses->list[LIST_GAG]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_gags(ses, line, strip);
+		check_all_gags(ses, *line, strip);
 	}
 
 	if (!HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
@@ -566,7 +766,7 @@ void do_one_line(char *line, struct session *ses)
 
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
-		check_all_highlights(ses, line, strip);
+		check_all_highlights(ses, *line, strip);
 	}
 
 	pop_call();

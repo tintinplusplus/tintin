@@ -30,18 +30,18 @@
 
 DO_COMMAND(do_alias)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char *left, *right, *rank;
 	struct listroot *root;
 
 	root = ses->list[LIST_ALIAS];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, pr, FALSE);
+	arg = get_arg_in_braces(arg, &left,  FALSE);
+	arg = get_arg_in_braces(arg, &right, TRUE);
+	arg = get_arg_in_braces(arg, &rank,  FALSE);
 
-	if (!*pr)
+	if (*rank == 0)
 	{
-		sprintf(pr, "%s", "5");
+		rank = string_alloc("5");
 	}
 
 	if (*left == 0)
@@ -57,9 +57,9 @@ DO_COMMAND(do_alias)
 	}
 	else
 	{
-		updatenode_list(ses, left, right, pr, LIST_ALIAS);
+		updatenode_list(ses, left, right, rank, LIST_ALIAS);
 
-		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASSES {%s} @ {%s}.", left, right, pr);
+		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASSES {%s} @ {%s}.", left, right, rank);
 	}
 	return ses;
 }
@@ -67,26 +67,8 @@ DO_COMMAND(do_alias)
 
 DO_COMMAND(do_unalias)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int flag = FALSE;
+	delete_node_with_wild(ses, LIST_ALIAS, arg);
 
-	root = ses->list[LIST_ALIAS];
-
-	arg = get_arg_in_braces(arg, left,  TRUE);
-
-	while ((node = search_node_with_wild(root, left)))
-	{
-		show_message(ses, LIST_ALIAS, "#OK. {%s} IS NO LONGER AN ALIAS.", node->left);
-
-		deletenode_list(ses, node, LIST_ALIAS);
-		flag = TRUE;
-	}
-	if (!flag)
-	{
-		show_message(ses, LIST_ALIAS, "#ALIAS: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }
 
@@ -116,7 +98,7 @@ int alias_regexp(char *exp, char *str)
 				{
 					if (exp[2] == 0)
 					{
-						strcpy(gtd->vars[exp[1] - '0'], str);
+						gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
 
 						return TRUE;
 					}
@@ -125,7 +107,7 @@ int alias_regexp(char *exp, char *str)
 					{
 						if (alias_regexp(exp + 2, &str[cnt]))
 						{
-							memcpy(gtd->vars[exp[1] - '0'], str, cnt);
+							gtd->vars[exp[1] - '0'] = string_realloc(gtd->vars[exp[1] - '0'], str);
 							gtd->vars[exp[1] - '0'][cnt] = 0;
 
 							return TRUE;
@@ -153,6 +135,7 @@ int alias_regexp(char *exp, char *str)
 		exp++;
 		str++;
 	}
+
 	if (*str == ' ' || *str == 0)
 	{
 		return TRUE;
@@ -160,46 +143,40 @@ int alias_regexp(char *exp, char *str)
 	return FALSE;
 }
 
-
-int check_all_aliases(struct session *ses, char *original, char *line)
+int check_all_aliases(struct session *ses, char *str1, char *str2, char **command)
 {
 	struct listnode *node;
 	struct listroot *root;
-	char *arg, temp[BUFFER_SIZE];
+	char *arg;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
 
-	strcpy(gtd->vars[0], line);
+	gtd->vars[0] = string_alloc(str2);
 
-	arg = line;
+	arg = str2;
 
 	for (i = 1 ; i < 10 ; i++)
 	{
-		arg = get_arg_in_braces(arg, gtd->vars[i], FALSE);
+		arg = get_arg_in_braces(arg, &gtd->vars[i], FALSE);
 	}
+
+	arg = stringf_alloc("%s%s%s", str1, *str2 ? " " : "", str2);
 
 	for (node = root->update = root->f_node ; node ; node = root->update)
 	{
 		root->update = node->next;
 
-		if (alias_regexp(node->left, original))
+		if (alias_regexp(node->left, arg))
 		{
-			substitute(ses, node->left, temp, SUB_ARG);
+			substitute(ses, node->right, command, SUB_ARG);
 
-			if (strlen(temp) < strlen(original))
+			if (!strcmp(node->right, *command) && *str2)
 			{
-				strcpy(gtd->vars[0], &original[strlen(temp) + 1]);
+				*command = stringf_alloc("%s %s", *command, str2);
 			}
 
-			substitute(ses, node->right, original, SUB_ARG);
-
-			if (!strcmp(node->right, original) && *line)
-			{
-				cat_sprintf(original, " %s", gtd->vars[0]);
-			}
-
-			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s", original);
+			show_debug(ses, LIST_ALIAS, "#ALIAS DEBUG: %s : %s", str1, str2);
 
 			return TRUE;
 		}

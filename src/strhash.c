@@ -115,7 +115,7 @@ unsigned short str_hash_grep(char *str, int write)
 
 void reset_hash_table(void)
 {
-	char temp[BUFFER_SIZE];
+	char temp[STRING_SIZE];
 	struct str_hash_data *hash_ptr;
 	int hash;
 

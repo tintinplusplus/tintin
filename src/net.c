@@ -51,7 +51,7 @@ int connect_mud(char *host, char *port, struct session *ses)
 
 	if (!is_number(port))
 	{
-		tintin_puts("#THE PORT SHOULD BE A NUMBER.", ses);
+		tintin_puts(ses, "#THE PORT SHOULD BE A NUMBER.");
 		return -1;
 	}
 
@@ -67,11 +67,11 @@ int connect_mud(char *host, char *port, struct session *ses)
 			break;
 
 		case -2:
-			tintin_printf2(ses, "#SESSION ERROR - UNKNOWN HOST.");
+			tintin_printf(ses, "#SESSION ERROR - UNKNOWN HOST.");
 			return -1;
 
 		default:
-			tintin_printf2(ses, "#SESSION, UNKNOWN ERROR.");
+			tintin_printf(ses, "#SESSION ERROR - CANNOT CONNECT.");
 			return -1;
 	}
 
@@ -120,7 +120,7 @@ int connect_mud(char *host, char *port, struct session *ses)
 
 		if (!(hp = gethostbyname(host)))
 		{
-			tintin_puts2("#ERROR - UNKNOWN HOST.", ses);
+			tintin_puts2(ses, "#ERROR - UNKNOWN HOST.");
 			return -1;
 		}
 		memcpy((char *)&sockaddr.sin_addr, hp->h_addr, sizeof(sockaddr.sin_addr));
@@ -132,7 +132,7 @@ int connect_mud(char *host, char *port, struct session *ses)
 	}
 	else
 	{
-		tintin_puts("#THE PORT SHOULD BE A NUMBER.", ses);
+		tintin_puts(ses, "#THE PORT SHOULD BE A NUMBER.");
 		return -1;
 	}
 
@@ -166,7 +166,7 @@ void write_line_mud(char *line, struct session *ses)
 {
 	if (ses == gts)
 	{
-		tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host port} TO START ONE.", gtd->tintin_char);
+		tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
 		return;
 	}
 
@@ -186,12 +186,12 @@ void write_line_mud(char *line, struct session *ses)
 
 void read_buffer_mud(struct session *ses)
 {
-	unsigned char buf[BUFFER_SIZE];
+	unsigned char buf[STRING_SIZE];
 	int size;
 
 	gtd->mud_output_len = 0;
 
-	size = read(ses->socket, buf, BUFFER_SIZE - 1);
+	size = read(ses->socket, buf, STRING_SIZE - 1);
 
 	if (size <= 0)
 	{
@@ -211,8 +211,8 @@ void read_buffer_mud(struct session *ses)
 
 void readmud(struct session *ses)
 {
-	char *line, *next_line;
-	char linebuf[BUFFER_SIZE];
+	char *line, *next_line, *unwind;
+	char linebuf[STRING_SIZE];
 
 	push_call("readmud(%p)", ses);
 
@@ -236,6 +236,8 @@ void readmud(struct session *ses)
 	gtd->mud_output_len = 0;
 
 	/* separate into lines and print away */
+
+	unwind = string_alloc("");
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
@@ -303,6 +305,8 @@ void readmud(struct session *ses)
 		restore_pos(gtd->ses);
 	}
 
+	string_free(unwind);
+
 	pop_call();
 	return;
 }
@@ -312,7 +316,7 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 {
 	ses->check_output = 0;
 
-	do_one_line(linebuf, ses);   /* changes linebuf */
+	do_one_line(&linebuf, ses);   /* changes linebuf */
 
 	/*
 		Take care of gags, vt102 support still goes

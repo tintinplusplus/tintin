@@ -109,12 +109,15 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define DEFAULT_OPEN                   '{'
 #define DEFAULT_CLOSE                  '}'
 
+#define COMMAND_SEPARATOR              ';'
+
 #define HISTORY_FILE         ".tt_history"
 
+#define STRING_SIZE                  50000
 #define BUFFER_SIZE                  10000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.96.8"
+#define VERSION_NUM               "1.96.9"
 
 #define ESCAPE                          27
 
@@ -128,8 +131,9 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define TIMER_UPDATE_PACKETS             5
 #define TIMER_UPDATE_CHAT                6
 #define TIMER_UPDATE_TERMINAL            7
-#define TIMER_STALL_PROGRAM              8
-#define TIMER_CPU                        9
+#define TIMER_UPDATE_MEMORY              8
+#define TIMER_STALL_PROGRAM              9
+#define TIMER_CPU                       10
 
 #define PULSE_PER_SECOND                20
 
@@ -141,6 +145,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define PULSE_UPDATE_PACKETS             2
 #define PULSE_UPDATE_CHAT                2
 #define PULSE_UPDATE_TERMINAL            1
+#define PULSE_UPDATE_MEMORY              1
 
 /*
 	Index for lists used by tintin
@@ -513,8 +518,7 @@ struct session
 	char                  * port;
 	long long               connect_retry;
 	int                     connect_error;
-	int                     more_outlen;
-	char                    more_output[BUFFER_SIZE];
+	char                    more_output[STRING_SIZE];
 	long long               check_output;
 };
 
@@ -523,13 +527,14 @@ struct tintin_data
 	struct session        * ses;
 	struct session        * update;
 	struct chat_data      * chat;
+	struct memory_data    * mem;
 	struct termios          terminal;
 	char                  * mud_output_buf;
 	int                     mud_output_max;
 	int                     mud_output_len;
 	unsigned char         * mccp_buf;
 	int                     mccp_buf_max;
-	char                    input_buf[BUFFER_SIZE];
+	char                    input_buf[STRING_SIZE];
 	char                    input_tmp[BUFFER_SIZE];
 	char                    macro_buf[BUFFER_SIZE];
 	int                     input_len;
@@ -548,8 +553,8 @@ struct tintin_data
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
-	char                    vars[10][BUFFER_SIZE];
-	char                    cmds[10][BUFFER_SIZE];
+	char                  * vars[10];
+	char                  * cmds[10];
 };
 
 struct chat_data
@@ -708,6 +713,13 @@ struct exit_data
 	char                    * cmd;
 };
 
+struct memory_data
+{
+	struct memory_data      * next;
+	struct memory_data      * prev;
+	char                    * data;
+};
+
 #endif
 
 
@@ -765,12 +777,14 @@ extern void input_printf(char *format, ...);
 #define __ARRAY_H__
 
 extern DO_COMMAND(do_list);
+extern DO_ARRAY(array_clr);
 extern DO_ARRAY(array_ins);
 extern DO_ARRAY(array_del);
 extern DO_ARRAY(array_fnd);
 extern DO_ARRAY(array_get);
 extern DO_ARRAY(array_len);
 extern DO_ARRAY(array_set);
+extern DO_ARRAY(array_srt);
 
 extern char *get_list_item(struct session *ses, struct listnode *node, char *arg);
 extern void  set_list_item(struct session *ses, struct listnode *node, char *left, char *right);
@@ -945,7 +959,7 @@ extern void show_vtmap(struct session *ses);
 extern DO_COMMAND(do_math);
 extern DO_COMMAND(do_if);
 extern double get_number(struct session *ses, char *str);
-extern void get_number_string(struct session *ses, char *str, char *result);
+extern void get_number_string(struct session *ses, char *str, char **result);
 extern double mathexp(struct session *ses, char *str);
 extern int mathexp_tokenize(struct session *ses, char *str);
 extern void mathexp_level(struct listnode *node);
@@ -977,7 +991,7 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 #define __REGEXP_H__
 
 extern int regexp(char *exp, char *str, unsigned char cs);
-extern void substitute(struct session *ses, char *string, char *result, int flags);
+extern void substitute(struct session *ses, char *string, char **result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
 extern int action_regexp(char *exp, char *str, unsigned char arg);
 
@@ -1081,7 +1095,7 @@ extern void check_all_actions(struct session *ses, char *original, char *line);
 
 extern struct session *do_alias(struct session *ses, char *arg);
 extern struct session *do_unalias(struct session *ses, char *arg);
-extern int check_all_aliases(struct session *ses, char *original, char *line);
+extern int check_all_aliases(struct session *ses, char *original, char *line, char **command);
 
 #endif
 
@@ -1136,6 +1150,19 @@ extern int get_highlight_codes(struct session *ses, char *htype, char *result);
 #endif
 
 
+#ifndef __HISTORY_H__
+#define __HISTORY_H__
+
+extern DO_COMMAND(do_history);
+
+extern void add_line_history(struct session *ses, char *line);
+extern void search_line_history(struct session *ses, char *line);
+
+extern int write_history(struct session *ses, char *filename);
+extern int read_history(struct session *ses, char *filename);
+#endif
+
+
 #ifndef __LLIST_H__
 #define __LLIST_H__
 
@@ -1152,6 +1179,8 @@ extern void shownode_list(struct session *ses, struct listnode *node, int index)
 extern void show_list(struct session *ses, struct listroot *listhead, int index);
 extern int show_node_with_wild(struct session *ses, char *cptr, int index);
 extern struct listnode *search_node_with_wild(struct listroot *listhead, char *cptr);
+extern void delete_node_with_wild(struct session *ses, int index, char *string);
+
 extern void addnode_list(struct listroot *listhead, char *ltext, char *rtext, char *prtext);
 extern int count_list(struct listroot *listhead);
 extern DO_COMMAND(do_message);
@@ -1190,6 +1219,19 @@ extern void init_tintin(void);
 extern void quitmsg(char *message);
 
 #endif
+
+
+#ifndef __MEMORY_H__
+#define __MEMORY_H__
+
+extern char *string_alloc(char *string);
+extern char *string_realloc(char *point, char *string);
+extern char *stringf_alloc(char *fmt, ...);
+extern char *string_free(char *string);
+extern void memory_free(struct memory_data *mem);
+
+#endif
+
 
 #ifndef __MISC_H__
 #define __MISC_H__
@@ -1273,14 +1315,17 @@ extern void init_telnet_session(struct session *ses);
 extern struct session *parse_input(struct session *ses, char *input);
 extern int is_speedwalk_dirs(char *cp);
 extern void process_speedwalk(char *cp, struct session *ses);
-extern struct session *parse_tintin_command(char *command, char *arg, struct session *ses);
-extern char *get_arg_all(char *s, char *arg);
-extern char *get_arg_with_spaces(char *s, char *arg);
-extern char *get_arg_in_braces(char *s, char *arg, int flag);
-extern char *get_arg_stop_spaces(char *s, char *arg);
-extern char *space_out(char *s);
+extern struct session *parse_tintin_command(struct session *ses, char *command, char *arg);
+extern char *get_arg_all(char *string, char **result);
+extern char *get_arg_in_braces(char *string, char **result, int flag);
+extern char *get_arg_with_spaces(char *string, char **result);
+extern char *get_arg_stop_spaces(char *string, char **result);
+extern char *cpy_arg_in_braces(char *pti, char *arg, int flag);
+extern char *cpy_arg_with_spaces(char *pti, char *pto);
+extern char *cpy_arg_stop_spaces(char *pti, char *pto);
+extern char *space_out(char *string);
 extern void write_mud(struct session *ses, char *command);
-extern void do_one_line(char *line, struct session *ses);
+extern void do_one_line(char **line, struct session *ses);
 
 #endif
 
@@ -1303,33 +1348,6 @@ extern void check_insert_path(char *command, struct session *ses);
 
 #endif
 
-#ifndef __UPDATE_H__
-#define __UPDATE_H__
-
-extern void mainloop(void);
-extern void poll_input(void);
-extern void poll_sessions(void);
-extern void poll_chat(void);
-extern void tick_update(void);
-extern void delay_update(void);
-extern void packet_update(void);
-extern void chat_update(void);
-extern void terminal_update(void);
-
-#endif
-
-
-#ifndef __HISTORY_H__
-#define __HISTORY_H__
-
-extern DO_COMMAND(do_history);
-
-extern void add_line_history(struct session *ses, char *line);
-extern void search_line_history(struct session *ses, char *line);
-
-extern int write_history(struct session *ses, char *filename);
-extern int read_history(struct session *ses, char *filename);
-#endif
 
 #ifndef __RLTAB_H__
 #define __RLTAB_H__
@@ -1338,30 +1356,6 @@ extern DO_COMMAND(do_tab);
 extern DO_COMMAND(do_untab);
 
 #endif
-
-
-#ifndef __VT102_H__
-#define __VT102_H__
-
-extern void save_pos(struct session *ses);
-extern void restore_pos(struct session *ses);
-extern void goto_rowcol(struct session *ses, int row, int col);
-extern void erase_screen(struct session *ses);
-extern void erase_toeol(void);
-extern void erase_scroll_region(struct session *ses);
-extern void reset(void);
-extern void scroll_region(struct session *ses, int top, int bottom);
-extern void reset_scroll_region(struct session *ses);
-extern int skip_vt102_codes(char *str);
-extern int skip_vt102_codes_non_graph(char *str);
-extern void strip_vt102_codes(char *str, char *buf);
-extern void strip_vt102_codes_non_graph(char *str, char *buf);
-extern void strip_non_vt102_codes(char *str, char *buf);
-extern int strip_vt102_strlen(char *str);
-extern int interpret_vt102_codes(struct session *ses, char *str, int real);
-
-#endif
-
 
 
 #ifndef __SESSION_H__
@@ -1384,7 +1378,7 @@ extern void cleanup_session(struct session *ses);
 
 extern DO_COMMAND(do_substitute);
 extern DO_COMMAND(do_unsubstitute);
-extern void check_all_substitutions(struct session *ses, char *original, char *line);
+extern void check_all_substitutions(struct session *ses, char **original, char *line);
 
 #endif
 
@@ -1424,6 +1418,24 @@ extern DO_COMMAND(do_delay);
 
 #endif
 
+
+#ifndef __UPDATE_H__
+#define __UPDATE_H__
+
+extern void mainloop(void);
+extern void poll_input(void);
+extern void poll_sessions(void);
+extern void poll_chat(void);
+extern void tick_update(void);
+extern void delay_update(void);
+extern void packet_update(void);
+extern void chat_update(void);
+extern void terminal_update(void);
+extern void memory_update(void);
+
+#endif
+
+
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
@@ -1443,8 +1455,8 @@ extern void socket_printf(struct session *ses, size_t length, char *format, ...)
 
 extern void tintin_printf2(struct session *ses, char *format, ...);
 extern void tintin_printf(struct session *ses, char *format, ...);
-extern void tintin_puts2(char *cptr, struct session *ses);
-extern void tintin_puts(char *cptr, struct session *ses);
+extern void tintin_puts2(struct session *ses, char *string);
+extern void tintin_puts(struct session *ses, char *string);
 
 extern void show_cpu(struct session *ses);
 extern long long display_timer(struct session *ses, int timer);
@@ -1453,12 +1465,14 @@ extern void close_timer(int timer);
 
 #endif
 
+
 #ifndef __VARIABLES_H__
 #define __VARIABLES_H__
 
 extern DO_COMMAND(do_variable);
-extern DO_COMMAND(do_internal_variable);
 extern DO_COMMAND(do_unvariable);
+
+extern void internal_variable(struct session *ses, char *format, ...);
 
 extern DO_COMMAND(do_format);
 extern DO_COMMAND(do_tolower);
@@ -1466,5 +1480,28 @@ extern DO_COMMAND(do_toupper);
 extern DO_COMMAND(do_postpad);
 extern DO_COMMAND(do_prepad);
 extern DO_COMMAND(do_replacestring);
+
+#endif
+
+
+#ifndef __VT102_H__
+#define __VT102_H__
+
+extern void save_pos(struct session *ses);
+extern void restore_pos(struct session *ses);
+extern void goto_rowcol(struct session *ses, int row, int col);
+extern void erase_screen(struct session *ses);
+extern void erase_toeol(void);
+extern void erase_scroll_region(struct session *ses);
+extern void reset(void);
+extern void scroll_region(struct session *ses, int top, int bottom);
+extern void reset_scroll_region(struct session *ses);
+extern int skip_vt102_codes(char *str);
+extern int skip_vt102_codes_non_graph(char *str);
+extern void strip_vt102_codes(char *str, char *buf);
+extern void strip_vt102_codes_non_graph(char *str, char *buf);
+extern void strip_non_vt102_codes(char *str, char *buf);
+extern int strip_vt102_strlen(char *str);
+extern int interpret_vt102_codes(struct session *ses, char *str, int real);
 
 #endif

@@ -29,36 +29,36 @@
 
 DO_COMMAND(do_action)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], pr[BUFFER_SIZE];
+	char *left, *right, *rank;
 	struct listroot *root;
 
 	root = ses->list[LIST_ACTION];
 
-	arg = get_arg_in_braces(arg, left,  FALSE);
-	arg = get_arg_in_braces(arg, right, TRUE);
-	arg = get_arg_in_braces(arg, pr,    TRUE);
+	arg = get_arg_in_braces(arg, &left,  0);
+	arg = get_arg_in_braces(arg, &right, 1);
+	arg = get_arg_in_braces(arg, &rank,  1);
 
-	if (!*pr)
+	if (*rank == 0)
 	{
-		sprintf(pr, "%s", "5"); 
+		rank = string_alloc("5");
 	}
 
-	if (!*left)
+	if (*left == 0)
 	{
 		show_list(ses, root, LIST_ACTION);
 	}
-	else if (*left && !*right) 
+	else if (*left && *right == 0)
 	{
-		if (show_node_with_wild(ses, left, LIST_ACTION) == FALSE) 
+		if (show_node_with_wild(ses, left, LIST_ACTION) == FALSE)
 		{
 			show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, pr, LIST_ACTION);
+		updatenode_list(ses, left, right, rank, LIST_ACTION);
 
-		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", left, right, pr);
+		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", left, right, rank);
 	}
 	return ses;
 }
@@ -66,34 +66,15 @@ DO_COMMAND(do_action)
 
 DO_COMMAND(do_unaction)
 {
-	char left[BUFFER_SIZE];
-	struct listroot *root;
-	struct listnode *node;
-	int flag = FALSE;
+	delete_node_with_wild(ses, LIST_ACTION, arg);
 
-	root = ses->list[LIST_ACTION];
-
-	arg = get_arg_in_braces(arg, left, TRUE);
-
-	while ((node = search_node_with_wild(root, left))) 
-	{
-		show_message(ses, LIST_ACTION, "#OK. {%s} IS NO LONGER A TRIGGER.", node->left);
-
-		deletenode_list(ses, node, LIST_ACTION);
-
-		flag = TRUE;
-	}
-
-	if (!flag)
-	{
-		show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", left);
-	}
 	return ses;
 }
 
 
 void check_all_actions(struct session *ses, char *original, char *line)
 {
+	char *buffer;
 	struct listnode *node;
 	struct listroot *root;
 
@@ -105,9 +86,7 @@ void check_all_actions(struct session *ses, char *original, char *line)
 
 		if (check_one_action(line, original, node->left, ses))
 		{
-			char buffer[BUFFER_SIZE];
-
-			substitute(ses, node->right, buffer, SUB_ARG|SUB_SEC);
+			substitute(ses, node->right, &buffer, SUB_ARG|SUB_SEC);
 
 			show_debug(ses, LIST_ACTION, "#ACTION DEBUG: %s", buffer);
 
