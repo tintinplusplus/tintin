@@ -974,7 +974,7 @@ April 2006     - 1.96.0
 
 llist.c        Rewrote #killall to accept arguments to kill specific lists.
 
-chat.c         Added #chat unitialize
+chat.c         Added #chat unitialize.
 
 chat.c         Added basic support for group chats.
 
@@ -987,4 +987,21 @@ class.c        Fixed crash bug with #killall related to classes.
 chat.c         Added #chat send which allows sending custom chat commands.
 
 chat.c         Fixed link lost crash bug.
+
+
+June 2006      - 1.96.1
+
+misc.c         Fixed a spacing issue in do_showme.
+
+mapper.c       Fixed map drawing.
+
+telopt.c       Fixed telnet negotations to login on ISCA BBS.
+
+math.c         Commas are now stripped from numbers.
+
+math.c         Added support for floating point math.
+
+tick.c         Can use 1d10 etc for the times in #delay.
+
+main.c         Added -h and -e as startup options.
 

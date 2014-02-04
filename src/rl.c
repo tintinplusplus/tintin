@@ -77,12 +77,12 @@ void printline(struct session *ses, const char *str, int prompt)
  	{
 		return;
 	}
-
+/*
 	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
 	{
 		return;
 	}
-
+*/
 	word_wrap(ses, str, wrapped_str, TRUE);
 
 /*	strcpy(wrapped_str, str); */

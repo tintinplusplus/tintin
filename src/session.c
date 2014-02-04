@@ -174,24 +174,27 @@ struct session *new_session(const char *name, const char *address, struct sessio
 	char host[BUFFER_SIZE], port[BUFFER_SIZE];
 	struct session *newsession;
 
-	address = get_arg_in_braces(address, host, FALSE);
-	address = get_arg_in_braces(address, port, FALSE);
-
-	if (*host == 0)
+	if (name)
 	{
-		tintin_puts("#HEY! SPECIFY AN ADDRESS WILL YOU?", ses);
-		return(ses);
-	}
+		address = get_arg_in_braces(address, host, FALSE);
+		address = get_arg_in_braces(address, port, FALSE);
 
-	if (*port == 0)
-	{
-		tintin_puts("#HEY! SPECIFY A PORT NUMBER WILL YOU?", ses);
-		return(ses);
+		if (*host == 0)
+		{
+			tintin_puts("#HEY! SPECIFY AN ADDRESS WILL YOU?", ses);
+			return(ses);
+		}
+
+		if (*port == 0)
+		{
+			tintin_puts("#HEY! SPECIFY A PORT NUMBER WILL YOU?", ses);
+			return(ses);
+		}
 	}
 
 	newsession                = calloc(1, sizeof(struct session));
 
-	newsession->name          = strdup(name);
+	newsession->name          = name ? strdup(name) : strdup("run");
 	newsession->flags         = gts->flags;
 	newsession->telopts       = gts->telopts;
 	newsession->host          = strdup(host);
@@ -218,8 +221,18 @@ struct session *new_session(const char *name, const char *address, struct sessio
 
 	dirty_screen(newsession);
 
-	connect_session(newsession);
+	if (name)
+	{
+		connect_session(newsession);
+	}
+	else
+	{
+		newsession->socket = atoi(address);
 
+		SET_BIT(newsession->flags, SES_FLAG_CONNECTED);
+
+		gtd->ses = ses;
+	}
 	return gtd->ses;
 }
 
@@ -234,7 +247,6 @@ void connect_session(struct session *ses)
 
 
 	reconnect:
-
 
 	sock = connect_mud(ses->host, ses->port, ses);
 

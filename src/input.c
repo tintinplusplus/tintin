@@ -138,6 +138,7 @@ char * readkeyboard(void)
 					return line;
 
 				case 127:
+				case 8:
 					if (rl_point)
 					{
 						rl_point--;
@@ -186,6 +187,7 @@ char * readkeyboard(void)
 					break;
 
 				case 127:
+				case 8:
 					if (rl_line_buffer[0] != gtd->tintin_char)
 					{
 						socket_printf(gtd->ses, 1, "%c", ch);

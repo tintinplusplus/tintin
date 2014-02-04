@@ -160,8 +160,7 @@ const struct help_type help_table[] =
 		"         will be assigned to that class.\n"
 		"         The {close} option will close the given class and make the last\n"
 		"         accessed open class active.\n"
-		"         The {read} option will only read triggers of the given class from file.\n"
-		"         the class when finished.\n"
+		"         The {read} option will open the class, read, and close afterwards.\n"
 		"         The {write} option will write all triggers of the given class to file.\n"
 		"         The {kill} option will delete all triggers of the given class.\n"
 	},
@@ -231,7 +230,7 @@ const struct help_type help_table[] =
 		"<068>    #<078>                 Jeremy C. Jack, Igor van den Hoven                 <068>#\n"
 		"<068>    #<078>                             1992, 2006                             <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
-		"<068>    #<078>                           Version 1.96.0                           <068>#\n"
+		"<068>    #<078>                           Version 1.96.1                           <068>#\n"
 		"<068>    #<078>                                                                    <068>#\n"
 		"<068>    #<068>####################################################################<068>#<088>\n\n"
 	},
@@ -498,7 +497,7 @@ const struct help_type help_table[] =
 		"LOADPATH",
 		"Command: #loadpath {alias name}\n"
 		"\n"
-		"Load a saved path back into the path, useful for the #walk command.\n"
+		"Load a saved path alias back into the path, useful for the #walk command.\n"
 	},
 	{
 		"LOG",
@@ -738,7 +737,7 @@ const struct help_type help_table[] =
 	{
 		"SESSION",
 		"\n"
-		"Command: #session {name} {host} {port}\n"
+		"Command: #session {name} {host port}\n"
 		"\n"
 		"Starts a telnet session with the given name, host, and port. The name can\n"
 		"be anything you want, except the name of an already existant session.\n"

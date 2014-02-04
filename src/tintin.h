@@ -760,14 +760,15 @@ extern void search_coord(int vnum, short x, short y, short z);
 
 extern DO_COMMAND(do_math);
 extern DO_COMMAND(do_if);
-extern long long get_number(struct session *ses, const char *str);
-extern long long mathexp(struct session *ses, const char *str);
+extern double get_number(struct session *ses, const char *str);
+extern char *get_number_string(struct session *ses, const char *str);
+extern double mathexp(struct session *ses, const char *str);
 extern int mathexp_tokenize(struct session *ses, const char *str);
 extern void mathexp_level(struct listnode *node);
 extern void mathexp_compute(struct listnode *node);
-extern long long tintoi(const char *str);
-extern long long tincmp(const char *left, const char *right);
-extern long long tindice(const char *left, const char *right);
+extern double tintoi(const char *str);
+extern double tincmp(const char *left, const char *right);
+extern double tindice(const char *left, const char *right);
 
 #endif
 
@@ -1008,6 +1009,7 @@ extern DO_COMMAND(do_loop);
 extern DO_COMMAND(do_nop);
 extern DO_COMMAND(do_parse);
 extern DO_COMMAND(do_return);
+extern DO_COMMAND(do_run);
 extern DO_COMMAND(do_send);
 extern DO_COMMAND(do_showme);
 extern DO_COMMAND(do_snoop);
@@ -1053,6 +1055,7 @@ extern int send_echo_on(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_echo_off(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_ip(struct session *ses, int cplen, unsigned char *cpsrc);
+extern int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int exec_zmp(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);
 extern int send_dont_mccp2(struct session *ses, int cplen, unsigned char *cpsrc);

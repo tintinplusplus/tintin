@@ -113,7 +113,6 @@ void trap_handler(int signal)
 int main(int argc, char **argv)
 {
 	char filestring[256];
-	int arg_num;
 
 	#ifdef SOCKS
 		SOCKSinit(argv[0]);
@@ -175,23 +174,27 @@ int main(int argc, char **argv)
 	}
 	srand48(time(NULL));
 
-	arg_num = 1;
-
-	if (argc > 1 && argv[1])
+	if (argc > 1)
 	{
-		if (*argv[1] == '-' && argv[1][1] == 'v')
+		if (!strcmp(argv[1], "-v"))
 		{
-			arg_num = 2;
+			do_configure(gtd->ses, "{VERBOSE} {ON}");
 
-			SET_BIT(gts->flags, SES_FLAG_VERBOSE);
+			do_read(gtd->ses, argv[2]);
+		}
+		else if (!strcmp(argv[1], "-e"))
+		{
+			gtd->ses = parse_input(argv[2], gtd->ses);
+		}
+		else if (!strcmp(argv[1], "-h"))
+		{
+			tintin_printf(NULL, "Usage: %s [file] [-v file] [-e \"command\"]", argv[0]);
+		}
+		else
+		{
+			gtd->ses = do_read(gtd->ses, argv[1]);
 		}
 	}
-
-	if (argc > arg_num && argv[arg_num])
-	{
-		gtd->ses = do_read(gts, argv[arg_num]);
-	}
-
 	commandloop();
 
 	pop_call();

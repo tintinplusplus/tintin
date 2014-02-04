@@ -42,7 +42,7 @@
 #define CALL_TIMEOUT 5
 #define BLOCK_SIZE 500
 #define DEFAULT_PORT 4050
-#define TINTIN_VERSION "TinTin++ 1.96.0"
+#define TINTIN_VERSION "TinTin++ 1.96.1"
 
 #define RESTRING(point, value)   \
 {                                \
@@ -120,6 +120,7 @@ DO_CHAT(chat_initialize)
 	char hostname[BUFFER_SIZE];
 	struct sockaddr_in sa;
 	struct hostent *hp = NULL;
+	struct linger ld;
 	const char *reuse = "1";
 	int sock;
 
@@ -166,6 +167,11 @@ DO_CHAT(chat_initialize)
 
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reuse, sizeof(reuse));
 
+	ld.l_onoff  = 0; 
+	ld.l_linger = 100;
+
+	setsockopt(sock, SOL_SOCKET, SO_LINGER, (char *) &ld, sizeof(ld));
+
 	if (bind(sock, (struct sockaddr *) &sa, sizeof(sa)) < 0)
 	{
 		chat_printf("Port in use, cannot initiate chat.");
@@ -175,7 +181,7 @@ DO_CHAT(chat_initialize)
 		return;
 	}
 
-	if (listen(sock, 3) == -1)
+	if (listen(sock, 50) == -1)
 	{
 		perror("chat_initialize: listen:");
 
@@ -191,7 +197,7 @@ DO_CHAT(chat_initialize)
 
 DO_CHAT(chat_uninitialize)
 {
-	int port = gtd->chat->fd;
+	int port = gtd->chat->port;
 
 	while (gtd->chat->next)
 	{
@@ -288,6 +294,7 @@ void *threaded_chat_call(void *arg)
 	else
 	{
 		struct hostent *hp;
+		int addr, address[4];
 
 		if ((hp = gethostbyname(ip)) == NULL)
 		{
@@ -296,6 +303,15 @@ void *threaded_chat_call(void *arg)
 			return NULL;
 		}
 		memcpy((char *)&dest_addr.sin_addr, hp->h_addr, sizeof(dest_addr.sin_addr));
+
+		addr = ntohl(dest_addr.sin_addr.s_addr);
+
+		address[0] = ( addr >> 24 ) & 0xFF ; 
+		address[1] = ( addr >> 16 ) & 0xFF ;
+		address[2] = ( addr >>  8 ) & 0xFF ;
+		address[3] = ( addr       ) & 0xFF ;
+
+		sprintf(ip, "%d.%d.%d.%d", address[0], address[1], address[2], address[3]);
 	}
 
 	if (is_number(pn))
@@ -376,6 +392,8 @@ void *threaded_chat_call(void *arg)
 
 	if (process_chat_input(new_buddy) == -1)
 	{
+		FD_CLR(new_buddy->fd, &rds);
+
 		close_chat(new_buddy, FALSE);
 
 		return NULL;
@@ -496,6 +514,8 @@ void process_chat_connections(fd_set *input_set, fd_set *exc_set)
 		{
 			if (process_chat_input(buddy) < 0)
 			{
+				FD_CLR(buddy->fd, exc_set);
+
 				close_chat(buddy, TRUE);
 			}
 		}

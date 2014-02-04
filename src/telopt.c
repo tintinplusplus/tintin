@@ -52,6 +52,7 @@ char iac_sb_mccp2[]           = { IAC, SB,    TELOPT_MCCP2, IAC, SE  };
 char iac_will_eor[]           = { IAC, WILL,  TELOPT_EOR             };
 char iac_eor[]                = { IAC, EOR                           };
 char iac_ga[]                 = { IAC, GA                            };
+char iac_do[]                 = { IAC, DO                            };
 char iac_sb_zmp[]             = { IAC, SB,    TELOPT_ZMP             };
 
 struct iac_type
@@ -91,6 +92,7 @@ const struct iac_type iac_table [] =
 	{   3,  iac_will_eor,         &send_do_eor             },
 	{   2,  iac_eor,              &mark_prompt             },
 	{   2,  iac_ga,               &mark_prompt             },
+	{   2,  iac_do,               &send_wont_telopt        },
 	{   3,  iac_sb_zmp,           &exec_zmp                },
 	{   0,  NULL,                 NULL                     }
 };
@@ -259,6 +261,7 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 						return;
 					}
+					break;
 				}
 			}
 
@@ -652,6 +655,15 @@ int send_ip(struct session *ses, int cplen, unsigned char *cpsrc)
 
 	telopt_debug(ses, "SENT IAC IP");
 	telopt_debug(ses, "SENT IAC DO TIMING MARK");
+
+	return 3;
+}
+
+int send_wont_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
+{
+	socket_printf(ses, 3, "%c%c%c", IAC, WONT, cpsrc[2]);
+
+	telopt_debug(ses, "SENT IAC WONT %s", TELOPT(cpsrc[2]));
 
 	return 3;
 }

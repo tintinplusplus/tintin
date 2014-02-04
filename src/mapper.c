@@ -523,12 +523,13 @@ void show_map(struct session *ses, char *argument)
 
 	for (y = temp_map_y ; y >= 0 ; y--)
 	{
-		buf[0] = 0;
+		strcpy(buf, "{");
 
 		for (x = 0 ; x <= temp_map_x ; x++)
 		{
 			strcat(buf, draw_room(ses, temp_map[x][y]));
 		}
+		strcat(buf, "}");
 
 		do_showme(ses, buf);
 	}
@@ -541,6 +542,7 @@ void show_map(struct session *ses, char *argument)
 	{
 		case 0:
 			break;
+
 		default:
 			tintin_printf2(ses, "\033(0%s\033(B", buf);
 			break;
@@ -561,7 +563,7 @@ void show_vtmap(struct session *ses)
 	memset(buf, 0, BUFFER_SIZE);
 
 	temp_map_y = (ses->top_row - 3);
-	temp_map_x = (ses->top_row - 3) * 3;
+	temp_map_x = (ses->cols - 1);
 
 	create_map(ses, ses->in_room, temp_map_x, temp_map_y);
 
@@ -616,7 +618,7 @@ char *draw_room(struct session *ses, struct room_data *room)
 	if (room->vnum == ses->in_room)
 	{
 		pop_call();
-		return "\033[1;31mX\033[0m";
+		return "<118>X<088>";
 	}
 
 	for (exit = room->f_exit ; exit ; exit = exit->next)

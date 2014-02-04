@@ -9,8 +9,7 @@
 
 - upgrade the #write command to format.
 
-- place #grep output in the buffer
-
+- place #grep output in the buffer. This might not be desirable.
 
 
 
@@ -19,8 +18,6 @@
 - auto mapper (half finished)
 
 - custom readline support (some progress has been made)
-
-- floating point calculations (tricky)
 
 - event system to deal with various situations
 
@@ -46,12 +43,14 @@
 - plugins: Maybe sometime far in the future I'll add a plugin to add plugins.
 
 - external script support: Python, Ruby, etc is fun, but I'd rather develop
-  tintin's scripting language instead.
+  tintin's scripting language instead. You can use external scripts with
+  the #system command, write the scripts output to a file, and use #read to
+  execute it. 
 
 
 --------------------------------------------------------------------------------
 
 If a line doesn't contain a ; do not modify it.
 
-If a line contains a ; place the bracket on a new line level alligned and space
-depending on level.
+If a line contains a ; place the bracket on a new line level alligned and
+tabbed depending on level.

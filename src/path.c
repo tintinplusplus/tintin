@@ -67,14 +67,16 @@ DO_COMMAND(do_map)
 
 	root = ses->list[LIST_PATH];
 
-	sprintf(buf, "%-10s", "#PATH:");
+	tintin_printf(ses, "#NOTE: This command will be used for the automapper in a future update. You can use #PATH instead.");
+
+	sprintf(buf, "%-8s", "#PATH:");
 
 	for (node = root->f_node ; node ; node = node->next)
 	{
 		if (strlen(buf) + strlen(node->left) > ses->cols)
 		{
 			tintin_puts2(buf, ses);
-			sprintf(buf, "%-8s", "#PATH:");
+			sprintf(buf, "%-8s", "");
 		}
 		strcat(buf, node->left);
 		strcat(buf, " ");
@@ -206,6 +208,8 @@ DO_COMMAND(do_loadpath)
 
 DO_COMMAND(do_path)
 {
+	struct listroot *root;
+	struct listnode *node;
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, left, FALSE);
@@ -213,7 +217,25 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #PATH {command} {reversed command}");
+		root = ses->list[LIST_PATH];
+
+		sprintf(left, "%-8s", "#PATH:");
+
+		for (node = root->f_node ; node ; node = node->next)
+		{
+			if (strlen(left) + strlen(node->left) > ses->cols)
+			{
+				tintin_puts2(left, ses);
+				sprintf(left, "%-8s", "");
+			}
+			strcat(left, node->left);
+			strcat(left, " ");
+		}
+
+		if (strlen(left) > 8)
+		{
+			tintin_puts2(left, ses);
+		}
 	}
 	else if (*right == 0 && searchnode_list(ses->list[LIST_PATHDIR], left))
 	{

@@ -158,9 +158,9 @@ void substitute(struct session *ses, const char *string, char *result, int flags
 						}
 					}
 
-					if (isalnum(pti[1]))
+					if (isalnum(pti[1]) || pti[1] == '_')
 					{
-						for (ptt = temp, i = 1 ; isalnum(pti[i]) ; i++)
+						for (ptt = temp, i = 1 ; isalnum(pti[i]) || pti[i] == '_' ; i++)
 						{
 							*ptt++ = pti[i];
 						}

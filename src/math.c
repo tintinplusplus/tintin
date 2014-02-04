@@ -50,6 +50,7 @@
 struct listnode *mathnode_s;
 struct listnode *mathnode_e;
 struct session  *mathses;
+int precision;
 
 DO_COMMAND(do_math)
 {
@@ -67,7 +68,7 @@ DO_COMMAND(do_math)
 	}
 	else
 	{
-		sprintf(result, "{%s} {%lld}", left, mathexp(ses, right));
+		sprintf(result, "{%s} {%.*f}", left, precision, mathexp(ses, right));
 
 		do_variable(ses, result);
 	}
@@ -103,20 +104,32 @@ DO_COMMAND(do_if)
 	return ses;
 }
 
-long long get_number(struct session *ses, const char *str)
+double get_number(struct session *ses, const char *str)
 {
 	char number[BUFFER_SIZE];
 
 	substitute(ses, str, number, SUB_VAR|SUB_FUN);
-
+	
 	return mathexp(ses, number);
+}
+
+char *get_number_string(struct session *ses, const char *str)
+{
+	char number[BUFFER_SIZE];
+	static char result[BUFFER_SIZE];
+
+	substitute(ses, str, number, SUB_VAR|SUB_FUN);	
+
+	sprintf(result, "%.*f", precision, mathexp(ses, number));
+
+	return result;
 }
 
 /******************************************************************************
 * mathematical expression interpreter by Scandum                              *
 ******************************************************************************/
 
-long long mathexp(struct session *ses, const char *str)
+double mathexp(struct session *ses, const char *str)
 {
 	struct listnode *node;
 
@@ -160,16 +173,19 @@ long long mathexp(struct session *ses, const char *str)
 	status = newstatus;                                          \
 	pta = buf3;                                                  \
 	valid = FALSE;                                               \
+	point = -1;                                                  \
 }
 
 int mathexp_tokenize(struct session *ses, const char *str)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[BUFFER_SIZE], *pti, *pta;
-	int level, status, valid;
+	int level, status, valid, point;
 
-	level  = 0;
-	status = EXP_VARIABLE;
-	valid  = FALSE;
+	level     = 0;
+	point     = -1;
+	status    = EXP_VARIABLE;
+	valid     = FALSE;
+	precision = 0;
 
 	pta = (char *) buf3;
 	pti = (char *) str;
@@ -183,9 +199,28 @@ int mathexp_tokenize(struct session *ses, const char *str)
 			case EXP_VARIABLE:
 				switch (*pti)
 				{
-					case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
 						*pta++ = *pti++;
 						valid = TRUE;
+
+						if (point >= 0)
+						{
+							point++;
+
+							if (precision < point)
+							{
+								precision = point;
+							}
+						}
 						break;
 
 					case '!':
@@ -221,6 +256,15 @@ int mathexp_tokenize(struct session *ses, const char *str)
 						*pta++ = *pti++;
 						MATH_NODE(FALSE, EXP_PR_LVL, EXP_VARIABLE);
 						level++;
+						break;
+
+					case ',':
+						*pti++;
+						break;
+
+					case '.':
+						*pta++ = *pti++;
+						point++;
 						break;
 
 					case ' ':
@@ -464,7 +508,7 @@ void mathexp_level(struct listnode *node)
 void mathexp_compute(struct listnode *node)
 {
 	char temp[BUFFER_SIZE];
-	long long value;
+	double value;
 
 	switch (node->pr[0])
 	{
@@ -486,22 +530,29 @@ void mathexp_compute(struct listnode *node)
 			if (tintoi(node->next->pr) == 0)
 			{
 				tintin_printf(NULL, "#MATH ERROR: DIVISION ZERO.");
-				value = tintoi(node->prev->pr) / 1;
+				value = tintoi(node->prev->pr);
 			}
 			else
 			{
-				value = tintoi(node->prev->pr) / tintoi(node->next->pr);
+				if (precision)
+				{
+					value = tintoi(node->prev->pr) / tintoi(node->next->pr);
+				}
+				else
+				{
+					value = (long long) tintoi(node->prev->pr) / (long long) tintoi(node->next->pr);
+				}
 			}
 			break;
 		case '%':
 			if (tintoi(node->next->pr) == 0)
 			{
 				tintin_printf(NULL, "#MATH ERROR: MODULO ZERO.");
-				value = tintoi(node->prev->pr) / 1;
+				value = tintoi(node->prev->pr);
 			}
 			else
 			{
-				value = tintoi(node->prev->pr) % tintoi(node->next->pr);
+				value = (long long) tintoi(node->prev->pr) % (long long) tintoi(node->next->pr);
 			}
 			break;
 		case '+':
@@ -517,7 +568,7 @@ void mathexp_compute(struct listnode *node)
 					value = tincmp(node->prev->pr, node->next->pr) <= 0;
 					break;
 				case '<':
-					value = tintoi(node->prev->pr) << tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->pr) << (long long) tintoi(node->next->pr);
 					break;
 				default:
 					value = tincmp(node->prev->pr, node->next->pr) < 0;
@@ -531,7 +582,7 @@ void mathexp_compute(struct listnode *node)
 					value = tincmp(node->prev->pr, node->next->pr) >= 0;
 					break;
 				case '>':
-					value = tintoi(node->prev->pr) >> tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->pr) >> (long long) tintoi(node->next->pr);
 					break;
 				default:
 					value = tincmp(node->prev->pr, node->next->pr) > 0;
@@ -546,7 +597,7 @@ void mathexp_compute(struct listnode *node)
 					value = tintoi(node->prev->pr) && tintoi(node->next->pr);
 					break;
 				default:
-					value = tintoi(node->prev->pr) & tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->pr) & (long long) tintoi(node->next->pr);
 					break;
 			}
 			break;
@@ -558,7 +609,7 @@ void mathexp_compute(struct listnode *node)
 					break;
 
 				default:
-					value = tintoi(node->prev->pr) ^ tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->pr) ^ (long long) tintoi(node->next->pr);
 					break;
 			}
 			break;
@@ -569,7 +620,7 @@ void mathexp_compute(struct listnode *node)
 					value = tintoi(node->prev->pr) || tintoi(node->next->pr);
 					break;
 				default:
-					value = tintoi(node->prev->pr) | tintoi(node->next->pr);
+					value = (long long) tintoi(node->prev->pr) | (long long) tintoi(node->next->pr);
 					break;
 			}
 			break;
@@ -602,34 +653,33 @@ void mathexp_compute(struct listnode *node)
 	free(node->right);
 	node->right = strdup(temp);
 
-	sprintf(temp, "%lld", value);
+	sprintf(temp, "%f", value);
 	free(node->pr);
 	node->pr = strdup(temp);
 }
 
-long long tintoi(const char *str)
+double tintoi(const char *str)
 {
-
 	switch (str[0])
 	{
 		case '!':
-			return !atoll(&str[1]);
+			return !atof(&str[1]);
 
 		case '~':
-			return ~atoll(&str[1]);
+			return (double) ~atoll(&str[1]);
 
 		case '+':
-			return +atoll(&str[1]);
+			return +atof(&str[1]);
 
 		case '-':
-			return -atoll(&str[1]);
+			return -atof(&str[1]);
 
 		default:
-			return atoll(str);
+			return atof(str);
 	}
 }
 
-long long tincmp(const char *left, const char *right)
+double tincmp(const char *left, const char *right)
 {
 	switch (left[0])
 	{
@@ -641,16 +691,16 @@ long long tincmp(const char *left, const char *right)
 	}
 }
 
-long long tindice(const char *left, const char *right)
+double tindice(const char *left, const char *right)
 {
 	long long cnt, numdice, sizedice, sum;
 
-	numdice  = tintoi(left);
-	sizedice = tintoi(right);
+	numdice  = (long long) tintoi(left);
+	sizedice = (long long) tintoi(right);
 
 	for (cnt = sum = 0 ; cnt < numdice ; cnt++)
 	{
 		sum += lrand48() % sizedice + 1;
 	}
-	return sum;
+	return (double) sum;
 }

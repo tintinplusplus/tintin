@@ -545,14 +545,10 @@ void do_one_line(char *line, struct session *ses)
 
 	strip_vt102_codes(line, strip);
 
-	push_call("1");
-
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_actions(line, strip, ses);
 	}
-
-	push_call("2");
 
 	if (!HAS_BIT(ses->list[LIST_PROMPT]->flags, LIST_FLAG_IGNORE))
 	{
@@ -562,20 +558,15 @@ void do_one_line(char *line, struct session *ses)
 		}
 	}
 
-	push_call("3");
-
 	if (!HAS_BIT(ses->list[LIST_SUBSTITUTE]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_substitutions(line, strip, ses);
 	}
 
-	push_call("4");
-
 	if (!HAS_BIT(ses->list[LIST_HIGHLIGHT]->flags, LIST_FLAG_IGNORE))
 	{
 		check_all_highlights(line, strip, ses);
 	}
-	pop_call(); pop_call(); pop_call(); pop_call();
 
 	pop_call();
 	return;

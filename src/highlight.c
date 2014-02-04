@@ -139,8 +139,6 @@ void check_all_highlights(char *original, char *line, struct session *ses)
 			sprintf(temp, "%s%s%s\033[0m%s%s", pt1, buf2, buf1, buf3, pt3);
 
 			strcpy(original, temp);
-
-			break;
 		}
 	}
 }

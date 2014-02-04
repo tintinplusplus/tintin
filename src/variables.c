@@ -362,11 +362,7 @@ void reversestring(char *str)
 
 void mathstring(struct session *ses, char *str)
 {
-	char result[BUFFER_SIZE];
-
-	sprintf(result, "%lld", mathexp(ses, str));
-
-	strcpy(str, result);
+	strcpy(str, get_number_string(ses, str));
 }
 
 void thousandgroupingstring(char *str)

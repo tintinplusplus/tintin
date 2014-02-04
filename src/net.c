@@ -135,12 +135,14 @@ void read_buffer_mud(struct session *ses)
 
 	gtd->mud_output_len = 0;
 
-	size = read(ses->socket, buf, BUFFER_SIZE -1);
+	if ((size = read(ses->socket, buf, BUFFER_SIZE - 1)) == -1)
+	{
+		perror("\n\033[0mread_buffer_mud: read");
+	}
 
 	if (size <= 0)
 	{
 		gtd->mud_output_len = -1;
-
 		return;
 	}
 
