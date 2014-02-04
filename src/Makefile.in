@@ -26,7 +26,7 @@ MAKE = @MAKE@
 
 #this is the standard CFLAGS options, this is what most people should use
 
-CFLAGS = $(DEFINES) @BIG5@
+CFLAGS += $(DEFINES) @BIG5@
 
 LDFLAGS = @LDFLAGS@
 

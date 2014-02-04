@@ -61,10 +61,10 @@ void init_terminal()
 /*
 	DEL_BIT(io.c_iflag, IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	DEL_BIT(io.c_oflag, OPOST);
-
 	DEL_BIT(io.c_cflag, CSIZE|PARENB);
 */
-	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN);
+
+	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
 
 	SET_BIT(io.c_cflag, CS8);
 

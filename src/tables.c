@@ -178,10 +178,17 @@ struct config_type config_table[] =
 	},
 
 	{
-		"ECHO COMMAND",
+		"COMMAND COLOR",
+		"",
+		"The color of echoed commands",
+		config_commandcolor
+	},
+
+	{
+		"COMMAND ECHO",
 		"Your commands are echoed in split mode",
 		"Your commands are not echoed in split mode",
-		config_echocommand
+		config_commandecho
 	},
 
 	{
@@ -387,14 +394,15 @@ struct map_type map_table[] =
 	{     "DELETE",                    map_delete,             1,1},
 	{     "DESTROY",                   map_destroy,            1,1},
 	{     "DIG",                       map_dig,                1,1},
-	{     "EXIT",                      map_exit,               0,1},
+	{     "EXITCMD",                   map_exitcmd,            0,1},
+	{     "EXITDIR",                   map_exitdir,            0,1},
 	{     "EXPLORE",                   map_explore,            1,1},
 	{     "FIND",                      map_find,               1,1},
 	{     "FLAG",                      map_flag,               1,1},
 	{     "GET",                       map_get,                0,1},
 	{     "GOTO",                      map_goto,               1,1},
 	{     "INFO",                      map_info,               1,1},
-	{     "INSERT",                    map_insert,             1,1},
+	{     "INSERT",                    map_insert,             0,1},
 	{     "LEAVE",                     map_leave,              1,1},
 	{     "LEGENDA",                   map_legenda,            1,1},
 	{     "LINK",                      map_link,               0,1},
@@ -404,11 +412,11 @@ struct map_type map_table[] =
 	{     "NAME",                      map_name,               1,1},
 	{     "READ",                      map_read,               1,1},
 	{     "ROOMFLAG",                  map_roomflag,           1,1},
+	{     "RUN",                       map_run,                1,1},
 	{     "SET",                       map_set,                0,1},
 	{     "TRAVEL",                    map_travel,             1,1},
 	{     "UNDO",                      map_undo,               1,1},
 	{     "UNLINK",                    map_unlink,             0,1},
-	{     "WALK",                      map_walk,               1,1},
 	{     "WRITE",                     map_write,              1,1},
 	{     "",                          NULL,                   1,1}
 };
@@ -428,7 +436,6 @@ struct cursor_type cursor_table[] =
 		"[6~",
 		buffer_d
 	},
-
 	{
 		"",
 		"",
@@ -453,7 +460,6 @@ struct cursor_type cursor_table[] =
 		"",
 		cursor_home
 	},
-
 	{
 		"",
 		"",
@@ -486,23 +492,18 @@ struct cursor_type cursor_table[] =
 		cursor_left
 	},
 	{
-		"EXIT",
-		"Exit current session",
+		"CLEAR LINE",
+		"Delete the input line",
 		"",
-		cursor_exit
+		cursor_clear_line
 	},
 	{
-		"DELETE",
-		"Delete character at cursor",
+		"CTRL DELETE",
+		"Delete character at cursor, or exit on empty line",
 		"",
-		cursor_delete
+		cursor_delete_exit
 	},
-	{
-		"",
-		"",
-		"[3~",
-		cursor_delete
-	},
+
 	{
 		"END",
 		"Move cursor to end of input",
@@ -539,7 +540,6 @@ struct cursor_type cursor_table[] =
 		"OC",
 		cursor_right
 	},
-
 	{
 		"BACKSPACE",
 		"Delete backward character",
@@ -647,6 +647,18 @@ struct cursor_type cursor_table[] =
 		"Suspend program, return with fg",
 		"",
 		cursor_suspend
+	},
+	{
+		"DELETE",
+		"Delete character at cursor",
+		"[3~",
+		cursor_delete
+	},
+	{
+		"EXIT",
+		"Exit current session",
+		"",
+		cursor_exit
 	},
 	{
 		"ECHO",

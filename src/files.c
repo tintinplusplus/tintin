@@ -51,7 +51,7 @@ DO_COMMAND(do_read)
 
 	temp[0] = getc(fp);
 
-	if (!isgraph(temp[0]))
+	if (!isgraph(temp[0]) || isalpha(temp[0]))
 	{
 		tintin_printf(ses, "#ERROR: #READ {%s} - INVALID START OF FILE.", filename);
 

@@ -83,10 +83,6 @@ void abort_handler(int signal)
 	{
 		socket_printf(gtd->ses, 1, "%c", 3);
 	}
-	else if (gtd->ses == gts)
-	{
-		quitmsg(NULL);
-	}
 	else
 	{
 		do_zap(gtd->ses, "");
@@ -309,7 +305,8 @@ void init_tintin(void)
 	do_configure(gts, "{SPEEDWALK}         {OFF}");
 	do_configure(gts, "{VERBATIM}          {OFF}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
-	do_configure(gts, "{ECHO COMMAND}       {ON}");
+	do_configure(gts, "{COMMAND COLOR}   {<078>}");
+	do_configure(gts, "{COMMAND ECHO}       {ON}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
 	do_configure(gts, "{LOG}               {RAW}");

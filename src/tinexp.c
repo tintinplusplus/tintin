@@ -38,19 +38,43 @@
 
 int match(struct session *ses, char *str, char *exp)
 {
-	char buf[BUFFER_SIZE];
+	char expbuf[BUFFER_SIZE], tmpbuf[BUFFER_SIZE];
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_REGEXP))
+	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
 	{
-		substitute(ses, exp, buf, SUB_VAR|SUB_FUN);
+		substitute(ses, exp, tmpbuf, SUB_VAR|SUB_FUN|SUB_ESC);
 
-		return glob(str, buf);
+		sprintf(expbuf, "^%s$", tmpbuf);
+
+		return regexp(str, expbuf);
 	}
 	else
 	{
-		substitute(ses, exp, buf, SUB_VAR|SUB_FUN|SUB_ESC);
+		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN);
 
-		return regexp(str, buf);
+		return glob(str, expbuf);
+	}
+}
+
+int find(struct session *ses, char *str, char *exp)
+{
+	char expbuf[BUFFER_SIZE], tmpbuf[BUFFER_SIZE];
+
+	if (HAS_BIT(ses->flags, SES_FLAG_REGEXP))
+	{
+		strip_vt102_codes(str, tmpbuf);
+
+		substitute(ses, exp, expbuf, SUB_VAR|SUB_FUN|SUB_ESC);
+
+		return regexp(tmpbuf, expbuf);
+	}
+	else
+	{
+		substitute(ses, exp, tmpbuf, SUB_VAR|SUB_FUN);
+
+		sprintf(expbuf, "*%s*", tmpbuf);
+
+		return glob(str, expbuf);
 	}
 }
 
@@ -215,12 +239,12 @@ int regexp(char *str, char *exp)
 	regex_t regex;
 	regmatch_t match[1];
 
-	if (regcomp(&regex, exp, REG_NOSUB))
+	if (regcomp(&regex, exp, REG_NOSUB|REG_EXTENDED))
 	{
 		return FALSE;
 	}
 
-	if (regexec(&regex, str, 0, match, REG_EXTENDED))
+	if (regexec(&regex, str, 0, match, 0))
 	{
 		regfree(&regex);
 
@@ -738,17 +762,17 @@ int check_one_action(char *line, char *original, char *action, struct session *s
 	if (*exp == '^')
 	{
 		exp++;
-		return action_glob(str, exp, 255);
+		return action_glob(ses, str, exp, 255);
 	}
 
 	if (exp[0] == '%' && isdigit(exp[1]))
 	{
-		return action_glob(str, exp, 255);
+		return action_glob(ses, str, exp, 255);
 	}
 
 	while (*str)
 	{
-		if ((*exp == '[' || *exp == *str) && action_glob(str, exp, 255))
+		if ((*exp == '[' || *exp == *str) && action_glob(ses, str, exp, 255))
 		{
 			return TRUE;
 		}
@@ -758,7 +782,7 @@ int check_one_action(char *line, char *original, char *action, struct session *s
 }
 
 
-int action_glob(char *str, char *exp, unsigned char arg)
+int action_glob(struct session *ses, char *str, char *exp, unsigned char arg)
 {
 	short cnt, cnt2;
 
@@ -796,9 +820,33 @@ int action_glob(char *str, char *exp, unsigned char arg)
 
 					for (cnt = 0 ; str[cnt] ; cnt++)
 					{
-						if (action_glob(&str[cnt], exp + (isdigit(exp[2]) ? 3 : 2), arg))
+						if (action_glob(ses, &str[cnt], exp + (isdigit(exp[2]) ? 3 : 2), arg))
 						{
 							gtd->vars[arg] = refstring(gtd->vars[arg], "%.*s", cnt, str);
+
+							return TRUE;
+						}
+					}
+					return FALSE;
+				}
+				if (exp[1] == DEFAULT_OPEN)
+				{
+					arg = (arg == 99) ? arg : arg + 1;
+
+					exp = get_arg_in_braces(&exp[1], gtd->vars[arg], TRUE);
+
+					if (*exp == 0)
+					{
+						internal_variable(ses, "{%s} {%s}", gtd->vars[arg], str);
+
+						return TRUE;
+					}
+
+					for (cnt = 0 ; str[cnt] ; cnt++)
+					{
+						if (action_glob(ses, &str[cnt], exp, arg))
+						{
+							internal_variable(ses, "{%s} {%.*s}", gtd->vars[arg], cnt, str);
 
 							return TRUE;
 						}

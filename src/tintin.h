@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.3"
+#define VERSION_NUM               "1.98.4"
 
 #define ESCAPE                          27
 
@@ -538,6 +538,7 @@ struct session
 	int                     connect_error;
 	char                    more_output[STRING_SIZE];
 	char                    color[100];
+	char                    command_color[100];
 	long long               check_output;
 };
 
@@ -744,6 +745,7 @@ struct exit_data
 	struct exit_data        * next;
 	struct exit_data        * prev;
 	short                     vnum;
+	short                     dir;
 	char                    * name;
 	char                    * cmd;
 };
@@ -774,6 +776,7 @@ extern DO_CURSOR(cursor_clear_line);
 extern DO_CURSOR(cursor_clear_right);
 extern DO_CURSOR(cursor_convert_meta);
 extern DO_CURSOR(cursor_delete);
+extern DO_CURSOR(cursor_delete_exit);
 extern DO_CURSOR(cursor_delete_word_left);
 extern DO_CURSOR(cursor_delete_word_right);
 extern DO_CURSOR(cursor_echo);
@@ -805,7 +808,7 @@ extern DO_CURSOR(cursor_tab);
 #define __INPUT_H__
 
 extern void process_input(void);
-extern void read_line(void);
+extern void read_line();
 extern void read_key(void);
 extern void convert_meta(char *input, char *output);
 extern void unconvert_meta(char *input, char *output);
@@ -944,7 +947,8 @@ extern DO_MAP(map_create);
 extern DO_MAP(map_delete);
 extern DO_MAP(map_destroy);
 extern DO_MAP(map_dig);
-extern DO_MAP(map_exit);
+extern DO_MAP(map_exitcmd);
+extern DO_MAP(map_exitdir);
 extern DO_MAP(map_explore);
 extern DO_MAP(map_find);
 extern DO_MAP(map_flag);
@@ -961,11 +965,11 @@ extern DO_MAP(map_move);
 extern DO_MAP(map_name);
 extern DO_MAP(map_read);
 extern DO_MAP(map_roomflag);
+extern DO_MAP(map_run);
 extern DO_MAP(map_set);
 extern DO_MAP(map_travel);
 extern DO_MAP(map_undo);
 extern DO_MAP(map_unlink);
-extern DO_MAP(map_walk);
 extern DO_MAP(map_write);
 
 extern void create_map(struct session *ses);
@@ -985,9 +989,9 @@ extern void build_map_grid(short room, short x, short y, short z);
 extern void follow_map(struct session *ses, char *argument);
 extern void insert_undo(struct session *ses, char *format, ...);
 extern char *draw_room(struct session *ses, struct room_data *room, int line);
-extern void search_path(short room, short size);
-extern void shortest_path(struct session *ses, int walk, char *left, char *right);
-extern void explore_path(struct session *ses, int walk, char *left, char *right);
+extern void search_path(short room, short size, short dir);
+extern void shortest_path(struct session *ses, int run, char *left, char *right);
+extern void explore_path(struct session *ses, int run, char *left, char *right);
 extern int find_coord(struct session *ses, char *arg);
 extern void search_coord(int vnum, short x, short y, short z);
 extern void show_vtmap(struct session *ses);
@@ -1032,6 +1036,7 @@ extern void do_one_prompt(struct session *ses, char *prompt, int row);
 #define __TINEXP_H__
 
 extern int match(struct session *ses, char *str, char *exp);
+extern int find(struct session *ses, char *str, char *exp);
 extern int glob(char *str, char *exp);
 DO_COMMAND(do_regexp);
 extern int regexp_cmds(char *str, char *exp);
@@ -1040,7 +1045,7 @@ extern int action_regexp(char *str, char *exp);
 
 extern void substitute(struct session *ses, char *string, char *result, int flags);
 extern int check_one_action(char *line, char *original, char *action, struct session *ses);
-extern int action_glob(char *str, char *exp, unsigned char arg);
+extern int action_glob(struct session *ses, char *str, char *exp, unsigned char arg);
 
 #endif
 
@@ -1053,7 +1058,8 @@ extern DO_COMMAND(do_configure);
 extern DO_CONFIG(config_speedwalk);
 extern DO_CONFIG(config_verbatim);
 extern DO_CONFIG(config_repeatenter);
-extern DO_CONFIG(config_echocommand);
+extern DO_CONFIG(config_commandecho);
+extern DO_CONFIG(config_commandcolor);
 extern DO_CONFIG(config_verbose);
 extern DO_CONFIG(config_wordwrap);
 extern DO_CONFIG(config_log);
@@ -1511,6 +1517,7 @@ extern void memory_update(void);
 
 extern int is_abbrev(char *s1, char *s2);
 extern int is_suffix(char *s1, char *s2);
+extern int is_color_code(char *str);
 extern int is_number(char *str);
 extern int hex_number(char *str);
 extern long long utime(void);

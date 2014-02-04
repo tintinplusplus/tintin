@@ -4,6 +4,10 @@
 
 GENERAL STUFF:
 
+- look into adding #map jump <coords>
+
+- see if it's possible to add better #path run support.
+
 - events for prompt lines
 
 - add line substitute option, to substitute variables and functions.
@@ -13,6 +17,11 @@ GENERAL STUFF:
 - tab completion based on scroll back history
 
 - look into mccp routine which sometimes doesn't work properly.
+
+- Add a pre-parser to determine whether a trigger is a regex or color
+  trigger.
+
+- leave unmatched backslashes untouched?
 
 -------------------------------------------------------------------------------
 

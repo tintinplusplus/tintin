@@ -174,7 +174,7 @@ int check_all_aliases(struct session *ses, char *input)
 	{
 		RESTRING(gtd->vars[0], arg);
 
-		for (i = 1 ; i < 100 && *arg ; i++)
+		for (i = 1 ; i < 100 ; i++)
 		{
 			arg = get_arg_in_braces(arg, right, FALSE);
 

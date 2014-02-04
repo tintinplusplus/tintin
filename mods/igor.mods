@@ -352,8 +352,6 @@ rl.c           Added the option to delay displaying and parsing possibly broken
 variables.c    Fixed #replacestring which got messed up while I added variable
                substitution to it.
 rl.c           Fixed echoing of commands in split mode.
-Makefile.in    Adding -lncurses per default now, someone reported this to cause
-               cursor problems if not included by the auto config.
 split.c        Changes split and prompt to work more logical, people might
                have to change their scripts, new syntax:
                #split {number of top lines} {number of bottom lines}
@@ -1009,3 +1007,47 @@ tinexp.c       All regexp's should substitute escape codes.
 
 tintin19.txt   Rewrote the large manual file to contain a brief up to date
                manual instead. #help remains the primary help source.
+
+
+July 2008      1.98.4
+
+               Added glob/regex support to reverse history searches.
+
+               wildcard searches should work as old again, and regexp searches
+               work more like old wildcard searches.
+
+tick.c         Can use variables for ticker names.
+
+mapper.c       Changed #map exit to #map exitcmd
+
+mapper.c       Added #map exitdir command, which allows setting a direction
+               for unusual exits so they can be displayed on the map.
+
+mapper.c       Changed #map walk to #map run, and fixed the optional delay
+               argument.
+
+mapper.c       Fixed optional delay argument for the #map travel command.
+
+mapper.c       Void rooms can have more than two exits again if the exits form
+               a straight line.
+
+mapper.c       Fixed going through void rooms with #map travel.
+
+variable.c     #format will use the current time if no time value is provided
+               for the %M %Y %D %d and %t arguments.
+
+mapper.c       asciigraphics is now the default map displaying setting.
+
+terminal.c     Enabled the ISIG flag allowing ctrl-c to be mapped.
+
+cursor.c       Updated ctrl-d to allow exiting tintin.
+
+cursor.c       Updated ctrl-c to clear the line rather than exiting tintin.
+
+config.c       Changed #config {echo command} to #config {command echo}
+
+config.c       Added the #config {command color} {000} option.
+
+mapper.c       #map insert now allows adding 1 roomflag as the 2nd argument.
+
+tinexp.c       Can now use %{variable} besides %0 - %99 in actions.

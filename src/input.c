@@ -86,7 +86,7 @@ void process_input(void)
 	}
 }
 
-void read_line(void)
+void read_line()
 {
 	char buffer[STRING_SIZE];
 	struct listnode *node;
@@ -423,13 +423,17 @@ void unconvert_meta(char *input, char *output)
 	*pto = 0;
 }
 
+/*
+	Currenly only used in split mode.
+*/
+
 void echo_command(struct session *ses, char *line, int newline)
 {
 	char buffer[STRING_SIZE], result[STRING_SIZE];
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		sprintf(buffer, "\033[0;37m%s", line);
+		sprintf(buffer, "%s%s", ses->command_color, line);
 	}
 	else
 	{

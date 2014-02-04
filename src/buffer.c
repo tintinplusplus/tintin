@@ -262,7 +262,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (match(ses, ses->buffer[scroll_cnt], right))
+			if (find(ses, ses->buffer[scroll_cnt], right))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -301,7 +301,7 @@ DO_COMMAND(do_grep)
 				continue;
 			}
 
-			if (match(ses, ses->buffer[scroll_cnt], right))
+			if (find(ses, ses->buffer[scroll_cnt], right))
 			{
 				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
 
@@ -804,7 +804,7 @@ void buffer_f(char *arg)
 					continue;
 				}
 
-				if (match(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
+				if (find(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
 				{
 					if (grep_cnt == grep_max)
 					{
@@ -847,7 +847,7 @@ void buffer_f(char *arg)
 					continue;
 				}
 
-				if (match(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
+				if (find(gtd->ses, gtd->ses->buffer[scroll_cnt], right))
 				{
 					grep_cnt--;
 

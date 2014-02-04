@@ -359,9 +359,9 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					break;
 
 				case '\n':
-					if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+					if (HAS_BIT(ses->telopts, TELOPT_FLAG_PROMPT))
 					{
-						DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
+						DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
 					}
 					if (cplen > 1 && cpsrc[1] == '\r')
 					{
@@ -377,11 +377,19 @@ void translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					break;
 
 				default:
-					if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+					if (HAS_BIT(ses->telopts, TELOPT_FLAG_PROMPT))
 					{
-						DEL_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT);
-						*cpdst++ = '\n';
-						gtd->mud_output_len++;
+						DEL_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
+
+						/*
+							Fix up non vt muds
+						*/
+
+						if (HAS_BIT(ses->flags, SES_FLAG_SPLIT) || !IS_SPLIT(ses))
+						{
+							*cpdst++ = '\n';
+							gtd->mud_output_len++;
+						}
 					}
 					*cpdst++ = *cpsrc;
 					gtd->mud_output_len++;

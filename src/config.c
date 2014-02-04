@@ -152,7 +152,26 @@ DO_CONFIG(config_repeatenter)
 	return ses;
 }
 
-DO_CONFIG(config_echocommand)
+DO_CONFIG(config_commandcolor)
+{
+	char str[BUFFER_SIZE];
+
+	if (!is_color_code(arg))
+	{
+		tintin_printf2(ses, "#CONFIG COMMAND COLOR: Invalid color code '%s'.", arg);
+
+		return NULL;
+	}
+	substitute(ses, arg, ses->command_color, SUB_COL);
+
+	sprintf(str, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, arg, str, LIST_CONFIG);
+
+	return ses;
+}
+
+DO_CONFIG(config_commandecho)
 {
 	char str[BUFFER_SIZE];
 

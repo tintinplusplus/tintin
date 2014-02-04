@@ -201,7 +201,20 @@ DO_CURSOR(cursor_convert_meta)
 {
 	SET_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR);
 }
-	
+
+
+DO_CURSOR(cursor_delete_exit)
+{
+	if (gtd->input_len == 0)
+	{
+		cursor_exit("");
+	}
+	else
+	{
+		cursor_delete("");
+	}
+}
+
 DO_CURSOR(cursor_delete)
 {
 	if (gtd->input_len == 0)
@@ -370,7 +383,14 @@ DO_CURSOR(cursor_enter)
 
 DO_CURSOR(cursor_exit)
 {
-	do_zap(gtd->ses, "");
+	if (gtd->ses == gts)
+	{
+		do_end(NULL, "");
+	}
+	else
+	{
+		cleanup_session(gtd->ses);
+	}
 }
 
 DO_CURSOR(cursor_history_next)
@@ -386,7 +406,7 @@ DO_CURSOR(cursor_history_next)
 
 		for (node = gtd->input_his->next ; node ; node = node->next)
 		{
-			if (*gtd->input_buf && strstr(node->left, gtd->input_buf))
+			if (*gtd->input_buf && find(gtd->ses, node->left, gtd->input_buf))
 			{
 				break;
 			}
@@ -446,7 +466,7 @@ DO_CURSOR(cursor_history_prev)
 
 		for (node = gtd->input_his->prev ; node ; node = node->prev)
 		{
-			if (strstr(node->left, gtd->input_buf))
+			if (find(gtd->ses, node->left, gtd->input_buf))
 			{
 				break;
 			}
@@ -576,7 +596,7 @@ DO_CURSOR(cursor_history_find)
 
 	for (node = root->l_node ; node ; node = node->prev)
 	{
-		if (*gtd->input_buf && strstr(node->left, gtd->input_buf))
+		if (*gtd->input_buf && find(gtd->ses, node->left, gtd->input_buf))
 		{
 			break;
 		}

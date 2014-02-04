@@ -1,3 +1,40 @@
+Chat Additions, Bug Fixes and Additions for 1.7
+-----------------------------------------------
+Sean Butler - Xin - sbutler@deveast.com
+
+
+1/13/98         Version 1.7
+		FIXED:
+		* All the #un commands no longer crash tintin.
+		* "#end"ing tintin with a session open does not crash it.
+                * Basically I fixed lots of linked list bugs.
+                * SIGPIPE is now ignored.
+		* Took out code that breaks lines if the user doesn't have
+		  a terminal that does it for him.  This just caused horrible
+		  problems with color muds.
+		* Made actions parse more quickly.
+		* Rewrote all socket IO to use send/recv also made it more
+		  efficient.
+                CHANGED:
+		* split mode now senses the size of your terminal and prints
+                  a line as wide as the terminal.  Works for autodetected
+                  screen size changes.
+
+		ADDED:
+		* Mudmaster compatible chat: #call, #chat, #chatall, #chatpriv,
+		  #chattransfer, #cinfo, #filecancel, #ping, #request, 
+                  #sendfile, #unchat, #filestat
+                  See help file for details on their use and function.
+                  chat.c was added for the above new functions.
+		* Color codes.  Using the syntax 
+		  &<letter>
+                  You can now include color codes in your actions and aliases.
+                  Valid letters are:
+		  capital = bright, lowercase = normal
+		  R = Red, G = Green, Y = Yellow, C = Cyan, M = magenta
+                  B = Blue, W = white, n = normal
+		(SB)
+
 chat.c
 
 This module by: Sean Butler, sbutler@deveast.com - January 10, 1998
@@ -18,6 +55,7 @@ The following new commands have been added to tintin for chat purposes:
 The scheme used to implement this is a linked list of structures
 containing data about each connection.  This structure was placed
 in tintin.h  
+
 
 This is an alpha release and is not yet complete.  There are many
 holes in the parsing of commands.  The most glaring is the failure

@@ -40,9 +40,10 @@ short               map_grid_z;
 
 struct room_data  *	map_grid[201][101];
 
+struct session    * map_search_ses;
 struct exit_data  * map_search_exit_best;
 struct exit_data  * map_search_exit_node;
-struct session    * map_search_ses;
+short               map_search_last_room;
 short               map_search_max_size;
 short               map_search_tar_room;
 
@@ -88,7 +89,7 @@ DO_COMMAND(do_map)
 	int cnt;
 	char cmd[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, cmd,   0);
+	arg = get_arg_in_braces(arg, cmd, FALSE);
 
 	if (*cmd == 0)
 	{
@@ -99,10 +100,10 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map destroy                           (destroys the map)");
 		tintin_printf2(ses, "#map delete   <direction>              (delete the room at given dir)");
 		tintin_printf2(ses, "#map dig      <direction>              (creates a new room)");
-		tintin_printf2(ses, "#map exit     <direction> <command>    (sets the exit command)");
+		tintin_printf2(ses, "#map exit     <direction>  <command>   (sets the exit command)");
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
-		tintin_printf2(ses, "#map insert   <direction>              (insert a new room)");
+		tintin_printf2(ses, "#map insert   <direction>  [roomflag]  (insert a new room)");
 		tintin_printf2(ses, "#map find     <room name>              (saves path to #path)");
 		tintin_printf2(ses, "#map flag     <map flag>               (set map wide flags)");
 		tintin_printf2(ses, "#map get      <option>     <variable>  (get various values)");
@@ -116,10 +117,10 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map read     <filename>               (load your map from a file)");
 		tintin_printf2(ses, "#map roomflag <room flag>              (set room based flags)");
 		tintin_printf2(ses, "#map set      <option>     <value>     (set various values)");
-		tintin_printf2(ses, "#map travel   <direction>              (walk to explored direction)");
+		tintin_printf2(ses, "#map run      <room name>  <delay>     (run to given room)");
+		tintin_printf2(ses, "#map travel   <direction>  <delay>     (run in given direction)");
 		tintin_printf2(ses, "#map undo                              (undo last move)");
 		tintin_printf2(ses, "#map unlink   <direction>              (deletes an exit)");
-		tintin_printf2(ses, "#map walk     <room name>              (walk to given room)");
 		tintin_printf2(ses, "#map write    <filename>               (save the map to a file)");
 
 		return ses;
@@ -255,7 +256,7 @@ DO_MAP(map_dig)
 	tintin_printf2(ses, "#MAP: Created room {%d}.", room);
 }
 
-DO_MAP(map_exit)
+DO_MAP(map_exitcmd)
 {
 	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
@@ -271,7 +272,40 @@ DO_MAP(map_exit)
 		return;
 	}
 
-	sprintf(temp, "{%d} {%s} {%s}", exit->vnum, left, right);
+	sprintf(temp, "{%d} {%s} {%s}", exit->vnum, exit->name, right);
+
+	delete_exit(ses, ses->map->in_room, exit);
+
+	create_exit(ses, ses->map->in_room, temp);
+
+	tintin_printf2(ses, "#MAP: Exit {%s} set to {%s}.", left, right);
+}
+
+DO_MAP(map_exitdir)
+{
+	char temp[BUFFER_SIZE];
+	struct exit_data *exit;
+	struct listnode *node;
+
+	CHECK_INSIDE();
+
+	exit = find_exit(ses, ses->map->in_room, left);
+
+	if (exit == NULL)
+	{
+		tintin_printf2(ses, "#MAP: Exit {%s} not found.", left);
+
+		return;
+	}
+
+	if ((node = searchnode_list(ses->list[LIST_PATHDIR], right)) == NULL)
+	{
+		tintin_printf2(ses, "#MAP: Pathdir {%s} not found.", right);
+
+		return;
+	}
+
+	sprintf(temp, "{%d} {%s} {%s} {%s}", exit->vnum, exit->name, exit->cmd, node->pr);
 
 	delete_exit(ses, ses->map->in_room, exit);
 
@@ -308,6 +342,13 @@ DO_MAP(map_flag)
 			tintin_printf2(ses, "#MAP: Static flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
 		}
 
+		if (is_abbrev(left, "vtgraphics"))
+		{
+			TOG_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS);
+
+			tintin_printf2(ses, "#MAP: VTgraphics flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
+		}
+
 		if (is_abbrev(left, "vtmap"))
 		{
 			TOG_BIT(ses->map->flags, MAP_FLAG_VTMAP);
@@ -315,13 +356,6 @@ DO_MAP(map_flag)
 			tintin_printf2(ses, "#MAP: VTmap flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
 
 			show_vtmap(ses);
-		}
-
-		if (is_abbrev(left, "vtgraphics"))
-		{
-			TOG_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS);
-
-			tintin_printf2(ses, "#MAP: VTgraphics flag toggled %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
 		}
 
 		if (is_abbrev(left, "asciigraphics"))
@@ -436,7 +470,7 @@ DO_MAP(map_info)
 
 		for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
 		{
-			tintin_printf2(ses, "%-20s %-3s (%s) to room: %-5d (%s).", "Exit:", exit->name, exit->cmd, exit->vnum, ses->map->room_list[exit->vnum]->name);
+			tintin_printf2(ses, "%-20s %03d %-3s (%s) to room: %-5d (%s)", "Exit:", exit->dir, exit->name, exit->cmd, exit->vnum, ses->map->room_list[exit->vnum]->name);
 		}
 	}
 }
@@ -500,6 +534,12 @@ DO_MAP(map_insert)
 		exit->vnum = room;
 	}
 
+	if (*right)
+	{
+		ses->map->in_room = room;
+		map_roomflag(ses, right, "");
+		ses->map->in_room = in_room;
+	}
 	tintin_printf2(ses, "#MAP: Inserted room {%d}.", room);
 }
 
@@ -581,7 +621,7 @@ DO_MAP(map_list)
 	{
 		if (ses->map->room_list[room])
 		{
-			if (*left == 0 || match(ses, ses->map->room_list[room]->name, str))
+			if (*left == 0 || find(ses, ses->map->room_list[room]->name, str))
 			{
 				tintin_printf2(ses, "[%5d] %s", ses->map->room_list[room]->vnum, ses->map->room_list[room]->name);
 
@@ -676,7 +716,7 @@ DO_MAP(map_read)
 				break;
 
 			case '#':
-				ses = pre_parse_input(ses, buffer, SUB_NONE);
+				ses = parse_tintin_command(ses, &buffer[1]);
 				break;
 
 			case 0:
@@ -757,9 +797,16 @@ DO_MAP(map_set)
 	{
 		if (is_abbrev(left, "roomcolor"))
 		{
-			RESTRING(ses->map->room_list[ses->map->in_room]->color, right);
+			if (is_color_code(right))
+			{
+				RESTRING(ses->map->room_list[ses->map->in_room]->color, right);
 
-			show_message(ses, LIST_MAP, "#MAP SET: roomcolor set to: %s.", right);
+				show_message(ses, LIST_MAP, "#MAP SET: roomcolor set to: %s.", right);
+			}
+			else
+			{
+				tintin_printf2(ses, "#MAP SET: invalid color code '%s'.", right);
+			}
 		}
 		else if (is_abbrev(left, "roomflags"))
 		{
@@ -811,6 +858,13 @@ DO_MAP(map_undo)
 	}
 
 	if (ses->map->in_room != atoi(node->left))
+	{
+		tintin_printf2(ses, "#MAP UNDO: Invalid last move.");
+
+		return;
+	}
+
+	if (ses->map->room_list[atoi(node->right)] == NULL)
 	{
 		tintin_printf2(ses, "#MAP UNDO: Invalid last move.");
 
@@ -881,7 +935,7 @@ DO_MAP(map_unlink)
 	tintin_printf2(ses, "#MAP UNLINK: Exit deleted.");
 }
 
-DO_MAP(map_walk)
+DO_MAP(map_run)
 {
 	CHECK_INSIDE();
 
@@ -934,10 +988,11 @@ DO_MAP(map_write)
 
 			for (exit = ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
 			{
-				sprintf(temp, "E {%5d} {%s} {%s}\n",
+				sprintf(temp, "E {%5d} {%s} {%s} {%d}\n",
 					exit->vnum,
 					exit->name,
-					exit->cmd);
+					exit->cmd,
+					exit->dir);
 
 				fputs(temp, file);
 			}
@@ -959,6 +1014,8 @@ void create_map(struct session *ses)
 	}
 
 	ses->map = calloc(1, sizeof(struct map_data));
+
+	ses->map->flags = MAP_FLAG_ASCIIGRAPHICS;
 
 	create_room(ses, "{1} {0} {<078>} {1} { }");
 
@@ -1078,16 +1135,28 @@ void delete_room(struct session *ses, int room, int exits)
 void create_exit(struct session *ses, int room, char *arg)
 {
 	struct exit_data *newexit;
-	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE];
+	struct listnode *node;
+
+	char vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE], dir[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(arg, vnum, FALSE);
 	arg = get_arg_in_braces(arg, name, FALSE);
 	arg = get_arg_in_braces(arg, cmd,  TRUE);
+	arg = get_arg_in_braces(arg, dir,  FALSE);
 
 	newexit       = calloc(1, sizeof(struct exit_data));
 	newexit->vnum = atoi(vnum);
 	newexit->name = strdup(name);
 	newexit->cmd  = strdup(cmd);
+	newexit->dir  = atoi(dir);
+
+	if (newexit->dir == 0)
+	{
+		if ((node = searchnode_list(ses->list[LIST_PATHDIR], name)) != NULL)
+		{
+			newexit->dir = atoi(node->pr);
+		}
+	}
 
 	LINK(newexit, ses->map->room_list[room]->f_exit, ses->map->room_list[room]->l_exit);
 
@@ -1157,6 +1226,15 @@ void follow_map(struct session *ses, char *argument)
 		}
 		else if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
 		{
+			exit = find_exit(ses, exit->vnum, argument);
+
+			if (exit)
+			{
+				follow_map(ses, exit->name);
+
+				return;
+			}
+
 			for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
 			{
 				if (exit->vnum != room)
@@ -1272,17 +1350,16 @@ void build_map_grid(short room, short x, short y, short z)
 			continue;
 		}
 
-		coord = get_map_exit(map_search_ses, exit->name);
+		coord = exit->dir;
 
-		if (coord == 0)
+		if (exit->dir == 0)
 		{
 			continue;
 		}
 
-		
-		xx = x + (HAS_BIT(coord, MAP_EXIT_E) ?  1 : HAS_BIT(coord, MAP_EXIT_W) ? -1 : 0);
-		yy = y + (HAS_BIT(coord, MAP_EXIT_N) ?  1 : HAS_BIT(coord, MAP_EXIT_S) ? -1 : 0);
-		zz = z + (HAS_BIT(coord, MAP_EXIT_U) ?  1 : HAS_BIT(coord, MAP_EXIT_D) ? -1 : 0);
+		xx = x + (HAS_BIT(exit->dir, MAP_EXIT_E) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_W) ? -1 : 0);
+		yy = y + (HAS_BIT(exit->dir, MAP_EXIT_N) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_S) ? -1 : 0);
+		zz = z + (HAS_BIT(exit->dir, MAP_EXIT_U) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_D) ? -1 : 0);
 
 		if (xx >= 0 && xx <= map_grid_x && yy >= 0 && yy <= map_grid_y && zz == 0)
 		{
@@ -1485,9 +1562,9 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 		for (exit = room->f_exit ; exit ; exit = exit->next)
 		{
-			door = get_map_exit(ses, exit->name);
+			door = exit->dir;
 
-			switch (door)
+			switch (exit->dir)
 			{
 				case MAP_EXIT_N|MAP_EXIT_E:
 					door = MAP_EXIT_NE;
@@ -1590,11 +1667,9 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 
 	for (exit = room->f_exit ; exit ; exit = exit->next)
 	{
-		door = get_map_exit(ses, exit->name);
-
-		if (door >= MAP_EXIT_N && door <= MAP_EXIT_W)
+		if (exit->dir >= MAP_EXIT_N && exit->dir <= MAP_EXIT_W)
 		{
-			SET_BIT(exits, door);
+			SET_BIT(exits, exit->dir);
 		}
 	}
 
@@ -1628,7 +1703,7 @@ int find_room(struct session *ses, char *arg)
 
 	for (room = 0 ; room < MAX_ROOM ; room++)
 	{
-		if (ses->map->room_list[room] && match(ses, ses->map->room_list[room]->name, arg))
+		if (ses->map->room_list[room] && find(ses, ses->map->room_list[room]->name, arg))
 		{
 			return room;
 		}
@@ -1657,37 +1732,62 @@ struct exit_data *find_exit(struct session *ses, int room, char *arg)
 	return NULL;
 }
 
+struct exit_data *find_exit_dir(struct session *ses, int room, short dir)
+{
+	struct exit_data *exit;
+
+	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+	{
+		if (exit->dir == dir)
+		{
+			return exit;
+		}
+	}
+	return NULL;
+}
+
 /*
 	Fast, short distance node weighted algorithm - Igor
 */
 
-void search_void(short from, short room)
+short follow_void(struct session *ses, short from, short room, short dir)
 {
-	if (get_map_exits(map_search_ses, room) != 2)
+	struct exit_data *exit;
+
+	map_search_last_room = from;
+
+	if (room == map_search_tar_room)
 	{
-		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
-
-		map_search_exit_best = NULL;
-
-		return;
+		return room;
 	}
 
-	if (map_search_ses->map->room_list[room]->f_exit->vnum != from)
+	exit = find_exit_dir(ses, room, dir);
+
+	if (exit == NULL)
 	{
-		map_search_exit_best = map_search_ses->map->room_list[room]->f_exit;
-	}
-	else
-	{
-		map_search_exit_best = map_search_ses->map->room_list[room]->l_exit;
+		if (get_map_exits(ses, room) != 2)
+		{
+			show_message(map_search_ses, LIST_MAP, "#TRAVERSE VOID: ROOM {%d} IS AN INVALID VOID ROOM.", room);
+		}
+
+		if (ses->map->room_list[room]->f_exit->vnum != from)
+		{
+			exit = ses->map->room_list[room]->f_exit;
+		}
+		else
+		{
+			exit = ses->map->room_list[room]->l_exit;
+		}
 	}
 
-	if (HAS_BIT(map_search_ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
+	if (HAS_BIT(ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_VOID))
 	{
-		search_void(room, map_search_exit_best->vnum);
+		return follow_void(ses, room, exit->vnum, exit->dir);
 	}
+	return exit->vnum;
 }
 
-void search_path(short room, short size)
+void search_path(short room, short size, short dir)
 {
 	struct exit_data *exit;
 
@@ -1710,27 +1810,34 @@ void search_path(short room, short size)
 			return;
 		}
 
-		if (!HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID))
+		if (HAS_BIT(map_search_ses->map->room_list[room]->flags, ROOM_FLAG_VOID) && (exit = find_exit_dir(map_search_ses, room, dir)))
+		{
+			if (map_search_ses->map->room_list[exit->vnum] != NULL)
+			{
+				search_path(exit->vnum, size, exit->dir);
+			}
+		}
+		else
 		{
 			size++;
-		}
 
-		for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
-		{
-			if (map_search_ses->map->room_list[exit->vnum] == NULL)
+			for (exit = map_search_ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
 			{
-				continue;
-			}
+				if (map_search_ses->map->room_list[exit->vnum] == NULL)
+				{
+					continue;
+				}
 
-			if (map_search_ses->map->room_list[exit->vnum]->size > size)
-			{
-				search_path(exit->vnum, size);
+				if (map_search_ses->map->room_list[exit->vnum]->size > size)
+				{
+					search_path(exit->vnum, size, exit->dir);
+				}
 			}
 		}
 	}
 }
 
-void shortest_path(struct session *ses, int walk, char *left, char *right)
+void shortest_path(struct session *ses, int run, char *left, char *right)
 {
 	char time[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct exit_data *exit;
@@ -1781,7 +1888,7 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 		if (ses->map->room_list[exit->vnum])
 		{
 			map_search_exit_node = exit;
-			search_path(exit->vnum, 1);
+			search_path(exit->vnum, 1, exit->dir);
 		}
 	}
 
@@ -1800,13 +1907,8 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 			if (ses->map->room_list[exit->vnum])
 			{
 				map_search_exit_node = exit;
-				search_path(exit->vnum, 1);
+				search_path(exit->vnum, 1, exit->dir);
 			}
-		}
-
-		if (HAS_BIT(ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
-		{
-			search_void(room, map_search_exit_best->vnum);
 		}
 
 		if (map_search_exit_best == NULL)
@@ -1816,15 +1918,22 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 
 		addnode_list(ses->list[LIST_PATH], map_search_exit_best->cmd, "", "0");
 
-		if (map_search_exit_best->vnum == map_search_tar_room)
+		if (HAS_BIT(ses->map->room_list[map_search_exit_best->vnum]->flags, ROOM_FLAG_VOID))
+		{
+			room = follow_void(ses, room, map_search_exit_best->vnum, map_search_exit_best->dir);
+		}
+		else
+		{
+			room = map_search_exit_best->vnum;
+		}
+
+		if (room == map_search_tar_room)
 		{
 			break;
 		}
-
-		room = map_search_exit_best->vnum;
 	}
 
-	if (walk)
+	if (run)
 	{
 		if (*right)
 		{
@@ -1835,7 +1944,7 @@ void shortest_path(struct session *ses, int walk, char *left, char *right)
 				sprintf(time, "%lld", utime() + wait);
 				sprintf(name, "%lld", gtd->time);
 
-				wait += (long long) (get_number(ses, left) * 1000000LL);
+				wait += (long long) (get_number(ses, right) * 1000000LL);
 
 				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
 
@@ -1895,7 +2004,7 @@ int find_coord(struct session *ses, char *arg)
 
 void search_coord(int vnum, short x, short y, short z)
 {
-	short xx, yy, zz, coord;
+	short xx, yy, zz;
 
 	map_search_ses->map->room_list[vnum]->size = 1;
 
@@ -1917,16 +2026,14 @@ void search_coord(int vnum, short x, short y, short z)
 
 			if (map_search_ses->map->room_list[exit->vnum] && map_search_ses->map->room_list[exit->vnum]->size == 0)
 			{
-				coord = get_map_exit(map_search_ses, exit->name);
-
-				if (coord == 0)
+				if (exit->dir == 0)
 				{
 					continue;
 				}
 
-				yy = y + (HAS_BIT(coord, MAP_EXIT_N) ?  1 : HAS_BIT(coord, MAP_EXIT_S) ? -1 : 0);
-				xx = x + (HAS_BIT(coord, MAP_EXIT_E) ?  1 : HAS_BIT(coord, MAP_EXIT_W) ? -1 : 0);
-				zz = z + (HAS_BIT(coord, MAP_EXIT_U) ?  1 : HAS_BIT(coord, MAP_EXIT_D) ? -1 : 0);
+				yy = y + (HAS_BIT(exit->dir, MAP_EXIT_N) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_S) ? -1 : 0);
+				xx = x + (HAS_BIT(exit->dir, MAP_EXIT_E) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_W) ? -1 : 0);
+				zz = z + (HAS_BIT(exit->dir, MAP_EXIT_U) ?  1 : HAS_BIT(exit->dir, MAP_EXIT_D) ? -1 : 0);
 
 				search_coord(exit->vnum, xx, yy, zz);
 			}
@@ -1934,7 +2041,7 @@ void search_coord(int vnum, short x, short y, short z)
 	}
 }
 
-void explore_path(struct session *ses, int walk, char *left, char *right)
+void explore_path(struct session *ses, int run, char *left, char *right)
 {
 	char time[BUFFER_SIZE], name[BUFFER_SIZE];
 	struct exit_data *exit;
@@ -1976,11 +2083,19 @@ void explore_path(struct session *ses, int walk, char *left, char *right)
 
 		addnode_list(ses->list[LIST_PATH], exit->cmd, "", "0");
 
-		room = vnum;
-		vnum = exit->vnum;
+		if (HAS_BIT(ses->map->room_list[exit->vnum]->flags, ROOM_FLAG_VOID))
+		{
+			vnum = follow_void(ses, room, exit->vnum, exit->dir);
+			room = map_search_last_room;
+		}
+		else
+		{
+			room = vnum;
+			vnum = exit->vnum;
+		}
 	}
 
-	if (walk)
+	if (run)
 	{
 		if (*right)
 		{
@@ -1991,7 +2106,7 @@ void explore_path(struct session *ses, int walk, char *left, char *right)
 				sprintf(time, "%lld", utime() + wait);
 				sprintf(name, "%lld", gtd->time);
 
-				wait += (long long) (get_number(ses, left) * 1000000LL);
+				wait += (long long) (get_number(ses, right) * 1000000LL);
 
 				updatenode_list(ses, name, ses->list[LIST_PATH]->f_node->left, time, LIST_DELAY);
 

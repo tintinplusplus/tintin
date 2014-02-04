@@ -38,6 +38,7 @@ DO_COMMAND(do_tick)
 	root = ses->list[LIST_TICKER];
 
 	arg = get_arg_in_braces(arg, left,  0);
+	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, right, 1);
 	arg = get_arg_in_braces(arg, delay, 1);
 

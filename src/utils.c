@@ -54,6 +54,26 @@ int is_suffix(char *s1, char *s2)
 
 	return (sl1 <= sl2 && !strcasecmp(s1, s2 + sl2 - sl1)) ? FALSE : TRUE;
 }
+
+int is_color_code(char *str)
+{
+	while (*str)
+	{
+		if (*str++ == '<')
+		{
+			if (isalnum(*str++) && isalnum(*str++) && isalnum(*str++))
+			{
+				if (*str++ == '>')
+				{
+					continue;
+				}
+			}
+		}
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /*
 	return TRUE if the string is a number
 */

@@ -456,7 +456,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'd':
-						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%d-%m-%Y", &timeval_tm);
 						break;
@@ -489,7 +489,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 't':
-						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%H:%M", &timeval_tm);
 						break;
@@ -508,7 +508,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'D':
-						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%d", &timeval_tm);
 						break;
@@ -522,7 +522,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'M':
-						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%m", &timeval_tm);
 						break;
@@ -540,7 +540,7 @@ DO_COMMAND(do_format)
 						break;
 
 					case 'Y':
-						timeval_t  = (time_t) atoi(arglist[i]);
+						timeval_t  = (time_t) *arglist[i] ? atoi(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%Y", &timeval_tm);
 						break;
