@@ -424,8 +424,10 @@ struct help_type help_table[] =
 		"         IAC SB NEW-ENVIRON   %0 variable %1 value\n"
 		"         IAC SB ZMP <VAR>     %0 value\n"
 		"         IAC SB <VAR>         %0 raw text %1 raw data\n"
-		"         MAP ENTER ROOM       %0 vnum\n"
-		"         MAP EXIT ROOM        %0 vnum\n"
+		"         MAP ENTER ROOM       %0 new vnum %1 old vnum\n"
+		"         MAP ENTER ROOM <VAR> %0 new vnum %1 old vnum\n"
+		"         MAP EXIT ROOM        %0 old vnum %1 new vnum\n"
+		"         MAP EXIT ROOM <VAR>  %0 old vnum %1 new vnum\n"
 		"         PROGRAM START        %0 client name %1 client version\n"
 		"         PROGRAM TERMINATION\n"
 		"         RECEIVED INPUT       %0 raw text\n"
@@ -531,19 +533,32 @@ struct help_type help_table[] =
 		"\n"
 		"<178>Comment<078>: You can remove a gag with the #ungag command.\n"
 	},
+/*
 	{
 		"GREETING",
-		"<068>      #<068>###################################################################<068>#\n"
-		"<068>      #<078>                                                                   <068>#\n"
-		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                      <068>#\n"
-		"<068>      #<078>                                                                   <068>#\n"
-		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>           #\n"
-		"<068>      #<078>                                                                   <068>#\n"
-		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,          <068>#\n"
-		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.       <068>#\n"
-		"<068>      #<078>                                                                   <068>#\n"
-//		"<068>      #<078>                             1992, 2010                            <068>#\n"
-		"<068>      #<068>###################################################################<068>#<088>\n"
+		"<068>      #<068>##################################################################<068>#\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                     <068>#\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,         <068>#\n"
+		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.      <068>#\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>                             1992, 2011                           <068>#\n"
+		"<068>      #<068>##################################################################<068>#<088>\n"
+	},
+*/
+	{
+		"GREETING",
+		"<068>      #<068>##################################################################<068>#\n"
+		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                     <068>#\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
+		"<068>      #<078>                                                                  <068>#\n"
+		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,         <068>#\n"
+		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.      <068>#\n"
+		"<068>      #<068>##################################################################<068>#<088>\n"
 	},
 	{
 		"GREP",

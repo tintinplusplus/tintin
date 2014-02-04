@@ -234,15 +234,27 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 		newsession->list[cnt] = copy_list(newsession, gts->list[cnt], cnt);
 	}
 
-	init_screen_size(newsession);
+	newsession->rows          = gts->rows;
+	newsession->cols          = gts->cols;
+	newsession->top_row       = gts->top_row;
+	newsession->bot_row       = gts->bot_row;
 
 	init_buffer(newsession, gts->scroll_max);
 
+	gtd->ses = newsession;
+
 	dirty_screen(newsession);
 
-	tintin_printf2(ses, "#Trying to connect to %s port %s.", newsession->host, newsession->port);
+	if (desc)
+	{
+		tintin_printf2(ses, "#TRYING TO LAUNCH '%s' RUNNING '%s'.", newsession->name, newsession->host);
+	}
+	else
+	{
+		tintin_printf2(ses, "#TRYING TO CONNECT '%s' TO '%s' PORT '%s'.", newsession->name, newsession->host, newsession->port);
+	}
 
-	gtd->ses = newsession;
+
 
 	if (desc == 0)
 	{

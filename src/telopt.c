@@ -853,7 +853,7 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 							}
 							else if (state[nest] == 1)
 							{
-								sprintf(buf, "{1}{%.*s}{2}{", pto - ptarr[nest], ptarr[nest]);
+								sprintf(buf, "{1}{%.*s}{2}{", (int) (pto - ptarr[nest]), ptarr[nest]);
 								sprintf(ptarr[nest], "%s", buf);
 								pto += 9;
 								state[nest]++;
@@ -934,7 +934,7 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 
 				telopt_debug(ses, "IAC SB MSDP VAR %-20s VAL %s", var, val);
 
-				check_all_events(ses, 1, 1, "IAC SB MSDP %s", var, val);
+				check_all_events(ses, 1, 2, "IAC SB MSDP %s", var, var, val);
 
 				check_all_events(ses, 0, 2, "IAC SB MSDP", var, val);
 

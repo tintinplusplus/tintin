@@ -252,7 +252,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				}
 
 			case '$':
-				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '$'))
+				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalpha((int) pti[1]) || pti[1] == '$'))
 				{
 					int def = FALSE;
 
@@ -263,7 +263,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 							*pto++ = *pti++;
 						}
 
-						if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]))
+						if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]))
 						{
 							pti++;
 						}
@@ -288,7 +288,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						ptt = temp;
 
-						while (isalnum(*pti) || *pti == '_')
+						while (isalnum((int) *pti) || *pti == '_')
 						{
 							*ptt++ = *pti++;
 						}
@@ -314,7 +314,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 			case '<':
 				if (HAS_BIT(flags, SUB_COL))
 				{
-					if (isdigit(pti[1]) && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
+					if (isdigit((int) pti[1]) && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
 					{
 						if (pti[1] != '8' || pti[2] != '8' || pti[3] != '8')
 						{
@@ -391,7 +391,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = 'm';
 						pti += 5;
 					}
-					else if (pti[1] == 'g' && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
+					else if (pti[1] == 'g' && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
 					{
 						*pto++ = ESCAPE;
 						*pto++ = '[';
@@ -407,7 +407,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*pto++ = 'm';
 						pti += 5;
 					}
-					else if (pti[1] == 'G' && isdigit(pti[2]) && isdigit(pti[3]) && pti[4] == '>')
+					else if (pti[1] == 'G' && isdigit((int) pti[2]) && isdigit((int) pti[3]) && pti[4] == '>')
 					{
 						*pto++ = ESCAPE;
 						*pto++ = '[';
@@ -445,7 +445,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						continue;
 					}
 
-					for (ptt = temp, i = 1 ; isalnum(pti[i]) || pti[i] == '_' ; i++)
+					for (ptt = temp, i = 1 ; isalnum((int) pti[i]) || pti[i] == '_' ; i++)
 					{
 						*ptt++ = pti[i];
 					}
@@ -509,7 +509,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			case '%':
-				if (HAS_BIT(flags, SUB_ARG) && (isdigit(pti[1]) || pti[1] == '%'))
+				if (HAS_BIT(flags, SUB_ARG) && (isdigit((int) pti[1]) || pti[1] == '%'))
 				{
 					if (pti[1] == '%')
 					{
@@ -521,7 +521,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					}
 					else
 					{
-						i = isdigit(pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
+						i = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
 
 						ptt = gtd->vars[i];
 
@@ -577,7 +577,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 								*pto++ = *ptt++;
 							}
 						}
-						pti += isdigit(pti[2]) ? 3 : 2;
+						pti += isdigit((int) pti[2]) ? 3 : 2;
 					}
 				}
 				else
@@ -587,7 +587,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			case '&':
-				if (HAS_BIT(flags, SUB_CMD) && (isdigit(pti[1]) || pti[1] == '&'))
+				if (HAS_BIT(flags, SUB_CMD) && (isdigit((int) pti[1]) || pti[1] == '&'))
 				{
 					if (pti[1] == '&')
 					{
@@ -595,7 +595,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						{
 							*pto++ = *pti++;
 						}
-						if (isdigit(pti[1]))
+						if (isdigit((int) pti[1]))
 						{
 							pti++;
 						}
@@ -606,16 +606,16 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					}
 					else
 					{
-						i = isdigit(pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
+						i = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
 
 						for (cnt = 0 ; gtd->cmds[i][cnt] ; cnt++)
 						{
 							*pto++ = gtd->cmds[i][cnt];
 						}
-						pti += isdigit(pti[2]) ? 3 : 2;
+						pti += isdigit((int) pti[2]) ? 3 : 2;
 					}
 				}
-				else if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '&'))
+				else if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalpha((int) pti[1]) || pti[1] == '&'))
 				{
 					int def = 0;
 
@@ -626,7 +626,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 							*pto++ = *pti++;
 						}
 
-						if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]))
+						if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]))
 						{
 							pti++;
 						}
@@ -650,7 +650,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					}
 					else
 					{
-						for (ptt = temp ; isalnum(*pti) || *pti == '_' ; i++)
+						for (ptt = temp ; isalnum((int) *pti) || *pti == '_' ; i++)
 						{
 							*ptt++ = *pti++;
 						}
@@ -938,7 +938,7 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 				break;
 
 			case '$':
-				if (pti[1] != DEFAULT_OPEN && !isalnum(pti[1]))
+				if (pti[1] != DEFAULT_OPEN && !isalnum((int) pti[1]))
 				{
 					int i = 0;
 
@@ -969,9 +969,9 @@ int tintin_regexp(pcre *nodepcre, char *str, char *exp, int option, int flag)
 					case '8':
 					case '9':
 						fix = SUB_FIX;
-						arg = isdigit(pti[2]) ? (pti[1] - '0') * 10 + (pti[2] - '0') : pti[1] - '0';
+						arg = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + (pti[2] - '0') : pti[1] - '0';
 						gtd->args[up(var)] = up(arg);
-						pti += isdigit(pti[2]) ? 3 : 2;
+						pti += isdigit((int) pti[2]) ? 3 : 2;
 						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
 						pto += strlen(pto);
 						break;
@@ -1133,7 +1133,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 				break;
 
 			case '&':
-				if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '&')
+				if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]) || pti[1] == '&')
 				{
 					return NULL;
 				}
@@ -1141,7 +1141,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 				break;
 
 			case '@':
-				if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]) || pti[1] == '@')
+				if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]) || pti[1] == '@')
 				{
 					return NULL;
 				}
@@ -1149,7 +1149,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 				break;
 
 			case '$':
-				if (pti[1] == DEFAULT_OPEN || isalnum(pti[1]))
+				if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]))
 				{
 					return NULL;
 				}
@@ -1196,7 +1196,7 @@ pcre *tintin_regexp_compile(struct listnode *node, char *exp, int option)
 					case '7':
 					case '8':
 					case '9':
-						pti += isdigit(pti[2]) ? 3 : 2;
+						pti += isdigit((int) pti[2]) ? 3 : 2;
 						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
 						pto += strlen(pto);
 						break;

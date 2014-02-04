@@ -1,12 +1,6 @@
 This document will hopefully answer most questions regarding tintin++ (tt++).
 
-I'll refer to this version as tintin++ 1.9. Due to heavy modifications, over
-50% of the source code, all questions and requests should be addressed on
-the forum at http://tintin.sf.net/board since I doubt previous tintin++ authors
-would know how to go about this version without reading up on over 5000 lines
-of code.
-
-Last updated: 03/10/2004
+Last updated: 12/28/2010
 
 Q00) I'm new to tintin, how do I get started?
 
@@ -28,12 +22,10 @@ A01) Pretty much any UNIX machine with a modern compiler as well as Windows
      and Mac OS X.
 
 
-Q02) What version should I use 1.50 or 1.86 or 1.90+ ?
+Q02) What version should I use 1.50 or 1.86 or 2.00 ?
 
-A02) 1.90+ but realize 1.90 is not 100% compatible with scripts from previous
-     tintin versions. 1.86 uses readline which might give trouble installing.
-     1.50 should run on most unix machines. 1.99 request the zlib and pcre
-     libraries to be installed.
+A02) TinTin++ 2.00 is twice the size of 1.86 with over 90% of the 1.86 code
+     rewritten. 2.00 is not backward compatible with TinTin++ 1.50 or 1.86.
 
 Q06) I can't get tintin compiled still.  Where can I get more help?
 
@@ -66,8 +58,8 @@ A09) Fan mail is always welcome :)
 Q11) Can I use code from tintin?
 
 A11) Yes, provided that you follow the terms of the license.  The license
-     used for tintin 1.87 and higher is GPL. Older tintin versions are public
-     domain which means there are no restrictions.
+     used for tintin 1.86 and higher is GPL. TINTIN III and TinTin++ 1.5
+     are public domain, meaning there are no restrinctions whatsoever.
 
 Q12) I contributed code X, why isn't my name listed in the CREDITS file?
 
@@ -75,7 +67,7 @@ A12) Most likely your name slipped by before Davin Chan started
      maintaining tintin and adding people to the CREDITS file. If you
      believe you have contributed code to tintin, please email me and
      let me know. Make sure to see if your code is still existant in this
-     version.
+     version as little of the original code has remained.
 
 
 Q14) I've seen some nifty code and would like to use it in a different program.
@@ -110,7 +102,7 @@ A17) Use %%0 %%1 %%2 for the arguments of the nested action.
 
 Q18) How to enable support for chinese muds?
 
-A18  Try: ./configure --enable-big5 to use the big5 encoding.
+A18  Use: #config BIG5 on
 
 Q19) I use Mac OS X and ran tintin a few times, now every time I open a terminal
      window, it runs tintin automatically.

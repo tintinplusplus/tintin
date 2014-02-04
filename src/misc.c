@@ -260,6 +260,10 @@ DO_COMMAND(do_info)
 
 DO_COMMAND(do_nop)
 {
+	if (*arg == '-')
+	{
+		ses->input_level++;
+	}
 	return ses;
 }
 

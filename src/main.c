@@ -37,7 +37,7 @@ struct tintin_data *gtd;
 
 void pipe_handler(int signal)
 {
-	reset_terminal();
+	restore_terminal();
 
 	clean_screen(gtd->ses);
 
@@ -87,7 +87,7 @@ void abort_handler(int signal)
 	}
 	crashed = TRUE;
 
-	reset_terminal();
+	restore_terminal();
 
 	clean_screen(gtd->ses);
 
@@ -117,7 +117,7 @@ void suspend_handler(int signal)
 
 	fflush(stdout);
 
-	reset_terminal();
+	restore_terminal();
 
 	kill(0, SIGSTOP);
 
@@ -138,7 +138,7 @@ void trap_handler(int signal)
 	}
 	crashed = TRUE;
 
-	reset_terminal();
+	restore_terminal();
 
 	clean_screen(gtd->ses);
 
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 					tintin_printf(NULL, "  -t  Set given title.");
 					tintin_printf(NULL, "  -v  Enable verbose mode.");
 
-					reset_terminal();
+					restore_terminal();
 					exit(1);
 					break;
 
@@ -430,7 +430,7 @@ void quitmsg(char *message)
 		history_write(gts, filename);
 	}
 */
-	reset_terminal();
+	restore_terminal();
 
 	clean_screen(gts);
 

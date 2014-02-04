@@ -1,3 +1,31 @@
+Oct 2010       2.00.5
+--------------------------------------------------------------------------------
+
+advertise.c    Updated with 2011 sponsors.
+
+system.c       do_script() and do_system() now call refresh_terminal(), this
+               due to php calls messing up the terminal settings.
+
+terminal.c     Added the refresh_terminal() function which will reset the
+               terminal settings to the tintin default.
+
+mapper.c       Fixed the MAP EXIT ROOM event, it was reporting the next room
+               rather than the current room for %0. %1 now holds the new room,
+               and MAP ENTER ROOM will hold the old room in %1.
+
+mapper.c       Added the option to make vnum specific events, like MAP EXIT ROOM
+               42 or MAP ENTER ROOM 27.
+
+vt102.c        Fixed bug in the VT102 state handler.
+
+mapper.c       Added the option to provide a vnum for #map delete.
+
+tokenize.c     Fixed a bug with the verbose state being lost when starting a
+               new session using an alias.
+
+tinexp.c       Fixed a bug with embedded variables not getting substituted when
+               used in nested variables.
+
 Aug 2010       2.00.4
 --------------------------------------------------------------------------------
 
@@ -7,7 +35,7 @@ tokenize.c     Added a better verbatim and verbosity handler to more
 mapper.c       Several mapper messages are no longer displayed when used in
                scripts.
 
-vt102.c        Added \e[0;0r handling.
+vt102.c        Added proper \e[0;0r VT100 handling.
 
 telopt.c       Added IAC DONT TTYPE handling, allowing servers to reset the
                TTYPE negotiation state.
@@ -32,8 +60,8 @@ path.c         Fixed #path zip command.
 prompt.c       Added better #prompt {line} {substitution} {0} support to print
                a mud prompt and pending input on the 0 line.
 
-mapper.c       Added #map map 80x20 <filename> {a} option to log in append mode,
-               by default an overwrite is performed.
+mapper.c       Added #map map 80x20 <filename> {a} option to log in append
+               mode, by default an overwrite is performed.
 
 path.c         Added the option to use #path load {n;e;s;w;u;d}
 

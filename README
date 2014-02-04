@@ -192,7 +192,5 @@ If you want to convert your scripts take notice of the following changes:
 
     or
 
-    #foreach {{Alicia}{Bubba}{Cathie}{Kayla}{Zorro}} {name}
-    {
-        #list friends ins -1 $name
-    }
+    #list friends create {{Alicia} {Bubba} {Cathie} {Kayla} {Zorro}}
+

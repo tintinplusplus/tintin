@@ -170,6 +170,8 @@ DO_COMMAND(do_script)
 
 		pclose(script);
 	}
+	refresh_terminal();
+
 	return ses;
 }
 
@@ -202,6 +204,8 @@ DO_COMMAND(do_system)
 		restore_pos(gtd->ses);
 	}
 	fflush(stdout);
+
+	refresh_terminal();
 
 	return ses;
 }

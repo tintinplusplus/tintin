@@ -52,7 +52,7 @@ int is_color_code(char *str)
 	{
 		if (*str++ == '<')
 		{
-			if (isalnum(*str++) && isalnum(*str++) && isalnum(*str++))
+			if (isalnum((int) *str++) && isalnum((int) *str++) && isalnum((int) *str++))
 			{
 				if (*str++ == '>')
 				{
@@ -78,14 +78,14 @@ int is_number(char *str)
 		i++;
 	}
 
-	if (!isdigit(str[i]))
+	if (!isdigit((int) str[i]))
 	{
 		return FALSE;
 	}
 
 	for (i = 1 ; str[i] != 0 ; i++)
 	{
-		if (!isdigit(str[i]))
+		if (!isdigit((int) str[i]))
 		{
 			if (str[i] != '.')
 			{
@@ -94,7 +94,7 @@ int is_number(char *str)
 
 			for (i++ ; str[i] != 0 ; i++)
 			{
-				if (!isdigit(str[i]))
+				if (!isdigit((int) str[i]))
 				{
 					return FALSE;
 				}
@@ -111,26 +111,26 @@ int hex_number(char *str)
 
 	if (str)
 	{
-		if (isdigit(*str))
+		if (isdigit((int) *str))
 		{
 			value += 16 * (*str - '0');
 		}
 		else
 		{
-			value += 16 * (toupper(*str) - 'A' + 10);
+			value += 16 * (toupper((int) *str) - 'A' + 10);
 		}
 		str++;
 	}
 
 	if (str)
 	{
-		if (isdigit(*str))
+		if (isdigit((int) *str))
 		{
 			value += *str - '0';
 		}
 		else
 		{
-			value += toupper(*str) - 'A' + 10;
+			value += toupper((int) *str) - 'A' + 10;
 		}
 		str++;
 	}
@@ -144,7 +144,7 @@ int oct_number(char *str)
 
 	if (str)
 	{
-		if (isdigit(*str))
+		if (isdigit((int) *str))
 		{
 			value += 8 * (*str - '0');
 		}
@@ -153,7 +153,7 @@ int oct_number(char *str)
 
 	if (str)
 	{
-		if (isdigit(*str))
+		if (isdigit((int) *str))
 		{
 			value += *str - '0';
 		}
@@ -187,7 +187,7 @@ char *capitalize(char *str)
 
 	for (cnt = 0 ; str[cnt] != 0 ; cnt++)
 	{
-		outbuf[cnt] = toupper(str[cnt]);
+		outbuf[cnt] = toupper((int) str[cnt]);
 	}
 	outbuf[cnt] = 0;
 
@@ -280,6 +280,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	{
 		if (ses->input_level == 0)
 		{
+
 			tintin_puts2(ses, buf);
 		}
 		pop_call();

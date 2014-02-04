@@ -122,7 +122,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION             "2.00.4"
+#define CLIENT_VERSION             "2.00.5"
 
 #define ESCAPE                          27
 
@@ -1068,7 +1068,9 @@ extern char *fix_file_name(char *name);
 #define __TERMINAL_H__
 
 extern void init_terminal(void);
-extern void reset_terminal(void);
+extern void restore_terminal(void);
+extern void refresh_terminal(void);
+
 extern void echo_on(struct session *ses);
 extern void echo_off(struct session *ses);
 extern void init_screen_size(struct session *ses);

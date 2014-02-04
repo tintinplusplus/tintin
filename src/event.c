@@ -92,10 +92,14 @@ int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 
 	vsprintf(buf, fmt, list);
 
+	va_end(list); 
+
 	node = search_node_list(ses->list[LIST_EVENT], buf);
 
 	if (node)
 	{
+		va_start(list, fmt);
+
 		for (cnt = 0 ; cnt < args ; cnt++)
 		{
 			va_arg(list, char *);
@@ -116,8 +120,6 @@ int check_all_events(struct session *ses, int args, int vars, char *fmt, ...)
 	}
 	else
 	{
-		va_end(list);
-
 		return 0;
 	}
 }

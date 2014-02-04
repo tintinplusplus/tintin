@@ -1,20 +1,14 @@
 * Stuff that needs to be done
 
-- Disable verbose input events.
-
 - Regex support for #replace
-
-- BIG5 issues. http://tintin.sourceforge.net/board/viewtopic.php?t=1313
-
-- #path crash: http://tintin.sourceforge.net/board/viewtopic.php?p=4911#4911
 
 - Check if Cygwin install info is still correct.
 
-- fix UTF-8 handling in input and wordwrap.
+- fix UTF-8 handling in input.
 
 - fix packet patch prompt repetition bug.
 
-- add chat server 'log' option to show last 15 messages.
+- add chat server script 'log' option to show last 15 messages.
 
 - look into getting rid of node->data
 
@@ -36,11 +30,20 @@ GENERAL STUFF:
 
 - Deal with escaping { } / ; in #script variables.
 
-- Make tintin char set by session instead of global.
+- Make tintin char setting by session instead of global.
 
 - Add a way to append text to prompts.
 
 - Proper manual for CHAT and MAP.
+
+- Don't eat the path when using #path walk forward, allowing mixed usage of
+  forward and backward. Also add a #MAP START OF PATH event?
+
+- crash on: #map exit {2}{command}{s;#map read floobity.map} 
+
+- add #line gag {lines} option.
+
+- auto adjust max vnum size of mapper.
 
 -------------------------------------------------------------------------------
 

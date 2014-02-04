@@ -812,7 +812,7 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 
 			case 'H':
 			case 'f':
-				if (sscanf(data, "%d;%d", &ses->cur_row, &ses->cur_col) == 2)
+				if (sscanf(data, "%d;%d", &ses->cur_row, &ses->cur_col) != 2)
 				{
 					if (sscanf(data, "%d", &ses->cur_row) == 1)
 					{

@@ -213,16 +213,39 @@ DO_MAP(map_delete)
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
-	exit = find_exit(ses, ses->map->in_room, arg1);
-
-	if (exit == NULL)
+	if (is_number(arg1))
 	{
-		tintin_printf2(ses, "#MAP: No exit with that name found");
+		room = find_room(ses, arg1);
 
-		return;
+		if (room == -1)
+		{
+			tintin_printf2(ses, "#MAP: No room with that vnum found");
+			return;
+		}
+	}
+	else
+	{
+		exit = find_exit(ses, ses->map->in_room, arg1);
+
+		if (exit)
+		{
+			room = exit->vnum;
+		}
+
+		if (exit == NULL)
+		{
+			tintin_printf2(ses, "#MAP: No exit with that name found");
+			return;
+		}
+
+		room = exit->vnum;
 	}
 
-	room = exit->vnum;
+	if (room == ses->map->in_room)
+	{
+		tintin_printf2(ses, "#MAP: You must first leave the room you're trying to delete");
+		return;
+	}
 
 	delete_room(ses, room, TRUE);
 
@@ -2722,7 +2745,8 @@ void goto_room(struct session *ses, int room)
 
 	if (ses->map->in_room)
 	{
-		check_all_events(ses, 0, 1, "MAP EXIT ROOM", ntos(room));
+		check_all_events(ses, 0, 2, "MAP EXIT ROOM", ntos(last_room), ntos(room));
+		check_all_events(ses, 1, 2, "MAP EXIT ROOM %d", last_room, ntos(last_room), ntos(room));
 	}
 
 	ses->map->in_room = room;
@@ -2734,7 +2758,8 @@ void goto_room(struct session *ses, int room)
 		check_all_events(ses, 0, 1, "MAP ENTER MAP", ntos(room));
 	}
 
-	check_all_events(ses, 0, 1, "MAP ENTER ROOM", ntos(room));
+	check_all_events(ses, 0, 2, "MAP ENTER ROOM", ntos(room), ntos(last_room));
+	check_all_events(ses, 1, 2, "MAP ENTER ROOM %d", room, ntos(room), ntos(last_room));
 
 	pop_call();
 	return;

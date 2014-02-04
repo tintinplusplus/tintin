@@ -87,9 +87,14 @@ void init_terminal()
 	}
 }
 
-void reset_terminal(void)
+void restore_terminal(void)
 {
 	tcsetattr(0, TCSANOW, &gtd->old_terminal);
+}
+
+void refresh_terminal(void)
+{
+	tcsetattr(0, TCSANOW, &gtd->new_terminal);
 }
 
 void echo_off(struct session *ses)

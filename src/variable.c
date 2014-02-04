@@ -316,7 +316,7 @@ void wrapstring(struct session *ses, char *str)
 
 			if (pti - lis > 15)
 			{
-				sprintf(tmp, "%.*s", sos - soc, soc);
+				sprintf(tmp, "%.*s", (int) (sos - soc), soc);
 
 				get_color_codes(color, tmp, color);
 
@@ -327,7 +327,7 @@ void wrapstring(struct session *ses, char *str)
 			}
 			else
 			{
-				sprintf(tmp, "%.*s", sos - soc, soc);
+				sprintf(tmp, "%.*s", (int) (sos - soc), soc);
 
 				get_color_codes(color, tmp, color);
 
@@ -345,7 +345,7 @@ void wrapstring(struct session *ses, char *str)
 			col++;
 		}
 	}
-	sprintf(tmp, "%.*s", sos - soc, soc);
+	sprintf(tmp, "%.*s", (int) (sos - soc), soc);
 
 	get_color_codes(color, tmp, color);
 
@@ -374,6 +374,11 @@ void timestring(struct session *ses, char *str)
 	time_t    timeval_t;
 
 	arg = get_arg_in_braces(str, left, TRUE);
+
+	if (*arg == COMMAND_SEPARATOR)
+	{
+		arg++;
+	}
 	arg = get_arg_in_braces(arg, right, TRUE);
 
 	if (*right)

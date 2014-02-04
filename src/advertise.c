@@ -31,14 +31,16 @@ struct advertisement_type
 {
 	time_t                  start;
 	time_t                  end;
+	int                     value;
 	char                  * desc;
 };
 
 struct advertisement_type advertisement_table[] =
 {
+/*
 	{
-		1260469590, /* 10 Dec 2009 */
-		1323541590, /* 10 Dec 2011 */
+		1260469590, * 10 Dec 2009 *
+		1323541590, * 10 Dec 2011 *
 		"\n"
 		"<138>                                  Lowlands\n"
 		"\n"
@@ -55,8 +57,8 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1260469590, /* 10 Dec 2009 */
-		1323541590, /* 10 Dec 2011 */
+		1260469590, * 10 Dec 2009 *
+		1323541590, * 10 Dec 2011 *
 		"\n"
 		"<138>                Maiden Desmodus  -  http://maidendesmodus.com\n"
 		"\n"
@@ -74,8 +76,8 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1260469590, /* 10 Dec 2009 */
-		1323541590, /* 10 Dec 2011 */
+		1260469590, * 10 Dec 2009 *
+		1323541590, * 10 Dec 2011 *
 		"\n"
 		"<138>                     Lost Souls  -  http://lostsouls.org\n"
 		"\n"
@@ -94,8 +96,8 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1260469590, /* 10 Dec 2009 */
-		1323541590, /* 10 Dec 2011 */
+		1260469590, * 10 Dec 2009 *
+		1323541590, * 10 Dec 2011 *
 		"\n"
 		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
 		"\n"
@@ -109,10 +111,29 @@ struct advertisement_type advertisement_table[] =
 		"<178>To connect to Alter Aeon enter: #session aa alteraeon.com 3002\n"
 		"\n"
 	},
+*/
+	{
+		1291140000, /* 30 Nov 2010 */
+		1354280000, /* 30 Nov 2012 */
+		100,
+		"\n"
+		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
+		"\n"
+		"<078>Alter Aeon is a custom MUD written entirely from scratch. The story setting\n"
+		"<078>is reminiscent of Dungeons and Dragons, but has elements of fantasy.\n"
+		"<078>There are unique spell, skill, and minion systems, player run shops, boats,\n"
+		"<078>and many other features for nearly every kind of player.  In development\n"
+		"<078>since 1995, the world of Alter Aeon has hundreds of areas to explore, quests\n"
+		"<078>to complete, and puzzles to solve.\n"
+		"\n"
+		"<178>To connect to Alter Aeon enter: #session aa alteraeon.com 3000\n"
+		"\n"
+	},
 
 	{
-		1260469590, /* 10 Dec 2009 */
-		1323541590, /* 10 Dec 2011 */
+		1291140000, /* 30 Nov 2010 */
+		1354280000, /* 30 Nov 2012 */
+		100,
 		"\n"
 		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"
 		"\n"
@@ -128,8 +149,9 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1275000000, /* 27 May 2010 */
-		1310000000, /* 06 Jul 2011 */
+		1291140000, /* 30 Nov 2010 */
+		1354280000, /* 30 Nov 2012 */
+		100,
 		"\n"
 		"<138>                   Primordiax - http://www.primordiax.com\n"
 		"\n"
@@ -146,6 +168,7 @@ struct advertisement_type advertisement_table[] =
 	{
 		0,
 		0,
+		0,
 		""
 	}
 };
@@ -156,13 +179,13 @@ int valid_advertisement(int i)
 
 	if (advertisement_table[i].start > current_time)
 	{
-		return FALSE;
+		return 0;
 	}
 	if (advertisement_table[i].end < current_time)
 	{
-		return FALSE;
+		return 0;
 	}
-	return TRUE;
+	return advertisement_table[i].value;
 }
 
 int total_advertisements()
@@ -178,23 +201,25 @@ int total_advertisements()
 
 DO_COMMAND(do_advertise)
 {
-	int max, cnt;
+	int i, max, cnt;
 	char buf[BUFFER_SIZE];
 
 	max = total_advertisements();
 
-	for (cnt = 0 ; *advertisement_table[cnt].desc ; cnt++)
+	for (i = 0 ; *advertisement_table[i].desc ; i++)
 	{
-		if (!valid_advertisement(cnt))
+		if (!valid_advertisement(i))
 		{
 			continue;
 		}
 
-		if (lrand48() % max == 0)
+		cnt = advertisement_table[i].value;
+
+		if (lrand48() % max < cnt)
 		{
 			char *pto, *ptf;
 
-			substitute(ses, advertisement_table[cnt].desc, buf, SUB_COL);
+			substitute(ses, advertisement_table[i].desc, buf, SUB_COL);
 
 			pto = buf;
 
@@ -214,8 +239,7 @@ DO_COMMAND(do_advertise)
 			}
 			break;
 		}
-
-		max--;
+		max -= cnt;
 	}
 
 //	tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);

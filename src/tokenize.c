@@ -990,23 +990,25 @@ char *write_script(struct session *ses, struct scriptroot *root)
 struct session *script_driver(struct session *ses, int list, char *str)
 {
 	struct scriptroot *root;
-	int level;
+	struct session *cur_ses;
+	int dlevel, ilevel;
 
 	root = (struct scriptroot *) calloc(1, sizeof(struct scriptroot));
 
-	root->ses = ses;
+	root->ses = cur_ses = ses;
+
+	dlevel = (list >= 0) ? HAS_BIT(root->ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
+	ilevel = (list >= 0) ? 1 : 0;
+
+	cur_ses->debug_level += dlevel;
+	cur_ses->input_level += ilevel;
 
 	tokenize_script(root, 0, str);
 
-	level = list >= 0 ? HAS_BIT(ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
-
-	ses->debug_level += level;
-	ses->input_level += list >= 0 ? 1 : 0;
-
 	ses = (struct session *) parse_script(root, 0, root->next, root->prev);
 
-	ses->debug_level -= level;
-	ses->input_level -= list >= 0 ? 1 : 0;
+	cur_ses->debug_level -= dlevel;
+	cur_ses->input_level -= ilevel;
 
 	while (root->prev)
 	{
