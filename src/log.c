@@ -28,22 +28,35 @@
 #include "tintin.h"
 
 
-void logit(struct session *ses, char *txt, FILE *file)
+void logit(struct session *ses, char *txt, FILE *file, int newline)
 {
-	char out[STRING_SIZE];
+	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
 
-	if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
+	if (*ses->timestamp)
 	{
-		strip_vt102_codes(txt, out);
-		strcat(out, "\n");
-	}
-	else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
-	{
-		vt102_to_html(ses, txt, out);
+		sprintf(buf, "%s%s", timestamp(ses->timestamp), txt);
 	}
 	else
 	{
-		sprintf(out, "%s\n", txt);
+		strcpy(buf, txt);
+	}
+	
+	if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
+	{
+		strip_vt102_codes(buf, out);
+	}
+	else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+	{
+		vt102_to_html(ses, buf, out);
+	}
+	else
+	{
+		strcpy(out, buf);
+	}
+
+	if (newline)
+	{
+		strcat(out, "\n");
 	}
 	fputs(out, file);
 
@@ -132,7 +145,7 @@ DO_COMMAND(do_logline)
 
 		if (*right)
 		{
-			logit(ses, right, ses->logline);
+			logit(ses, right, ses->logline, TRUE);
 
 			fclose(ses->logline);
 			ses->logline = NULL;
@@ -190,7 +203,6 @@ DO_COMMAND(do_writebuffer)
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGPLAIN))
 				{
 					strip_vt102_codes(ses->buffer[cnt], out);
-					strcat(out, "\n");
 				}
 				else if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
@@ -198,8 +210,10 @@ DO_COMMAND(do_writebuffer)
 				}
 				else
 				{
-					sprintf(out, "%s\n", ses->buffer[cnt]);
+					strcpy(out, ses->buffer[cnt]);
 				}
+				strcat(out, "\n");
+
 				fputs(out, fp);
 			}
 			while (cnt != ses->scroll_row);
@@ -421,6 +435,5 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 				break;
 		}
 	}
-	*pto++ = '\n';
 	*pto = 0;
 }

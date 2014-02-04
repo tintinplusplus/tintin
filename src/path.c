@@ -480,6 +480,7 @@ DO_COMMAND(do_pathdir)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], coord[BUFFER_SIZE];
 	struct listroot *root;
+	struct listnode *node;
 
 	root = ses->list[LIST_PATHDIR];
 
@@ -502,7 +503,14 @@ DO_COMMAND(do_pathdir)
 	{
 		if (*coord == 0)
 		{
-			strcpy(coord, "0");
+			if ((node = searchnode_list(ses->list[LIST_PATHDIR], left)) != NULL)
+			{
+				strcpy(coord, node->pr);
+			}
+			else
+			{
+				strcpy(coord, "0");
+			}
 		}
 		updatenode_list(ses, left, right, coord, LIST_PATHDIR);
 

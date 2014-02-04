@@ -8,8 +8,6 @@ GENERAL STUFF:
 
 - Treat variables passed along to functions by value.
 
-- Look into #script variable spam and better single line storage support.
-
 - See if it's possible to add better #path run support.
 
 - Events for prompt lines.
@@ -37,25 +35,31 @@ Use \e[ X to erase an amount of characters to deal with ctrl-r and redraw line f
 
 MAPPING STUFF:
 
+- Add a return option.
+
 - Display hidden exits differently.
+
+- Synchronise drawn map with the link map.
+
+- Add support to set exit and hiddenexit colors.
 
 - A method to double check correct movement.
 
 - A method to highlight a route on the map
 
-- A method to add a note for a room, can be scripted with the movement event.
+- A method to add a note for a room.
 
 - A method to find a generic room more precisely by giving exits and other identifying information.,
 
 - Better #map undo support.
-
-- Add info about which room you're in when leaving the map.
 
 - Add conditional if checks for room traversal.
 
 -------------------------------------------------------------------------------
 
 * This is a list of improvements that are planned for a rainy day.
+
+- auto create coord flag for pathdirs.
 
 - Perl compatible regular expressions.
 

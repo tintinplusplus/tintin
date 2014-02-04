@@ -1092,3 +1092,26 @@ alias.c        Variables passed along as an alias argument now go by value
 
 mapper.c       Added the asciivnums flag which displays room vnums in the ascii
                map. 
+
+
+October 2008   1.98.7
+
+alias.c        Variables can be used in alias triggers, working pretty much
+               the same way as they do in actions.
+
+mapper.c       When leaving a map a last room is set, which can be returned
+               to with #map return. The last room is stored when saving a map,
+               and #map return will work as well after reading in a map.
+
+help.c         Updated the math helpfile with available bit operations.
+
+misc.c         #echo no longer triggers actions.
+
+help.c         Updated the showme and echo help entries.
+
+map.c          #map map now takes an optional <x>x<y> size argument and an
+               optional filename argument to log the map output to file.
+               Useful for people who want to tail -f -s 0.1 a map window.
+
+config.c       Added a timestamp config option to add timestamps to log
+               files using the strftime format.

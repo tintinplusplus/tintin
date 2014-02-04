@@ -49,7 +49,7 @@ DO_COMMAND(do_configure)
 
 		for (node = root->f_node ; node ; node = node->next)
 		{
-			tintin_printf2(ses, "  [%-13s] [%6s] %s", 
+			tintin_printf2(ses, "[%-13s] [%8s] %s", 
 				node->left,
 				node->right,
 				strcmp(node->right, "ON") == 0 ? config_table[atoi(node->pr)].msg_on : config_table[atoi(node->pr)].msg_off);
@@ -563,6 +563,21 @@ DO_CONFIG(config_regexp)
 	sprintf(str, "%d", index);
 
 	updatenode_list(ses, config_table[index].name, capitalize(arg), str, LIST_CONFIG);
+
+	return ses;
+}
+
+DO_CONFIG(config_timestamp)
+{
+	char str[BUFFER_SIZE];
+
+	substitute(ses, arg, str, SUB_COL|SUB_ESC);
+
+	RESTRING(ses->timestamp, str);
+
+	sprintf(str, "%d", index);
+
+	updatenode_list(ses, config_table[index].name, *ses->timestamp ? "ON" : "OFF", str, LIST_CONFIG);
 
 	return ses;
 }

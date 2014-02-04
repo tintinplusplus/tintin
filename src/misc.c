@@ -101,7 +101,7 @@ DO_COMMAND(do_cr)
 
 DO_COMMAND(do_echo)
 {
-	char temp[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], output[BUFFER_SIZE];
 
 	sprintf(temp, "result %s", arg);
 
@@ -109,16 +109,39 @@ DO_COMMAND(do_echo)
 
 	do_format(ses, temp);
 
-	substitute(ses, "$result", temp, SUB_VAR);
+	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-	if (*temp)
+	if (strip_vt102_strlen(ses->more_output) != 0)
 	{
-		do_showme(ses, temp);
+		sprintf(output, "\r\n\033[0m%s\033[0m", temp);
+	}
+	else
+	{
+		sprintf(output, "\033[0m%s\033[0m", temp);
+	}
+
+	add_line_buffer(ses, output, FALSE);
+
+	if (ses != gtd->ses)
+	{
+		return ses;
+	}
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		save_pos(ses);
+		goto_rowcol(ses, ses->bot_row, 1);
+	}
+
+	printline(ses, output, FALSE);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		restore_pos(ses);
 	}
 
 	return ses;
 }
-
 
 DO_COMMAND(do_end)
 {

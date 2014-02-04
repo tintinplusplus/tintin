@@ -206,6 +206,7 @@ struct session *new_session(struct session *ses, char *name, char *address, int 
 	newsession->name          = strdup(name);
 	newsession->host          = strdup(host);
 	newsession->port          = strdup(port);
+	newsession->timestamp     = strdup(gts->timestamp);
 
 	newsession->class         = strdup(gts->class);
 	newsession->flags         = gts->flags;

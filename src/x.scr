@@ -33,8 +33,6 @@ oops 5
 #forall {bli bla blo} {#if {"$forall" != "bl?"} {oops 6}}
 #loop {1 3} {#if {$loop != &0} {oops 7}}
 
-#showme working so far
-
 #logline x.tmp #var bla 3
 #read x.tmp
 #if {$bla != 3} {oops 8} {#var bla 2}

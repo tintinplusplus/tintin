@@ -118,7 +118,7 @@ typedef void            LINE    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.6"
+#define VERSION_NUM               "1.98.7"
 
 #define ESCAPE                          27
 
@@ -538,6 +538,7 @@ struct session
 	int                     flags;
 	char                  * host;
 	char                  * port;
+	char                  * timestamp;
 	long long               connect_retry;
 	int                     connect_error;
 	char                    more_output[STRING_SIZE];
@@ -727,8 +728,10 @@ struct str_hash_index_data
 struct map_data
 {
 	struct room_data      * room_list[MAX_ROOM];
+	FILE                  * logfile;
 	int                     flags;
 	int                     in_room;
+	int                     last_room;
 	char                    legend[17][100];
 };
 
@@ -969,6 +972,7 @@ extern DO_MAP(map_map);
 extern DO_MAP(map_move);
 extern DO_MAP(map_name);
 extern DO_MAP(map_read);
+extern DO_MAP(map_return);
 extern DO_MAP(map_roomflag);
 extern DO_MAP(map_run);
 extern DO_MAP(map_set);
@@ -1082,6 +1086,7 @@ extern DO_CONFIG(config_convertmeta);
 extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
 extern DO_CONFIG(config_regexp);
+extern DO_CONFIG(config_timestamp);
 
 #endif
 
@@ -1265,7 +1270,7 @@ extern DO_COMMAND(do_debug);
 #ifndef __LOG_H__
 #define __LOG_H__
 
-extern void logit(struct session *ses, char *txt, FILE *file);
+extern void logit(struct session *ses, char *txt, FILE *file, int newline);
 extern DO_COMMAND(do_log);
 extern DO_COMMAND(do_logline);
 extern DO_COMMAND(do_writebuffer);
@@ -1528,6 +1533,7 @@ extern int is_color_code(char *str);
 extern int is_number(char *str);
 extern int hex_number(char *str);
 extern long long utime(void);
+extern char *timestamp(char *str);
 extern char *capitalize(char *str);
 extern void cat_sprintf(char *dest, char *fmt, ...);
 extern void ins_sprintf(char *dest, char *fmt, ...);

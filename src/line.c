@@ -72,8 +72,6 @@ DO_LINE(line_log)
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 1);
 
-	substitute(ses, right, right, SUB_ESC|SUB_COL);
-
 	if (ses->logline)
 	{
 		return;
@@ -90,7 +88,9 @@ DO_LINE(line_log)
 
 		if (*right)
 		{
-			logit(ses, right, ses->logline);
+			substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_EOL);
+
+			logit(ses, right, ses->logline, FALSE);
 
 			fclose(ses->logline);
 			ses->logline = NULL;

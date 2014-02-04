@@ -31,21 +31,24 @@
 	todo:
 */
 
-void show_map(struct session *ses, char *argument);
+void show_map(struct session *ses, char *left, char *right);
 void create_legend(struct session *ses, char *arg);
 
-short               map_grid_x;
-short               map_grid_y;
-short               map_grid_z;
+#define MAX_MAP_X 201
+#define MAX_MAP_Y 101
 
-struct room_data  *	map_grid[201][101];
+int                 map_grid_x;
+int                 map_grid_y;
+int                 map_grid_z;
+
+struct room_data  * map_grid[MAX_MAP_X][MAX_MAP_Y];
 
 struct session    * map_search_ses;
 struct exit_data  * map_search_exit_best;
 struct exit_data  * map_search_exit_node;
-short               map_search_last_room;
-short               map_search_max_size;
-short               map_search_tar_room;
+int                 map_search_last_room;
+int                 map_search_max_size;
+int                 map_search_tar_room;
 
 #define             MAP_SEARCH_SIZE 500
 
@@ -628,8 +631,17 @@ DO_MAP(map_leave)
 {
 	CHECK_INSIDE();
 
-	ses->map->in_room = 0;
-	tintin_printf2(ses, "#MAP: Leaving the map. Use goto to return.");
+	if (ses->map->in_room == 0)
+	{
+		tintin_printf2(ses, "#MAP: You're not currently inside the map.");
+	}
+	else
+	{
+		ses->map->last_room = ses->map->in_room;
+		ses->map->in_room = 0;
+
+		tintin_printf2(ses, "#MAP: Leaving the map. Use goto to return.");
+	}
 }
 
 DO_MAP(map_legend)
@@ -712,7 +724,6 @@ DO_MAP(map_list)
 	}
 }
 
-
 DO_MAP(map_map)
 {
 	CHECK_INSIDE();
@@ -723,7 +734,7 @@ DO_MAP(map_map)
 	}
 	else
 	{
-		show_map(ses, left);
+		show_map(ses, left, right);
 	}
 }
 
@@ -786,6 +797,10 @@ DO_MAP(map_read)
 				ses->map->flags = atoi(&buffer[2]);
 				break;
 
+			case 'I':
+				ses->map->last_room = atoi(&buffer[2]);
+				break;
+
 			case 'L':
 				create_legend(ses, &buffer[2]);
 				break;
@@ -837,6 +852,18 @@ DO_MAP(map_read)
 	show_message(ses, LIST_MAP, "#MAP READ: Map file {%s} loaded.", left);
 
 
+}
+
+DO_MAP(map_return)
+{
+	if (ses->map == NULL || ses->map->room_list[ses->map->last_room] == NULL)
+	{
+		tintin_printf2(ses, "#MAP RETURN: No known last room.");
+
+		return;
+	}
+
+	ses->map->in_room = ses->map->last_room;
 }
 
 DO_MAP(map_roomflag)
@@ -1084,7 +1111,6 @@ DO_MAP(map_run)
 DO_MAP(map_write)
 {
 	FILE *file;
-	char temp[BUFFER_SIZE];
 	struct exit_data *exit;
 	int vnum;
 
@@ -1097,43 +1123,38 @@ DO_MAP(map_write)
 		return;
 	}
 
-	sprintf(temp, "C %d\n\n", MAX_ROOM);
-	fputs(temp, file);
+	fprintf(file, "C %d\n\n", MAX_ROOM);
 
-	sprintf(temp, "F %d\n\n", ses->map->flags);
-	fputs(temp, file);
+	fprintf(file, "F %d\n\n", ses->map->flags);
 
-	sprintf(temp, "L %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n\n",
+	fprintf(file, "I %d\n\n", ses->map->in_room);
+
+	fprintf(file, "L %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n\n",
 		ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],
 		ses->map->legend[3],  ses->map->legend[4],  ses->map->legend[5],
 		ses->map->legend[6],  ses->map->legend[7],  ses->map->legend[8],
 		ses->map->legend[9],  ses->map->legend[10], ses->map->legend[11],
 		ses->map->legend[12], ses->map->legend[13], ses->map->legend[14],
 		ses->map->legend[15], ses->map->legend[16]);
-	fputs(temp, file);
 
 	for (vnum = 0 ; vnum < MAX_ROOM ; vnum++)
 	{
 		if (ses->map->room_list[vnum])
 		{
-			sprintf(temp, "\nR {%5d} {%d} {%s} {%s} {%s}\n",
+			fprintf(file, "\nR {%5d} {%d} {%s} {%s} {%s}\n",
 				ses->map->room_list[vnum]->vnum,
 				ses->map->room_list[vnum]->flags,
 				ses->map->room_list[vnum]->color,
 				ses->map->room_list[vnum]->name,
 				ses->map->room_list[vnum]->symbol);
 
-			fputs(temp, file);
-
 			for (exit = ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
 			{
-				sprintf(temp, "E {%5d} {%s} {%s} {%d}\n",
+				fprintf(file, "E {%5d} {%s} {%s} {%d}\n",
 					exit->vnum,
 					exit->name,
 					exit->cmd,
 					exit->dir);
-
-				fputs(temp, file);
 			}
 		}
 	}
@@ -1643,16 +1664,28 @@ void create_map_grid(struct session *ses, short room, short x, short y)
 	}
 }
 
-void show_map(struct session *ses, char *argument)
+void show_map(struct session *ses, char *left, char *right)
 {
+	FILE *logfile = NULL;
 	char buf[BUFFER_SIZE], out[BUFFER_SIZE];
-	int x, y, line, size;
+	int x, y, line;
 
-	push_call("show_map(%p,%p)",ses,argument);
+	push_call("show_map(%p,%p,%p)",ses,left,right);
 
-	size = atoi(argument) * 2 + 1;
+	if (sscanf(left, "%dx%d", &map_grid_x, &map_grid_y) == 2)
+	{
+		logfile = fopen(right, "a");
 
-	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
+		map_grid_x = URANGE(1, map_grid_x, MAX_MAP_X);
+		map_grid_y = URANGE(1, map_grid_y, MAX_MAP_Y);
+
+		if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
+		{
+			map_grid_y = map_grid_y / 3;
+			map_grid_x = map_grid_x / 6;
+		}
+	}
+	else if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
 		map_grid_y = (get_scroll_size(ses) / 3) - 1;
 		map_grid_x = (ses->cols / 6) - 1;
@@ -1662,11 +1695,6 @@ void show_map(struct session *ses, char *argument)
 	{
 		map_grid_y = get_scroll_size(ses) - 1;
 		map_grid_x = ses->cols - 1;
-	}
-
-	if (size > 1 && map_grid_y > size)
-	{
-		map_grid_y = size;
 	}
 
 	create_map_grid(ses, ses->map->in_room, map_grid_x, map_grid_y);
@@ -1686,35 +1714,54 @@ void show_map(struct session *ses, char *argument)
 
 				substitute(ses, buf, out, SUB_COL);
 
+				if (logfile)
+				{
+					fprintf(logfile, "%s\n", out);
+				}
+				else
+				{
+					tintin_puts2(ses, out);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y = map_grid_y ; y >= 0 ; y--)
+		{
+			strcpy(buf, "");
+
+			for (x = 0 ; x < map_grid_x ; x++)
+			{
+				strcat(buf, draw_room(ses, map_grid[x][y], 0));
+			}
+
+			for (x = strlen(buf) - 1 ; x > 0 ; x--)
+			{
+				if (buf[x] != ' ')
+				{
+					break;
+				}
+			}
+
+			buf[x+1] = 0;
+
+			substitute(ses, buf, out, SUB_COL);
+
+			if (logfile)
+			{
+				fprintf(logfile, "%s\n", out);
+			}
+			else
+			{
 				tintin_puts2(ses, out);
 			}
 		}
-		pop_call();
-		return;
 	}
-		
-	for (y = map_grid_y ; y >= 0 ; y--)
+
+	if (logfile)
 	{
-		strcpy(buf, "");
-
-		for (x = 0 ; x < map_grid_x ; x++)
-		{
-			strcat(buf, draw_room(ses, map_grid[x][y], 0));
-		}
-
-		for (x = strlen(buf) - 1 ; x > 0 ; x--)
-		{
-			if (buf[x] != ' ')
-			{
-				break;
-			}
-		}
-
-		buf[x+1] = 0;
-
-		substitute(ses, buf, out, SUB_COL);
-
-		tintin_puts2(ses, out);
+		fflush(logfile);
 	}
 
 	pop_call();

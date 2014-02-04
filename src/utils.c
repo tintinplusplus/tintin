@@ -154,6 +154,21 @@ long long utime()
 	return gtd->time;
 }
 
+char *timestamp(char *str)
+{
+	static char outbuf[BUFFER_SIZE];
+	struct tm timeval_tm;
+	time_t    timeval_t;
+
+	timeval_t = (time_t) time(NULL);
+
+	timeval_tm = *localtime(&timeval_t);
+
+	strftime(outbuf, 100, str, &timeval_tm);
+
+	return outbuf;
+}
+
 
 char *capitalize(char *str)
 {
@@ -246,7 +261,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	{
 		if (ses->logfile)
 		{
-			logit(ses, buf, ses->logfile);
+			logit(ses, buf, ses->logfile, TRUE);
 		}
 	}
 	pop_call();
@@ -286,7 +301,7 @@ void show_debug(struct session *ses, int index, char *format, ...)
 	{
 		if (ses->logfile)
 		{
-			logit(ses, buf, ses->logfile);
+			logit(ses, buf, ses->logfile, TRUE);
 		}
 	}
 	pop_call();

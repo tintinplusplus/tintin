@@ -106,3 +106,12 @@
 	}
 }
 
+007 Append a goto to your current room when saving a map
+
+#alias {savemap}
+{
+        #map write %0;
+        #map get roomvnum room;
+        #system echo '#map goto $room' >> %0
+}
+

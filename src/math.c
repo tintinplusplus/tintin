@@ -22,8 +22,7 @@
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                          coded by Bill Reiss 1993                           *
-*                     recoded by Igor van den Hoven 2004                      *
+*                      coded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -125,7 +124,7 @@ void get_number_string(struct session *ses, char *str, char *result)
 }
 
 /*
-	Flexible tokenized mathematical expression interpreter - Igor
+	Flexible tokenized mathematical expression interpreter
 */
 
 double mathexp(struct session *ses, char *str)
@@ -163,7 +162,7 @@ double mathexp(struct session *ses, char *str)
 {                                                                 \
 	if (buffercheck && (pta == buf3 || valid == FALSE))          \
 	{                                                            \
-		return FALSE;                                           \
+		return FALSE;                                        \
 	}                                                            \
 	*pta = 0;                                                    \
 	sprintf(buf1, "%02d", level);                                \
@@ -706,7 +705,7 @@ double tineval(char *left, char *right)
 			return tintoi(left) == tintoi(right);
 	}
 }
-			
+
 double tindice(char *left, char *right)
 {
 	long long cnt, numdice, sizedice, sum;

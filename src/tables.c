@@ -255,6 +255,13 @@ struct config_type config_table[] =
 	},
 
 	{
+		"TIMESTAMP",
+		"Your log files have a timestamp appended to them",
+		"Your log files have no timestamp appended to them",
+		config_timestamp
+	},
+
+	{
 		"TINTIN CHAR",
 		"",
 		"The character used for Tintin commands",
@@ -408,10 +415,11 @@ struct map_type map_table[] =
 	{     "LEGENDA",                   map_legend,             1,1},
 	{     "LINK",                      map_link,               0,1},
 	{     "LIST",                      map_list,               1,1},
-	{     "MAP",                       map_map,                1,1},
+	{     "MAP",                       map_map,                0,0},
 	{     "MOVE",                      map_move,               1,1},
 	{     "NAME",                      map_name,               1,1},
 	{     "READ",                      map_read,               1,1},
+	{     "RETURN",                    map_return,             0,0},
 	{     "ROOMFLAG",                  map_roomflag,           0,1},
 	{     "RUN",                       map_run,                0,1},
 	{     "SET",                       map_set,                0,1},

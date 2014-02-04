@@ -145,7 +145,7 @@ int check_all_aliases(struct session *ses, char *input)
 {
 	struct listnode *node;
 	struct listroot *root;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], alias[BUFFER_SIZE], *arg;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
@@ -158,7 +158,9 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			root->update = node->next;
 
-			if (action_regexp(left, node->left))
+			substitute(ses, node->left, alias, SUB_VAR|SUB_FUN);
+
+			if (action_regexp(left, alias))
 			{
 				substitute(ses, node->right, input, SUB_ARG);
 
@@ -187,7 +189,9 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			root->update = node->next;
 
-			if (alias_glob(node->left, left))
+			substitute(ses, node->left, alias, SUB_VAR|SUB_FUN);
+
+			if (alias_glob(alias, left))
 			{
 				substitute(ses, node->right, right, SUB_ARG);
 

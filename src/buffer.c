@@ -159,7 +159,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 	{
 		if (ses->logfile)
 		{
-			logit(ses, linebuf, ses->logfile);
+			logit(ses, linebuf, ses->logfile, TRUE);
 		}
 	}
 
@@ -170,7 +170,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 
 	if (ses->logline)
 	{
-		logit(ses, linebuf, ses->logline);
+		logit(ses, linebuf, ses->logline, TRUE);
 
 		fclose(ses->logline);
 		ses->logline = NULL;

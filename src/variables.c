@@ -53,6 +53,8 @@ DO_COMMAND(do_variable)
 	else
 	{
 		internal_variable(ses, "{%s} {%s}", left, right);
+
+		show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", left, right);
 	}
 	return ses;
 }
@@ -123,7 +125,7 @@ void internal_variable(struct session *ses, char *format, ...)
 		updatenode_list(ses, left, right, "", LIST_VARIABLE);
 	}
 
-	show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", left, right);
+	show_debug(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", left, right);
 }
 
 

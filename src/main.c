@@ -257,6 +257,7 @@ void init_tintin(void)
 	gts->class          = strdup("");
 	gts->host           = strdup("");
 	gts->port           = strdup("");
+	gts->timestamp      = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
 	gts->socket         = 1;
 
