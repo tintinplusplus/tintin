@@ -83,7 +83,8 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 		{
 			if (*node->right)
 			{
-				substitute(ses, node->right, original, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL);
+				substitute(ses, node->right, original, SUB_ARG);
+				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL);
 			}
 
 			show_debug(ses, LIST_PROMPT, "#PROMPT DEBUG: %s", original);
@@ -115,7 +116,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 
 	if (row <= ses->top_row && row >= ses->bot_row)
 	{
-		show_message(ses, LIST_PROMPT, "#ERROR: INVALID PROMPT ROW: {%s} {%d}", prompt, row);
+		show_message(ses, LIST_PROMPT, "#ERROR: INVALID PROMPT ROW: {%s} {%d}.", prompt, row);
 
 		return;
 	}

@@ -91,6 +91,7 @@ typedef struct session *COMMAND (struct session *ses, char *arg);
 typedef void            MAP     (struct session *ses, char *left, char *right);
 typedef void            CURSOR  (char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
+typedef void            LINE    (struct session *ses, char *arg);
 
 /*
 	A bunch of constants
@@ -117,7 +118,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define BUFFER_SIZE                  15000
 #define NUMBER_SIZE                    100
 
-#define VERSION_NUM               "1.98.0"
+#define VERSION_NUM               "1.98.1"
 
 #define ESCAPE                          27
 
@@ -297,7 +298,6 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define LIST_FLAG_WRITE               (1 <<  6)
 #define LIST_FLAG_SHOW                (1 <<  7)
 #define LIST_FLAG_INHERIT             (1 <<  8)
-
 #define LIST_FLAG_DEFAULT             LIST_FLAG_MESSAGE
 
 #define NODE_FLAG_MAX                 (1 <<  0)
@@ -447,6 +447,7 @@ typedef void            PATH    (struct session *ses, char *arg);
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
 #define DO_MAP(map) void map (struct session *ses, char *left, char *right)
 #define DO_PATH(path) void path (struct session *ses, char *arg)
+#define DO_LINE(line) void line (struct session *ses, char *arg)
 #define DO_CURSOR(cursor) void cursor (char *arg)
 
 
@@ -683,9 +684,15 @@ struct timer_type
 struct path_type
 {
 	char                  * name;
-	PATH                  * fun;
+	PATH                  * fun; 	
 };
-
+  
+struct line_type
+{
+	char                  * name;
+	LINE                  * fun;
+};
+  
 struct str_hash_data
 {
 	struct str_hash_data    * next;
@@ -1178,12 +1185,21 @@ extern int get_highlight_codes(struct session *ses, char *htype, char *result);
 #define __HISTORY_H__
 
 extern DO_COMMAND(do_history);
-
 extern void add_line_history(struct session *ses, char *line);
 extern void search_line_history(struct session *ses, char *line);
-
 extern int write_history(struct session *ses, char *filename);
 extern int read_history(struct session *ses, char *filename);
+
+#endif
+
+
+#ifndef __LINE_H__
+#define __LINE_H__
+extern DO_COMMAND(do_line);
+extern DO_LINE(line_gag);
+extern DO_LINE(line_log);
+extern DO_LINE(line_skipgags);
+
 #endif
 
 
@@ -1428,6 +1444,7 @@ extern struct list_type list_table[LIST_MAX];
 extern struct map_type map_table[];
 extern struct timer_type timer_table[];
 extern struct path_type path_table[];
+extern struct line_type line_table[];
 
 #endif
 
@@ -1487,6 +1504,8 @@ extern void socket_printf(struct session *ses, size_t length, char *format, ...)
 
 extern void tintin_printf2(struct session *ses, char *format, ...);
 extern void tintin_printf(struct session *ses, char *format, ...);
+
+extern void tintin_puts3(struct session *ses, char *string);
 extern void tintin_puts2(struct session *ses, char *string);
 extern void tintin_puts(struct session *ses, char *string);
 

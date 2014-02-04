@@ -39,7 +39,7 @@ DO_COMMAND(do_history)
 	arg = get_arg_in_braces(arg, left,  0);
 	arg = get_arg_in_braces(arg, right, 1);
 
-	switch (left[0])
+	switch (tolower(left[0]))
 	{
 		case 'd':
 			deletenode_list(gts, root->l_node, LIST_HISTORY);
@@ -47,6 +47,14 @@ DO_COMMAND(do_history)
 
 		case 'i':
 			insertnode_list(gts, right, "", "", LIST_HISTORY);
+			break;
+
+		case 'r':
+			read_history(gts, right);
+			break;
+
+		case 'w':
+			write_history(gts, right);
 			break;
 
 		default:
@@ -142,6 +150,7 @@ int write_history(struct session *ses, char *filename)
 
 	if (file == NULL)
 	{
+		tintin_printf2(ses, "#HISTORY: COULDN'T OPEN FILE {%s} TO WRITE.", filename);
 		return FALSE;
 	}
 
@@ -158,13 +167,26 @@ int write_history(struct session *ses, char *filename)
 int read_history(struct session *ses, char *filename)
 {
 	FILE *file;
+	struct listroot *root;
 	char *cptr, buffer[BUFFER_SIZE];
+
+	root = ses->list[LIST_HISTORY];
 
 	file = fopen(filename, "r");
 
 	if (file == NULL)
 	{
+		tintin_printf2(ses, "#HISTORY: COULDN'T OPEN FILE {%s} TO READ.", filename);
 		return FALSE;
+	}
+
+	while (root->f_node)
+	{
+		if (root->f_node == gtd->input_his)
+		{
+			gtd->input_his = NULL;
+		}
+		deletenode_list(ses, root->f_node, LIST_HISTORY);
 	}
 
 	while (fgets(buffer, BUFFER_SIZE-1, file))

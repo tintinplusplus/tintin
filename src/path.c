@@ -38,7 +38,7 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|RUN|WALK|DEL|INS|MAP} {argument}");
+		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {NEW|END|SAVE|LOAD|RUN|WALK|DEL|INS|MAP} {argument}.");
 	}
 	else
 	{
@@ -255,7 +255,7 @@ DO_PATH(path_del)
 
 	if (root->l_node)
 	{
-		show_message(ses, LIST_PATH, "#PATH DEL: DELETED MOVE {%s}", root->l_node->left);
+		show_message(ses, LIST_PATH, "#PATH DEL: DELETED MOVE {%s}.", root->l_node->left);
 		deletenode_list(ses, root->l_node, LIST_PATH);
 	}
 	else
@@ -372,7 +372,7 @@ DO_PATH(path_walk)
 				break;
 
 			default:
-				tintin_printf(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}");
+				tintin_printf(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}.");
 				break;
 		}
 		ses->flags = flags;
@@ -410,7 +410,7 @@ DO_COMMAND(do_pathdir)
 	{
 		if (show_node_with_wild(ses, left, LIST_PATHDIR) == FALSE)
 		{
-			show_message(ses, LIST_PATHDIR, "#NO MATCH(ES) FOUND FOR {%s}", left);
+			show_message(ses, LIST_PATHDIR, "#NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else
@@ -421,7 +421,7 @@ DO_COMMAND(do_pathdir)
 		}
 		updatenode_list(ses, left, right, coord, LIST_PATHDIR);
 
-		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}", left, right, coord);
+		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}.", left, right, coord);
 	}
 	return ses;
 }

@@ -45,7 +45,7 @@ DO_COMMAND(do_list)
 
 	if (*left == 0 || *right == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {listname} {CLR|DEL|FND|GET|INS|LEN|SET|SRT} {argument}");
+		show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {listname} {CLR|DEL|FND|GET|INS|LEN|SET|SRT} {argument}.");
 	}
 	else
 	{
@@ -59,7 +59,7 @@ DO_COMMAND(do_list)
 
 		if (*array_table[cnt].name == 0)
 		{
-			show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {%s} {CLR|DEL|FND|INS|GET|SET|LEN} {argument}", left);
+			show_message(ses, LIST_VARIABLE, "#SYNTAX: #LIST {%s} {CLR|DEL|FND|INS|GET|SET|LEN} {argument}.", left);
 		}
 		else
 		{

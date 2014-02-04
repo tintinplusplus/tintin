@@ -154,7 +154,7 @@ DO_COMMAND(do_system)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #SYSTEM {COMMAND}");
+		tintin_printf(ses, "#SYNTAX: #SYSTEM {COMMAND}.");
 		return ses;
 	}
 

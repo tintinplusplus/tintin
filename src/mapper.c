@@ -430,6 +430,7 @@ DO_MAP(map_info)
 		tintin_printf2(ses, "%-20s %s", "Avoid:",          HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_AVOID) ? "on" : "off");
 		tintin_printf2(ses, "%-20s %s", "Hide:",           HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_HIDE) ? "on" : "off");		
 		tintin_printf2(ses, "%-20s %s", "Leave:",          HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE) ? "on" : "off");
+		tintin_printf2(ses, "%-20s %s", "Void:",           HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID) ? "on" : "off");
 
 		for (exit = ses->map->room_list[ses->map->in_room]->f_exit ; exit ; exit = exit->next)
 		{
@@ -539,7 +540,7 @@ DO_MAP(map_link)
 
 	if ((room = find_room(ses, right)) == -1)
 	{
-		tintin_printf2(ses, "#MAP: Couldn't find room {%s}", right);
+		tintin_printf2(ses, "#MAP: Couldn't find room {%s}.", right);
 		return;
 	}
 
@@ -837,22 +838,39 @@ DO_MAP(map_undo)
 
 DO_MAP(map_unlink)
 {
-	struct exit_data *exit;
+	struct exit_data *exit1;
+	struct exit_data *exit2;
+	struct listnode *node;
 
 	CHECK_INSIDE();
 
-	exit = find_exit(ses, ses->map->in_room, left);
+	node = searchnode_list(ses->list[LIST_PATHDIR], left);
 
-	if (exit == NULL)
+	exit1 = find_exit(ses, ses->map->in_room, left);
+
+	if (exit1 == NULL)
 	{
-		tintin_printf2(ses, "#MAP: No exit with that name found");
+		tintin_printf2(ses, "#MAP UNLINK: No exit with that name found");
 
 		return;
 	}
 
-	delete_exit(ses, ses->map->in_room, exit);
+	if (*right == 'b')
+	{
+		if (node)
+		{
+			exit2 = find_exit(ses, exit1->vnum, node->right);
 
-	tintin_printf2(ses, "#MAP: Exit deleted.");
+			if (exit2)
+			{
+				delete_exit(ses, exit1->vnum, exit2);
+			}
+		}
+	}
+
+	delete_exit(ses, ses->map->in_room, exit1);
+
+	tintin_printf2(ses, "#MAP UNLINK: Exit deleted.");
 }
 
 DO_MAP(map_walk)
@@ -1002,7 +1020,7 @@ int create_room(struct session *ses, char *arg)
 
 	ses->map->room_list[newroom->vnum] = newroom;
 
-	tintin_printf2(ses, "#READMAP R %5s {%s}", vnum, name);
+	tintin_printf2(ses, "#READMAP R %5s {%s}.", vnum, name);
 
 	return newroom->vnum;
 }
@@ -1059,7 +1077,7 @@ void create_exit(struct session *ses, int room, char *arg)
 
 	LINK(newexit, ses->map->room_list[room]->f_exit, ses->map->room_list[room]->l_exit);
 
-	tintin_printf2(ses, "#READMAP E %5s {%s} {%s}", vnum, name, cmd);
+	tintin_printf2(ses, "#READMAP E %5s {%s} {%s}.", vnum, name, cmd);
 }
 
 void delete_exit(struct session *ses, int room, struct exit_data *exit)

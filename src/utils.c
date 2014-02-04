@@ -42,7 +42,7 @@ int is_abbrev(char *s1, char *s2)
 	{
 		return (FALSE);
 	}
-	return(!strncasecmp(s2, s1, strlen(s1)));
+	return (!strncasecmp(s2, s1, strlen(s1)));
 }
 
 int is_suffix(char *s1, char *s2)
@@ -327,6 +327,54 @@ void tintin_printf(struct session *ses, char *format, ...)
 	va_end(args);
 
 	tintin_puts(ses, buf);
+}
+
+/*
+	Like tintin_puts2, but no color codes added
+*/
+
+void tintin_puts3(struct session *ses, char *string)
+{
+	char output[STRING_SIZE];
+
+	if (ses == NULL)
+	{
+		ses = gtd->ses;
+	}
+
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet)
+	{
+		return;
+	}
+
+	if (strip_vt102_strlen(ses->more_output) != 0)
+	{
+		sprintf(output, "\r\n%s", string);
+	}
+	else
+	{
+		sprintf(output, "%s", string);
+	}
+
+	add_line_buffer(ses, output, FALSE);
+
+	if (ses != gtd->ses)
+	{
+		return;
+	}
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		save_pos(ses);
+		goto_rowcol(ses, ses->bot_row, 1);
+	}
+
+	printline(ses, output, FALSE);
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+	{
+		restore_pos(ses);
+	}
 }
 
 /*

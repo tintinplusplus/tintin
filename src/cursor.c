@@ -272,7 +272,7 @@ DO_CURSOR(cursor_echo)
 	}
 	else
 	{
-		tintin_printf(NULL, "#SYNTAX: #CURSOR {ECHO} {ON|OFF}");
+		tintin_printf(NULL, "#SYNTAX: #CURSOR {ECHO} {ON|OFF}.");
 	}
 }
 
@@ -505,11 +505,25 @@ DO_CURSOR(cursor_history_find)
 
 	if (node)
 	{
-		input_printf("\0337\033[%dC\033[0K%.*s\0338", gtd->input_len - gtd->input_cur + 3, gtd->ses->cols - 16 - gtd->input_len, node->left);
+		if (gtd->input_len == gtd->input_cur)
+		{
+			input_printf("\0337\033[0K]   %.*s\0338", gtd->ses->cols - 16 - gtd->input_len, node->left);
+		}
+		else
+		{
+			input_printf("\0337\033[%dC\033[0K]\033[3C%.*s\0338", gtd->input_len - gtd->input_cur, gtd->ses->cols - 16 - gtd->input_len, node->left);
+		}
 	}
 	else
 	{
-		input_printf("\033[%dC\033[0K\033[%dD", gtd->input_len - gtd->input_cur + 3, gtd->input_len - gtd->input_cur + 3);
+		if (gtd->input_len == gtd->input_cur)
+		{
+			input_printf("\0337\033[0K]\0338");
+		}
+		else
+		{
+			input_printf("\0337\033[%dC\033[0K]\0338", gtd->input_len - gtd->input_cur);
+		}
 	}
 	pop_call();
 }
@@ -553,7 +567,7 @@ DO_CURSOR(cursor_insert)
 	}
 	else
 	{
-		tintin_printf(NULL, "#SYNTAX: #CURSOR {INSERT} {ON|OFF}");
+		tintin_printf(NULL, "#SYNTAX: #CURSOR {INSERT} {ON|OFF}.");
 	}
 }
 

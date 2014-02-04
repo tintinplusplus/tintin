@@ -77,7 +77,7 @@ DO_COMMAND(do_highlight)
 		{
 			updatenode_list(ses, left, right, rank, LIST_HIGHLIGHT);
 
-			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}", left, right, rank);
+			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}.", left, right, rank);
 		}
 	}
 	return ses;
@@ -91,42 +91,6 @@ DO_COMMAND(do_unhighlight)
 	return ses;
 }
 
-/*
-void check_all_highlights(struct session *ses, char **original, char *line)
-{
-	struct listnode *node;
-	char *pt1, *pt2, *pt3;
-	char *buf1, buf2[BUFFER_SIZE], buf3[BUFFER_SIZE], temp[BUFFER_SIZE];
-
-	for (node = ses->list[LIST_HIGHLIGHT]->f_node ; node ; node = node->next)
-	{
-		if (check_one_action(line, *original, node->left, ses))
-		{
-			substitute(ses, node->left, &buf1, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
-
-			pt1 = strstr(*original, buf1) ? *original : line;
-			pt2 = strstr(pt1, buf1);
-
-			if (pt2 == NULL)
-			{
-				continue;
-			}
-			*pt2 = 0;
-			pt3 = pt2 + strlen(buf1);
-
-			strip_non_vt102_codes(pt1, buf2);
-			strip_vt102_codes_non_graph(buf2, buf3);
-
-			get_highlight_codes(ses, node->right, buf2);
-
-			sprintf(temp, "%s%s%s\033[0m%s%s", pt1, buf2, buf1, buf3, pt3);
-
-			substitute(ses, temp, original, 0);
-		}
-	}
-}
-*/
-
 void check_all_highlights(struct session *ses, char *original, char *line)
 {
 	struct listnode *node;
@@ -137,7 +101,8 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 	{
 		if (check_one_action(line, original, node->left, ses))
 		{
-			substitute(ses, node->left, match, SUB_VAR|SUB_FUN|SUB_ARG|SUB_ANC|SUB_ESC);
+			substitute(ses, node->left, match, SUB_ARG);
+			substitute(ses, match, match, SUB_VAR|SUB_FUN|SUB_ANC|SUB_ESC);
 
 			if (strstr(original, match) == NULL)
 			{

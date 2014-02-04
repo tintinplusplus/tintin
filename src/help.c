@@ -70,7 +70,7 @@ struct help_type help_table[] =
 	},
 	{
 		"ALIAS",
-		"<178>Command<078>: #alias <178>{<078>word<178><178>}<078> {<078>commands<178>}<078>\n"
+		"<178>Command<078>: #alias <178>{<078>word<178>} {<078>commands<178>}<078>\n"
 		"\n"
 		"         Defines a word that actually means a different word. Useful for long\n"
 		"         commands repeated often.  You can have multiple commands aliased to\n"
@@ -112,7 +112,7 @@ struct help_type help_table[] =
 	},
 	{
 		"BUFFER",
-		"<178>Command<078>: #buffer <178>{<078>home|up|down|end|find|write filename|info<178>}<078>\n"
+		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>find<178>|<078>write filename<178>|<078>info<178>}<078>\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The write option allows you to save\n"
 		"         the entire scrollback buffer to file.\n"
@@ -158,7 +158,7 @@ struct help_type help_table[] =
 	},
 	{
 		"CLASS",
-		"<178>Command<078>: #class <178>{<078>name<178>}<078> <178>{<078>open|close|read filename|write filename|kill<178>}<078>\n"
+		"<178>Command<078>: #class <178>{<078>name<178>}<078> <178>{<078>open<178>|<078>close<178>|<078>read filename<178>|<078>write filename<178>|<078>kill<178>}<078>\n"
 		"\n"
 		"         The {open} option will open a class, closing a previously opened\n"
 		"         class. All triggers added afterwards are assigned to this class.\n"
@@ -176,7 +176,7 @@ struct help_type help_table[] =
 	},
 	{
 		"COLORS",
-		"         <<888>xyz>  with x, y, z being parameters\n"
+		"<178>Syntax<078>:  <<888>xyz>  with x, y, z being parameters\n"
 		"\n"
 		"         Parameter 'x': VT102 code\n"
 		"\n"
@@ -240,7 +240,7 @@ struct help_type help_table[] =
 	},
 	{
 		"DEBUG",
-		"<178>Command<078>: #debug <178>{<078>listname<178>}<078> <178>{<078>on|off|log<178>}<078>\n"
+		"<178>Command<078>: #debug <178>{<078>listname<178>}<078> <178>{<078>on<178>|<078>off<178>|<078>log<178>}<078>\n"
 		"\n"
 		"         Toggles a list on or off. With no argument it shows your current\n"
 		"         settings, as well as the list names that you can debug.\n"
@@ -398,16 +398,6 @@ struct help_type help_table[] =
 		"<178>Comment<078>: You can remove a gag with the #ungag command.\n"
 	},
 	{
-		"GAGLINE",
-		"<178>Command<078>: #gagline\n"
-		"\n"
-		"         The gagline command will stop the next line from being displayed.\n"
-		"         If used in an action it will work in a similar fashion as the gag\n"
-		"         command. If you use gagline before a showme in an action the showme\n"
-		"         will be gagged, rather than the line triggering the action. To avoid\n"
-		"         this place the gagline command add the end of the action."
-	},
-	{
 		"GREP",
 		"<178>Command<078>: #grep <178>[<078>page<178>]<078> <178>{<078>search string<178>}<078>\n"
 		"\n"
@@ -445,6 +435,8 @@ struct help_type help_table[] =
 		"         You may start the string to highlight with a ^ to only highlight text\n"
 		"         if it begins the line.\n"
 		"\n"
+		"         Besides color names also <abc> color codes can be used.\n"
+		"\n"
 		"<178>Comment<078>: This command is only compatible with ANSI/VT100 terminals or emulators.\n"
 		"\n"
 		"\n"
@@ -467,9 +459,13 @@ struct help_type help_table[] =
 	{
 		"HISTORY",
 		"<178>Command<078>: #history <178>{<078>delete<178>}<078> \n"
-		"         #history <178>{<078>insert} <178>{<078>command<178>}<078>\n"
+		"         #history <178>{<078>insert<178>} {<078>command<178>}<078>\n"
+		"         #history <178>{<078>read<178>}   {<078>filename<178>}<078>\n"
+		"         #history <178>{<078>write<178>}  {<078>filename<178>}<078>\n"
 		"\n"
-		"         Either deletes the last command or inserts a new last command.\n"
+		"         Either deletes the last command, inserts a new last command,\n"
+		"         or saves/loads the history from file.\n"
+		"\n"
 		"         Without an argument your entire command history is shown.\n"
 	},
 	{
@@ -495,7 +491,7 @@ struct help_type help_table[] =
 	},
 	{
 		"IGNORE",
-		"<178>Command<078>: #ignore <178>{<078>listname<178>}<078> <178>{<078>on|off<178>}<078>\n"
+		"<178>Command<078>: #ignore <178>{<078>listname<178>}<078> <178>{<078>on<178>|<078>off<178>}<078>\n"
 		"\n"
 		"         Toggles a list on or off. With no arguments it shows your current\n"
 		"         settings, as well as the list names that you can ignore.\n"
@@ -513,7 +509,7 @@ struct help_type help_table[] =
 	},
 	{
 		"KILL",
-		"<178>Command<078>: #kill <178>{<078>list|all<178>}<078>\n"
+		"<178>Command<078>: #kill <178>{<078>list<178>|<078>all<178>}<078>\n"
 		"\n"
 		"         Without an argument, kill commanddeletes all lists.  Useful so you\n"
 		"         don't have to exit tintin to load up a new command file.\n"
@@ -521,8 +517,16 @@ struct help_type help_table[] =
 		"         With an argument a specific list can be killed.\n"
 	},
 	{
+		"LINE",
+		"<178>Command<078>: #line <178>{<078>gag<178>|<078>log<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"\n"
+		"         #line log {filename} {[text]}  Log the next line or the given text to\n"
+		"                                        file.\n"
+		"         #line gag                      Gag the next line.\n"
+	},
+	{
 		"LIST",
-		"<178>Command<078>: #list <178>{<078>variable<178>}<078> <178>{<078>clr|del|ins|get|len|set|srt<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<078>: #list <178>{<078>variable<178>}<078> <178>{<078>clr<178>|<078>del<178>|<078>ins<178>|<078>get<178>|<078>len<178>|<078>set<178>|<078>srt<178>}<078> <178>{<078>argument<178>}<078>\n"
 		"\n"
 		"         #list {list} {clr}                     Empty the given list\n"
 		"         #list {list} {del} {index}             Delete an item from the list\n"
@@ -547,18 +551,11 @@ struct help_type help_table[] =
 
 	{
 		"LOG",
-		"<178>Command<078>: #log <178>{<078>append|overwrite<178>}<078> <178>{<078>filename<178>}<078>\n"
+		"<178>Command<078>: #log <178>{<078>append<178>|<078>overwrite<178>}<078> <178>{<078>filename<178>}<078>\n"
 		"\n"
 		"         Logs session to a file, you can set the data type with config command.\n"
 	},
-	{
-		"LOGLINE",
-		"<178>Command<078>: #logline <178>{<078>filename<178>}<078> <178>{<078>text<178>}<078>\n"
-		"\n"
-		"         If used in an an action it will log that line to the given file.\n"
-		"         The {text} argument is optional, and if used it will instead log\n"
-		"         the given text instead.\n"
-	},
+
 	{
 		"LOOP",
 		"<178>Command<078>: #loop <178>{<078>start finish<178>}<078> <178>{<078>commands<178>}<078>\n"
@@ -648,7 +645,7 @@ struct help_type help_table[] =
 		"         #map info: Gives information about the map and room you are in.\n"
 		"\n"
 		"         #map insert: Insert a room in the given direction. Useful for\n"
-		"                   inserting void rooms.\n"
+		"                  inserting void rooms.\n"
 		"\n"
 		"         #map leave: Makes you leave the map. Useful when entering a maze.\n"
 		"\n"
@@ -689,16 +686,22 @@ struct help_type help_table[] =
 		"         #map roomflag leave: When entering a room with this flag, you will\n"
 		"                  automatically leave the map. Useful when set at the entrance\n"
 		"                  of an unmappable maze.\n"
+		"         #map roomflag void: When set the room becomes a spacing room that can be\n"
+		"                  used to connect otherwise overlapping areas. A void room should\n"
+		"                  only have two exits. When entering a void room you are automatically\n"
+		"                  moved to the connecting room until you enter a non void room.\n"
 		"\n"
 		"         #map travel <direction> <delay>: Follows the direction until a dead end or an\n"
 		"                  intersection is found. Use braces around the direction if you use\n"
 		"                  the delay, which will add the given delay between movements.\n"
 		"\n"
-		"         #map undo: Will delete the room you are in and move you out.\n"
+		"         #map undo: Will undo your last move. If this created a room or a link they\n"
+		"                  will be deleted, otherwise you'll simply move back a room.\n"
 		"                  Useful if you walked into a non existant direction.\n"
 		"\n"
-		"         #map unlink <direction>: Will remove the exit, this is never two way so\n"
+		"         #map unlink <direction> [both]: Will remove the exit, this isn't two way so\n"
 		"                  you can have the map properly display no exit rooms and mazes.\n"
+		"                  If you use the both argument the exit is removed two-ways.\n"
 		"\n"
 		"         #map walk <room name> <delay>: Calculates the shortest path to the\n"
 		"                  destination and walks you there. Use braces around the room\n"
@@ -754,7 +757,7 @@ struct help_type help_table[] =
 	},
 	{
 		"MESSAGE",
-		"<178>Command<078>: #message <178>{<078>listname<178>}<078> <178>{<078>on|off<178>}<078>\n"
+		"<178>Command<078>: #message <178>{<078>listname<178>}<078> <178>{<078>on<178>|<078>off<178>}<078>\n"
 		"\n"
 		"         This will show the message status of all your lists if typed without an\n"
 		"         argument. If you set for example VARIABLES to OFF you will no longer be\n"
@@ -787,7 +790,7 @@ struct help_type help_table[] =
 	},
 	{
 		"PATH",
-		"<178>Command<078>: #path <178>{<078>del|end|ins|load|map|new|run|save|walk<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<078>: #path <178>{<078>del<178>|<078>end<178>|<078>ins<178>|<078>load<178>|<078>map<178>|<078>new<178>|<078>run<178>|<078>save<178>|<078>walk<178>}<078> <178>{<078>argument<178>}<078>\n"
 		"\n"
 		"         #path del:  Will delete the last move of the path.\n"
 		"         #path end:  Movement commands are no longer added to the path.\n"
@@ -908,7 +911,7 @@ struct help_type help_table[] =
 	},
 	{
 		"SCRIPT",
-		"<178>Command<078>: #script <178>{<078>shell command<178>}\n"
+		"<178>Command<078>: #script <178>{<078>shell command<178>}<078>\n"
 		"\n"
 		"         The script command works much like the system command except that it\n"
 		"         treats the generated echos as commands.\n"
@@ -957,7 +960,7 @@ struct help_type help_table[] =
 		"         status, warnings, etc.  The {row} number is optional and works the same\n"
 		"         way as the row number of the #prompt trigger.\n"
 		"\n"
-		"<178>Example<078>: #action {%0 ultraslays you}\\\n"
+		"<178>Example<078>: #action {%0 ultraslays you.}\n"
 		"           {#showme {###### ARGH! We were ultraslayed by %0 ######};#gagline}\n"
 		"         Emphasis ultraslaying.\n"
 	},
@@ -971,7 +974,7 @@ struct help_type help_table[] =
 	},
 	{
 		"SPEEDWALK",
-		"         Speedwalking allows you to type multiple directions not separated by\n"
+		"         <078>Speedwalking allows you to type multiple directions not separated by\n"
 		"         semicolons, and now it lets you prefix a direction with a number, to\n"
 		"         signify how many times to go that direction. You can turn it on/off\n"
 		"         with #config.\n"
@@ -1204,7 +1207,7 @@ DO_COMMAND(do_help)
 					}
 					*ptf++ = 0;
 
-					tintin_printf2(ses, "%s", pto);
+					tintin_puts3(ses, pto);
 
 					pto = ptf;
 				}

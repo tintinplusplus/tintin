@@ -121,6 +121,10 @@ void read_line(void)
 
 				gtd->macro_buf[0] = 0;
 
+				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+				{
+					cursor_history_find("");
+				}
 				return;
 			}
 			else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
@@ -136,6 +140,10 @@ void read_line(void)
 				cursor_table[cnt].fun("");
 				gtd->macro_buf[0] = 0;
 
+				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
+				{
+					cursor_history_find("");
+				}
 				return;
 			}
 			else if (!strncmp(gtd->macro_buf, cursor_table[cnt].code, strlen(gtd->macro_buf)))

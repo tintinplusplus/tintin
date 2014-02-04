@@ -35,8 +35,6 @@
 struct session *gts;
 struct tintin_data *gtd;
 
-
-
 void pipe_handler(int signal)
 {
 	tintin_printf(NULL, "broken_pipe: dumping stack");
@@ -185,6 +183,7 @@ int main(int argc, char **argv)
 		syserr("signal SIGWINCH");
 	}
 
+/*
 	if (getenv("HOME") != NULL)
 	{
 		char filename[256];
@@ -193,6 +192,7 @@ int main(int argc, char **argv)
 
 		read_history(gts, filename);
 	}
+*/
 
 	srand48(time(NULL));
 
@@ -365,6 +365,8 @@ void quitmsg(char *message)
 		close(gtd->chat->fd);
 	}
 
+	check_all_events(gts, "PROGRAM TERMINATION");
+/*
 	if (gtd->history_size)
 	{
 		char filename[BUFFER_SIZE];
@@ -373,7 +375,7 @@ void quitmsg(char *message)
 
 		write_history(gts, filename);
 	}
-
+*/
 	reset_terminal();
 
 	clean_screen(gts);

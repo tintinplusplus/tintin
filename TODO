@@ -4,13 +4,11 @@
 
 GENERAL STUFF:
 
-- fix web site compile info, check request in forum.
+- events for input and prompt lines
 
-- fix ctrl-r display stuff.
+- add line substitute option, to substitute variables and functions.
 
 - add a #line gag/skip/log command.
-
-- events for text and input and prompt lines
 
 - tab completion based on scroll back history
 

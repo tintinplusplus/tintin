@@ -150,7 +150,7 @@ DO_COMMAND(do_replacestring)
 	}
 	else if ((ptr = strstr(node->right, old)) == NULL)
 	{
-		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: {%s} NOT FOUND IN {%s}", old, node->right);
+		show_message(ses, LIST_VARIABLE, "#REPLACESTRING: {%s} NOT FOUND IN {%s}.", old, node->right);
 	}
 	else
 	{
@@ -400,7 +400,7 @@ DO_COMMAND(do_format)
 
 	if (*destvar == 0 || *format == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #format {variable} {format} {arguments}");
+		tintin_printf2(ses, "#SYNTAX: #format {variable} {format} {arguments}.");
 
 		return ses;
 	}
@@ -546,7 +546,7 @@ DO_COMMAND(do_format)
 						break;
 
 					default:
-						show_message(ses, LIST_VARIABLE, "#FORMAT: UNKNOWN ARGUMENT {%%%c}", *ptf);
+						show_message(ses, LIST_VARIABLE, "#FORMAT: UNKNOWN ARGUMENT {%%%c}.", *ptf);
 						break;
 				}
 				*ptf = 's';
@@ -557,7 +557,7 @@ DO_COMMAND(do_format)
 
 	sprintf(argument, format, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
 
-/*	show_message(ses, LIST_VARIABLE, "#FORMAT: $%s IS NOW SET TO {%s}", destvar, argument); */
+/*	show_message(ses, LIST_VARIABLE, "#FORMAT: $%s IS NOW SET TO {%s}.", destvar, argument); */
 
 	internal_variable(ses, "{%s} {%s}", destvar, argument);
 

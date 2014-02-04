@@ -64,7 +64,7 @@ DO_COMMAND(do_math)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #MATH {variable} {expression}");
+		tintin_printf2(ses, "#SYNTAX: #MATH {variable} {expression}.");
 	}
 	else
 	{
@@ -83,7 +83,7 @@ DO_COMMAND(do_if)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #IF {expression} {true} {false}");
+		tintin_printf2(ses, "#SYNTAX: #IF {expression} {true} {false}.");
 	}
 	else
 	{
@@ -136,7 +136,7 @@ double mathexp(struct session *ses, char *str)
 
 	if (mathexp_tokenize(ses, str) == FALSE)
 	{
-		tintin_printf2(ses, "#MATH EXP: INVALID INPUT {%s}", str);
+		tintin_printf2(ses, "#MATH EXP: INVALID INPUT {%s}.", str);
 
 		return 0;
 	}

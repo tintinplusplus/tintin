@@ -27,6 +27,7 @@
 ******************************************************************************/
 
 #include <regex.h>
+#include <sys/types.h>
 
 #include "tintin.h"
 
@@ -115,7 +116,7 @@ DO_COMMAND(do_regexp)
 
 	if (*left == 0 || *right == 0 || *true == 0)
 	{
-		tintin_printf2(ses, "SYNTAX: #REGEXP {string} {expression} {true} {false}");
+		tintin_printf2(ses, "SYNTAX: #REGEXP {string} {expression} {true} {false}.");
 	}
 	else
 	{
@@ -405,7 +406,7 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 					substitute(ses, temp, buf, flags_neol);
 
-					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, buf);
+					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}.", node->left, buf);
 
 					RESTRING(gtd->vars[0], buf);
 
@@ -427,9 +428,9 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 
 					DEL_BIT(ses->flags, SES_FLAG_BREAK);
 
-					substitute(ses, "$result", pto, SUB_VAR);
+					substitute(ses, "$result", pto, flags_neol|SUB_VAR);
 
-					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}", node->left, pto);
+					show_debug(ses, LIST_FUNCTION, "#FUNCTION DEBUG: {%s} {%s}.", node->left, pto);
 
 					pto += strlen(pto);
 				}
@@ -488,6 +489,20 @@ void substitute(struct session *ses, char *string, char *result, int flags)
 									case '\\':
 										*pto++ = '\\';
 										*pto++ = '\\';
+										break;
+
+									case '{':
+										*pto++ = '\\';
+										*pto++ = 'x';
+										*pto++ = '7';
+										*pto++ = 'B';
+										break;
+
+									case '}':
+										*pto++ = '\\';
+										*pto++ = 'x';
+										*pto++ = '7';
+										*pto++ = 'D';
 										break;
 
 									default:

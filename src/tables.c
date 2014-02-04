@@ -60,6 +60,7 @@ struct command_type command_table[] =
 	{	"ignore",            do_ignore,            CMD_FLAG_SUB     },
 	{	"info",              do_info,              CMD_FLAG_NONE    },
 	{	"killall",           do_killall,           CMD_FLAG_NONE    },
+	{	"line",              do_line,              CMD_FLAG_SUB     },
 	{	"list",              do_list,              CMD_FLAG_SUB     },
 	{	"log",               do_log,               CMD_FLAG_SUB     },
 	{	"logline",           do_logline,           CMD_FLAG_SUB     },
@@ -398,7 +399,7 @@ struct map_type map_table[] =
 	{     "SET",                       map_set,                0,1},
 	{     "TRAVEL",                    map_travel,             1,1},
 	{     "UNDO",                      map_undo,               1,1},
-	{     "UNLINK",                    map_unlink,             1,1},
+	{     "UNLINK",                    map_unlink,             0,1},
 	{     "WALK",                      map_walk,               1,1},
 	{     "WRITE",                     map_write,              1,1},
 	{     "",                          NULL,                   1,1}
@@ -672,8 +673,10 @@ struct timer_type timer_table[] =
 struct event_type event_table[] =
 {
 	{    "MAP ENTER ROOM",               "Triggers when entering a map room."    },
+	{    "PROGRAM TERMINATION",          "Triggers when main session exists."    },
+	{    "RECEIVED LINE",                "Triggers when a new line is received." },
 	{    "SESSION CONNECTED",            "Triggers when a new session connects." },
-	{    "SESSION DISCONNECTED",         "Triggers when session disconnects."    },
+	{    "SESSION DISCONNECTED",         "Triggers when a session disconnects."  },
 	{    "",                             ""                                      }
 };
 
@@ -688,5 +691,13 @@ struct path_type path_table[] =
 	{    "RUN",                        path_run               },
 	{    "SAVE",                       path_save              },
 	{    "WALK",                       path_walk              },
+	{    "",                           NULL                   }
+};
+
+
+struct line_type line_table[] =
+{
+	{    "GAG",                        line_gag               },
+	{    "LOG",                        line_log               },
 	{    "",                           NULL                   }
 };

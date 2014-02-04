@@ -676,11 +676,11 @@ void process_chat_connections(fd_set *read_set, fd_set *write_set, fd_set *exc_s
 
 void chat_socket_printf(struct chat_data *buddy, char *format, ...)
 {
-	char buf[STRING_SIZE];
+	char buf[BUFFER_SIZE];
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buf, format, args);
+	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
 	va_end(args);
 
 	if (!HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST))
@@ -701,7 +701,7 @@ void chat_printf(char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buf, format, args);
+	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
 	va_end(args);
 
 	if (strncmp(buf, "<CHAT>", 6))
@@ -774,6 +774,16 @@ int process_chat_input(struct chat_data *buddy)
 			RESTRING(buddy->name, name);
 
 			buddy->timeout = 0;
+
+			if (strlen(buddy->name) > 20)
+			{
+				chat_socket_printf(buddy, "%c\n%s has refused your connection because your name is too long.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
+
+				chat_printf("Refusing connection from %.21s:%d, name too long. (%d characters)", buddy->ip, buddy->port, strlen(buddy->name));
+
+				pop_call();
+				return -1;
+			}
 
 			for (node = gtd->chat ; node ; node = node->next)
 			{
@@ -1037,7 +1047,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 				break;
 
 			default:
-				tintin_printf(NULL, "get_chat_commands: unknown option [%d] (%s)", ptc, txt);
+				chat_printf("get_chat_commands: unknown option [%d] from %s@%s:%d (%s)", ptc, buddy->name, buddy->ip, buddy->port, txt);
 				break;
 		}
 		pti++;
@@ -1057,11 +1067,22 @@ void chat_name_change(struct chat_data *buddy, char *txt)
 
 	strip_vt102_codes(txt, name);
 
+	if (strlen(name) > 20)
+	{
+		chat_socket_printf(buddy, "%c\n%s has refused your name change because your name is too long.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
+
+		chat_printf("Refusing connection from %.21s:%d, name too long. (%d characters)", buddy->ip, buddy->port, strlen(name));
+
+		close_chat(buddy, TRUE);
+
+		return;
+	}
+
 	for (node = gtd->chat ; node ; node = node->next)
 	{
 		if (node != buddy && !strcmp(name, node->name))
 		{
-			chat_socket_printf(buddy, "%c\n%s was already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
+			chat_socket_printf(buddy, "%c\n%s is already connected to someone named %s.\n%c", CHAT_MESSAGE, gtd->chat->name, name, CHAT_END_OF_COMMAND);
 
 			chat_printf("Refusing name change from %s@%s:%d, already connected to someone named %s.", buddy->name, buddy->ip, buddy->port, name);
 
@@ -1357,9 +1378,7 @@ DO_CHAT(chat_downloaddir)
 
 	if (gtd->chat->download == NULL)
 	{
-		sprintf(dir, "%s/", getenv("HOME"));
-
-		gtd->chat->download = strdup(dir);
+		gtd->chat->download = strdup("");
 
 		return;
 	}
@@ -1489,6 +1508,14 @@ DO_CHAT(chat_name)
 
 		return;
 	}
+
+	if (strip_vt102_strlen(left) > 20)
+	{
+		chat_printf("Your name cannot be longer than 20 characters.");
+
+		return;
+	}
+
 	RESTRING(gtd->chat->name, left);
 
 	for (buddy = gtd->chat->next ; buddy ; buddy = buddy->next)

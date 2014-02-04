@@ -234,22 +234,26 @@ void process_speedwalk(struct session *ses, char *input)
 
 struct session *parse_tintin_command(struct session *ses, char *input)
 {
-	char command[BUFFER_SIZE], argument[BUFFER_SIZE];
+	char argument[BUFFER_SIZE];
 	int cmd;
 	struct session *sesptr;
 
 	push_call("parse_tintin_command(%p,%s)", ses, input);
 
-	input = get_arg_stop_spaces(input, command);
+	input = get_arg_stop_spaces(input, argument);
 
 	for (sesptr = gts ; sesptr ; sesptr = sesptr->next)
 	{
-		if (!strcmp(sesptr->name, command))
+		if (!strcmp(sesptr->name, argument))
 		{
 			if (*input)
 			{
+				input = get_arg_in_braces(input, argument, TRUE);
+
+				pre_parse_input(sesptr, argument, SUB_VAR|SUB_FUN);
+
 				pop_call();
-				return pre_parse_input(sesptr, input, SUB_VAR|SUB_FUN);
+				return ses;
 			}
 			else
 			{
@@ -259,7 +263,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 		}
 	}
 
-	cmd = atoi(command);
+	cmd = atoi(argument);
 
 	if (cmd > 0)
 	{
@@ -273,13 +277,13 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 		return ses;
 	}
 
-	if (isalpha(*command))
+	if (isalpha(*argument))
 	{
-		cmd = gtd->command_ref[tolower(*command) - 'a'];
+		cmd = gtd->command_ref[tolower(*argument) - 'a'];
 
 		for ( ; *command_table[cmd].name != 0 ; cmd++)
 		{
-			if (is_abbrev(command, command_table[cmd].name))
+			if (is_abbrev(argument, command_table[cmd].name))
 			{
 				if (HAS_BIT(command_table[cmd].flags, CMD_FLAG_SUB))
 				{
@@ -299,7 +303,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 		}
 	}
 
-	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", command);
+	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", argument);
 
 	pop_call();
 	return ses;
@@ -577,11 +581,17 @@ void write_mud(struct session *ses, char *command, int flags)
 
 void do_one_line(char *line, struct session *ses)
 {
-	char strip[STRING_SIZE];
+	char strip[BUFFER_SIZE];
 
-	push_call("[%s] do_one_line(%p,%p)",ses->name,*line,ses);
+	if (push_call("[%s] do_one_line(%s)",ses->name,line))
+	{
+		pop_call();
+		return;
+	}
 
 	strip_vt102_codes(line, strip);
+
+	check_all_events(ses, "RECEIVED LINE");
 
 	if (!HAS_BIT(ses->list[LIST_ACTION]->flags, LIST_FLAG_IGNORE))
 	{

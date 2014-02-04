@@ -58,7 +58,7 @@ DO_COMMAND(do_tick)
 	{
 		if (show_node_with_wild(ses, left, LIST_TICKER) == FALSE) 
 		{
-			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}", left);
+			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}.", left);
 		}
 	}
 	else

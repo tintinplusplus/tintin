@@ -165,7 +165,6 @@ DO_COMMAND(do_forall)
 	return ses;
 }
 
-
 DO_COMMAND(do_gagline)
 {
 	SET_BIT(ses->flags, SES_FLAG_GAG);

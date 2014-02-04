@@ -1,6 +1,6 @@
 /******************************************************************************
 *   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   Copyright (C) 2008 (See CREDITS file)                                     *
 *                                                                             *
 *   This program is protected under the GNU GPL (See COPYING)                 *
 *                                                                             *
@@ -17,82 +17,87 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with this program; if not, write to the Free Software               *
 *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-******************************************************************************/
+*******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                         coded by Peter Unold 1992                           *
+*                      coded by Igor van den Hoven 2008                       *
 ******************************************************************************/
-
 
 #include "tintin.h"
 
-DO_COMMAND(do_substitute)
+DO_COMMAND(do_line)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], rank[BUFFER_SIZE];
-	struct listroot *root;
+	char left[BUFFER_SIZE];
+	int cnt;
 
-	root = ses->list[LIST_SUBSTITUTE];
-
-	arg = get_arg_in_braces(arg, left,  0);
-	arg = get_arg_in_braces(arg, right, 1);
-	arg = get_arg_in_braces(arg, rank,  1);
-
-	if (*rank == 0)
-	{
-		strcpy(rank, "5");
-	}
+	arg = get_arg_in_braces(arg, left, FALSE);
 
 	if (*left == 0)
 	{
-		show_list(ses, root, LIST_SUBSTITUTE);
+		tintin_printf(ses, "#SYNTAX: #LINE {GAG|LOG} {argument}.");
 	}
-	else if (*left && !*right)
+	else
 	{
-		if (show_node_with_wild(ses, left, LIST_SUBSTITUTE) == FALSE)
+		for (cnt = 0 ; *line_table[cnt].name ; cnt++)
 		{
-			show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", left);
+			if (is_abbrev(left, line_table[cnt].name))
+			{
+				break;
+			}
+		}
+
+		if (*line_table[cnt].name == 0)
+		{
+			do_line(ses, "");
+		}
+		else
+		{
+			line_table[cnt].fun(ses, arg);
+		}
+	}
+	return ses;
+}
+
+DO_LINE(line_gag)
+{
+	SET_BIT(ses->flags, SES_FLAG_GAG);
+}
+
+DO_LINE(line_log)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+
+	substitute(ses, right, right, SUB_ESC|SUB_COL);
+
+	if (ses->logline)
+	{
+		return;
+	}
+
+	if ((ses->logline = fopen(left, "a")))
+	{
+		fseek(ses->logline, 0, SEEK_END);
+
+		if (ftell(ses->logline) == 0 && HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		{
+			write_html_header(ses->logline);
+		}
+
+		if (*right)
+		{
+			logit(ses, right, ses->logline);
+
+			fclose(ses->logline);
+			ses->logline = NULL;
 		}
 	}
 	else
 	{
-		updatenode_list(ses, left, right, rank, LIST_SUBSTITUTE);
-
-		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", left, right, rank);
-	}
-	return ses;
-}
-
-
-DO_COMMAND(do_unsubstitute)
-{
-	delete_node_with_wild(ses, LIST_SUBSTITUTE, arg);
-
-	return ses;
-}
-
-void check_all_substitutions(struct session *ses, char *original, char *line)
-{
-	struct listnode *node;
-
-	for (node = ses->list[LIST_SUBSTITUTE]->f_node ; node ; node = node->next)
-	{
-		if (check_one_action(line, original, node->left, ses))
-		{
-			if (strcmp(node->right, "."))
-			{
-				substitute(ses, node->right, original, SUB_ARG);
-				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
-
-				show_debug(ses, LIST_SUBSTITUTE, "#SUBSTITUTE DEBUG: %s : %s", line, original);
-			}
-			else
-			{
-				SET_BIT(ses->flags, SES_FLAG_GAG);
-			}
-			return;
-		}
+		tintin_printf(ses, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
 	}
 }
-

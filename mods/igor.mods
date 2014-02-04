@@ -936,3 +936,21 @@ log.c          Fixed a coloring bug with html logging.
 
 alias.c        Fixed a bug with alias parsing.
 
+March 2008     1.98.1
+
+main.c         Command history is no longer automatically saved and loaded.
+
+history.c      Added history read and write option.
+
+cursor.c       Fixed displaying of ctrl-r reverse command history search.
+
+*.c            Added punctuation to most messages.
+
+*.c            Fixed function arguments overwriting action arguments.
+
+tinexp.c       { and } in triggers will be translated to \x codes.
+
+line.c         Added the line command to group #gagline and #logline.
+
+tables.c       Added the 'program termination' and 'received line' events.
+
