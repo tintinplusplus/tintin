@@ -149,7 +149,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 				break;
 
 			case Z_STREAM_END:
-				tintin_puts2(ses, "");
+				tintin_printf2(ses, "");
 				tintin_printf2(ses, "#COMPRESSION END, DISABLING MCCP.");
 
 				cpsrc = src + (cplen - ses->mccp->avail_in);
@@ -412,7 +412,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					continue;
 
 				case '\r':
-					if (cplen < 2 || cpsrc[1] != 0)
+					if (cplen > 1 && cpsrc[1] == '\n')
 					{
 						cpsrc++;
 						cplen--;
@@ -511,8 +511,8 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	if (!check_all_events(ses, 0, 1, "IAC SB TERMINAL TYPE", ntos(cpsrc[3])))
-	{        
-		if (HAS_BIT(ses->telopts, TELOPT_FLAG_TSPEED) && atoi(ses->port) == TELNET_PORT && getenv("TERM"))
+	{
+		if (HAS_BIT(ses->telopts, TELOPT_FLAG_TTYPE) && getenv("TERM"))
 		{
 			socket_printf(ses, 6 + strlen(getenv("TERM")), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, getenv("TERM"), IAC, SE);
 
@@ -523,6 +523,8 @@ int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 			socket_printf(ses, 14, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
 
 			telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
+
+			SET_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
 		}
 	}
 	return 6;
@@ -753,7 +755,7 @@ int recv_sb_mssp(struct session *ses, int cplen, unsigned char *src)
 
 int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 {
-	char var[BUFFER_SIZE], val[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], var[BUFFER_SIZE], val[BUFFER_SIZE];
 	char *pto;
 	int i;
 
@@ -770,24 +772,28 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 		{
 			case MSSP_VAR:
 				i++;
-				pto = var;
+				pto = buf;
 
 				while (i < cplen && src[i] >= 3 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
 				*pto = 0;
+
+				substitute(ses, buf, var, SUB_SEC);
 				break;
 
 			case MSSP_VAL:
 				i++;
-				pto = val;
+				pto = buf;
 
 				while (i < cplen && src[i] >= 3 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
 				*pto = 0;
+
+				substitute(ses, buf, val, SUB_SEC);
 
 				telopt_debug(ses, "IAC SB MSDP (VAR %-20s VAL %s)", var, val);
 
@@ -812,7 +818,7 @@ int recv_sb_msdp(struct session *ses, int cplen, unsigned char *src)
 
 int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 {
-	char var[BUFFER_SIZE], val[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], var[BUFFER_SIZE], val[BUFFER_SIZE];
 	char *pto;
 	int i, x;
 
@@ -836,13 +842,15 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 			case ENV_USR:
 				x = src[i];
 				i++;
-				pto = var;
+				pto = buf;
 
 				while (i < cplen && src[i] >= 4 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
 				*pto = 0;
+
+				substitute(ses, buf, var, SUB_SEC);
 
 				if (src[3] == ENV_SEND)
 				{
@@ -854,13 +862,15 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 
 			case ENV_VAL:
 				i++;
-				pto = val;
+				pto = buf;
 
 				while (i < cplen && src[i] >= 3 && src[i] != IAC)
 				{
 					*pto++ = src[i++];
 				}
 				*pto = 0;
+
+				substitute(ses, buf, val, SUB_SEC);
 
 				telopt_debug(ses, "IAC SB NEW-ENVIRON %s %s", src[3] ? "IS" : "INFO", x ? "VAR" : "USR");
 
@@ -891,7 +901,7 @@ int recv_sb_new_environ(struct session *ses, int cplen, unsigned char *src)
 
 int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 {
-	char var[BUFFER_SIZE], val[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], var[BUFFER_SIZE], val[BUFFER_SIZE];
 	char *pto;
 	int i, x;
 
@@ -913,13 +923,15 @@ int recv_sb_zmp(struct session *ses, int cplen, unsigned char *src)
 				break;
 
 			default:
-				pto = x ? val : var;
+				pto = buf;
 
 				while (i < cplen && src[i])
 				{
 					*pto++ = src[i++];
 				}
 				*pto = src[i++];
+
+				substitute(ses, buf, x ? val : var, SUB_SEC);
 
 				if (x++)
 				{

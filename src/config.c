@@ -513,3 +513,23 @@ DO_CONFIG(config_autotab)
 	return ses;
 }
 
+DO_CONFIG(config_big5)
+{
+	if (!strcasecmp(arg, "ON"))
+	{
+		#define BIG5
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		#undef BIG5D
+	}
+	else
+	{
+		tintin_printf(ses, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+
+	return ses;
+}

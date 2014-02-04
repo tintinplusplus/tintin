@@ -937,6 +937,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 			{
 				arg++;
 			}
+
 		}
 	}
 	while (scroll_cnt != gtd->ses->scroll_row);

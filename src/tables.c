@@ -32,7 +32,7 @@
 struct command_type command_table[] =
 {
 	{    "action",            do_action,            TOKEN_TYPE_COMMAND },
-	{    "advertise",         do_advertise,         TOKEN_TYPE_COMMAND },
+//	{    "advertise",         do_advertise,         TOKEN_TYPE_COMMAND },
 	{    "alias",             do_alias,             TOKEN_TYPE_COMMAND },
 	{    "all",               do_all,               TOKEN_TYPE_COMMAND },
 	{    "bell",              do_bell,              TOKEN_TYPE_COMMAND },
@@ -93,7 +93,6 @@ struct command_type command_table[] =
 	{    "snoop",             do_snoop,             TOKEN_TYPE_COMMAND },
 	{    "split",             do_split,             TOKEN_TYPE_COMMAND },
 	{    "substitute",        do_substitute,        TOKEN_TYPE_COMMAND },
-	{    "suspend",           do_suspend,           TOKEN_TYPE_COMMAND },
 	{    "switch",            do_nop,               TOKEN_TYPE_SWITCH  },
 	{    "system",            do_system,            TOKEN_TYPE_COMMAND },
 	{    "tab",               do_tab,               TOKEN_TYPE_COMMAND },
@@ -146,6 +145,20 @@ struct list_type list_table[LIST_MAX] =
 	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_SHOW|LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT|LIST_FLAG_NEST }
 };
 
+struct substitution_type substitution_table[] =
+{
+//	{    "ARGUMENTS",         1     },
+	{    "VARIABLES",         2     },
+	{    "FUNCTIONS",         4     },
+	{    "COLORS",            8     },
+	{    "ESCAPES",           16    },
+//	{    "COMMANDS",          32    },
+//	{    "SECURE",            64    },
+//	{    "EOL",               128   },
+//	{    "LNF",               256   },
+//	{    "FIX",               1024  },
+	{    "",                  0     }
+};
 
 struct config_type config_table[] =
 {
@@ -154,6 +167,13 @@ struct config_type config_table[] =
 		"",
 		"Scroll back buffer lines used for tab completion",
 		config_autotab
+	},
+
+	{
+		"BIG5",
+		"Tintin skips BIG5 characters.",
+		"Tintin doesn't skip BIG5 characters.",
+		config_big5
 	},
 
 	{
@@ -730,8 +750,11 @@ struct event_type event_table[] =
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."      },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },
 	{    "RECEIVED LINE",                          "Triggers when a new line is received."   },
+	{    "SCREEN RESIZE",                          "Triggers when the screen is resized."    },
 	{    "SEND OUTPUT",                            "Triggers when sending output."           },
+	{    "SESSION ACTIVATED",                      "Triggers when a session is activated."   },
 	{    "SESSION CONNECTED",                      "Triggers when a new session connects."   },
+	{    "SESSION DEACTIVATED",                    "Triggers when a session is deactivated." },
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
 	{    "",                                       ""                                        }
 };
@@ -756,6 +779,7 @@ struct line_type line_table[] =
 	{    "GAG",               line_gag               },
 	{    "LOG",               line_log               },
 	{    "LOGVERBATIM",       line_logverbatim       },
+	{    "SUBSTITUTE",        line_substitute        },
 	{    "",                  NULL                   }
 };
 

@@ -476,7 +476,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					for (i = 1 ; i < 100 ; i++)
 					{
-						pte = get_arg_in_braces(pte, temp, FALSE);
+						pte = get_arg_in_braces(pte, temp, TRUE);
 
 						RESTRING(gtd->vars[i], temp);
 
@@ -489,6 +489,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						{
 							pte++;
 						}
+
 					}
 
 					substitute(ses, node->right, buf, SUB_ARG);

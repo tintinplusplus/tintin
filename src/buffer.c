@@ -501,7 +501,11 @@ int show_buffer(struct session *ses)
 		{
 			temp_ptr = strchr(temp_ptr, '\n');
 		}
-		*temp_ptr = 0;
+
+		if (temp_ptr)
+		{
+			*temp_ptr = 0;
+		}
 
 		printf("%s\n", temp);
 	}

@@ -1,5 +1,11 @@
 * Stuff that needs to be done
 
+- Check if Cygwin install info is still correct.
+
+- fix UTF-8 handling in input and wordwrap.
+
+- fix packet patch prompt repetition bug.
+
 - add chat server 'log' option to show last 15 messages.
 
 - look into getting rid of node->data
@@ -12,7 +18,7 @@
 
 GENERAL STUFF:
 
-- Look into scrollback blanking with screen.
+- Add escape stripping #prompt option.
 
 - Look into old school automatic packet patching.
 
@@ -21,10 +27,6 @@ GENERAL STUFF:
 - Add a ARG_LEN / ARG_MAX setting.
 
 - Add a #line skip option.
-
-- look into color patch with 256 color codes.
-
-- #config toggle for big5
 
 - Deal with escaping { } / ; in #script variables.
 

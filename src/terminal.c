@@ -149,7 +149,7 @@ void init_screen_size(struct session *ses)
 	{
 		init_split(ses, ses->top_row, ses->bot_row);
 	}
-
+	check_all_events(ses, 0, 2, "SCREEN RESIZE", ntos(ses->cols), ntos(ses->rows));
 }
 
 int get_scroll_size(struct session *ses)

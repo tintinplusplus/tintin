@@ -54,7 +54,7 @@ DO_COMMAND(do_line)
 		}
 		else
 		{
-			line_table[cnt].fun(ses, arg);
+			ses = line_table[cnt].fun(ses, arg);
 		}
 	}
 	return ses;
@@ -63,6 +63,8 @@ DO_COMMAND(do_line)
 DO_LINE(line_gag)
 {
 	SET_BIT(ses->flags, SES_FLAG_GAG);
+
+	return ses;
 }
 
 DO_LINE(line_log)
@@ -76,7 +78,7 @@ DO_LINE(line_log)
 
 	if (ses->logline)
 	{
-		return;
+		return ses;
 	}
 
 	if ((ses->logline = fopen(left, "a")))
@@ -102,20 +104,19 @@ DO_LINE(line_log)
 	{
 		tintin_printf(ses, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
 	}
+	return ses;
 }
 
 DO_LINE(line_logverbatim)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(arg, left,  0);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
+	arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(arg, right, 1);
 
 	if (ses->logline)
 	{
-		return;
+		return ses;
 	}
 
 	if ((ses->logline = fopen(left, "a")))
@@ -141,5 +142,47 @@ DO_LINE(line_logverbatim)
 	{
 		tintin_printf(ses, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
 	}
+	return ses;
 }
 
+DO_LINE(line_substitute)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], subs[BUFFER_SIZE];
+	int i, flags = 0;
+
+	arg = get_arg_in_braces(arg, left,  0);
+	arg = get_arg_in_braces(arg, right, 1);
+
+	if (*right == 0)
+	{
+		tintin_printf(ses, "#SYNTAX: #LINE {SUBSTITUTE} {argument} {command}.");
+
+		return ses;
+	}
+
+	arg = left;
+
+	while (*arg)
+	{
+		arg = get_arg_in_braces(arg, subs, 0);
+
+		for (i = 0 ; *substitution_table[i].name ; i++)
+		{
+			if (is_abbrev(subs, substitution_table[i].name))
+			{
+				SET_BIT(flags, substitution_table[i].bitvector);
+			}
+		}
+
+		if (*arg == COMMAND_SEPARATOR)
+		{
+			arg++;
+		}
+	}
+
+	substitute(ses, right, subs, flags);
+
+	ses = script_driver(ses, -1, subs);
+
+	return ses;
+}

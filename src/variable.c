@@ -451,6 +451,10 @@ DO_COMMAND(do_format)
 						sprintf(arglist[i], temp, (long long) get_number(ses, arglist[i]));
 						break;
 
+					case 'g':
+						thousandgroupingstring(ses, arglist[i]);
+						break;
+
 					case 'h':
 						headerstring(arglist[i]);
 						break;

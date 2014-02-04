@@ -212,6 +212,7 @@ DO_COMMAND(do_forall)
 			{
 				arg++;
 			}
+
 		}
 	}
 	return ses;

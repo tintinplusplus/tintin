@@ -139,7 +139,7 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 
 	while (*string)
 	{
-		if (isalpha(*string))
+		if (isalpha((int) *string))
 		{
 			for (cnt = 0 ; *color_table[cnt].name ; cnt++)
 			{

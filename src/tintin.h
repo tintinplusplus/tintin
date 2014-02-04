@@ -120,7 +120,8 @@
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
-#define VERSION_NUM               "2.00.1"
+#define CLIENT_NAME              "TinTin++"
+#define CLIENT_VERSION             "2.00.2"
 
 #define ESCAPE                          27
 
@@ -327,6 +328,7 @@ enum operators
 #define TELOPT_FLAG_PROMPT            (1 <<  3) 
 #define TELOPT_FLAG_DEBUG             (1 <<  4)
 #define TELOPT_FLAG_TSPEED            (1 <<  5)
+#define TELOPT_FLAG_TTYPE             (1 <<  6)
 
 #define LIST_FLAG_IGNORE              (1 <<  0)
 #define LIST_FLAG_MESSAGE             (1 <<  1)
@@ -350,12 +352,14 @@ enum operators
 #define ROOM_FLAG_LEAVE               (1 <<  2)
 #define ROOM_FLAG_VOID                (1 <<  3)
 #define ROOM_FLAG_STATIC              (1 <<  4)
+#define ROOM_FLAG_RIVER               (1 <<  5)
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
 #define MAP_FLAG_VTGRAPHICS           (1 <<  2)
 #define MAP_FLAG_ASCIIGRAPHICS        (1 <<  3)
 #define MAP_FLAG_ASCIIVNUMS           (1 <<  4)
+#define MAP_FLAG_MUDFONT              (1 <<  5)
 
 #define MAP_EXIT_N                    (1 <<  0)
 #define MAP_EXIT_E                    (1 <<  1)
@@ -480,7 +484,7 @@ enum operators
 
 #define IS_SPLIT(ses)             ((ses)->rows != (ses)->bot_row || (ses)->top_row != 1)
 
-#define SCROLL(ses)               (((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
+#define SCROLL(ses)               ((ses)->cur_row == 0 || ((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
 #define VERBATIM                  (HAS_BIT(gtd->flags, TINTIN_FLAG_VERBATIM) && HAS_BIT(gtd->flags, TINTIN_FLAG_USERCOMMAND))
 
@@ -491,7 +495,7 @@ enum operators
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
 #define DO_MAP(map) void map (struct session *ses, char *arg, char *arg1, char *arg2)
 #define DO_PATH(path) void path (struct session *ses, char *arg)
-#define DO_LINE(line) void line (struct session *ses, char *arg)
+#define DO_LINE(line) struct session *line (struct session *ses, char *arg)
 #define DO_CURSOR(cursor) void cursor (char *arg)
 #define DO_HISTORY(history) void history (struct session *ses, char *arg)
 #define DO_BUFFER(buffer) void buffer (struct session *ses, char *arg)
@@ -679,7 +683,7 @@ typedef struct session *COMMAND (struct session *ses, char *arg);
 typedef void            MAP     (struct session *ses, char *arg, char *arg1, char *arg2);
 typedef void            CURSOR  (char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
-typedef void            LINE    (struct session *ses, char *arg);
+typedef struct session *LINE    (struct session *ses, char *arg);
 typedef void            HISTORY (struct session *ses, char *arg);
 typedef void            BUFFER  (struct session *ses, char *arg);
 
@@ -745,6 +749,12 @@ struct list_type
 	int                     mode;
 	int                     args;
 	int                     flags;
+};
+
+struct substitution_type
+{
+	char                  * name;
+	int                     bitvector;
 };
 
 struct map_type
@@ -1215,6 +1225,7 @@ extern DO_CONFIG(config_loglevel);
 extern DO_CONFIG(config_colorpatch);
 extern DO_CONFIG(config_mccp);
 extern DO_CONFIG(config_autotab);
+extern DO_CONFIG(config_big5);
 
 #endif
 
@@ -1404,7 +1415,7 @@ extern DO_COMMAND(do_line);
 extern DO_LINE(line_gag);
 extern DO_LINE(line_log);
 extern DO_LINE(line_logverbatim);
-extern DO_LINE(line_skipgags);
+extern DO_LINE(line_substitute);
 
 #endif
 
@@ -1642,6 +1653,7 @@ extern struct config_type config_table[];
 extern struct cursor_type cursor_table[];
 extern struct event_type event_table[];
 extern struct list_type list_table[LIST_MAX];
+extern struct substitution_type substitution_table[];
 extern struct map_type map_table[];
 extern struct timer_type timer_table[];
 extern struct path_type path_table[];

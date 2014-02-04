@@ -1,3 +1,39 @@
+Apr 2010       2.00.2
+
+line.c         Added the #line substitute options.
+
+config.c       Added a config option to enable BIG5 support.
+
+mapper.c       Added an optional vnum argument to #map get and #map set,
+               calling #map set on an invalid vnum results in the variable
+               being set to 0.
+
+terminal.c     Added SCREEN RESIZE event.
+
+session.c      Added SESSION ACTIVATED and SESSION DEACTIVATED events.
+
+nest.c         Nested variable calls to non existing nests now return
+               "" rather than "0", this to allow $var[%*] calls to work
+               correctly with empty variables. I originally added the "0"
+               response for if checks, but this is obsolete with the
+               much more reliable &variable[] call.
+
+buffer.c       Added a check to avoid a potential crash on displaying the
+               scrollback buffer in show_buffer(), needs a better fix but I
+               don't have the time and patience.
+
+tables.c       Removed #suspend command, #cursor suspend is available instead.
+
+tokenize.c     Added BIG5 handling for #parse
+
+tintin.h       Fixed an error in the SCROLL macro that determines whether
+               something is printed inside or outside of the scrolling region.
+
+tinexp.c       Function arguments are no longer space but semicolon separated.
+
+mapper.c       Updated messages to be non triggerable and to only echo on manual
+               input.
+
 Feb 2010       2.00.1
 --------------------------------------------------------------------------------
 

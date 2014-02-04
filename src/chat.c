@@ -850,7 +850,7 @@ int process_chat_input(struct chat_data *buddy)
 
 			RESTRING(buddy->name, name);
 
-			chat_socket_printf(buddy, "%c%s%s%c", CHAT_VERSION, "TinTin++ ", VERSION_NUM, CHAT_END_OF_COMMAND);
+			chat_socket_printf(buddy, "%c%s %s%c", CHAT_VERSION, CLIENT_NAME, CLIENT_VERSION, CHAT_END_OF_COMMAND);
 
 			get_chat_commands(buddy, sep, size - strlen(temp) - 1);
 
@@ -1003,7 +1003,7 @@ void get_chat_commands(struct chat_data *buddy, char *buf, int len)
 			case CHAT_VERSION:
 				if (*buddy->version == 0 && *txt != 0)
 				{
-					chat_socket_printf(buddy, "%c%s%s%c", CHAT_VERSION, "TinTin++ ", VERSION_NUM, CHAT_END_OF_COMMAND);
+					chat_socket_printf(buddy, "%c%s %s%c", CHAT_VERSION, CLIENT_NAME, CLIENT_VERSION, CHAT_END_OF_COMMAND);
 
 					RESTRING(buddy->version, txt);
 				}

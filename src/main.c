@@ -283,7 +283,8 @@ int main(int argc, char **argv)
 			gtd->ses = do_read(gtd->ses, argv[optind]);
 		}
 	}
-	check_all_events(gts, 0, 0, "PROGRAM START");
+	check_all_events(gts, 0, 2, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION);
+	check_all_events(gts, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
 
 	mainloop();
 
@@ -359,7 +360,7 @@ void init_tintin(int greeting)
 	do_configure(gts, "{CONNECT RETRY}      {15}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
-	do_configure(gts, "{PACKET PATCH}     {0.01}");
+	do_configure(gts, "{PACKET PATCH}     {0.00}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");

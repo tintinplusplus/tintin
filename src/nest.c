@@ -273,7 +273,7 @@ struct listnode *get_nest_node(struct listroot *root, char *variable, char *resu
 
 	if (node || def)
 	{
-		strcpy(result, "0");
+		strcpy(result, "");
 	}
 	else
 	{

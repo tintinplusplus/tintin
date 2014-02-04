@@ -305,10 +305,18 @@ void breakparsetoken(struct scriptnode *token)
 
 char *get_arg_parse(struct scriptnode *token)
 {
-	static char buf[2];
+	static char buf[3];
+
+	buf[2] = 0;
 
 	buf[0] = *token->data->arg++;
 
+#ifdef BIG5
+	if (buf[0] & 0x80 && *token->data->arg)
+	{
+		buf[1] = *token->data->arg++
+	}
+#endif
 	return buf;
 }
 

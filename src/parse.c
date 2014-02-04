@@ -99,6 +99,7 @@ struct session *parse_input(struct session *ses, char *input)
 		{
 			input++;
 		}
+
 	}
 
 	free(line);

@@ -382,7 +382,7 @@ void convert_meta(char *input, char *output)
 				break;
 
 			default:
-				if (*pti < 32)
+				if (*pti > 0 && *pti < 32)
 				{
 					*pto++ = '\\';
 					*pto++ = 'c';

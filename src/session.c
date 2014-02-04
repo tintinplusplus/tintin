@@ -138,12 +138,7 @@ struct session *newactive_session(void)
 	}
 	else
 	{
-		gtd->ses = gts;
-		dirty_screen(gtd->ses);
-
-		tintin_printf(NULL, "");
-
-		tintin_printf(NULL, "#THERE'S NO ACTIVE SESSION NOW.");
+		activate_session(gts);
 	}
 	pop_call();
 	return gtd->ses;
@@ -151,11 +146,15 @@ struct session *newactive_session(void)
 
 struct session *activate_session(struct session *ses)
 {
+	check_all_events(gtd->ses, 0, 1, "SESSION DEACTIVATED", gtd->ses->name);
+
 	gtd->ses = ses;
 
 	dirty_screen(ses);
 
 	tintin_printf(ses, "#SESSION '%s' ACTIVATED.", ses->name);
+
+	check_all_events(ses, 0, 1, "SESSION ACTIVATED", ses->name);
 
 	return ses;
 }
