@@ -186,7 +186,7 @@ void set_list_item(struct session *ses, struct listnode *node, char *left, char 
 
 DO_ARRAY(array_clr)
 {
-	internal_variable(ses, "%s", list->left);
+	internal_variable(ses, "{%s}", list->left);
 
 	return ses;
 }
@@ -255,7 +255,7 @@ DO_ARRAY(array_fnd)
 			break;
 		}
 	}
-	internal_variable(ses, "%d", result);
+	internal_variable(ses, "{%s} {%d}", right, result);
 
 	return ses;
 }

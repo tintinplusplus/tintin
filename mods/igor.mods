@@ -1269,3 +1269,16 @@ chat.c         Configure now detects a missing pthread library.
 tick.c         Delay now takes a name argument as the 3rd argument.
 
 tick.c         Added #undelay command.
+
+cursor.c       Added the option to paste deleted input with ctrl-y
+
+May 2007       1.97.1
+
+               Added #map insert
+
+               Fixed bug with #list fnd
+
+               Fixed bug with prompts in buffer
+
+               Set #delay {name} {command} {delay} as alternative syntax
+               opposed to #delay {delay} {command}

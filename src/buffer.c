@@ -104,6 +104,8 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 	{
 		if (strlen(line) < STRING_SIZE - BUFFER_SIZE)
 		{
+			strcat(ses->more_output, line);
+
 			return;
 		}
 	}

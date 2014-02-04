@@ -10,8 +10,6 @@ GENERAL STUFF:
 
 - add BB log writing
 
-- Fix ^Y
-
 -------------------------------------------------------------------------------
 
 MAPPING STUFF:
@@ -41,7 +39,7 @@ MAPPING STUFF:
 
 * This is a list of improvements that are planned for a rainy day.
 
-- Buffer safe strings
+- Buffer safe strings (partial implemention finished)
 
 - improved #system command
 

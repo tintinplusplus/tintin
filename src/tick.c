@@ -109,12 +109,20 @@ DO_COMMAND(do_delay)
 
 		if (*arg3 == 0)
 		{
-			arg3 = time;
+			time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg1) * 1000000LL));
+
+			updatenode_list(ses, time, arg2, time, LIST_DELAY);
+
+			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg1, arg2);
 		}
+		else
+		{
+			time = stringf_alloc("%lld", utime() + (long long) (get_number(ses, arg3) * 1000000LL));
 
-		updatenode_list(ses, arg3, arg2, time, LIST_DELAY);
+			updatenode_list(ses, arg1, arg2, time, LIST_DELAY);
 
-		show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg1, arg2);
+			show_message(ses, LIST_TICKER, "#OK, IN {%s} SECONDS {%s} IS EXECUTED.", arg3, arg2);
+		}
 	}
 	return ses;
 }

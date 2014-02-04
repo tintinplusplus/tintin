@@ -100,6 +100,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map dig      <direction>              (creates a new room)");
 		tintin_printf2(ses, "#map exit     <direction> <command>    (sets the exit command)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
+		tintin_printf2(ses, "#map insert   <direction>              (insert a new room)");
 		tintin_printf2(ses, "#map find     <room name>              (saves path to #path)");
 		tintin_printf2(ses, "#map flag     <map flag>               (set map wide flags)");
 		tintin_printf2(ses, "#map goto     <room name>              (moves you to given room)");
@@ -429,10 +430,7 @@ DO_MAP(map_info)
 		{
 			cnt++;
 
-			for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
-			{
-				exits++;
-			}
+			exits += get_map_exits(ses, room);
 		}
 	}
 
@@ -455,6 +453,65 @@ DO_MAP(map_info)
 			tintin_printf2(ses, "%-20s %-3s (%s) to room: %-5d (%s).", "Exit:", exit->name, exit->cmd, exit->vnum, ses->map->room_list[exit->vnum]->name);
 		}
 	}
+}
+
+DO_MAP(map_insert)
+{
+	int room, in_room, to_room;
+	char temp[BUFFER_SIZE];
+	struct exit_data *exit;
+	struct listnode *node;
+	char *left;
+
+	CHECK_INSIDE();
+
+	arg = get_arg_in_braces(arg, &left, TRUE);
+
+	for (room = 1 ; room < MAX_ROOM ; room++)
+	{
+		if (ses->map->room_list[room] == NULL)
+		{
+			break;
+		}
+	}
+
+	exit = find_exit(ses, ses->map->in_room, left);
+
+	node = searchnode_list(ses->list[LIST_PATHDIR], left);
+
+	if (exit == NULL)
+	{
+		tintin_printf2(ses, "#MAP: There is no room in that direction.");
+
+		return;
+	}
+
+	if (room == MAX_ROOM)
+	{
+		tintin_printf2(ses, "#MAP: Maximum amount of rooms of %d reached.", MAX_ROOM);
+		return;
+	}
+
+	in_room = ses->map->in_room;
+	to_room = exit->vnum;
+
+	sprintf(temp, "{%d} {0} {<088>} {%d} { }", room, room);
+	create_room(ses, temp);
+
+	sprintf(temp, "{%d} {%s} {%s}", to_room, node->left, node->left);
+	create_exit(ses, room, temp);
+
+	sprintf(temp, "{%d} {%s} {%s}", in_room, node->right, node->right);
+	create_exit(ses, room, temp);
+
+	exit->vnum = room;
+
+	if ((exit = find_exit(ses, to_room, node->right)) != NULL)
+	{
+		exit->vnum = room;
+	}
+
+	tintin_printf2(ses, "#MAP: Inserted room {%d}.", room);
 }
 
 DO_MAP(map_leave)
@@ -1075,6 +1132,19 @@ int get_map_exit(struct session *ses, char *arg)
 	}
 }
 
+int get_map_exits(struct session *ses, int room)
+{
+	struct exit_data *exit;
+
+	int exits = 0;
+
+	for (exit = ses->map->room_list[room]->f_exit ; exit ; exit = exit->next)
+	{
+		exits++;
+	}
+
+	return exits;
+}
 
 void follow_map(struct session *ses, char *argument)
 {
@@ -1604,25 +1674,10 @@ struct exit_data *find_exit(struct session *ses, int room, char *arg)
 
 void search_void(short from, short room)
 {
-	if (map_search_ses->map->room_list[room]->f_exit == NULL)
+	if (get_map_exits(map_search_ses, room) != 2)
 	{
 		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
-		map_search_exit_best = NULL;
 
-		return;
-	}
-
-	if (map_search_ses->map->room_list[room]->f_exit == map_search_ses->map->room_list[room]->l_exit)
-	{
-		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
-		map_search_exit_best = NULL;
-
-		return;
-	}
-
-	if (map_search_ses->map->room_list[room]->f_exit->next != map_search_ses->map->room_list[room]->l_exit)
-	{
-		show_message(map_search_ses, LIST_MAP, "#SHORTEST PATH: ROOM {%d} IS AN INVALID VOID ROOM.", room);
 		map_search_exit_best = NULL;
 
 		return;

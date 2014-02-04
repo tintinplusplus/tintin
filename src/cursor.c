@@ -33,7 +33,7 @@ DO_COMMAND(do_cursor)
 	char *left, *right, temp[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(arg, &left, FALSE);
+	arg = get_arg_in_braces(arg, &left,  TRUE);
 	arg = get_arg_in_braces(arg, &right, TRUE);
 
 	if (*left == 0)

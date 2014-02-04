@@ -373,6 +373,7 @@ struct map_type map_table[] =
 	{     "GET",                       map_get                },
 	{     "GOTO",                      map_goto               },
 	{     "INFO",                      map_info               },
+	{     "INSERT",                    map_insert             },
 	{     "LEAVE",                     map_leave              },
 	{     "LEGENDA",                   map_legenda            },
 	{     "LINK",                      map_link               },

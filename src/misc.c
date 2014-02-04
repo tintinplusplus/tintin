@@ -104,7 +104,7 @@ DO_COMMAND(do_echo)
 
 	temp = stringf_alloc("result %s", arg);
 
-	internal_variable(ses, "result");
+	internal_variable(ses, "{result}");
 
 	do_format(ses, temp);
 
@@ -154,7 +154,7 @@ DO_COMMAND(do_forall)
 		{
 			arg = get_arg_in_braces(arg, &gtd->cmds[0], FALSE);
 
-			internal_variable(ses, "forall {%s}", gtd->cmds[0]);
+			internal_variable(ses, "{forall} {%s}", gtd->cmds[0]);
 
 			substitute(ses, right, &temp, SUB_CMD);
 
@@ -298,7 +298,7 @@ DO_COMMAND(do_parse)
 #else
 			gtd->cmds[0] = stringf_alloc("%c", left[cnt]);
 #endif
-			internal_variable(ses, "parse {%s}", gtd->cmds[0]);
+			internal_variable(ses, "{parse} {%s}", gtd->cmds[0]);
 
 			substitute(ses, right, &temp, SUB_CMD);
 
@@ -315,7 +315,7 @@ DO_COMMAND(do_return)
 
 	if (*arg)
 	{
-		internal_variable(ses, "result %s", arg);
+		internal_variable(ses, "{result} {%s}", arg);
 	}
 	return ses;
 }

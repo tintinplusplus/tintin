@@ -115,7 +115,7 @@ long long utime()
 
 	gettimeofday(&now_time, NULL);
 
-	if (gtd->time == now_time.tv_sec * 1000000LL + now_time.tv_usec)
+	if (gtd->time >= now_time.tv_sec * 1000000LL + now_time.tv_usec)
 	{
 		gtd->time++;
 	}

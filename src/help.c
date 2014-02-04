@@ -254,7 +254,8 @@ struct help_type help_table[] =
 	},
 	{
 		"DELAY",
-		"<178>Command<078>: #delay <178>{<078>seconds<178>}<078> <178>{<078>command<178>}<078> <178>{<078>name<178>}<078>\n"
+		"<178>Command<078>: #delay <178>{<078>seconds<178>}<078> <178>{<078>command<178>}<078>\n"
+		"<178>Command<078>: #delay <178>{<078>name<178>}<078> <178>{<078>command<178>}<078> <178>{<078>seconds<178>}<078> \n"
 		"\n"
 		"         Delay allows you to have tintin wait the given amount of seconds\n"
 		"         before executing the given command. tintin won't wait before\n"
@@ -262,11 +263,11 @@ struct help_type help_table[] =
 		"\n"
 		"         Floating point precision for miliseconds is possible.\n"
 		"\n"
-		"<178>Example<078>: #delay {1} {#showme last};#showme first\n"
+		"<178>Example<078>: #showme first;#delay {1} {#showme last}\n"
 		"         This will print 'first', and 'last' around one second later.\n"
 		"\n"
 		"<178>Comment<078>: If you want to remove a delay with the #undelay command you can add\n"
-		"         a name as the third argument.\n"
+		"         a name as the first argument, be aware this changes the syntax.\n"
 	},
 	{
 		"ECHO",
@@ -635,6 +636,9 @@ struct help_type help_table[] =
 		"         #map goto <room name>: Takes you to the given room name.\n"
 		"\n"
 		"         #map info: Gives information about the map and room you are in.\n"
+		"\n"
+		"         #map insert: Insert a room in the given direction. Useful for\n"
+		"                   inserting void rooms.\n"
 		"\n"
 		"         #map leave: Makes you leave the map. Useful when entering a maze.\n"
 		"\n"
