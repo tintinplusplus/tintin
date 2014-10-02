@@ -162,7 +162,7 @@ DO_HISTORY(history_read)
 
 	if (file == NULL)
 	{
-		tintin_printf2(ses, "#HISTORY: COULDN'T OPEN FILE {%s} TO READ.", arg);
+		show_message(ses, -1, "#HISTORY: COULDN'T OPEN FILE {%s} TO READ.", arg);
 		return;
 	}
 
@@ -185,6 +185,15 @@ DO_HISTORY(history_read)
 	insert_node_list(ses->list[LIST_HISTORY], "", "", "");
 
 	fclose(file);
+
+	if (ses->list[LIST_HISTORY]->used > gtd->history_size) 
+	{
+		char buf[BUFFER_SIZE];
+
+		sprintf(buf, "{HISTORY SIZE} {%d}", UMIN(ses->list[LIST_HISTORY]->used, 9999));
+
+		do_configure(gts, buf);
+	}
 
 	return;
 }

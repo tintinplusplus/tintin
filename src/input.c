@@ -29,7 +29,7 @@
 
 void process_input(void)
 {
-	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA)	&& !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
+	if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA) && !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
 		read_key();
 	}
@@ -73,7 +73,7 @@ void process_input(void)
 
 	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 
-	gtd->ses = script_driver(gtd->ses, -1, gtd->input_buf);
+	gtd->ses = script_driver(gtd->ses, -2, gtd->input_buf);
 
 	if (IS_SPLIT(gtd->ses))
 	{

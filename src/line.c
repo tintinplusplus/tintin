@@ -75,7 +75,7 @@ DO_LINE(line_log)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	FILE *logfile;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN|SUB_ESC);
 	arg = sub_arg_in_braces(ses, arg, temp, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if ((logfile = fopen(left, "a")))
@@ -161,7 +161,7 @@ DO_LINE(line_strip)
 
 	strip_vt102_codes(left, strip);
 
-	ses = script_driver(ses, -1, strip);
+	ses = script_driver(ses, -2, strip);
 
 	return ses;
 }
@@ -203,7 +203,7 @@ DO_LINE(line_substitute)
 
 	substitute(ses, right, subs, flags);
 
-	ses = script_driver(ses, -1, subs);
+	ses = script_driver(ses, -2, subs);
 
 	return ses;
 }
@@ -226,7 +226,7 @@ DO_LINE(line_verbose)
 
 	SET_BIT(sesptr->flags, SES_FLAG_VERBOSELINE);
 
-	ses = script_driver(ses, -1, left);
+	ses = script_driver(ses, -2, left);
 
 	DEL_BIT(sesptr->flags, SES_FLAG_VERBOSELINE);
 
@@ -251,7 +251,7 @@ DO_LINE(line_ignore)
 
 	SET_BIT(sesptr->flags, SES_FLAG_IGNORELINE);
 
-	ses = script_driver(ses, -1, left);
+	ses = script_driver(ses, -2, left);
 
 	DEL_BIT(sesptr->flags, SES_FLAG_IGNORELINE);
 

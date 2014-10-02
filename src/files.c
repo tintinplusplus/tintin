@@ -328,7 +328,7 @@ DO_COMMAND(do_read)
 
 		if (bufi[0])
 		{
-			ses = script_driver(ses, -1, bufi);
+			ses = script_driver(ses, -2, bufi);
 		}
 		pto = bufi;
 		pti++;
@@ -348,11 +348,11 @@ DO_COMMAND(do_read)
 						break;
 
 					case 1:
-						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->used - counter[cnt], list_table[cnt].name);
+						show_message(ses, cnt, "#OK: %3d %s LOADED.", ses->list[cnt]->used - counter[cnt], list_table[cnt].name);
 						break;
 
 					default:
-						show_message(ses, LIST_MESSAGE, "#OK: %3d %s LOADED.", ses->list[cnt]->used - counter[cnt], list_table[cnt].name_multi);
+						show_message(ses, cnt, "#OK: %3d %s LOADED.", ses->list[cnt]->used - counter[cnt], list_table[cnt].name_multi);
 						break;
 				}
 			}

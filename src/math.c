@@ -57,6 +57,7 @@ DO_COMMAND(do_math)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listnode *node;
+	double result;
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_NST, SUB_VAR|SUB_FUN);
 
@@ -68,7 +69,9 @@ DO_COMMAND(do_math)
 	}
 	else
 	{
-		node = set_nest_node(ses->list[LIST_VARIABLE], left, "%.*f", precision, get_number(ses, right));
+		result = get_number(ses, right);
+
+		node = set_nest_node(ses->list[LIST_VARIABLE], left, "%.*f", precision, result);
 
 		show_message(ses, LIST_VARIABLE, "#MATH: VARIABLE {%s} HAS BEEN SET TO {%s}.", left, node->right);
 	}
@@ -355,7 +358,36 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 						break;
 
 					case '*':
+						*pta++ = *pti++;
+
+						switch (*pti)
+						{
+							case '*':
+								*pta++ = *pti++;
+								MATH_NODE(FALSE, EXP_PR_INTMUL, EXP_VARIABLE);
+								break;
+							
+							default:
+								MATH_NODE(FALSE, EXP_PR_INTMUL, EXP_VARIABLE);
+								break;
+						}
+						break;
+	
 					case '/':
+						*pta++ = *pti++;
+
+						switch (*pti)
+						{
+							case '/':
+								*pta++ = *pti++;
+								MATH_NODE(FALSE, EXP_PR_INTMUL, EXP_VARIABLE);
+								break;
+							default:
+								MATH_NODE(FALSE, EXP_PR_INTMUL, EXP_VARIABLE);
+								break;
+						}
+						break;
+
 					case '%':
 						*pta++ = *pti++;
 						MATH_NODE(FALSE, EXP_PR_INTMUL, EXP_VARIABLE);
@@ -568,24 +600,47 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 			}
 			break;
 		case '*':
-			value = tintoi(node->prev->str3) * tintoi(node->next->str3);
+			switch (node->str3[1])
+			{
+				case '*':
+					value = pow(tintoi(node->prev->str3), tintoi(node->next->str3));
+					break;
+				default:
+					value = tintoi(node->prev->str3) * tintoi(node->next->str3);
+					break;
+			}
 			break;
 		case '/':
-			if (tintoi(node->next->str3) == 0)
+			switch (node->str3[1])
 			{
-//				show_message(ses, -1, "#MATH ERROR: DIVISION ZERO.");
-				value = tintoi(node->prev->str3);
-			}
-			else
-			{
-				if (precision)
-				{
-					value = tintoi(node->prev->str3) / tintoi(node->next->str3);
-				}
-				else
-				{
-					value = (long long) tintoi(node->prev->str3) / (long long) tintoi(node->next->str3);
-				}
+				case '/':
+					if (tintoi(node->next->str3) == 3)
+					{
+						value = cbrt(tintoi(node->prev->str3));
+					}
+					else
+					{
+						value = sqrt(tintoi(node->prev->str3));
+					}
+					break;
+				default:
+					if (tintoi(node->next->str3) == 0)
+					{
+//						show_message(ses, -1, "#MATH ERROR: DIVISION ZERO.");
+						value = tintoi(node->prev->str3);
+					}
+					else
+					{
+						if (precision)
+						{
+							value = tintoi(node->prev->str3) / tintoi(node->next->str3);
+						}
+						else
+						{
+							value = (long long) tintoi(node->prev->str3) / (long long) tintoi(node->next->str3);
+						}
+					}
+					break;
 			}
 			break;
 		case '%':

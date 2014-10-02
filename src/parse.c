@@ -80,7 +80,7 @@ struct session *parse_input(struct session *ses, char *input)
 
 		if (parse_command(ses, line))
 		{
-			ses = script_driver(ses, -1, line);
+			ses = script_driver(ses, -2, line);
 		}
 		else if (check_all_aliases(ses, line))
 		{
@@ -227,7 +227,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 
 		while (cnt-- > 0)
 		{
-			ses = script_driver(ses, -1, line);
+			ses = script_driver(ses, -2, line);
 		}
 		return ses;
 	}

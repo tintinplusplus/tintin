@@ -92,6 +92,7 @@ struct command_type command_table[] =
 	{    "showme",            do_showme,            TOKEN_TYPE_COMMAND },
 	{    "snoop",             do_snoop,             TOKEN_TYPE_COMMAND },
 	{    "split",             do_split,             TOKEN_TYPE_COMMAND },
+	{    "ssl",               do_ssl,               TOKEN_TYPE_COMMAND },
 	{    "substitute",        do_substitute,        TOKEN_TYPE_COMMAND },
 	{    "switch",            do_nop,               TOKEN_TYPE_SWITCH  },
 	{    "system",            do_system,            TOKEN_TYPE_COMMAND },
@@ -373,6 +374,10 @@ struct color_type color_table[] =
 	{    "blink",         "<588>" },
 	{    "reverse",       "<788>" },
 
+	{    "no-underscore", "\e[24m"},
+	{    "no-blink",      "\e[25m"},
+	{    "no-reverse",    "\e[27m"},
+		
 	{    "black",         "<808>" },
 	{    "red",           "<818>" },
 	{    "green",         "<828>" },
@@ -408,6 +413,7 @@ struct class_type class_table[] =
 {
 	{    "OPEN",              class_open             },
 	{    "CLOSE",             class_close            },
+	{    "LIST",              class_list             },
 	{    "READ",              class_read             },
 	{    "WRITE",             class_write            },
 	{    "KILL",              class_kill             },
@@ -842,6 +848,7 @@ struct event_type event_table[] =
 	{    "SEND OUTPUT",                            "Triggers when sending output."           },
 	{    "SESSION ACTIVATED",                      "Triggers when a session is activated."   },
 	{    "SESSION CONNECTED",                      "Triggers when a new session connects."   },
+	{    "SESSION CREATED",                        "Triggers when a new session is created." },
 	{    "SESSION DEACTIVATED",                    "Triggers when a session is deactivated." },
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
 	{    "SESSION TIMED OUT",                      "Triggers when a session doesn't connect."},

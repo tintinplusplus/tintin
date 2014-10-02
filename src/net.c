@@ -176,11 +176,28 @@ void write_line_mud(struct session *ses, char *line, int size)
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 	{
-		tintin_printf2(ses, "#THIS SESSION IS NOT CONNECTED.");
+		tintin_printf2(ses, "#THIS SESSION IS NOT CONNECTED, CANNOT SEND: %s", line);
 
 		pop_call();
 		return;
 	}
+
+#ifdef HAVE_GNUTLS_H
+
+	if (ses->ssl)
+	{
+		int result;
+
+		result = gnutls_record_send(ses->ssl, line, size);
+
+		while (result == GNUTLS_E_INTERRUPTED || result == GNUTLS_E_AGAIN)
+		{
+			result = gnutls_record_send(ses->ssl, 0, 0);
+		}
+	}
+	else
+
+#endif
 
 	if (write(ses->socket, line, size) == -1)
 	{
@@ -217,14 +234,30 @@ int read_buffer_mud(struct session *ses)
 
 	push_call("read_buffer_mud(%p)",ses);
 
-	size = read(ses->socket, buffer, BUFFER_SIZE - 1);
+#ifdef HAVE_GNUTLS_H
 
+	if (ses->ssl)
+	{
+		do
+		{
+			size = gnutls_record_recv(ses->ssl, buffer, BUFFER_SIZE - 1);
+		}
+		while (size == GNUTLS_E_INTERRUPTED || size == GNUTLS_E_AGAIN);
+
+		if (size < 0)
+		{
+			tintin_printf2(ses, "#SSL ERROR: %s", gnutls_strerror(size));
+		}
+	}
+	else
+#endif
+	size = read(ses->socket, buffer, BUFFER_SIZE - 1);
+	
 	if (size <= 0)
 	{
 		pop_call();
 		return FALSE;
 	}
-
 	ses->read_len = translate_telopts(ses, buffer, size);
 
 	pop_call();
@@ -367,7 +400,11 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 	if (ses == gtd->ses)
 	{
-		printline(ses, linebuf, prompt);
+		char *output = str_dup(linebuf);
+
+		printline(ses, &output, prompt);
+
+		str_free(output);
 	}
 	else if (HAS_BIT(ses->flags, SES_FLAG_SNOOP))
 	{

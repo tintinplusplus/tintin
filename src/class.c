@@ -32,10 +32,11 @@
 DO_COMMAND(do_class)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
+	int i;
 
 	struct listroot *root;
 	struct listnode *node;
-	int i, j;
+
 
 	root = ses->list[LIST_CLASS];
 
@@ -56,25 +57,7 @@ DO_COMMAND(do_class)
 	}
 	else if (*arg2 == 0)
 	{
-		if (search_node_list(ses->list[LIST_CLASS], arg1))
-		{
-			tintin_header(ses, " %s ", arg1);
-
-			for (i = 0 ; i < LIST_MAX ; i++)
-			{
-				for (j = 0 ; j < ses->list[i]->used ; j++)
-				{
-					if (!strcmp(ses->list[i]->list[j]->group, arg1))
-					{
-						show_node(ses->list[i], ses->list[i]->list[j], 0);
-					}
-				}
-			}
-		}
-		else
-		{
-			tintin_printf2(ses, "#CLASS {%s} DOES NOT EXIST.", arg1);
-		}
+		class_list(ses, arg1, arg2);
 	}
 	else
 	{
@@ -128,6 +111,11 @@ int count_class(struct session *ses, struct listnode *group)
 
 DO_CLASS(class_open)
 {
+	if (!search_node_list(ses->list[LIST_CLASS], left))
+	{
+		update_node_list(ses->list[LIST_CLASS], left, "", "");
+	}
+
 	if (!strcmp(ses->group, left))
 	{
 		show_message(ses, LIST_CLASS, "#CLASS {%s} IS ALREADY OPENED.", left);
@@ -142,25 +130,65 @@ DO_CLASS(class_open)
 	return ses;
 }
 
-
 DO_CLASS(class_close)
 {
-	if (!strcmp(ses->group, left))
+	if (!search_node_list(ses->list[LIST_CLASS], left))
 	{
-		RESTRING(ses->group, "");
-
-		show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", left);
+		show_message(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
 	}
 	else
 	{
-		show_message(ses, LIST_CLASS, "#CLASS {%s} IS ALREADY CLOSED.", left);
+		if (!strcmp(ses->group, left))
+		{
+			RESTRING(ses->group, "");
+
+			show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN CLOSED.", left);
+		}
+		else
+		{
+			show_message(ses, LIST_CLASS, "#CLASS {%s} IS ALREADY CLOSED.", left);
+		}
 	}
 	return ses;
 }
 
+DO_CLASS(class_list)
+{
+	int i, j;
+
+	if (search_node_list(ses->list[LIST_CLASS], left))
+	{
+		tintin_header(ses, " %s ", left);
+
+		for (i = 0 ; i < LIST_MAX ; i++)
+		{
+			if (*right && !is_abbrev(right, list_table[i].name_multi))
+			{
+				continue;
+			}
+
+			for (j = 0 ; j < ses->list[i]->used ; j++)
+			{
+				if (!strcmp(ses->list[i]->list[j]->group, left))
+				{
+					show_node(ses->list[i], ses->list[i]->list[j], 0);
+				}
+			}
+		}
+	}
+	else
+	{
+		show_message(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
+	}
+	return ses;
+}
 
 DO_CLASS(class_read)
 {
+	if (!search_node_list(ses->list[LIST_CLASS], left))
+	{
+		update_node_list(ses->list[LIST_CLASS], left, "", "");
+	}
 	class_open(ses, left, right);
 
 	do_read(ses, right);
@@ -175,6 +203,13 @@ DO_CLASS(class_write)
 {
 	FILE *file;
 	int list, index;
+
+	if (!search_node_list(ses->list[LIST_CLASS], left))
+	{
+		show_message(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
+
+		return ses;
+	}
 
 	if (*right == 0 || (file = fopen(right, "w")) == NULL)
 	{
@@ -214,6 +249,10 @@ DO_CLASS(class_kill)
 {
 	int type, index, group;
 
+	if (!search_node_list(ses->list[LIST_CLASS], left))
+	{
+		update_node_list(ses->list[LIST_CLASS], left, "", "");
+	}
 	group = search_index_list(ses->list[LIST_CLASS], left, NULL);
 
 	for (type = 0 ; type < LIST_MAX ; type++)

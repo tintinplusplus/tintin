@@ -28,11 +28,11 @@
 #include "tintin.h"
 
 
-void printline(struct session *ses, char *str, int prompt)
+void printline(struct session *ses, char **str, int prompt)
 {
 	char *out;
 
-	push_call("printline(%p,%p,%d)",ses,str,prompt);
+	push_call("printline(%p,%p,%d)",ses,*str,prompt);
 
 	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
 	{
@@ -46,21 +46,21 @@ void printline(struct session *ses, char *str, int prompt)
 		return;
 	}
 
-	out = str_alloc(strlen(str) * 2);
+	out = str_alloc(strlen(*str) * 2);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA))
 	{
-		convert_meta(str, out);
-		strcpy(str, out);
+		convert_meta(*str, out);
+		str_cpy(str, out);
 	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_WORDWRAP))
 	{
-		word_wrap(ses, str, out, TRUE);
+		word_wrap(ses, *str, out, TRUE);
 	}
 	else
 	{
-		strcpy(out, str);
+		strcpy(out, *str);
 	}
 
 	if (prompt)

@@ -67,7 +67,7 @@ DO_COMMAND(do_list)
 			{
 				node = set_nest_node(root, arg1, "");
 			}
-			array_table[cnt].array(ses, node, arg);
+			array_table[cnt].array(ses, node, arg, arg1);
 		}
 	}
 	return ses;
@@ -116,7 +116,8 @@ DO_ARRAY(array_clear)
 
 		list->root = NULL;
 	}
-	set_nest_node(ses->list[LIST_VARIABLE], list->left, "");
+
+	set_nest_node(ses->list[LIST_VARIABLE], var, "");
 
 	return ses;
 }
@@ -199,7 +200,7 @@ DO_ARRAY(array_delete)
 	}
 	else
 	{
-		show_message(ses, LIST_VARIABLE, "#LIST DEL: {%s} is not a list.", list->left);
+		show_message(ses, LIST_VARIABLE, "#LIST DEL: {%s} is not a list.", var);
 	}
 	return ses;
 }
@@ -365,7 +366,7 @@ DO_ARRAY(array_set)
 		return ses;
 	}
 
-	show_message(ses, LIST_VARIABLE, "#LIST SET: {%s} is not a list.", list->left);
+	show_message(ses, LIST_VARIABLE, "#LIST SET: {%s} is not a list.", var);
 
 	return ses;
 }
@@ -407,7 +408,7 @@ DO_ARRAY(array_sort)
 				sprintf(arg3, "{%d} {%s}", cnt + 1, arg2);
 			}
 
-			array_insert(ses, list, arg3);
+			array_insert(ses, list, arg3, var);
 
 			if (*str == COMMAND_SEPARATOR)
 			{

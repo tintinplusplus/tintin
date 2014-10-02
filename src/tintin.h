@@ -35,6 +35,8 @@
 #include <stdarg.h>
 #include <termios.h>
 #include <pcre.h>
+#include <errno.h>
+#include <math.h>
 
 /******************************************************************************
 *   Autoconf patching by David Hedbor                                         *
@@ -76,6 +78,21 @@
 #include <net/errno.h>
 #endif
 
+#ifdef HAVE_GNUTLS_H
+#include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
+#else
+#define gnutls_session_t int
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 #ifndef __TINTIN_H__
 #define __TINTIN_H__
 
@@ -114,10 +131,11 @@
 
 #define COMMAND_SEPARATOR              ';'
 
-#define HISTORY_FILE         ".tt_history"
+#define TINTIN_DIR               ".tintin"
+#define HISTORY_FILE         "history.txt"
 
-#define STRING_SIZE                  45000
-#define BUFFER_SIZE                  30000
+#define STRING_SIZE                  65536
+#define BUFFER_SIZE                  32768
 #define NUMBER_SIZE                    100
 #define LIST_SIZE                        2
 
@@ -381,7 +399,8 @@ enum operators
 #define MAP_SEARCH_AREA               3
 #define MAP_SEARCH_NOTE               4
 #define MAP_SEARCH_TERRAIN            5
-#define MAP_SEARCH_MAX                6
+#define MAP_SEARCH_FLAG               6
+#define MAP_SEARCH_MAX                7
 
 #define MAP_EXIT_N                     1
 #define MAP_EXIT_E                     2
@@ -537,7 +556,7 @@ enum operators
 
 #define VERBATIM(ses)             ((ses)->input_level == 0 && HAS_BIT((ses)->flags, SES_FLAG_VERBATIM))
 
-#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg)
+#define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg, char *var)
 #define DO_CHAT(chat) void chat (char *left, char *right)
 #define DO_CLASS(class) struct session *class (struct session *ses, char *left, char *right)
 #define DO_COMMAND(command) struct session  *command (struct session *ses, char *arg)
@@ -635,6 +654,7 @@ struct session
 	char                    color[100];
 	long long               check_output;
 	int                     auto_tab;
+	gnutls_session_t        ssl;
 };
 
 
@@ -661,6 +681,7 @@ struct tintin_data
 	int                     input_cur;
 	int                     input_pos;
 	int                     input_hid;
+	char                  * home;
 	char                  * term;
 	long long               time;
 	long long               timer[TIMER_CPU][5];
@@ -720,7 +741,7 @@ struct link_data
 	Typedefs
 */
 
-typedef struct session *ARRAY   (struct session *ses, struct listnode *list, char *arg);
+typedef struct session *ARRAY   (struct session *ses, struct listnode *list, char *arg, char *var);
 typedef void            CHAT    (char *left, char *right);
 typedef struct session *CLASS   (struct session *ses, char *left, char *right);
 typedef struct session *CONFIG  (struct session *ses, char *arg, int index);
@@ -953,6 +974,7 @@ struct search_data
 	pcre                  * area;
 	pcre                  * note;
 	pcre                  * terrain;
+	long long               flag;
 };
 
 #endif
@@ -1163,6 +1185,7 @@ extern DO_COMMAND(do_class);
 extern int count_class(struct session *ses, struct listnode *group);
 extern DO_CLASS(class_open);
 extern DO_CLASS(class_close);
+extern DO_CLASS(class_list);
 extern DO_CLASS(class_read);
 extern DO_CLASS(class_write);
 extern DO_CLASS(class_kill);
@@ -1742,10 +1765,18 @@ extern struct session *session_command(char *arg, struct session *ses);
 extern void show_session(struct session *ses, struct session *ptr);
 extern struct session *newactive_session(void);
 extern struct session *activate_session(struct session *ses);
-extern struct session *new_session(struct session *ses, char *name, char *address, int desc);
+extern struct session *new_session(struct session *ses, char *name, char *address, int desc, int ssl);
 extern struct session *connect_session(struct session *ses);
 extern void cleanup_session(struct session *ses);
 extern void dispose_session(struct session *ses);
+
+#endif
+
+#ifndef __SSL_H__
+#define __SSL_H__
+
+extern DO_COMMAND(do_ssl);
+extern gnutls_session_t ssl_negotiate(struct session *ses);
 
 #endif
 
@@ -1798,7 +1829,7 @@ extern struct term_type term_table[];
 #ifndef __TEXT_H__
 #define __TEXT_H__
 
-extern void printline(struct session *ses, char *str, int isaprompt);
+extern void printline(struct session *ses, char **str, int isaprompt);
 int word_wrap(struct session *ses, char *textin, char *textout, int display);
 int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, int keep);
 
@@ -1918,6 +1949,7 @@ extern void strip_non_vt102_codes(char *str, char *buf);
 extern void get_color_codes(char *old, char *str, char *buf);
 extern int strip_vt102_strlen(struct session *ses, char *str);
 extern int strip_color_strlen(struct session *ses, char *str);
+extern char *strip_vt102_strstr(char *str, char *buf, int *len);
 extern int interpret_vt102_codes(struct session *ses, char *str, int real);
 
 #endif

@@ -1,16 +1,26 @@
 * Stuff that's going to be done.
 
-http://tintin.sourceforge.net/board/viewtopic.php?t=2026&highlight=
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8735#8735
 
-http://tintin.sourceforge.net/board/viewtopic.php?t=2025&start=0&postdays=0&postorder=asc&highlight=
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8733#8733
 
-DEBUG_STACK[000] = parse_input(bust,walkto lj 1)
-DEBUG_STACK[001] = find_room(0xc30c80,1)
-DEBUG_STACK[002] = map_search_compile(0xc30c80,0xcb00d5,0x7fffe7d4c240) 
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8717#8717
 
-  - http://tintin.sourceforge.net/board/viewtopic.php?p=7885 (check %p)
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8655#8655
 
-  - http://tintin.sourceforge.net/board/viewtopic.php?p=7688#7688 (improve keyword searches)
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8612
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=2179&highlight=
+
+  - http://tintinplusplus.github.io/
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=2154 cross-session vars
+
+  - properly handle history size setting on load.
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8018 (map list might have issue with distant rooms.)
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=2025 (map_search_compile crash)
 
   - Weirdness with joe
 
@@ -150,8 +160,6 @@ DEBUG_STACK[002] = map_search_compile(0xc30c80,0xcb00d5,0x7fffe7d4c240)
 
 
 * Stuff that has been request but that I'm not entirely sure about
-
-- Add a command to manipulate the input buffer..
 
 - Keep last input visible with repeat enter enabled.
 

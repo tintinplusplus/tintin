@@ -22,6 +22,7 @@ Julia Longtin                      see mods/igr.mods Telnet enhancements
 Bryan Turner                       see mods/igr.mods Mapper enhancements
 David Champion                     see mods/igr.mods Solaris forkpty fix
 Ben Love                           see mods/igr.mods Tab enhancements
+Adam Borowski                      see mods/igr.mods SSL implementation
 
 Modification History
 --------------------

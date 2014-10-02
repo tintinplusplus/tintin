@@ -42,7 +42,7 @@ DO_COMMAND(do_all)
 		{
 			next_ses = sesptr->next;
 
-			script_driver(sesptr, -1, left);
+			script_driver(sesptr, -2, left);
 		}
 	}
 	else
@@ -102,7 +102,7 @@ DO_COMMAND(do_cr)
 
 DO_COMMAND(do_echo)
 {
-	char temp[BUFFER_SIZE], output[BUFFER_SIZE], left[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], *output, left[BUFFER_SIZE];
 	int lnf;
 
 	sprintf(temp, "{result} %s", arg);
@@ -138,32 +138,31 @@ DO_COMMAND(do_echo)
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		sprintf(output, "\n\033[0m%s\033[0m", temp);
+		output = str_dup_printf("\n\033[0m%s\033[0m", temp);
 	}
 	else
 	{
-		sprintf(output, "\033[0m%s\033[0m", temp);
+		output = str_dup_printf("\033[0m%s\033[0m", temp);
 	}
 
 	add_line_buffer(ses, output, lnf);
 
-	if (ses != gtd->ses)
+	if (ses == gtd->ses)
 	{
-		return ses;
-	}
+		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+		{
+			save_pos(ses);
+			goto_rowcol(ses, ses->bot_row, 1);
+		}
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		save_pos(ses);
-		goto_rowcol(ses, ses->bot_row, 1);
-	}
+		printline(ses, &output, lnf);
 
-	printline(ses, output, lnf);
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		restore_pos(ses);
+		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+		{
+			restore_pos(ses);
+		}
 	}
+	str_free(output);
 
 	return ses;
 }
@@ -205,7 +204,7 @@ DO_COMMAND(do_forall)
 
 			substitute(ses, right, temp, SUB_CMD);
 
-			ses = script_driver(ses, -1, temp);
+			ses = script_driver(ses, -2, temp);
 
 			if (*arg == COMMAND_SEPARATOR)
 			{
@@ -310,7 +309,7 @@ DO_COMMAND(do_parse)
 
 			substitute(ses, right, temp, SUB_CMD);
 
-			ses = script_driver(ses, -1, temp);
+			ses = script_driver(ses, -2, temp);
 		}
 	}
 	return ses;
@@ -333,7 +332,7 @@ DO_COMMAND(do_send)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE], *output;
 	int lnf;
 
 	arg = get_arg_in_braces(ses, arg, left, TRUE);
@@ -363,32 +362,32 @@ DO_COMMAND(do_showme)
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		sprintf(right, "\n\033[0m%s\033[0m", left);
+		output = str_dup_printf("\n\033[0m%s\033[0m", left);
 	}
 	else
 	{
-		sprintf(right, "\033[0m%s\033[0m", left);
+		output = str_dup_printf("\033[0m%s\033[0m", left);
 	}
 
-	add_line_buffer(ses, right, lnf);
+	add_line_buffer(ses, output, lnf);
 
-	if (ses != gtd->ses)
+	if (ses == gtd->ses)
 	{
-		return ses;
+		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+		{
+			save_pos(ses);
+			goto_rowcol(ses, ses->bot_row, 1);
+		}
+
+		printline(ses, &output, lnf);
+
+		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
+		{
+			restore_pos(ses);
+		}
 	}
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		save_pos(ses);
-		goto_rowcol(ses, ses->bot_row, 1);
-	}
-
-	printline(ses, right, lnf);
-
-	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-	{
-		restore_pos(ses);
-	}
+	str_free(output);
 
 	return ses;
 }

@@ -159,7 +159,7 @@ DO_MAP(map_at)
 	ses->map->at_room = ses->map->in_room;
 	ses->map->in_room = new_room;
 
-	script_driver(ses, -1, arg2);
+	script_driver(ses, -2, arg2);
 
 	if (ses->map)
 	{
@@ -806,15 +806,14 @@ DO_MAP(map_get)
 
 DO_MAP(map_goto)
 {
-	char buf[BUFFER_SIZE];
 	int room;
 
 	room = find_room(ses, arg);
 
-	arg = sub_arg_in_braces(ses, arg, buf, GET_ALL, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, buf, GET_ALL, SUB_VAR|SUB_FUN); // look for dig argument
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN); // look for dig argument
 
-	if (room == 0 && ses->map->search->vnum > 0 && ses->map->search->vnum < ses->map->size && !strcasecmp(buf, "dig"))
+	if (room == 0 && ses->map->search->vnum > 0 && ses->map->search->vnum < ses->map->size && !strcasecmp(arg2, "dig"))
 	{
 		room = ses->map->search->vnum;
 
@@ -832,7 +831,7 @@ DO_MAP(map_goto)
 	else
 	{
 
-		show_message(ses, -1, "#MAP GOTO: COULDN'T FIND ROOM %s.", buf);
+		show_message(ses, -1, "#MAP GOTO: COULDN'T FIND ROOM %s.", arg1);
 	}
 }
 
@@ -1383,7 +1382,7 @@ DO_MAP(map_read)
 
 			case '#':
 				buffer[0] = gtd->tintin_char;
-				ses = script_driver(ses, -1, buffer);
+				ses = script_driver(ses, -2, buffer);
 				break;
 
 			case  0:
@@ -2319,7 +2318,7 @@ int follow_map(struct session *ses, char *argument)
 		{
 			ses->map->nofollow++;
 
-			script_driver(ses, -1, exit->cmd);
+			script_driver(ses, -2, exit->cmd);
 
 			ses->map->nofollow--;
 		}
@@ -2431,7 +2430,7 @@ int follow_map(struct session *ses, char *argument)
 		{
 			ses->map->nofollow++;
 
-			script_driver(ses, -1, argument);
+			script_driver(ses, -2, argument);
 
 			ses->map->nofollow--;
 		}
@@ -3019,6 +3018,10 @@ void search_keywords(struct session *ses, char *arg, char *out, char *var)
 		{
 			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_TERRAIN], GET_ALL, SUB_VAR|SUB_FUN);
 		}
+		else if (!strcasecmp(tmp, "roomflag"))
+		{
+			arg = sub_arg_in_braces(ses, arg, buf[MAP_SEARCH_FLAG], GET_ALL, SUB_VAR|SUB_FUN);
+		}
 		else if (!strcasecmp(tmp, "variable"))
 		{
 			arg = sub_arg_in_braces(ses, arg, var, GET_ALL, SUB_VAR|SUB_FUN);
@@ -3072,6 +3075,8 @@ void map_search_compile(struct session *ses, char *arg, char *var)
 
 	if (*buf)
 	{
+		strcat(buf, "$");
+
 		ses->map->search->name = tintin_regexp_compile(ses, NULL, buf, PCRE_ANCHORED);
 	}
 	else
@@ -3191,6 +3196,43 @@ void map_search_compile(struct session *ses, char *arg, char *var)
 	{
 		ses->map->search->terrain = NULL;
 	}
+
+	arg = sub_arg_in_braces(ses, arg, buf, GET_ALL, SUB_VAR|SUB_FUN); // flag
+
+	if (*buf)
+	{
+		ses->map->search->flag = tintoi(buf);
+
+		if (is_abbrev(buf, "avoid"))
+		{
+			ses->map->search->flag = ROOM_FLAG_AVOID;
+		}
+		else if (is_abbrev(buf, "hide"))
+		{
+			ses->map->search->flag = ROOM_FLAG_HIDE;
+		}
+		else if (is_abbrev(buf, "leave"))
+		{
+			ses->map->search->flag = ROOM_FLAG_LEAVE;
+		}
+		else if (is_abbrev(buf, "void"))
+		{
+			ses->map->search->flag = ROOM_FLAG_VOID;
+		}
+		else if (is_abbrev(buf, "static"))
+		{
+			ses->map->search->flag = ROOM_FLAG_STATIC;
+		}
+		else if (is_abbrev(buf, "river"))
+		{
+			ses->map->search->flag = ROOM_FLAG_RIVER;
+		}
+	}
+	else
+	{
+		ses->map->search->flag = 0;
+	}
+
 	pop_call();
 	return;
 }
@@ -3270,6 +3312,14 @@ int match_room(struct session *ses, int vnum, struct search_data *search)
 	if (search->terrain)
 	{
 		if (!regexp_compare(search->terrain, room->terrain, "", 0, 0))
+		{
+			return 0;
+		}
+	}
+
+	if (search->flag)
+	{
+		if ((room->flags & search->flag) != search->flag)
 		{
 			return 0;
 		}

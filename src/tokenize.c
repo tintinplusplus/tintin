@@ -600,7 +600,7 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 						break;
 
 					case TOKEN_TYPE_RETURN:
-						str = get_arg_with_spaces(root->ses, arg, line, 1);
+						str = get_arg_in_braces(root->ses, arg, line, TRUE);
 						addtoken(root, lvl, TOKEN_TYPE_RETURN, cmd, line);
 						break;
 
@@ -897,7 +897,7 @@ struct scriptnode *parse_script(struct scriptroot *root, int lvl, struct scriptn
 				{
 					substitute(root->ses, token->regex->bod, token->regex->buf, SUB_CMD);
 
-					root->ses = script_driver(root->ses, -1, token->regex->buf);
+					root->ses = script_driver(root->ses, -2, token->regex->buf);
 				}
 				else
 				{
@@ -1062,8 +1062,9 @@ struct session *script_driver(struct session *ses, int list, char *str)
 
 	root->ses = cur_ses = ses;
 
-	dlevel = (list >= 0) ? HAS_BIT(root->ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
-	ilevel = (list >= 0) ? 1 : 0;
+	dlevel = (list > -1) ? HAS_BIT(root->ses->list[list]->flags, LIST_FLAG_DEBUG) : 0;
+
+	ilevel = (list > -2) ? 1 : 0;
 
 	cur_ses->debug_level += dlevel;
 	cur_ses->input_level += ilevel;

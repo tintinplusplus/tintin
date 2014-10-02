@@ -339,12 +339,12 @@ void wrapstring(struct session *ses, char *str)
 			continue;
 		}
 
-		if (*pti == ' ')
+		if (*pti == ' ' || *pti == '\n')
 		{
 			lis = pti;
 		}
 
-		if (col > ses->cols)
+		if (col > ses->cols || *pti == '\n')
 		{
 			col = 1;
 

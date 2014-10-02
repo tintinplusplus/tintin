@@ -59,11 +59,11 @@ DO_COMMAND(do_log)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, left, GET_ONE);
 	substitute(ses, left, left, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, right, GET_ALL);
+	substitute(ses, right, right, SUB_VAR|SUB_FUN|SUB_ESC);
 
 	if (*left == 0)
 	{

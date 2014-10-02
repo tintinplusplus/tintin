@@ -1,3 +1,37 @@
+Jan 2014       2.01.1
+
+COPYING        Upgraded the license from GPL 2 to GPL 3 in order to use some
+               code licensed under GPL 3.
+
+highlight.c    Added no-blink no-underscore and no-reverse #highlight options.
+
+highlight.c    Added option to use escape codes in the #highlight color field.
+
+class.c        Added #class {<class>} list {<list>} option.
+
+map.c          Added #map list {roomflag} option.
+
+list.c         Fixed bug with using #list clear on a nested variable.
+
+substitute.c   Added patch by Nya to properly handle colored substitutions.
+
+math.c         Added // operator to calculate sqrt // 2 or cbrt // 3
+
+math.c         Added ** operator to calculate power
+
+tinexp.c       Added IGNORE options to variables and functions.
+
+main.c         The command history is automatically saved again.
+
+ssl.c          Added SSL support based on KBTin code by Adam Borowski.
+
+tinex.c        $ @ and & are now escaped when received as part of an action for
+               added security.
+
+session.c      Added SESSION CREATED event.
+
+parse.c        Fixed command echoing when executing commands in another session.
+
 Mar 2013       2.01.0
 
 session.c      #session takes a filename as an additional argument, if the

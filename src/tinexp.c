@@ -82,11 +82,11 @@ DO_COMMAND(do_regexp)
 		{
 			substitute(ses, is_true, is_true, SUB_CMD);
 
-			ses = script_driver(ses, -1, is_true);
+			ses = script_driver(ses, -2, is_true);
 		}
 		else if (*is_false)
 		{
-			ses = script_driver(ses, -1, is_false);
+			ses = script_driver(ses, -2, is_false);
 		}
 	}
 	return ses;
@@ -122,6 +122,8 @@ int regexp_compare(pcre *nodepcre, char *str, char *exp, int option, int flag)
 		}
 		return FALSE;
 	}
+
+	// SUB_FIX handles %1 to %99 usage. Backward compatibility.
 
 	switch (flag)
 	{
@@ -240,36 +242,110 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				}
 				break;
 
-			case '$':
-				if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalpha((int) pti[1]) || pti[1] == '$'))
+			case '@':
+				if (HAS_BIT(flags, SUB_FUN) && !HAS_BIT(ses->list[LIST_FUNCTION]->flags, LIST_FLAG_IGNORE))
 				{
-					int def = FALSE;
+					i = 1;
+					escape = FALSE;
 
-					if (pti[1] == '$')
+					while (pti[i] == '@')
 					{
-						while (pti[1] == '$')
-						{
-							*pto++ = *pti++;
-						}
+						escape = TRUE;
 
-						if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]))
-						{
-							pti++;
-						}
-						else
+						i++;
+					}
+
+					for (ptt = temp ; isalnum((int) pti[i]) || pti[i] == '_' ; i++)
+					{
+						*ptt++ = pti[i];
+					}
+					*ptt = 0;
+
+					node = search_node_list(ses->list[LIST_FUNCTION], temp);
+
+					if (node == NULL || pti[i] != DEFAULT_OPEN)
+					{
+						while (*pti == '@')
 						{
 							*pto++ = *pti++;
 						}
 						continue;
 					}
 
-					pti++;
+					if (escape)
+					{
+						pti++;
 
-					if (*pti == DEFAULT_OPEN)
+						while (*pti == '@')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					pti = get_arg_in_braces(ses, &pti[i], temp, FALSE);
+
+					substitute(ses, temp, buf, flags_neol);
+
+					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->left);
+
+					RESTRING(gtd->vars[0], buf);
+
+					pte = buf;
+
+					for (i = 1 ; i < 100 ; i++)
+					{
+						pte = get_arg_in_braces(ses, pte, temp, TRUE);
+
+						RESTRING(gtd->vars[i], temp);
+
+						if (*pte == 0)
+						{
+							break;
+						}
+
+						if (*pte == COMMAND_SEPARATOR)
+						{
+							pte++;
+						}
+
+					}
+
+					substitute(ses, node->right, buf, SUB_ARG);
+
+					script_driver(ses, LIST_FUNCTION, buf);
+
+					substitute(ses, "$result", pto, flags_neol|SUB_VAR);
+
+					pto += strlen(pto);
+				}
+				else
+				{
+					*pto++ = *pti++;
+				}
+				break;
+
+			case '$':
+				if (HAS_BIT(flags, SUB_VAR) && !HAS_BIT(ses->list[LIST_VARIABLE]->flags, LIST_FLAG_IGNORE))
+				{
+					int def = FALSE;
+					i = 1;
+					escape = FALSE;
+
+					while (pti[i] == '$')
+					{
+						escape = TRUE;
+
+						i++;
+					}
+
+					if (pti[i] == DEFAULT_OPEN)
 					{
 						def = TRUE;
 
-						pti = get_arg_in_braces(ses, pti, buf, TRUE);
+						ptt = get_arg_in_braces(ses, &pti[i], buf, TRUE);
+
+						i += strlen(buf) + 2;
 
 						substitute(ses, buf, temp, flags_neol);
 					}
@@ -277,14 +353,38 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						ptt = temp;
 
-						while (isalnum((int) *pti) || *pti == '_')
+						while (isalnum((int) pti[i]) || pti[i] == '_')
 						{
-							*ptt++ = *pti++;
+							*ptt++ = pti[i];
+
+							i++;
 						}
 						*ptt = 0;
 					}
 
-					pti = get_arg_at_brackets(ses, pti, temp + strlen(temp));
+					node = search_node_list(ses->list[LIST_VARIABLE], temp);
+
+					if (node == NULL)
+					{
+						while (*pti == '$')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					if (escape)
+					{
+						pti++;
+
+						while (*pti == '$')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					pti = get_arg_at_brackets(ses, &pti[i], temp + strlen(temp));
 
 					substitute(ses, temp, buf, flags_neol);
 
@@ -297,6 +397,194 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					pto += strlen(pto);
 
 					str_free(str);
+				}
+				else
+				{
+					*pto++ = *pti++;
+				}
+				break;
+
+			case '&':
+				if (HAS_BIT(flags, SUB_CMD) && (isdigit((int) pti[1]) || pti[1] == '&'))
+				{
+					if (pti[1] == '&')
+					{
+						while (pti[1] == '&')
+						{
+							*pto++ = *pti++;
+						}
+						if (isdigit((int) pti[1]))
+						{
+							pti++;
+						}
+						else
+						{
+							*pto++ = *pti++;
+						}
+					}
+					else
+					{
+						i = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
+
+						for (cnt = 0 ; gtd->cmds[i][cnt] ; cnt++)
+						{
+							*pto++ = gtd->cmds[i][cnt];
+						}
+						pti += isdigit((int) pti[2]) ? 3 : 2;
+					}
+				}
+				else if (HAS_BIT(flags, SUB_VAR) && !HAS_BIT(ses->list[LIST_VARIABLE]->flags, LIST_FLAG_IGNORE))
+				{
+					int def = FALSE;
+					i = 1;
+					escape = FALSE;
+
+					while (pti[i] == '&')
+					{
+						escape = TRUE;
+
+						i++;
+					}
+
+					if (pti[i] == DEFAULT_OPEN)
+					{
+						def = TRUE;
+
+						ptt = get_arg_in_braces(ses, &pti[i], buf, TRUE);
+
+						i += strlen(buf) + 2;
+
+						substitute(ses, buf, temp, flags_neol);
+					}
+					else
+					{
+						ptt = temp;
+
+						while (isalnum((int) pti[i]) || pti[i] == '_')
+						{
+							*ptt++ = pti[i];
+
+							i++;
+						}
+						*ptt = 0;
+					}
+
+					node = search_node_list(ses->list[LIST_VARIABLE], temp);
+
+					if (node == NULL)
+					{
+						while (*pti == '&')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					if (escape)
+					{
+						pti++;
+
+						while (*pti == '&')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					pti = get_arg_at_brackets(ses, &pti[i], temp + strlen(temp));
+
+					substitute(ses, temp, buf, flags_neol);
+
+					str = str_dup("");
+
+					get_nest_index(ses->list[LIST_VARIABLE], buf, &str, def);
+
+					substitute(ses, str, pto, flags_neol - SUB_VAR);
+
+					pto += strlen(pto);
+
+					str_free(str);
+				}
+				else
+				{
+					*pto++ = *pti++;
+				}
+				break;
+
+			case '%':
+				if (HAS_BIT(flags, SUB_ARG) && (isdigit((int) pti[1]) || pti[1] == '%'))
+				{
+					if (pti[1] == '%')
+					{
+						while (pti[1] == '%')
+						{
+							*pto++ = *pti++;
+						}
+						pti++;
+					}
+					else
+					{
+						i = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
+
+						ptt = gtd->vars[i];
+
+						while (*ptt)
+						{
+							if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *ptt & 128 && ptt[1] != 0)
+							{
+								*pto++ = *ptt++;
+								*pto++ = *ptt++;
+								continue;
+							}
+
+							if (HAS_BIT(flags, SUB_SEC))
+							{
+								switch (*ptt)
+								{
+									case '\\':
+										*pto++ = '\\';
+										*pto++ = '\\';
+										break;
+
+									case '{':
+										*pto++ = '\\';
+										*pto++ = 'x';
+										*pto++ = '7';
+										*pto++ = 'B';
+										break;
+
+									case '}':
+										*pto++ = '\\';
+										*pto++ = 'x';
+										*pto++ = '7';
+										*pto++ = 'D';
+										break;
+
+									case '$':
+									case '@':
+									case '&':
+										*pto++ = '\\';
+										*pto++ = *ptt;
+										break;
+
+									case COMMAND_SEPARATOR:
+										*pto++ = '\\';
+										*pto++ = COMMAND_SEPARATOR;
+										break;
+
+									default:
+										*pto++ = *ptt;
+										break;
+								}
+								ptt++;
+							}
+							else
+							{
+								*pto++ = *ptt++;
+							}
+						}
+						pti += isdigit((int) pti[2]) ? 3 : 2;
+					}
 				}
 				else
 				{
@@ -431,244 +719,6 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				}
 				break;
 
-			case '@':
-				if (HAS_BIT(flags, SUB_FUN))
-				{
-					if (pti[1] == '@')
-					{
-						escape = TRUE;
-						*pto++ = *pti++;
-
-						continue;
-					}
-
-					for (ptt = temp, i = 1 ; isalnum((int) pti[i]) || pti[i] == '_' ; i++)
-					{
-						*ptt++ = pti[i];
-					}
-					*ptt = 0;
-
-					node = search_node_list(ses->list[LIST_FUNCTION], temp);
-
-					if (node == NULL || pti[i] != DEFAULT_OPEN)
-					{
-						escape = FALSE;
-						*pto++ = *pti++;
-						continue;
-					}
-
-					if (escape)
-					{
-						pti++;
-						continue;
-					}
-
-					pti = get_arg_in_braces(ses, &pti[i], temp, FALSE);
-
-					substitute(ses, temp, buf, flags_neol);
-
-					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->left);
-
-					RESTRING(gtd->vars[0], buf);
-
-					pte = buf;
-
-					for (i = 1 ; i < 100 ; i++)
-					{
-						pte = get_arg_in_braces(ses, pte, temp, TRUE);
-
-						RESTRING(gtd->vars[i], temp);
-
-						if (*pte == 0)
-						{
-							break;
-						}
-
-						if (*pte == COMMAND_SEPARATOR)
-						{
-							pte++;
-						}
-
-					}
-
-					substitute(ses, node->right, buf, SUB_ARG);
-
-					script_driver(ses, LIST_FUNCTION, buf);
-
-					substitute(ses, "$result", pto, flags_neol|SUB_VAR);
-
-					pto += strlen(pto);
-				}
-				else
-				{
-					*pto++ = *pti++;
-				}
-				break;
-
-			case '%':
-				if (HAS_BIT(flags, SUB_ARG) && (isdigit((int) pti[1]) || pti[1] == '%'))
-				{
-					if (pti[1] == '%')
-					{
-						while (pti[1] == '%')
-						{
-							*pto++ = *pti++;
-						}
-						pti++;
-					}
-					else
-					{
-						i = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
-
-						ptt = gtd->vars[i];
-
-						while (*ptt)
-						{
-							if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *ptt & 128 && ptt[1] != 0)
-							{
-								*pto++ = *ptt++;
-								*pto++ = *ptt++;
-								continue;
-							}
-
-							if (HAS_BIT(flags, SUB_SEC))
-							{
-								switch (*ptt)
-								{
-									case '\\':
-										*pto++ = '\\';
-										*pto++ = '\\';
-										break;
-
-									case '{':
-										*pto++ = '\\';
-										*pto++ = 'x';
-										*pto++ = '7';
-										*pto++ = 'B';
-										break;
-
-									case '}':
-										*pto++ = '\\';
-										*pto++ = 'x';
-										*pto++ = '7';
-										*pto++ = 'D';
-										break;
-
-									case COMMAND_SEPARATOR:
-										*pto++ = '\\';
-										*pto++ = COMMAND_SEPARATOR;
-										break;
-
-									default:
-										*pto++ = *ptt;
-										break;
-								}
-								ptt++;
-							}
-							else
-							{
-								*pto++ = *ptt++;
-							}
-						}
-						pti += isdigit((int) pti[2]) ? 3 : 2;
-					}
-				}
-				else
-				{
-					*pto++ = *pti++;
-				}
-				break;
-
-			case '&':
-				if (HAS_BIT(flags, SUB_CMD) && (isdigit((int) pti[1]) || pti[1] == '&'))
-				{
-					if (pti[1] == '&')
-					{
-						while (pti[1] == '&')
-						{
-							*pto++ = *pti++;
-						}
-						if (isdigit((int) pti[1]))
-						{
-							pti++;
-						}
-						else
-						{
-							*pto++ = *pti++;
-						}
-					}
-					else
-					{
-						i = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + pti[2] - '0' : pti[1] - '0';
-
-						for (cnt = 0 ; gtd->cmds[i][cnt] ; cnt++)
-						{
-							*pto++ = gtd->cmds[i][cnt];
-						}
-						pti += isdigit((int) pti[2]) ? 3 : 2;
-					}
-				}
-				else if (HAS_BIT(flags, SUB_VAR) && (pti[1] == DEFAULT_OPEN || isalpha((int) pti[1]) || pti[1] == '&'))
-				{
-					int def = 0;
-
-					if (pti[1] == '&')
-					{
-						while (pti[1] == '&')
-						{
-							*pto++ = *pti++;
-						}
-
-						if (pti[1] == DEFAULT_OPEN || isalnum((int) pti[1]))
-						{
-							pti++;
-						}
-						else
-						{
-							*pto++ = *pti++;
-						}
-						continue;
-					}
-
-
-					pti++;
-
-					if (*pti == DEFAULT_OPEN)
-					{
-						def = TRUE;
-
-						pti = get_arg_in_braces(ses, pti, buf, TRUE);
-
-						substitute(ses, buf, temp, flags_neol);
-					}
-					else
-					{
-						for (ptt = temp ; isalnum((int) *pti) || *pti == '_' ; i++)
-						{
-							*ptt++ = *pti++;
-						}
-						*ptt = 0;
-					}
-
-					pti = get_arg_at_brackets(ses, pti, temp + strlen(temp));
-
-					substitute(ses, temp, buf, flags_neol);
-
-					str = str_dup("");
-
-					get_nest_index(ses->list[LIST_VARIABLE], buf, &str, def);
-
-					substitute(ses, str, pto, flags_neol - SUB_VAR);
-
-					pto += strlen(pto);
-
-					str_free(str);
-				}
-				else
-				{
-					*pto++ = *pti++;
-				}
-				break;
 
 			case '\\':
 				if (HAS_BIT(flags, SUB_ESC))
@@ -731,11 +781,8 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				else
 				{
 					*pto++ = *pti++;
+					*pto++ = *pti++;
 				}
-				break;
-
-			case ESCAPE:
-				*pto++ = *pti++;
 				break;
 
 			default:
@@ -760,6 +807,13 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 							*pto++ = 'x';
 							*pto++ = '7';
 							*pto++ = 'D';
+							break;
+
+						case '$':
+						case '@':
+						case '&':
+							*pto++ = '\\';
+							*pto++ = *pti;
 							break;
 
 						case COMMAND_SEPARATOR:

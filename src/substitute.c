@@ -74,6 +74,7 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *ptl, *ptm, *pto;
 	struct listroot *root = ses->list[LIST_SUBSTITUTE];
 	struct listnode *node;
+	int len;
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
@@ -95,26 +96,26 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 				strcpy(match, gtd->vars[0]);
 
-				substitute(ses, node->right, subst, SUB_ARG);
+				substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				ptm = strstr(pto, match);
-
-				if (!HAS_BIT(node->flags, NODE_FLAG_META))
+				if (HAS_BIT(node->flags, NODE_FLAG_META))
 				{
-					if (ptm == NULL)
-					{
-						break;
-					}
+					ptm = strstr(pto, match);
 
-					ptl = strstr(ptl, match);
-					ptl = ptl + strlen(match);
+					len = strlen(match);
+				}
+				else
+				{
+					ptm = strip_vt102_strstr(pto, match, &len);
+
+					ptl = strstr(ptl, match) + strlen(match);
 				}
 
 				*ptm = 0;
 
 				cat_sprintf(output, "%s%s", pto, subst);
 
-				pto = ptm + strlen(match);
+				pto = ptm + len;
 
 				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
 			}
@@ -122,9 +123,9 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 			strcat(output, pto);
 
-			substitute(ses, output, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+//			substitute(ses, output, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-//			strcpy(original, output);
+			strcpy(original, output);
 		}
 	}
 }

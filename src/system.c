@@ -75,7 +75,7 @@ DO_COMMAND(do_run)
 		default:
 			sprintf(temp, "{%s} {%d} {%s}", right, pid, file);
 
-			ses = new_session(ses, left, temp, desc);
+			ses = new_session(ses, left, temp, desc, 0);
 
 			break;
 	}
@@ -146,7 +146,7 @@ DO_COMMAND(do_script)
 				*cptr = 0;
 			}
 
-			ses = script_driver(ses, -1, buf);
+			ses = script_driver(ses, -2, buf);
 		}
 
 		pclose(script);

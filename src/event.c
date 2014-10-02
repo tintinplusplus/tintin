@@ -66,7 +66,7 @@ DO_COMMAND(do_event)
 				return ses;
 			}
 		}
-		tintin_printf(ses, "#EVENT {%s} IS NOT AN EXISTING EVENT.", capitalize(arg1));
+		tintin_printf(ses, "#EVENT {%s} IS NOT AN EXISTING EVENT.", arg1);
 	}
 	return ses;
 }

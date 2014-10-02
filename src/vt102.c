@@ -471,6 +471,42 @@ void strip_non_vt102_codes(char *str, char *buf)
 	*pto = 0;
 }
 
+char *strip_vt102_strstr(char *str, char *buf, int *len)
+{ 
+	char *pti, *ptm;
+
+	pti = str;
+
+	while (*str)
+	{
+		ptm = buf;
+
+		while (*pti)
+		{
+			if (*pti++ != *ptm++)
+			{
+				break;
+			}
+
+			if (*ptm == 0)
+			{
+				if (len)
+				{
+					*len = pti - str;
+				}
+				return str;
+			}
+
+			while (skip_vt102_codes(pti))
+			{
+				pti += skip_vt102_codes(pti);
+			}
+		}
+		str = pti;
+	}
+	return NULL;
+}
+
 // mix old and str, then copy compressed color string to buf which can point to old.
 
 void get_color_codes(char *old, char *str, char *buf)
@@ -604,10 +640,10 @@ void get_color_codes(char *old, char *str, char *buf)
 									DEL_BIT(vtc, COL_UND);
 									break;
 								case 25:
-									DEL_BIT(vtc, COL_UND);
+									DEL_BIT(vtc, COL_BLK);
 									break;
 								case 27:
-									DEL_BIT(vtc, COL_BLK);
+									DEL_BIT(vtc, COL_REV);
 									break;
 								case 38:
 									DEL_BIT(vtc, COL_XTB);

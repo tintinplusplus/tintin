@@ -158,6 +158,7 @@ void trap_handler(int signal)
 int main(int argc, char **argv)
 {
 	int greeting = TRUE;
+	char filename[256];
 
 	#ifdef SOCKS
 		SOCKSinit(argv[0]);
@@ -203,16 +204,6 @@ int main(int argc, char **argv)
 		syserr("signal SIGWINCH");
 	}
 
-/*
-	if (getenv("HOME") != NULL)
-	{
-		char filename[256];
-
-		sprintf(filename, "%s/%s", getenv("HOME"), HISTORY_FILE);
-
-		read_history(gts, filename);
-	}
-*/
 
 	srand(time(NULL));
 
@@ -233,6 +224,18 @@ int main(int argc, char **argv)
 
 	init_tintin(greeting);
 
+	sprintf(filename, "%s/%s", gtd->home, TINTIN_DIR);
+
+	if (mkdir(filename, 0777) || errno == EEXIST)
+	{
+		sprintf(filename, "%s/%s/%s", gtd->home, TINTIN_DIR, HISTORY_FILE);
+
+		if (access(filename, F_OK ) != -1)
+		{
+			history_read(gts, filename);
+		}
+	}
+
 	if (argc > 1)
 	{
 		int c;
@@ -244,7 +247,9 @@ int main(int argc, char **argv)
 			switch (c)
 			{
 				case 'e':
-					gtd->ses = script_driver(gtd->ses, -1, optarg);
+					gtd->quiet++;
+					gtd->ses = script_driver(gtd->ses, -2, optarg);
+					gtd->quiet--;
 					break;
 
 				case 'G':
@@ -291,6 +296,8 @@ int main(int argc, char **argv)
 			gtd->ses = do_read(gtd->ses, argv[optind]);
 		}
 	}
+
+
 	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 2, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION);
 	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
 
@@ -298,7 +305,6 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
 
 void init_tintin(int greeting)
 {
@@ -336,6 +342,7 @@ void init_tintin(int greeting)
 
 	gtd->input_off      = 1;
 
+	gtd->home           = strdup(getenv("HOME") ? getenv("HOME") : ".");
 	gtd->term           = strdup(getenv("TERM") ? getenv("TERM") : "UNKNOWN");
 
 	for (index = 0 ; index < 100 ; index++)
@@ -426,16 +433,15 @@ void quitmsg(char *message)
 
 	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 0, "PROGRAM TERMINATION");
 
-/*
 	if (gtd->history_size)
 	{
 		char filename[BUFFER_SIZE];
 
-		sprintf(filename, "%s/%s", getenv("HOME"), HISTORY_FILE);
+		sprintf(filename, "%s/%s/%s", gtd->home, TINTIN_DIR, HISTORY_FILE);
 
 		history_write(gts, filename);
 	}
-*/
+
 	restore_terminal();
 
 	clean_screen(gts);
