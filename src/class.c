@@ -71,7 +71,7 @@ DO_COMMAND(do_class)
 
 		if (*class_table[i].name == 0)
 		{
-			tintin_printf2(ses, "#SYNTAX: CLASS {name} {OPEN|CLOSE|READ|WRITE|KILL}.", arg1, capitalize(arg2));
+			show_error(ses, LIST_COMMAND, "#SYNTAX: CLASS {name} {OPEN|CLOSE|READ|WRITE|KILL}.", arg1, capitalize(arg2));
 		}
 		else
 		{
@@ -178,7 +178,7 @@ DO_CLASS(class_list)
 	}
 	else
 	{
-		show_message(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
+		show_error(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
 	}
 	return ses;
 }
@@ -206,16 +206,12 @@ DO_CLASS(class_write)
 
 	if (!search_node_list(ses->list[LIST_CLASS], left))
 	{
-		show_message(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
-
-		return ses;
+		return show_error(ses, LIST_CLASS, "#CLASS {%s} DOES NOT EXIST.", left);
 	}
 
 	if (*right == 0 || (file = fopen(right, "w")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #CLASS WRITE {%s} - COULDN'T OPEN FILE TO WRITE.", right);
-
-		return ses;
+		return show_error(ses, LIST_CLASS, "#ERROR: #CLASS WRITE {%s} - COULDN'T OPEN FILE TO WRITE.", right);
 	}
 
 	fprintf(file, "%cCLASS {%s} OPEN\n\n", gtd->tintin_char, left);

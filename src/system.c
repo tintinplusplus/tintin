@@ -49,9 +49,7 @@ DO_COMMAND(do_run)
 
 	if (*left == 0 || *right == 0)
 	{
-		tintin_printf2(ses, "#RUN: TWO ARGUMENTS REQUIRED.");
-
-		return ses;
+		return show_error(ses, LIST_COMMAND, "#RUN: TWO ARGUMENTS REQUIRED.");
 	}
 
 	size.ws_row = get_scroll_size(ses);
@@ -92,8 +90,7 @@ DO_COMMAND(do_scan)
 
 	if ((fp = fopen(filename, "r")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #SCAN {%s} - FILE NOT FOUND.", filename);
-		return ses;
+		return show_error(ses, LIST_COMMAND, "#ERROR: #SCAN {%s} - FILE NOT FOUND.", filename);
 	}
 
 	SET_BIT(ses->flags, SES_FLAG_SCAN);
@@ -113,7 +110,7 @@ DO_COMMAND(do_scan)
 
 	DEL_BIT(ses->flags, SES_FLAG_SCAN);
 
-	show_message(ses, LIST_MESSAGE, "#OK. FILE READ.", filename);
+	show_message(ses, LIST_COMMAND, "#OK. FILE SCANNED.", filename);
 
 	fclose(fp);
 
@@ -131,7 +128,7 @@ DO_COMMAND(do_script)
 
 	if (*arg1 == 0)
 	{
-		show_message(ses, LIST_MESSAGE, "#SCRIPT: ONE ARGUMENT REQUIRED.");
+		show_error(ses, LIST_COMMAND, "#SCRIPT: ONE ARGUMENT REQUIRED.");
 	}
 	else if (*arg2 == 0)
 	{
@@ -146,7 +143,7 @@ DO_COMMAND(do_script)
 				*cptr = 0;
 			}
 
-			ses = script_driver(ses, -2, buf);
+			ses = script_driver(ses, LIST_COMMAND, buf);
 		}
 
 		pclose(script);
@@ -192,11 +189,10 @@ DO_COMMAND(do_system)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #SYSTEM {COMMAND}.");
-		return ses;
+		return show_error(ses, LIST_COMMAND, "#SYNTAX: #SYSTEM {COMMAND}.");
 	}
 
-	show_message(ses, LIST_MESSAGE, "#OK: EXECUTING '%s'", left);
+	show_message(ses, LIST_COMMAND, "#OK: EXECUTING '%s'", left);
 
 	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_READMUD) && IS_SPLIT(gtd->ses))
 	{
@@ -231,8 +227,7 @@ DO_COMMAND(do_textin)
 
 	if ((fp = fopen(left, "r")) == NULL)
 	{
-		tintin_printf(ses, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", left);
-		return ses;
+		return show_error(ses, LIST_COMMAND, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", left);
 	}
 
 	while (fgets(buffer, BUFFER_SIZE - 1, fp))
@@ -253,8 +248,7 @@ DO_COMMAND(do_textin)
 	}
 	fclose(fp);
 
-	show_message(ses, LIST_MESSAGE, "#OK. FILE READ.");
+	show_message(ses, LIST_COMMAND, "#OK. FILE READ.");
 
 	return ses;
 }
-

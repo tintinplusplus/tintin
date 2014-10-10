@@ -3,7 +3,7 @@
 *                                                                             *
 *    This program is free software: you can redistribute it and/or modify     *
 *    it under the terms of the GNU General Public License as published by     *
-*    the Free Software Foundation, either version 3 of the License, or        *
+*    the Free Software Foundation, either version 2 of the License, or        *
 *    (at your option) any later version.                                      *
 *                                                                             *
 *    This program is distributed in the hope that it will be useful,          *
@@ -583,7 +583,7 @@ DO_COMMAND(do_kill)
 		{
 			kill_list(ses->list[index]);
 		}
-		tintin_printf(ses, "#KILL - ALL LISTS CLEARED.");
+		show_message(ses, LIST_COMMAND, "#KILL - ALL LISTS CLEARED.");
 
 		return ses;
 	}
@@ -599,7 +599,7 @@ DO_COMMAND(do_kill)
 		{
 			kill_list(ses->list[index]);
 
-			tintin_printf(ses, "#OK: #%s LIST CLEARED.", list_table[index].name);
+			show_message(ses, LIST_COMMAND, "#OK: #%s LIST CLEARED.", list_table[index].name);
 		}
 		else
 		{
@@ -610,7 +610,7 @@ DO_COMMAND(do_kill)
 
 	if (index == LIST_MAX)
 	{
-		tintin_printf(ses, "#ERROR: #KILL {%s} {%s} - NO MATCH FOUND.", arg1, arg2);
+		show_error(ses, LIST_COMMAND, "#ERROR: #KILL {%s} {%s} - NO MATCH FOUND.", arg1, arg2);
 	}
 	return ses;
 }
@@ -665,16 +665,16 @@ DO_COMMAND(do_message)
 			}
 			else
 			{
-				tintin_printf(ses, "#SYNTAX: #MESSAGE [NAME] [ON|OFF]");
-				break;
+				return show_error(ses, LIST_COMMAND, "#SYNTAX: #MESSAGE {%s} [ON|OFF]",  left);
 			}
-			tintin_printf(ses, "#OK: #%s MESSAGES HAVE BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+			show_message(ses, LIST_COMMAND, "#OK: #%s MESSAGES HAVE BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
+
 			found = TRUE;
 		}
 
 		if (found == FALSE)
 		{
-			tintin_printf(ses, "#ERROR: #MESSAGE {%s} - NO MATCH FOUND.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #MESSAGE {%s} - NO MATCH FOUND.", left);
 		}
 	}
 	return ses;
@@ -731,16 +731,16 @@ DO_COMMAND(do_ignore)
 			}
 			else
 			{
-				tintin_printf(ses, "#SYNTAX: #IGNORE [NAME] [ON|OFF]");
-				break;
+				return show_error(ses, LIST_COMMAND, "#SYNTAX: #IGNORE {%s} [ON|OFF]", left);
 			}
-			tintin_printf(ses, "#OK: #%s IGNORE STATUS HAS BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+			show_message(ses, LIST_COMMAND, "#OK: #%s IGNORE STATUS HAS BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
+
 			found = TRUE;
 		}
 
 		if (found == FALSE)
 		{
-			tintin_printf(ses, "#ERROR: #IGNORE {%s} - NO MATCH FOUND.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #IGNORE {%s} - NO MATCH FOUND.", left);
 		}
 	}
 	return ses;
@@ -801,16 +801,16 @@ DO_COMMAND(do_debug)
 			}
 			else
 			{
-				tintin_printf(ses, "#SYNTAX: #DEBUG [NAME] [ON|OFF|LOG]");
-				break;
+				return show_error(ses, LIST_COMMAND, "#SYNTAX: #DEBUG {%s} [ON|OFF|LOG]", left);
 			}
-			tintin_printf(ses, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[index].name, is_abbrev(right, "LOG") ? "LOG" : HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+			show_message(ses, LIST_COMMAND, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[index].name, is_abbrev(right, "LOG") ? "LOG" : HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+
 			found = TRUE;
 		}
 
 		if (found == FALSE)
 		{
-			tintin_printf2(ses, "#DEBUG {%s} - NO MATCH FOUND.", left);
+			show_error(ses, LIST_COMMAND, "#DEBUG {%s} - NO MATCH FOUND.", left);
 		}
 	}
 	return ses;

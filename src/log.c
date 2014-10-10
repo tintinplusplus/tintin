@@ -67,7 +67,7 @@ DO_COMMAND(do_log)
 
 	if (*left == 0)
 	{
-		show_message(ses, -1, "#SYNTAX: #LOG {APPEND|OVERWRITE|OFF} {<FILENAME>}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LOG {APPEND|OVERWRITE|OFF} {<FILENAME>}");
 	}
 	else if (is_abbrev(left, "APPEND") && *right != 0)
 	{
@@ -84,11 +84,11 @@ DO_COMMAND(do_log)
 			{
 				write_html_header(ses->logfile);
 			}
-			show_message(ses, -1, "#LOG: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
+			show_message(ses, LIST_COMMAND, "#LOG: LOGGING OUTPUT TO '%s' FILESIZE: %ld", right, ftell(ses->logfile));
 		}
 		else
 		{
-			tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
+			show_error(ses, LIST_COMMAND, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 		}
 	}
 	else if (is_abbrev(left, "OVERWRITE") && *right != 0)
@@ -104,11 +104,11 @@ DO_COMMAND(do_log)
 			{
 				write_html_header(ses->logfile);
 			}
-			show_message(ses, -1, "#LOG: LOGGING OUTPUT TO '%s'", right);
+			show_message(ses, LIST_COMMAND, "#LOG: LOGGING OUTPUT TO '%s'", right);
 		}
 		else
 		{
-			tintin_printf2(ses, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
+			show_error(ses, LIST_COMMAND, "#ERROR: #LOG {%s} {%s} - COULDN'T OPEN FILE.", left, right);
 		}
 	}
 	else if (is_abbrev(left, "OFF"))
@@ -117,16 +117,16 @@ DO_COMMAND(do_log)
 		{
 			fclose(ses->logfile);
 			ses->logfile = NULL;
-			show_message(ses, -1, "#LOG: LOGGING TURNED OFF.");
+			show_message(ses, LIST_COMMAND, "#LOG: LOGGING TURNED OFF.");
 		}
 		else
 		{
-			show_message(ses, -1, "#LOG: LOGGING ALREADY TURNED OFF.");
+			show_message(ses, LIST_COMMAND, "#LOG: LOGGING ALREADY TURNED OFF.");
 		}
 	}
 	else
 	{
-		tintin_printf(ses, "#SYNTAX: #LOG {APPEND|OVERWRITE|OFF} {<FILENAME>}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LOG {APPEND|OVERWRITE|OFF} {<FILENAME>}");
 	}
 	return ses;
 }

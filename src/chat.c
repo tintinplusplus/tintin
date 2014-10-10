@@ -184,6 +184,7 @@ DO_CHAT(chat_initialize)
 	gtd->chat->ip       = strdup("<Unknown>");
 	gtd->chat->name     = strdup("TinTin");
 	gtd->chat->reply    = strdup("");
+	gtd->chat->prefix   = strdup("<CHAT>");
 
 	chat_printf("Initialized chat on port %d.", gtd->chat->port);
 }
@@ -736,6 +737,8 @@ void chat_printf(char *format, ...)
 		}
 	}
 	sprintf(tmp, "%s%s%s", gtd->chat->color, buf, "\033[0m");
+
+	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 2, "CHAT MESSAGE", tmp, buf);
 
 	tintin_puts(NULL, tmp);
 }
@@ -1442,6 +1445,7 @@ DO_CHAT(chat_info)
 	tintin_printf2(NULL, "Chat Port            : %d", gtd->chat->port);
 	tintin_printf2(NULL, "Download Dir         : %s", gtd->chat->download);
 	tintin_printf2(NULL, "Reply                : %s", gtd->chat->reply);
+	tintin_printf2(NULL, "Prefix               : %s", gtd->chat->prefix);
 	tintin_printf2(NULL, "DND                  : %s", HAS_BIT(gtd->chat->flags, CHAT_FLAG_DND) ? "Yes" : "No");
 }
 
@@ -1644,6 +1648,12 @@ DO_CHAT(chat_ping)
 	chat_printf("Ping request sent to %s.", buddy->name);
 }
 
+DO_CHAT(chat_prefix)
+{
+	RESTRING(gtd->chat->prefix, left);
+
+	chat_printf("Prefix set to '%s'", gtd->chat->prefix);
+}
 
 DO_CHAT(chat_reply)
 {

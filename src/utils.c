@@ -322,19 +322,62 @@ void show_message(struct session *ses, int index, char *format, ...)
 	vasprintf(&buffer, format, args);
 	va_end(args);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_VERBOSELINE))
+	root = ses->list[index];
+
+	if (HAS_BIT(root->flags, LIST_FLAG_LOG))
+	{
+		if (ses->logfile)
+		{
+			logit(ses, buffer, ses->logfile, TRUE);
+		}
+	}
+
+	if (gtd->noise_level)
 	{
 		tintin_puts2(ses, buffer);
 
 		goto end;
 	}
 
-	if (index == -1)
+	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 	{
-		if (ses->input_level == 0)
+		tintin_puts2(ses, buffer);
+
+		goto end;
+	}
+
+	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
+	{
+		if (gtd->input_level == 0)
 		{
 			tintin_puts2(ses, buffer);
 		}
+	}
+
+	end:
+
+	free(buffer);
+
+	pop_call();
+	return;
+}
+
+struct session *show_error(struct session *ses, int index, char *format, ...)
+{
+	struct listroot *root;
+	char *buffer;
+	va_list args;
+
+	push_call("show_error(%p,%p,%p)",ses,index,format);
+
+	va_start(args, format);
+	vasprintf(&buffer, format, args);
+	va_end(args);
+
+	if (gtd->noise_level)
+	{
+		tintin_puts2(ses, buffer);
+
 		goto end;
 	}
 
@@ -357,10 +400,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_MESSAGE))
 	{
-		if (ses->input_level == 0)
-		{
-			tintin_puts2(ses, buffer);
-		}
+		tintin_puts2(ses, buffer);
 	}
 
 	end:
@@ -368,7 +408,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 	free(buffer);
 
 	pop_call();
-	return;
+	return ses;
 }
 
 void show_debug(struct session *ses, int index, char *format, ...)
@@ -494,7 +534,7 @@ void tintin_puts3(struct session *ses, char *string)
 		ses = gtd->ses;
 	}
 
-	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet)
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet && gtd->noise_level == 0)
 	{
 		pop_call();
 		return;
@@ -549,7 +589,7 @@ void tintin_puts2(struct session *ses, char *string)
 		ses = gtd->ses;
 	}
 
-	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet)
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet && gtd->noise_level == 0)
 	{
 		pop_call();
 		return;

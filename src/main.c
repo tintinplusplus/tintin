@@ -96,18 +96,21 @@ void abort_handler(int signal)
 	fflush(NULL);
 
 	exit(-1);
+}
 
+void interrupt_handler(int signal)
+{
 	if (gtd->ses->connect_retry > utime())
 	{
 		gtd->ses->connect_retry = 0;
 	}
 	else if (HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_SGA) && !HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_ECHO))
 	{
-		socket_printf(gtd->ses, 1, "%c", 3);
+		socket_printf(gtd->ses, 1, "%c", 4);
 	}
 	else
 	{
-		do_zap(gtd->ses, "");
+		cursor_delete_or_exit(gtd->ses, "");
 	}
 }
 
@@ -184,7 +187,7 @@ int main(int argc, char **argv)
 		syserr("signal SIGTERM");
 	}
 
-	if (signal(SIGINT, abort_handler) == BADSIG)
+	if (signal(SIGINT, interrupt_handler) == BADSIG)
 	{
 		syserr("signal SIGINT");
 	}
@@ -248,7 +251,7 @@ int main(int argc, char **argv)
 			{
 				case 'e':
 					gtd->quiet++;
-					gtd->ses = script_driver(gtd->ses, -2, optarg);
+					gtd->ses = script_driver(gtd->ses, LIST_COMMAND, optarg);
 					gtd->quiet--;
 					break;
 
@@ -367,7 +370,7 @@ void init_tintin(int greeting)
 
 	printf("\033="); // set application keypad mode
 
-	gts->input_level++;
+	gtd->input_level++;
 
 	do_configure(gts, "{AUTO TAB}         {5000}");
 	do_configure(gts, "{BUFFER SIZE}     {20000}");
@@ -390,7 +393,7 @@ void init_tintin(int greeting)
 	do_configure(gts, "{WORDWRAP}           {ON}");
 	do_configure(gts, "{256 COLORS}       {AUTO}");
 
-	gts->input_level--;
+	gtd->input_level--;
 
 	insert_node_list(gts->list[LIST_PATHDIR],  "n",  "s",  "1");
 	insert_node_list(gts->list[LIST_PATHDIR],  "e",  "w",  "2");

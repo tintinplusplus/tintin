@@ -162,7 +162,7 @@ DO_HISTORY(history_read)
 
 	if (file == NULL)
 	{
-		show_message(ses, -1, "#HISTORY: COULDN'T OPEN FILE {%s} TO READ.", arg);
+		show_message(ses, LIST_HISTORY, "#HISTORY: COULDN'T OPEN FILE {%s} TO READ.", arg);
 		return;
 	}
 

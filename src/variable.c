@@ -113,11 +113,11 @@ DO_COMMAND(do_replace)
 
 	if (*arg1 == 0 || *arg2 == 0)
 	{
-		show_message(ses, LIST_VARIABLE, "#Syntax: #replace <var> <old text> <new text>", ses);
+		show_error(ses, LIST_VARIABLE, "#SYNTAX: #REPLACE {VARIABLE} {OLD TEXT} {NEW TEXT}");
 	}
 	else if ((node = search_nest_node(root, arg1)) == NULL)
 	{
-		show_message(ses, LIST_VARIABLE, "#REPLACE: VARIABLE {%s} NOT FOUND.", arg1);
+		show_error(ses, LIST_VARIABLE, "#REPLACE: VARIABLE {%s} NOT FOUND.", arg1);
 	}
 	else if (tintin_regexp(ses, NULL, node->right, arg2, 0, SUB_CMD) == FALSE)
 	{
@@ -160,7 +160,7 @@ DO_COMMAND(do_replace)
 }
 
 /*
-	support routines for #format - Igor
+	support routines for #format
 */
 
 void charactertonumber(struct session *ses, char *str)
@@ -531,22 +531,12 @@ void timestring(struct session *ses, char *str)
 	strftime(str, BUFFER_SIZE, left, &timeval_tm);
 }
 
-DO_COMMAND(do_format)
+void format_string(struct session *ses, char *format, char *arg, char *out)
 {
-	char temp[BUFFER_SIZE], destvar[BUFFER_SIZE], format[BUFFER_SIZE], newformat[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf, *ptt, *pts, *ptn;
+	char temp[BUFFER_SIZE], newformat[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf, *ptt, *pts, *ptn;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
-
-	arg = sub_arg_in_braces(ses, arg, destvar,  GET_NST, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, format,   GET_ONE, SUB_VAR|SUB_FUN);
-
-	if (*destvar == 0)
-	{
-		tintin_printf2(ses, "#SYNTAX: #format {variable} {format} {arg1} {arg2}");
-
-		return ses;
-	}
 
 	for (i = 0 ; i < 20 ; i++)
 	{
@@ -618,13 +608,11 @@ DO_COMMAND(do_format)
 					{
 						if (atoi(arg1) < 0)
 						{
-							sprintf(temp, "%%%d",
-								atoi(arg1) - ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)));
+							sprintf(temp, "%%%d", atoi(arg1) - ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)));
 						}
 						else
 						{
-							sprintf(temp, "%%%d",
-								atoi(arg1) + ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)));
+							sprintf(temp, "%%%d", atoi(arg1) + ((int) strlen(arglist[i]) - string_raw_str_len(ses, arglist[i], 0, BUFFER_SIZE)));
 						}
 					}
 					else
@@ -775,7 +763,7 @@ DO_COMMAND(do_format)
 						break;
 
 					default:
-						show_message(ses, LIST_VARIABLE, "#FORMAT: UNKNOWN ARGUMENT {%%%c}.", *ptf);
+						show_error(ses, LIST_VARIABLE, "#FORMAT STRING: UNKNOWN ARGUMENT {%%%c}.", *ptf);
 						break;
 				}
 				*ptn++ = 's';
@@ -790,9 +778,30 @@ DO_COMMAND(do_format)
 	}
 	*ptn = 0;
 
-	sprintf(temp, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
+	sprintf(out, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
 
-	set_nest_node(ses->list[LIST_VARIABLE], destvar, "%s", temp);
+	return;
+}
+
+DO_COMMAND(do_format)
+{
+	char destvar[BUFFER_SIZE], format[BUFFER_SIZE], result[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, destvar,  GET_NST, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, format,   GET_ONE, SUB_VAR|SUB_FUN);
+
+	if (*destvar == 0)
+	{
+		show_error(ses, LIST_VARIABLE, "#SYNTAX: #format {variable} {format} {arg1} {arg2}");
+
+		return ses;
+	}
+
+	format_string(ses, format, arg, result);
+
+	set_nest_node(ses->list[LIST_VARIABLE], destvar, "%s", result);
+
+	show_message(ses, LIST_VARIABLE, "#OK. VARIABLE {%s} HAS BEEN SET TO {%s}.", destvar, result);
 
 	return ses;
 }

@@ -73,7 +73,7 @@ void process_input(void)
 
 	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 
-	gtd->ses = script_driver(gtd->ses, -2, gtd->input_buf);
+	gtd->ses = script_driver(gtd->ses, LIST_COMMAND, gtd->input_buf);
 
 	if (IS_SPLIT(gtd->ses))
 	{
@@ -210,7 +210,7 @@ void read_line()
 
 				DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYBROWSE);
 
-				kill_list(gtd->ses->list[LIST_TABCYCLE]);
+				kill_list(gtd->ses->list[LIST_COMMAND]);
 
 				if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 				{
@@ -564,7 +564,7 @@ void input_printf(char *format, ...)
 
 void modified_input(void)
 {
-	kill_list(gtd->ses->list[LIST_TABCYCLE]);
+	kill_list(gtd->ses->list[LIST_COMMAND]);
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{

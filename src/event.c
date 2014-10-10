@@ -66,7 +66,7 @@ DO_COMMAND(do_event)
 				return ses;
 			}
 		}
-		tintin_printf(ses, "#EVENT {%s} IS NOT AN EXISTING EVENT.", arg1);
+		show_error(ses, LIST_EVENT, "#EVENT {%s} IS NOT AN EXISTING EVENT.", arg1);
 	}
 	return ses;
 }
@@ -82,7 +82,7 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 {
 	struct session *ses_ptr;
 	struct listnode *node;
-	char buf[BUFFER_SIZE];
+	char name[BUFFER_SIZE], buf[BUFFER_SIZE];
 	va_list list;
 	int cnt;
 
@@ -90,7 +90,7 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 
 	va_start(list, fmt);
 
-	vsprintf(buf, fmt, list);
+	vsprintf(name, fmt, list);
 
 	va_end(list); 
 
@@ -98,7 +98,7 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 	{
 		if (!HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_IGNORE))
 		{
-			node = search_node_list(ses_ptr->list[LIST_EVENT], buf);
+			node = search_node_list(ses_ptr->list[LIST_EVENT], name);
 
 			if (node)
 			{
@@ -132,6 +132,7 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 				}
 			}
 		}
+
 		if (ses)
 		{
 			pop_call();

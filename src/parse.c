@@ -80,7 +80,7 @@ struct session *parse_input(struct session *ses, char *input)
 
 		if (parse_command(ses, line))
 		{
-			ses = script_driver(ses, -2, line);
+			ses = script_driver(ses, LIST_COMMAND, line);
 		}
 		else if (check_all_aliases(ses, line))
 		{
@@ -227,29 +227,28 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 
 		while (cnt-- > 0)
 		{
-			ses = script_driver(ses, -2, line);
+			ses = script_driver(ses, LIST_COMMAND, line);
 		}
 		return ses;
 	}
 
-	for (sesptr = gts ; sesptr ; sesptr = sesptr->next)
+	sesptr = find_session(line);
+
+	if (sesptr)
 	{
-		if (!strcmp(sesptr->name, line))
+		if (*input)
 		{
-			if (*input)
-			{
-				input = get_arg_in_braces(ses, input, line, TRUE);
+			input = get_arg_in_braces(ses, input, line, TRUE);
 
-				substitute(ses, line, line, SUB_VAR|SUB_FUN);
+			substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
-				script_driver(sesptr, -1, line);
+			script_driver(sesptr, LIST_COMMAND, line);
 
-				return ses;
-			}
-			else
-			{
-				return activate_session(sesptr);
-			}
+			return ses;
+		}
+		else
+		{
+			return activate_session(sesptr);
 		}
 	}
 

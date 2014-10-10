@@ -57,6 +57,7 @@ void init_terminal()
 	io.c_cc[VTIME]  = 0;
 	io.c_cc[VSTART] = 255;
 	io.c_cc[VSTOP]  = 255;
+	io.c_cc[VINTR]  = 4; // ctrl-d
 
 	/*
 		Make the terminalal as raw as possible
@@ -68,7 +69,8 @@ void init_terminal()
 	DEL_BIT(io.c_cflag, CSIZE|PARENB);
 */
 
-	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
+//	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
+	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN);
 
 	SET_BIT(io.c_cflag, CS8);
 

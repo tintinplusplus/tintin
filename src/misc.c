@@ -42,12 +42,12 @@ DO_COMMAND(do_all)
 		{
 			next_ses = sesptr->next;
 
-			script_driver(sesptr, -2, left);
+			script_driver(sesptr, LIST_COMMAND, left);
 		}
 	}
 	else
 	{
-		tintin_puts2(ses, "#BUT THERE AREN'T ANY SESSIONS AT ALL!");
+		show_error(ses, LIST_COMMAND, "#ALL: THERE AREN'T ANY SESSIONS.");
 	}
 	return ses;
 }
@@ -102,18 +102,14 @@ DO_COMMAND(do_cr)
 
 DO_COMMAND(do_echo)
 {
-	char temp[BUFFER_SIZE], *output, left[BUFFER_SIZE];
+	char format[BUFFER_SIZE], result[BUFFER_SIZE], temp[BUFFER_SIZE], *output, left[BUFFER_SIZE];
 	int lnf;
 
-	sprintf(temp, "{result} %s", arg);
+	arg = sub_arg_in_braces(ses, arg, format, GET_ONE, SUB_VAR|SUB_FUN);
 
-	set_nest_node(ses->list[LIST_VARIABLE], "result", "");
+	format_string(ses, format, arg, result);
 
-	do_format(ses, temp);
-
-	substitute(ses, "$result", temp, SUB_VAR|SUB_FUN);
-
-	arg = temp;
+	arg = result;
 
 	if (*arg == DEFAULT_OPEN)
 	{
@@ -204,7 +200,7 @@ DO_COMMAND(do_forall)
 
 			substitute(ses, right, temp, SUB_CMD);
 
-			ses = script_driver(ses, -2, temp);
+			ses = script_driver(ses, LIST_COMMAND, temp);
 
 			if (*arg == COMMAND_SEPARATOR)
 			{
@@ -260,61 +256,6 @@ DO_COMMAND(do_nop)
 {
 	return ses;
 }
-
-
-DO_COMMAND(do_parse)
-{
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
-
-	arg = get_arg_in_braces(ses, arg, left,  0);
-	arg = get_arg_in_braces(ses, arg, right, 1);
-
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
-	if (*left == 0 || *right == 0)
-	{
-		tintin_printf2(ses, "#ERROR: #PARSE - PROVIDE 2 ARGUMENTS");
-	}
-	else
-	{
-		int i = 0;
-
-		while (left[i] != 0)
-		{
-			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && left[i] & 128 && left[i+1] != 0)
-			{
-				i += sprintf(temp, "%c%c", left[i], left[i+1]);
-			}
-			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (left[i] & 192) == 192 && left[i+1] != 0)
-			{
-				if ((left[i] & 240) == 240 && left[i+2] != 0 && left[i+3] != 0)
-				{
-					i += sprintf(temp, "%c%c%c%c", left[i], left[i+1], left[i+2], left[i+3]);
-				}
-				else if ((left[i] & 224) == 224 && left[i+2] != 0)
-				{
-					i += sprintf(temp, "%c%c%c", left[i], left[i+1], left[i+2]);
-				}
-				else
-				{
-					i += sprintf(temp, "%c%c", left[i], left[i+1]);
-				}
-			}
-			else
-			{
-				i += sprintf(temp, "%c", left[i]);
-			}
-
-			RESTRING(gtd->cmds[0], temp);
-
-			substitute(ses, right, temp, SUB_CMD);
-
-			ses = script_driver(ses, -2, temp);
-		}
-	}
-	return ses;
-}
-
 
 DO_COMMAND(do_send)
 {
@@ -402,18 +343,11 @@ DO_COMMAND(do_snoop)
 
 	if (*left)
 	{
-		for (sesptr = gts->next ; sesptr ; sesptr = sesptr->next)
-  		{
-  			if (!strcmp(sesptr->name, left))
-  			{
-  				break;
-  			}
-  		}
+		sesptr = find_session(left);
+
 		if (sesptr == NULL)
 		{
-			tintin_puts2(ses, "#NO SESSION WITH THAT NAME!");
-
-			return ses;
+			return show_error(ses, LIST_COMMAND, "#SNOOP: THERE'S NO SESSION NAMED {%s}", left);
 		}
 	}
 	else
@@ -423,11 +357,11 @@ DO_COMMAND(do_snoop)
 
 	if (HAS_BIT(sesptr->flags, SES_FLAG_SNOOP))
 	{
-		tintin_printf2(ses, "#UNSNOOPING SESSION '%s'", sesptr->name);
+		show_message(ses, LIST_COMMAND, "#NO LONGER SNOOPING SESSION '%s'", sesptr->name);
 	}
 	else
 	{
-		tintin_printf2(ses, "#SNOOPING SESSION '%s'", sesptr->name);
+		show_message(ses, LIST_COMMAND, "#SNOOPING SESSION '%s'", sesptr->name);
 	}
 	TOG_BIT(sesptr->flags, SES_FLAG_SNOOP);
 
@@ -441,11 +375,17 @@ DO_COMMAND(do_suspend)
 	return ses;
 }
 
-
 DO_COMMAND(do_test)
 {
 	long long x, time1, time2;
 	char *str, buf[100001];
+
+	tintin_printf2(ses, "input_level %d", gtd->input_level);
+	tintin_printf2(ses, "noise_level %d", gtd->noise_level);
+	tintin_printf2(ses, "quiet_level %d", gtd->quiet);
+	tintin_printf2(ses, "debug_level %d", gtd->debug_level);
+
+	return ses;
 
 	tintin_printf2(ses, "testing");
 
@@ -485,32 +425,28 @@ DO_COMMAND(do_test)
 
 DO_COMMAND(do_zap)
 {
-	struct session *sesptr = ses;
+	struct session *sesptr;
 	char left[BUFFER_SIZE];
 
 	push_call("do_zap(%p,%p)",ses,arg);
 
 	sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
 
-	sesptr = ses;
-
 	if (*left)
 	{
-		for (sesptr = gts->next ; sesptr ; sesptr = sesptr->next)
-  		{
-  			if (!strcmp(sesptr->name, left))
-  			{
-  				break;
-  			}
-  		}
+		sesptr = find_session(left);
 
 		if (sesptr == NULL)
 		{
-			tintin_puts2(ses, "#NO SESSION WITH THAT NAME!");
+			show_error(ses, LIST_COMMAND, "#ZAP: THERE'S NO SESSION WITH THAT NAME!");
 
 			pop_call();
 			return ses;
 		}
+	}
+	else
+	{
+		sesptr = ses;
 	}
 
 	tintin_puts(sesptr, "");

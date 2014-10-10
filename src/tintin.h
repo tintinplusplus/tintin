@@ -179,20 +179,20 @@
 #define LIST_ACTION                      0
 #define LIST_ALIAS                       1
 #define LIST_CLASS                       2
-#define LIST_CONFIG                      3
-#define LIST_DELAY                       4
-#define LIST_EVENT                       5
-#define LIST_FUNCTION                    6
-#define LIST_GAG                         7
-#define LIST_HIGHLIGHT                   8
-#define LIST_HISTORY                     9
-#define LIST_MACRO                      10
-#define LIST_PATH                       11
-#define LIST_PATHDIR                    12
-#define LIST_PROMPT                     13
-#define LIST_SUBSTITUTE                 14
-#define LIST_TAB                        15
-#define LIST_TABCYCLE                   16
+#define LIST_COMMAND                     3
+#define LIST_CONFIG                      4
+#define LIST_DELAY                       5
+#define LIST_EVENT                       6
+#define LIST_FUNCTION                    7
+#define LIST_GAG                         8
+#define LIST_HIGHLIGHT                   9
+#define LIST_HISTORY                    10
+#define LIST_MACRO                      11
+#define LIST_PATH                       12
+#define LIST_PATHDIR                    13
+#define LIST_PROMPT                     14
+#define LIST_SUBSTITUTE                 15
+#define LIST_TAB                        16
 #define LIST_TICKER                     17
 #define LIST_VARIABLE                   18
 #define LIST_MAX                        19
@@ -226,14 +226,6 @@ enum operators
 	TOKEN_TYPE_WHILE,
 	TOKEN_TYPE_BROKEN_WHILE
 };
-
-
-/*
-	generic define for show_message
-*/
-
-#define LIST_MESSAGE                    -1
-
 
 /*
 	Various flags
@@ -329,7 +321,7 @@ enum operators
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
-#define SES_FLAG_VERBOSELINE          (1 << 14)
+//#define SES_FLAG_VERBOSELINE          (1 << 14)
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
 #define SES_FLAG_LOGHTML              (1 << 17)
@@ -554,7 +546,7 @@ enum operators
 
 #define SCROLL(ses)               ((ses)->cur_row == 0 || ((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
-#define VERBATIM(ses)             ((ses)->input_level == 0 && HAS_BIT((ses)->flags, SES_FLAG_VERBATIM))
+#define VERBATIM(ses)             (gtd->input_level == 0 && HAS_BIT((ses)->flags, SES_FLAG_VERBATIM))
 
 #define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg, char *var)
 #define DO_CHAT(chat) void chat (char *left, char *right)
@@ -646,8 +638,6 @@ struct session
 	unsigned char         * read_buf;
 	int                     read_len;
 	int                     read_max;
-	int                     debug_level;
-	int                     input_level;
 	long long               connect_retry;
 	int                     connect_error;
 	char                    more_output[BUFFER_SIZE * 2];
@@ -681,6 +671,7 @@ struct tintin_data
 	int                     input_cur;
 	int                     input_pos;
 	int                     input_hid;
+	int                     input_tab;
 	char                  * home;
 	char                  * term;
 	long long               time;
@@ -694,6 +685,9 @@ struct tintin_data
 	int                     command_ref[26];
 	int                     flags;
 	int                     quiet;
+	int                     noise_level;
+	int                     debug_level;
+	int                     input_level;
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
@@ -711,6 +705,7 @@ struct chat_data
 	char                  * version;
 	char                  * download;
 	char                  * reply;
+	char                  * prefix;
 	char                  * paste_buf;
 	char                  * color;
 	char                  * group;
@@ -1112,6 +1107,7 @@ extern DO_CHAT(chat_name);
 extern DO_CHAT(chat_paste);
 extern DO_CHAT(chat_peek);
 extern DO_CHAT(chat_ping);
+extern DO_CHAT(chat_prefix);
 extern DO_CHAT(chat_private);
 extern DO_CHAT(chat_public);
 extern DO_CHAT(chat_reply);
@@ -1540,6 +1536,7 @@ extern DO_LINE(line_gag);
 extern DO_LINE(line_ignore);
 extern DO_LINE(line_log);
 extern DO_LINE(line_logverbatim);
+extern DO_LINE(line_quiet);
 extern DO_LINE(line_strip);
 extern DO_LINE(line_substitute);
 extern DO_LINE(line_verbose);
@@ -1763,6 +1760,7 @@ extern DO_COMMAND(do_untab);
 extern DO_COMMAND(do_session);
 extern struct session *session_command(char *arg, struct session *ses);
 extern void show_session(struct session *ses, struct session *ptr);
+extern struct session *find_session(char *name);
 extern struct session *newactive_session(void);
 extern struct session *activate_session(struct session *ses);
 extern struct session *new_session(struct session *ses, char *name, char *address, int desc, int ssl);
@@ -1886,6 +1884,7 @@ extern void ins_sprintf(char *dest, char *fmt, ...);
 extern int str_suffix(char *str1, char *str2);
 extern void syserr(char *msg);
 extern void show_message(struct session *ses, int index, char *format, ...);
+extern struct session *show_error(struct session *ses, int index, char *format, ...);
 extern void show_debug(struct session *ses, int index, char *format, ...);
 extern void tintin_header(struct session *ses, char *format, ...);
 extern void socket_printf(struct session *ses, size_t length, char *format, ...);
@@ -1918,6 +1917,8 @@ extern struct listnode *get_variable(struct session *ses, char *variable, char *
 extern struct listnode *set_variable(struct session *ses, char *variable, char *format, ...);
 
 extern int get_variable_index(struct session *ses, char *variable, char *result);
+
+extern void format_string(struct session *ses, char *format, char *arg, char *out);
 
 extern DO_COMMAND(do_format);
 extern DO_COMMAND(do_tolower);

@@ -87,11 +87,6 @@ DO_COMMAND(do_session)
 	return gtd->ses;
 }
 
-
-/******************/
-/* show a session */
-/******************/
-
 void show_session(struct session *ses, struct session *ptr)
 {
 	char temp[BUFFER_SIZE];
@@ -111,9 +106,21 @@ void show_session(struct session *ses, struct session *ptr)
 	tintin_puts2(ses, temp);
 }
 
-/**********************************/
-/* find a new session to activate */
-/**********************************/
+struct session *find_session(char *name)
+{
+	struct session *ses;
+
+	for (ses = gts ; ses ; ses = ses->next)
+	{
+		if (!strcmp(ses->name, name))
+		{
+			return ses;
+		}
+	}
+	return NULL;
+}
+
+// find a session to activate when current session is closed
 
 struct session *newactive_session(void)
 {
@@ -187,15 +194,12 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 		}
 	}
 
-	for (newses = gts ; newses ; newses = newses->next)
+	if (find_session(name))
 	{
-		if (!strcmp(newses->name, name))
-		{
-			tintin_puts(ses, "THERE'S A SESSION WITH THAT NAME ALREADY.");
+		tintin_puts(ses, "#THERE'S A SESSION WITH THAT NAME ALREADY.");
 
-			pop_call();
-			return ses;
-		}
+		pop_call();
+		return ses;
 	}
 
 	newses                = (struct session *) calloc(1, sizeof(struct session));
@@ -293,7 +297,7 @@ struct session *connect_session(struct session *ses)
 {
 	int sock;
 
-	push_call("connection_session(%p)",ses);
+	push_call("connect_session(%p)",ses);
 
 	ses->connect_retry = utime() + gts->connect_retry;
 

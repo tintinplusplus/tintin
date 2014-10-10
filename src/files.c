@@ -328,7 +328,7 @@ DO_COMMAND(do_read)
 
 		if (bufi[0])
 		{
-			ses = script_driver(ses, -2, bufi);
+			ses = script_driver(ses, LIST_COMMAND, bufi);
 		}
 		pto = bufi;
 		pti++;
@@ -404,7 +404,7 @@ DO_COMMAND(do_write)
 
 	fclose(file);
 
-	show_message(ses, LIST_MESSAGE, "#WRITE: %d COMMANDS WRITTEN TO {%s}.", cnt, filename);
+	show_message(ses, LIST_COMMAND, "#WRITE: %d COMMANDS WRITTEN TO {%s}.", cnt, filename);
 
 	return ses;
 }

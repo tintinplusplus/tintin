@@ -1,7 +1,22 @@
 Jan 2014       2.01.1
 
-COPYING        Upgraded the license from GPL 2 to GPL 3 in order to use some
-               code licensed under GPL 3.
+chat.c         Added CHAT MESSAGE event, %0 contains the chat color and prefix,
+               %1 omits chat color and prefix.
+
+chat.c         Added #chat prefix option.
+
+mapper.c       Can now provide multiple flags at once when using
+               #map roomflag and #map insert.
+
+line.c         Added #line quiet option.
+
+cursor.c       Fixed tab bug with multi-word tabs.
+
+event.c        Fixed bug with events defined in multiple sessions.
+
+tinexp.c       Added @<session name>{<substitution>} option to perform a
+               function-like substitution in another session and retreive
+               the result. Primarily useful for getting variables.
 
 highlight.c    Added no-blink no-underscore and no-reverse #highlight options.
 

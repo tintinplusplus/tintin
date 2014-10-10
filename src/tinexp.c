@@ -82,11 +82,11 @@ DO_COMMAND(do_regexp)
 		{
 			substitute(ses, is_true, is_true, SUB_CMD);
 
-			ses = script_driver(ses, -2, is_true);
+			ses = script_driver(ses, LIST_COMMAND, is_true);
 		}
 		else if (*is_false)
 		{
-			ses = script_driver(ses, -2, is_false);
+			ses = script_driver(ses, LIST_COMMAND, is_false);
 		}
 	}
 	return ses;
@@ -185,6 +185,7 @@ pcre *regexp_compile(char *exp, int option)
 int substitute(struct session *ses, char *string, char *result, int flags)
 {
 	struct listnode *node;
+	struct session *sesptr;
 	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt, *str;
 	char *pte, old[6] = { 0 };
 	int i, cnt, escape = FALSE, flags_neol = flags;
@@ -247,6 +248,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				{
 					i = 1;
 					escape = FALSE;
+					sesptr = NULL;
 
 					while (pti[i] == '@')
 					{
@@ -263,7 +265,12 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					node = search_node_list(ses->list[LIST_FUNCTION], temp);
 
-					if (node == NULL || pti[i] != DEFAULT_OPEN)
+					if (node == NULL)
+					{
+						sesptr = find_session(temp);
+					}
+
+					if ((sesptr == NULL && node == NULL) || pti[i] != DEFAULT_OPEN)
 					{
 						while (*pti == '@')
 						{
@@ -285,7 +292,18 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					pti = get_arg_in_braces(ses, &pti[i], temp, FALSE);
 
-					substitute(ses, temp, buf, flags_neol);
+					if (sesptr)
+					{
+						substitute(sesptr, temp, pto, flags_neol);
+
+						pto += strlen(pto);
+						
+						continue;
+					}
+					else
+					{
+						substitute(ses, temp, buf, flags_neol);
+					}
 
 					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->left);
 
@@ -364,7 +382,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					node = search_node_list(ses->list[LIST_VARIABLE], temp);
 
-					if (node == NULL)
+					if (def == FALSE && node == NULL)
 					{
 						while (*pti == '$')
 						{
@@ -471,7 +489,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					node = search_node_list(ses->list[LIST_VARIABLE], temp);
 
-					if (node == NULL)
+					if (def == FALSE && node == NULL)
 					{
 						while (*pti == '&')
 						{

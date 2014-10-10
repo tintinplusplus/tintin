@@ -199,190 +199,189 @@ DO_COMMAND(do_grep)
 
 	if (ses->buffer == NULL)
 	{
-		tintin_puts2(ses, "#GREP, NO SCROLL BUFFER AVAILABLE.");
+		return show_error(ses, LIST_COMMAND, "#GREP, NO SCROLL BUFFER AVAILABLE.");
 	}
-	else if (*left == 0)
+
+	if (*left == 0)
 	{
-		tintin_puts2(ses, "#GREP WHAT?");
+		return show_error(ses, LIST_COMMAND, "#GREP WHAT?");
+	}
+
+	page = get_number(ses, left);
+
+	if (page)
+	{
+		arg = get_arg_in_braces(ses, arg, left, FALSE);
+		arg = get_arg_in_braces(ses, arg, right, TRUE);
+
+		if (*right == 0)
+		{
+			return show_error(ses, LIST_COMMAND, "#GREP PAGE {%s} FOR WHAT?", left);
+		}
 	}
 	else
 	{
-		page = get_number(ses, left);
+		page = 1;
 
-		if (page)
+		arg = get_arg_in_braces(ses, arg, right, TRUE);
+	}
+
+	if (page > 0)
+	{
+		grep_min = grep_max * page - grep_max;
+		grep_max = grep_max * page;
+	}
+	else
+	{
+		grep_min = grep_max * (page * -1) - grep_max;
+		grep_max = grep_max * (page * -1);
+	}
+
+	SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+
+	tintin_header(ses, " GREPPING PAGE %d FOR %s ", page, right);
+
+	if (page > 0)
+	{
+		scroll_cnt = ses->scroll_row;
+
+		do
 		{
-			arg = get_arg_in_braces(ses, arg, left, FALSE);
-			arg = get_arg_in_braces(ses, arg, right, TRUE);
-
-			if (*right == 0)
+			if (scroll_cnt == ses->scroll_max - 1)
 			{
-				tintin_printf2(ses, "#GREP PAGE {%s} FOR WHAT?", left);
-
-				return ses;
-			}
-		}
-		else
-		{
-			page = 1;
-
-			arg = get_arg_in_braces(ses, arg, right, TRUE);
-		}
-
-		if (page > 0)
-		{
-			grep_min = grep_max * page - grep_max;
-			grep_max = grep_max * page;
-		}
-		else
-		{
-			grep_min = grep_max * (page * -1) - grep_max;
-			grep_max = grep_max * (page * -1);
-		}
-
-		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
-
-		tintin_header(ses, " GREPPING PAGE %d FOR %s ", page, right);
-
-		if (page > 0)
-		{
-			scroll_cnt = ses->scroll_row;
-
-			do
-			{
-				if (scroll_cnt == ses->scroll_max - 1)
-				{
-					scroll_cnt = 0;
-				}
-				else
-				{
-					scroll_cnt++;
-				}
-
-				if (ses->buffer[scroll_cnt] == NULL)
-				{
-					break;
-				}
-
-				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
-				{
-					continue;
-				}
-
-				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
-				{
-					grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
-
-					if (grep_cnt + grep_add > grep_max)
-					{
-						break;
-					}
-
-					grep_cnt += grep_add;
-				}
-			}
-			while (scroll_cnt != ses->scroll_row);
-
-			if (grep_cnt <= grep_min)
-			{
-				tintin_puts2(ses, "#NO MATCHES FOUND.");
-			}
-			else do
-			{
-				if (scroll_cnt == 0)
-				{
-					scroll_cnt = ses->scroll_max - 1;
-				}
-				else
-				{
-					scroll_cnt--;
-				}
-
-				if (ses->buffer[scroll_cnt] == NULL)
-				{
-					break;
-				}
-
-				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
-				{
-					continue;
-				}
-
-				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
-				{
-					grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
-
-					if (grep_cnt - grep_add < grep_min)
-					{
-						break;
-					}
-
-					grep_cnt -= grep_add;
-
-					tintin_puts2(ses, ses->buffer[scroll_cnt]);
-				}
-			}
-			while (scroll_cnt != ses->scroll_row);
-		}
-		else
-		{
-			if (ses->buffer[0])
-			{
-				scroll_cnt = ses->scroll_row - 1;
+				scroll_cnt = 0;
 			}
 			else
 			{
-				scroll_cnt = ses->scroll_max - 1;
+				scroll_cnt++;
 			}
 
-			do
+			if (ses->buffer[scroll_cnt] == NULL)
 			{
-				if (scroll_cnt == -1)
-				{
-					scroll_cnt = 0;
-				}
-				else
-				{
-					scroll_cnt--;
-				}
+				break;
+			}
 
-				if (ses->buffer[scroll_cnt] == NULL)
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+			{
+				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+
+				if (grep_cnt + grep_add > grep_max)
 				{
 					break;
 				}
 
-				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
-				{
-					continue;
-				}
-
-				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
-				{
-					grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
-
-					if (grep_cnt >= grep_min)
-					{
-						tintin_puts2(ses, ses->buffer[scroll_cnt]);
-					}
-
-					if (grep_cnt + grep_add >= grep_max)
-					{
-						break;
-					}
-
-					grep_cnt += grep_add;
-				}
-			}
-			while (scroll_cnt != ses->scroll_row);
-
-			if (grep_cnt <= grep_min)
-			{
-				tintin_puts2(ses, "#NO MATCHES FOUND.");
+				grep_cnt += grep_add;
 			}
 		}
-		tintin_header(ses, "");
+		while (scroll_cnt != ses->scroll_row);
 
-		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+		if (grep_cnt <= grep_min)
+		{
+			return show_error(ses, LIST_COMMAND, "#NO MATCHES FOUND.");
+		}
+
+		do
+		{
+			if (scroll_cnt == 0)
+			{
+				scroll_cnt = ses->scroll_max - 1;
+			}
+			else
+			{
+				scroll_cnt--;
+			}
+
+			if (ses->buffer[scroll_cnt] == NULL)
+			{
+				break;
+			}
+
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+			{
+				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+
+				if (grep_cnt - grep_add < grep_min)
+				{
+					break;
+				}
+
+				grep_cnt -= grep_add;
+
+				tintin_puts2(ses, ses->buffer[scroll_cnt]);
+			}
+		}
+		while (scroll_cnt != ses->scroll_row);
 	}
+	else
+	{
+		if (ses->buffer[0])
+		{
+			scroll_cnt = ses->scroll_row - 1;
+		}
+		else
+		{
+			scroll_cnt = ses->scroll_max - 1;
+		}
+
+		do
+		{
+			if (scroll_cnt == -1)
+			{
+				scroll_cnt = 0;
+			}
+			else
+			{
+				scroll_cnt--;
+			}
+
+			if (ses->buffer[scroll_cnt] == NULL)
+			{
+				break;
+			}
+
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+			{
+				grep_add = str_hash_lines(ses->buffer[scroll_cnt]);
+
+				if (grep_cnt >= grep_min)
+				{
+					tintin_puts2(ses, ses->buffer[scroll_cnt]);
+				}
+
+				if (grep_cnt + grep_add >= grep_max)
+				{
+					break;
+				}
+
+				grep_cnt += grep_add;
+			}
+		}
+		while (scroll_cnt != ses->scroll_row);
+
+		if (grep_cnt <= grep_min)
+		{
+			return show_error(ses, LIST_COMMAND, "#NO MATCHES FOUND.");
+		}
+	}
+	tintin_header(ses, "");
+
+	DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+
 	return ses;
 }
 
@@ -786,129 +785,133 @@ DO_BUFFER(buffer_find)
 
 	if (ses->buffer == NULL)
 	{
-		tintin_puts2(NULL, "#BUFFER, NO SCROLL BUFFER AVAILABLE.");
+		show_error(gtd->ses, LIST_COMMAND, "#BUFFER, NO SCROLL BUFFER AVAILABLE.");
+
+		return;
 	}
-	else if (*left == 0)
+
+	if (*left == 0)
 	{
-		tintin_puts2(NULL, "#BUFFER, FIND WHAT?");
+		show_error(gtd->ses, LIST_COMMAND, "#BUFFER, FIND WHAT?");
+
+		return;
+	}
+
+	page = get_number(ses, left);
+
+	if (page)
+	{
+		arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
+		arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
+
+		if (*right == 0)
+		{
+			show_error(gtd->ses, LIST_COMMAND, "#BUFFER, FIND OCCURANCE %d OF WHAT?", page);
+
+			return;
+		}
 	}
 	else
 	{
-		page = get_number(ses, left);
+		page = 1;
 
-		if (page)
+		arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
+	}
+
+	if (page > 0)
+	{
+		scroll_cnt = ses->scroll_row;
+
+		do
 		{
-			arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
-			arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
-
-			if (*right == 0)
+			if (scroll_cnt == ses->scroll_max -1)
 			{
-				tintin_printf2(NULL, "#BUFFER, FIND OCCURANCE %d OF WHAT?", page);
-
-				return;
-			}
-		}
-		else
-		{
-			page = 1;
-
-			arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
-		}
-
-		if (page > 0)
-		{
-			scroll_cnt = ses->scroll_row;
-
-			do
-			{
-				if (scroll_cnt == ses->scroll_max -1)
-				{
-					scroll_cnt = 0;
-				}
-				else
-				{
-					scroll_cnt++;
-				}
-
-				if (ses->buffer[scroll_cnt] == NULL)
-				{
-					break;
-				}
-
-				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
-				{
-					continue;
-				}
-
-				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
-				{
-					grep_cnt++;
-
-					if (grep_cnt == page)
-					{
-						break;
-					}
-				}
-			}
-			while (scroll_cnt != ses->scroll_row);
-		}
-		else
-		{
-			if (ses->buffer[0])
-			{
-				scroll_cnt = ses->scroll_row - 1;
+				scroll_cnt = 0;
 			}
 			else
 			{
-				scroll_cnt = ses->scroll_max - 1;
+				scroll_cnt++;
 			}
 
-			do
+			if (ses->buffer[scroll_cnt] == NULL)
 			{
-				if (scroll_cnt == 0)
-				{
-					scroll_cnt = ses->scroll_max -1;
-				}
-				else
-				{
-					scroll_cnt--;
-				}
+				break;
+			}
 
-				if (ses->buffer[scroll_cnt] == NULL)
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+			{
+				grep_cnt++;
+
+				if (grep_cnt == page)
+				{
+					break;
+				}
+			}
+		}
+		while (scroll_cnt != ses->scroll_row);
+	}
+	else
+	{
+		if (ses->buffer[0])
+		{
+			scroll_cnt = ses->scroll_row - 1;
+		}
+		else
+		{
+			scroll_cnt = ses->scroll_max - 1;
+		}
+
+		do
+		{
+			if (scroll_cnt == 0)
+			{
+				scroll_cnt = ses->scroll_max -1;
+			}
+			else
+			{
+				scroll_cnt--;
+			}
+
+			if (ses->buffer[scroll_cnt] == NULL)
+			{
+				break;
+			}
+
+			if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
+			{
+				continue;
+			}
+
+			if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
+			{
+				grep_cnt--;
+
+				if (grep_cnt == page)
 				{
 					break;
 				}
 
-				if (str_hash_grep(ses->buffer[scroll_cnt], FALSE))
-				{
-					continue;
-				}
-
-				if (find(ses, ses->buffer[scroll_cnt], right, SUB_NONE))
-				{
-					grep_cnt--;
-
-					if (grep_cnt == page)
-					{
-						break;
-					}
-
-				}
 			}
-			while (scroll_cnt != ses->scroll_row);
 		}
-
-		if (ses->buffer[scroll_cnt] == NULL || scroll_cnt == ses->scroll_row)
-		{
-			tintin_puts(NULL, "#BUFFER FIND, NO MATCHES FOUND.");
-		}
-		else
-		{
-			ses->scroll_line = scroll_cnt;
-
-			show_buffer(ses);
-		}
+		while (scroll_cnt != ses->scroll_row);
 	}
+
+	if (ses->buffer[scroll_cnt] == NULL || scroll_cnt == ses->scroll_row)
+	{
+		show_error(gtd->ses, LIST_COMMAND, "#BUFFER FIND, NO MATCHES FOUND.");
+
+		return;
+	}
+
+	ses->scroll_line = scroll_cnt;
+
+	show_buffer(ses);
+
 	return;
 }
 
@@ -926,7 +929,8 @@ DO_BUFFER(buffer_get)
 
 	if (*arg1 == 0 || *arg2 == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #BUFFER GET <VARIABLE> <LOWER BOUND> [UPPER BOUND]");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #BUFFER GET <VARIABLE> <LOWER BOUND> [UPPER BOUND]");
+
 		return;
 	}
 
@@ -980,13 +984,13 @@ DO_BUFFER(buffer_write)
 
 	if (*left == 0)
 	{
-		tintin_printf(ses, "#SYNTAX: #BUFFER WRITE <FILENAME>]");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #BUFFER WRITE <FILENAME>]");
 	}
 	else
 	{
 		if ((fp = fopen(left, "w")))
 		{
-			show_message(ses, LIST_MESSAGE, "#OK: WRITING BUFFER TO '%s'.", left);
+			show_message(ses, LIST_COMMAND, "#OK: WRITING BUFFER TO '%s'.", left);
 
 			if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 			{
@@ -1033,7 +1037,7 @@ DO_BUFFER(buffer_write)
 		}
 		else
 		{
-			tintin_printf(ses, "#ERROR: #BUFFER WRITE {%s} - FAILED TO OPEN FILE.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #BUFFER WRITE {%s} - FAILED TO OPEN FILE.", left);
 		}
 	}
 	return;

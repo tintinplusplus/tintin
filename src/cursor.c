@@ -616,7 +616,7 @@ DO_CURSOR(cursor_get)
 {
 	if (*arg == 0)
 	{
-		show_message(ses, -1, "#SYNTAX: #CURSOR GET {variable}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #CURSOR GET {variable}");
 	}
 	else
 	{
@@ -876,7 +876,7 @@ DO_CURSOR(cursor_insert)
 	}
 	else
 	{
-		tintin_printf(NULL, "#SYNTAX: #CURSOR {INSERT} {ON|OFF}.");
+		show_error(gtd->ses, LIST_COMMAND, "#SYNTAX: #CURSOR {INSERT} {ON|OFF}.");
 	}
 }
 
@@ -1142,11 +1142,11 @@ int cursor_tab_add(int input_now, int stop_after_first)
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
-				if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
+				if (search_node_list(gtd->ses->list[LIST_COMMAND], tab))
 				{
 					continue;
 				}
-				insert_node_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+				insert_node_list(gtd->ses->list[LIST_COMMAND], tab, "", "");
 
 				if (stop_after_first)
 				{
@@ -1215,11 +1215,11 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 					}
 				}
 
-				if (search_node_list(gtd->ses->list[LIST_TABCYCLE], tab))
+				if (search_node_list(gtd->ses->list[LIST_COMMAND], tab))
 				{
 					continue;
 				}
-				insert_node_list(gtd->ses->list[LIST_TABCYCLE], tab, "", "");
+				insert_node_list(gtd->ses->list[LIST_COMMAND], tab, "", "");
 
 				if (stop_after_first)
 				{
@@ -1241,7 +1241,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 void cursor_hide_completion(int input_now)
 {
-	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
+	struct listroot *root = gtd->ses->list[LIST_COMMAND];
 	struct listnode *f_node;
 	struct listnode *l_node;
 	int len_change;
@@ -1273,7 +1273,7 @@ void cursor_hide_completion(int input_now)
 
 void cursor_show_completion(int input_now, int show_last_node)
 {
-	struct listroot *root = gtd->ses->list[LIST_TABCYCLE];
+	struct listroot *root = gtd->ses->list[LIST_COMMAND];
 	struct listnode *node;
 
 	if (!root->used)
@@ -1311,7 +1311,7 @@ void cursor_show_completion(int input_now, int show_last_node)
 
 	if (node == root->list[0])
 	{
-		kill_list(gtd->ses->list[LIST_TABCYCLE]);
+		kill_list(root);
 	}
 
 	return;
@@ -1333,160 +1333,179 @@ int cursor_calc_input_now(void)
 			return input_now + 1;
 		}
 	}
+
 	return input_now;
 }
 
 DO_CURSOR(cursor_tab_forward)
 {
-	int input_now, tab_found;
+	struct listroot *root = ses->list[LIST_COMMAND];
+	int tab_found;
 
-	input_now = cursor_calc_input_now();
+	if (!root->list[0])
+	{
+		gtd->input_tab = cursor_calc_input_now();
+	}
 
-	if (input_now == -1)
+	if (gtd->input_tab == -1)
 	{
 		return;
 	}
 
-	cursor_hide_completion(input_now);
+	cursor_hide_completion(gtd->input_tab);
 
-	if (!ses->list[LIST_TABCYCLE]->list[0])
+	if (!root->list[0])
 	{
-		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
 	}
-	tab_found = cursor_tab_add(input_now, TRUE);
+	tab_found = cursor_tab_add(gtd->input_tab, TRUE);
 
-	cursor_show_completion(input_now, tab_found);
+	cursor_show_completion(gtd->input_tab, tab_found);
 }
 
 DO_CURSOR(cursor_tab_backward)
 {
-	struct listroot *root = ses->list[LIST_TABCYCLE];
-	int input_now;
+	struct listroot *root = ses->list[LIST_COMMAND];
 
-	input_now = cursor_calc_input_now();
+	if (!root->list[0])
+	{
+		gtd->input_tab = cursor_calc_input_now();
+	}
 
-	if (input_now == -1)
+	if (gtd->input_tab == -1)
 	{
 		return;
 	}
 
-	cursor_hide_completion(input_now);
+	cursor_hide_completion(gtd->input_tab);
 
 	if (root->used)
 	{
-		delete_index_list(ses->list[LIST_TABCYCLE], root->used - 1);
+		delete_index_list(root, root->used - 1);
 	}
 
 	if (!root->list[0])
 	{
-		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
 
-		cursor_tab_add(input_now, FALSE);
+		cursor_tab_add(gtd->input_tab, FALSE);
 	}
-	cursor_show_completion(input_now, TRUE);
+	cursor_show_completion(gtd->input_tab, TRUE);
 }
 
 DO_CURSOR(cursor_auto_tab_forward)
 {
-	int input_now, tab_found;
+	struct listroot *root = ses->list[LIST_COMMAND];
+	int tab_found;
 
-	input_now = cursor_calc_input_now();
+	if (!root->list[0])
+	{
+		gtd->input_tab = cursor_calc_input_now();
+	}
 
-	if (input_now == -1)
+	if (gtd->input_tab == -1)
 	{
 		return;
 	}
 
-	cursor_hide_completion(input_now);
+	cursor_hide_completion(gtd->input_tab);
 
-	if (!ses->list[LIST_TABCYCLE]->list[0])
+	if (!root->list[0])
 	{
-		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
 	}
 
-	tab_found = cursor_auto_tab_add(input_now, TRUE);
+	tab_found = cursor_auto_tab_add(gtd->input_tab, TRUE);
 
-	cursor_show_completion(input_now, tab_found);
+	cursor_show_completion(gtd->input_tab, tab_found);
 }
 
 DO_CURSOR(cursor_auto_tab_backward)
 {
-	struct listroot *root = ses->list[LIST_TABCYCLE];
-	int input_now;
+	struct listroot *root = ses->list[LIST_COMMAND];
 
-	input_now = cursor_calc_input_now();
+	if (!root->list[0])
+	{
+		gtd->input_tab = cursor_calc_input_now();
+	}
 
-	if (input_now == -1)
+	if (gtd->input_tab == -1)
 	{
 		return;
 	}
 
-	cursor_hide_completion(input_now);
+	cursor_hide_completion(gtd->input_tab);
 
 	if (root->used)
 	{
-		delete_index_list(ses->list[LIST_TABCYCLE], root->used - 1);
+		delete_index_list(root, root->used - 1);
 	}
 
 	if (!root->list[0])
 	{
-		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
 
-		cursor_auto_tab_add(input_now, FALSE);
+		cursor_auto_tab_add(gtd->input_tab, FALSE);
 	}
 
-	cursor_show_completion(input_now, TRUE);
+	cursor_show_completion(gtd->input_tab, TRUE);
 }
 
 
 DO_CURSOR(cursor_mixed_tab_forward)
 {
-	int input_now, tab_found;
+	struct listroot *root = ses->list[LIST_COMMAND];
+	int tab_found;
 
-	input_now = cursor_calc_input_now();
+	if (!root->list[0])
+	{
+		gtd->input_tab = cursor_calc_input_now();
+	}
 
-	if (input_now == -1)
+	if (gtd->input_tab == -1)
 	{
 		return;
 	}
 
-	cursor_hide_completion(input_now);
+	cursor_hide_completion(gtd->input_tab);
 
-	if (!ses->list[LIST_TABCYCLE]->list[0])
+	if (!root->list[0])
 	{
-		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
 	}
-	tab_found = cursor_tab_add(input_now, TRUE) || cursor_auto_tab_add(input_now, TRUE);
+	tab_found = cursor_tab_add(gtd->input_tab, TRUE) || cursor_auto_tab_add(gtd->input_tab, TRUE);
 
-	cursor_show_completion(input_now, tab_found);
+	cursor_show_completion(gtd->input_tab, tab_found);
 }
 
 DO_CURSOR(cursor_mixed_tab_backward)
 {
-	struct listroot *root = ses->list[LIST_TABCYCLE];
-	int input_now;
+	struct listroot *root = ses->list[LIST_COMMAND];
 
-	input_now = cursor_calc_input_now();
+	if (!root->list[0])
+	{
+		gtd->input_tab = cursor_calc_input_now();
+	}
 
-	if (input_now == -1)
+	if (gtd->input_tab == -1)
 	{
 		return;
 	}
 
-	cursor_hide_completion(input_now);
+	cursor_hide_completion(gtd->input_tab);
 
 	if (root->used)
 	{
-		delete_index_list(ses->list[LIST_TABCYCLE], root->used - 1);
+		delete_index_list(root, root->used - 1);
 	}
 
 	if (!root->list[0])
 	{
-		insert_node_list(ses->list[LIST_TABCYCLE], &gtd->input_buf[input_now], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
 
-		cursor_tab_add(input_now, FALSE);
-		cursor_auto_tab_add(input_now, FALSE);
+		cursor_tab_add(gtd->input_tab, FALSE);
+		cursor_auto_tab_add(gtd->input_tab, FALSE);
 	}
 
-	cursor_show_completion(input_now, TRUE);
+	cursor_show_completion(gtd->input_tab, TRUE);
 }
