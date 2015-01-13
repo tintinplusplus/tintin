@@ -32,12 +32,15 @@ TERMINAL EMULATION:
 
 In order to run tintin full featured you will need a vt100 emulator. If your
 OS doesn't use one per default it's suggested to install xterm or rxvt (also
-known as wterm). If you are using cygwin for example you might want to do the
-following:
+known as wterm).
 
-cat x < rxvt -bg 0 -fg 15 -cr 2 -fn "courier-15" -fb "courier-15" +sb -tn xterm -e /usr/bin/bash --login -i&
-chmod 777 x
-./x
+STATIC LINKING:
 
-This will start up rxvt configured as an old school PuTTY terminal everytime
-you type ./x  and allows you to run tintin in split mode.
+This is more so a note to myself to statically link PCRE on Cygwin.
+
+$ wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.34.tar.bz2
+$ tar xvf pcre-8.34.tar.bz2
+$ cd pcre-8.34/
+$ ./configure CC=i686-pc-mingw32-gcc CXX=i686-pc-mingw32-g++ --enable-jit --enable-unicode-properties --disable-shared
+$ make
+$ ./configure --libdir='../pcre-8.34' --includedir='../pcre-8.34'

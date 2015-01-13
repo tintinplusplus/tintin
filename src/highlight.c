@@ -87,6 +87,8 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 	char match[BUFFER_SIZE], color[BUFFER_SIZE], reset[BUFFER_SIZE], output[BUFFER_SIZE], plain[BUFFER_SIZE];
 	int len;
 
+	push_call("check_all_highlights(%p,%p,%p)",ses,original,line);
+
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
 		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
@@ -141,6 +143,8 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 			strcpy(original, output);
 		}
 	}
+	pop_call();
+	return;
 }
 
 int get_highlight_codes(struct session *ses, char *string, char *result)

@@ -126,6 +126,8 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 //			substitute(ses, output, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
 			strcpy(original, output);
+
+			strip_vt102_codes(original, line);
 		}
 	}
 }

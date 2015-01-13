@@ -84,7 +84,7 @@ gnutls_session_t ssl_negotiate(struct session *ses)
 		gnutls_deinit(ssl_ses);
 		return 0;
 	}
-
+/*
 	{
 		char *debug = gnutls_session_get_desc(ssl_ses);
 
@@ -92,7 +92,7 @@ gnutls_session_t ssl_negotiate(struct session *ses)
 
 		gnutls_free(debug);
 	}
-
+*/
 	if (!ssl_check_cert(ses, ssl_ses))
 	{
 		gnutls_deinit(ssl_ses);

@@ -38,8 +38,8 @@ struct advertisement_type
 struct advertisement_type advertisement_table[] =
 {
 	{
-		1388166000, /* 27 Dec 2013 */
-		1420072000, /* 31 Dec 2014 */
+		1388166000, /* 2013 */
+		1500000000, /* 2017 */
 		100,
 		"\n"
 		"<138>                     Lost Souls  -  http://lostsouls.org\n"
@@ -55,21 +55,39 @@ struct advertisement_type advertisement_table[] =
 		"\n"
                 "<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
                 "\n"
+	},
+
+	{
+		1388166000, /* 2013 */
+		1500000000, /* 2017 */
+		100,
+		"\n"
+		"<138>               Carrion Fields  -  http://carrionfields.net\n"
+		"\n"
+		"<078>Adventure, politics and bloody war await you in this life of swords, sorcery,\n"
+		"<078>deception, and honor.  We have 17 customizable classes with which to explore a\n"
+		"<078>massively rich world of over 270 areas.  RP is mandatory, but help is always\n"
+		"<078>available on the newbie channel.  Intuitive game mechanics provide a fun and\n"
+		"<078>fulfilling PK environment.  Carrion Fields is 100% free to play and free of\n"
+		"<078>paid perks as well.  By what name do you wish to be mourned?\n"
+		"\n"
+                "<178>To connect to Carrion Fields enter: #session cf carrionfields.net 4449\n"
+                "\n"
 		                
 	},
 
 	{
-		1388166000, /* 27 Dec 2013 */
-		1420072000, /* 31 Dec 2014 */
+		1388166000, /* 2013 */
+		1500000000, /* 2017 */
 		100,
 		"\n"
 		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
 		"\n"
-		"<078>Alter Aeon is a custom multiclass MUD, where each of the five character\n"
-		"<078>classes combine to make unique characters with unique skill sets.  This is\n"
-		"<078>a very large MUD - there are hundreds of areas and quests, spanning several\n"
-		"<078>continents and outer planar regions.  There are custom spells, skills,\n"
-		"<078>minions, player run shops, seafaring boats, PvP, and many other features\n"
+		"<078>Alter Aeon is a custom multiclass MUD, where each of the six character\n"
+		"<078>classes can be combined to make very unique characters.  This huge\n"
+		"<078>fantasy themed game has hundreds of areas and quests, spanning\n"
+		"<078>several continents and outer planar regions.  There are custom spells,\n"
+		"<078>skills, minions, player run shops, boats, PvP, and many other features\n"
 		"<078>for nearly every kind of player.  The game is very friendly to new players\n"
 		"<078>and has extensive support for the blind and visually impaired.\n"
 		"\n"
@@ -78,8 +96,8 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1388166000, /* 27 Dec 2013 */
-		1420072000, /* 31 Dec 2014 */
+		1388166000, /* 2013 */
+		1500000000, /* 2017 */
 		100,
 		"\n"
 		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"

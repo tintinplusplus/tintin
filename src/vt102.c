@@ -473,12 +473,15 @@ void strip_non_vt102_codes(char *str, char *buf)
 
 char *strip_vt102_strstr(char *str, char *buf, int *len)
 { 
-	char *pti, *ptm;
+	char *pti, *ptm, *pts;
 
-	pti = str;
+	push_call("strip_vt102_strstr(%p,%p,%p)",str,buf,len);
 
-	while (*str)
+	pts = str;
+
+	while (*pts)
 	{
+		pti = pts;
 		ptm = buf;
 
 		while (*pti)
@@ -492,9 +495,10 @@ char *strip_vt102_strstr(char *str, char *buf, int *len)
 			{
 				if (len)
 				{
-					*len = pti - str;
+					*len = pti - pts;
 				}
-				return str;
+				pop_call();
+				return pts;
 			}
 
 			while (skip_vt102_codes(pti))
@@ -502,8 +506,9 @@ char *strip_vt102_strstr(char *str, char *buf, int *len)
 				pti += skip_vt102_codes(pti);
 			}
 		}
-		str = pti;
+		pts++;
 	}
+	pop_call();
 	return NULL;
 }
 

@@ -454,6 +454,7 @@ struct help_type help_table[] =
 		"         SEND OUTPUT           %0 raw text\n"
 		"         SESSION ACTIVATED     %0 name\n"
 		"         SESSION CONNECTED     %0 name %1 host %2 ip %3 port\n"
+		"         SESSION CREATED       %0 name %1 host %2 ip %3 port\n"
 		"         SESSION DEACTIVATED   %0 name\n"
 		"         SESSION DISCONNECTED  %0 name %1 host %2 ip %3 port\n"
 		"         SESSION TIMED OUT     %0 name %1 host %2 ip %3 port\n"

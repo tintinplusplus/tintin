@@ -1,8 +1,6 @@
 * Stuff that's going to be done.
 
-F - multi option roomflag setting like #line sub.
-
-  - http://tintin.sourceforge.net/board/viewtopic.php?p=8789#8789 (format debug?)
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8944
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=8766#8766 (global verbose toggle?)
 
@@ -10,17 +8,9 @@ F - multi option roomflag setting like #line sub.
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=8735#8735 RECEIVED MESSAGE event?
 
-F - http://tintin.sourceforge.net/board/viewtopic.php?p=8733#8733 switch "" documentation
-
-F - http://tintin.sourceforge.net/board/viewtopic.php?p=8717#8717 tab bug
-
 ? - http://tintin.sourceforge.net/board/viewtopic.php?p=8655#8655 FILE OPENED / CLOSED event?
 
-F - http://tintin.sourceforge.net/board/viewtopic.php?p=8612 infinite loop
-
   - http://tintinplusplus.github.io/
-
-F - http://tintin.sourceforge.net/board/viewtopic.php?t=2154 cross-session vars
 
   - Weirdness with joe
 
