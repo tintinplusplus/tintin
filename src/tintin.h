@@ -1264,8 +1264,8 @@ extern void show_vtmap(struct session *ses);
 
 #endif
 
-#ifndef __MATH_H__
-#define __MATH_H__
+#ifndef __OURMATH_H__
+#define __OURMATH_H__
 
 extern DO_COMMAND(do_math);
 extern double get_number(struct session *ses, char *str);
