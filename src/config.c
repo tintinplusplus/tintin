@@ -179,6 +179,28 @@ DO_CONFIG(config_commandecho)
 	return ses;
 }
 
+DO_CONFIG(config_indent)
+{
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_INDENT);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_INDENT);
+	}
+	else
+	{
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+
+	return ses;
+}
+
+
 DO_CONFIG(config_verbose)
 {
 	if (!strcasecmp(arg, "ON"))

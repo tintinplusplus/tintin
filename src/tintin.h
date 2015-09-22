@@ -321,6 +321,7 @@ enum operators
 #define SES_FLAG_CONNECTED            (1 << 11)
 #define SES_FLAG_REPEATENTER          (1 << 12)
 #define SES_FLAG_VERBOSE              (1 << 13)
+#define SES_FLAG_INDENT               (1 << 14)
 //#define SES_FLAG_VERBOSELINE          (1 << 14)
 #define SES_FLAG_LOGLEVEL             (1 << 15)
 #define SES_FLAG_LOGPLAIN             (1 << 16)
@@ -1327,6 +1328,7 @@ extern DO_CONFIG(config_verbatim);
 extern DO_CONFIG(config_repeatenter);
 extern DO_CONFIG(config_commandecho);
 extern DO_CONFIG(config_commandcolor);
+extern DO_CONFIG(config_indent);
 extern DO_CONFIG(config_verbose);
 extern DO_CONFIG(config_wordwrap);
 extern DO_CONFIG(config_log);

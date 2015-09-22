@@ -237,6 +237,13 @@ struct config_type config_table[] =
 	},
 
 	{
+		"INDENT",
+		"Wrapped text is indented after the first line",
+		"Wrapped text is not indented",
+		config_indent
+	},
+
+	{
 		"LOG",
 		"",
 		"The data format of the log files",
