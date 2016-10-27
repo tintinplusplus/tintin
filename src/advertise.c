@@ -83,7 +83,7 @@ struct advertisement_type advertisement_table[] =
 		"\n"
 		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
 		"\n"
-		"<078>Alter Aeon is a custom multiclass MUD, where each of the six character\n"
+		"<078>Alter Aeon is a custom multiclass MUD, where each of the character\n"
 		"<078>classes can be combined to make very unique characters.  This huge\n"
 		"<078>fantasy themed game has hundreds of areas and quests, spanning\n"
 		"<078>several continents and outer planar regions.  There are custom spells,\n"

@@ -70,7 +70,7 @@ void init_terminal()
 */
 
 //	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
-	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN);
+	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
 
 	SET_BIT(io.c_cflag, CS8);
 

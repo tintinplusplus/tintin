@@ -48,7 +48,7 @@ DO_COMMAND(do_alias)
 	}
 	else if (*arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_ALIAS) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_ALIAS]) == FALSE)
 		{
 			show_message(ses, LIST_ALIAS, "#ALIAS: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

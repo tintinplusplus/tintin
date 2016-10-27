@@ -367,14 +367,12 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_COLORPATCH))
 	{
-		sprintf(line, "%s%s", ses->color, linebuf);
+		sprintf(line, "%s%s%s", ses->color, linebuf, "\e[0m");
 
 		get_color_codes(ses->color, linebuf, ses->color);
 
 		linebuf = line;
 	}
-
-
 
 	do_one_line(linebuf, ses);   /* changes linebuf */
 

@@ -910,6 +910,7 @@ struct map_data
 	char                  * here_color;
 	char                  * path_color;
 	char                  * room_color;
+	char                  * back_color;
 	int                     max_grid_x;
 	int                     max_grid_y;
 	int                     undo_size;
@@ -1264,8 +1265,8 @@ extern void show_vtmap(struct session *ses);
 
 #endif
 
-#ifndef __MATH_H__
-#define __MATH_H__
+#ifndef __TT_MATH_H__
+#define __TT_MATH_H__
 
 extern DO_COMMAND(do_math);
 extern double get_number(struct session *ses, char *str);
@@ -1405,7 +1406,7 @@ extern struct listnode *insert_node_list(struct listroot *root, char *ltext, cha
 extern struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtext, char *prtext);
 extern struct listnode *insert_index_list(struct listroot *root, struct listnode *node, int index);
 
-extern  int show_node_with_wild(struct session *ses, char *cptr, int type);
+extern  int show_node_with_wild(struct session *ses, char *cptr, struct listroot *root);
 extern void show_node(struct listroot *root, struct listnode *node, int level);
 extern void show_nest(struct listnode *node, char *result);
 extern void show_list(struct listroot *root, int level);
@@ -1846,6 +1847,8 @@ extern DO_COMMAND(do_undelay);
 #ifndef __TOKENIZE_H__
 #define __TOKENIZE_H__
 
+extern void init_local(struct session *ses);
+extern struct listroot *local_list(struct session *ses);
 extern struct session *script_driver(struct session *ses, int list, char *str);
 extern char *script_writer(struct session *ses, char *str);
 
@@ -1909,6 +1912,8 @@ extern void close_timer(int timer);
 
 extern DO_COMMAND(do_variable);
 extern DO_COMMAND(do_unvariable);
+
+extern DO_COMMAND(do_local);
 
 extern int delete_variable(struct session *ses, char *variable);
 extern struct listnode *search_variable(struct session *ses, char *variable);

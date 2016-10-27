@@ -497,7 +497,7 @@ struct help_type help_table[] =
 		"         no integer operations and a maximum of 20 arguments. If you use format\n"
 		"         inside an alias or action you must escape the %0-9 like: %+4s.\n"
 		"\n"
-		"<178>Example<078>: #format {test} {%+9s} {string}  pad string with up to 9 spaces\n"
+		"         #format {test} {%+9s} {string}  pad string with up to 9 spaces\n"
 		"         #format {test} {%-9s} {string}  post pad string with up to 9 spaces\n"
 		"         #format {test} {%.8s} {string}  copy at most 8 characters\n"
 		"         #format {test} {%a}   {number}  print corresponding ascii character\n"
@@ -513,8 +513,10 @@ struct help_type help_table[] =
 		"         #format {test} {%r}   {string}  reverse text, hiya = ayih\n"
 		"         #format {test} {%s}   {string}  print given string\n"
 		"         #format {test} {%t}   {format}  display time with strftime format\n"
+		"                                         optional {{format}{time}} syntax\n"
 		"         #format {test} {%u}   {string}  uppercase text\n"
-		"         #format {test} {%w}   {string}  wordwrap text\n"
+		"         #format {list} {%w}   {string}  store wordwrapped text in {list}\n"
+		"                                         optional {{string}{width}} syntax\n"
 		"         #format {test} {%A}     {char}  print corresponding ascii value\n"
 		"         #format {cols} {%C}         {}  store the screen width in {cols}\n"
 		"         #format {test} {%L}   {string}  store the string length in {test}\n"
@@ -719,7 +721,7 @@ struct help_type help_table[] =
 	},
 	{
 		"LINE",
-		"<178>Command<078>: #line <178>{<078>gag<178>|<078>log<178>|<078>logverbatim<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<078>: #line <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
 		"\n"
 		"         #line log {filename} {[text]}          Log the current or given line to\n"
 		"                                                file.\n"
@@ -780,6 +782,23 @@ struct help_type help_table[] =
 		"\n"
 		"         You can directly access elements in a list variable using $var[1],\n"
 		"         $var[2], $var[-1], etc.\n"
+	},
+
+	{
+		"LOCAL",
+		"<178>Command<078>: #local <178>{<078>variable name<178>}<078> <178>{<078>text to fill variable<178>}<078>\n"
+		"\n"
+		"         The local command sets a local variable. Unlike a regular variable\n"
+		"         a local variable will only stay in memory for the duration of the\n"
+		"         event that created it. They are accessed in the same way as a\n"
+		"         regular variable.\n"
+		"\n"
+		"         Commands that store information to a variable will use a local variable\n"
+		"         if it exists.\n"
+		"\n"
+		"         Avoid setting the result variable as local in a function.\n"
+		"\n"
+		"<178>Example<078>: #alias {swap} {#local x %0;#replace x {e} {u};#showme $x}\n"
 	},
 
 	{
@@ -850,7 +869,7 @@ struct help_type help_table[] =
 		"\n"
 		"         #map destroy: Deletes the map.\n"
 		"\n"
-		"         #map delete <direction>: Deletes the room in the given direction.\n"
+		"         #map delete <direction|vnum>: Deletes the room in the given direction.\n"
 		"\n"
 		"         #map dig <direction|vnum> [new|<vnum>]: Creates an exit in the given\n"
 		"                  direction. If no valid direction is given or no existing room\n"
@@ -1300,6 +1319,9 @@ struct help_type help_table[] =
 		"         #{name}:  Switches to a session with the given name.\n"
 		"         #{name} {command}:  Executes a command with the given session without\n"
 		"                             changing the active session.\n"
+		"         @<name>{text}:      Parse text in the given session, substituting the\n"
+		"                             variables and functions, and print the result in\n"
+		"                             the current active session.\n"
 		"\n"
 		"         The startup session is named 'gts' and can be used for relog scripts.\n"
 		"\n"

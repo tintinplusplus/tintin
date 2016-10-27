@@ -185,6 +185,7 @@ pcre *regexp_compile(char *exp, int option)
 int substitute(struct session *ses, char *string, char *result, int flags)
 {
 	struct listnode *node;
+	struct listroot *root;
 	struct session *sesptr;
 	char temp[BUFFER_SIZE], buf[BUFFER_SIZE], buffer[BUFFER_SIZE], *pti, *pto, *ptt, *str;
 	char *pte, old[6] = { 0 };
@@ -344,7 +345,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			case '$':
-				if (HAS_BIT(flags, SUB_VAR) && !HAS_BIT(ses->list[LIST_VARIABLE]->flags, LIST_FLAG_IGNORE))
+				if (HAS_BIT(flags, SUB_VAR) && !HAS_BIT(ses->list[LIST_VARIABLE]->flags, LIST_FLAG_IGNORE) && pti[1])
 				{
 					int def = FALSE;
 					i = 1;
@@ -380,7 +381,14 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*ptt = 0;
 					}
 
-					node = search_node_list(ses->list[LIST_VARIABLE], temp);
+					root = local_list(ses);
+
+					if ((node = search_node_list(root, temp)) == NULL)
+					{
+						root = ses->list[LIST_VARIABLE];
+
+						node = search_node_list(root, temp);
+					}
 
 					if (def == FALSE && node == NULL)
 					{
@@ -408,7 +416,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					str = str_dup("");
 
-					get_nest_node(ses->list[LIST_VARIABLE], buf, &str, def);
+					get_nest_node(root, buf, &str, def);
 
 					substitute(ses, str, pto, flags_neol - SUB_VAR);
 
@@ -487,7 +495,13 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*ptt = 0;
 					}
 
-					node = search_node_list(ses->list[LIST_VARIABLE], temp);
+					root = local_list(ses);
+
+					if ((node = search_node_list(root, temp)) == NULL)
+					{
+						root = ses->list[LIST_VARIABLE];
+						node = search_node_list(root, temp);
+					}
 
 					if (def == FALSE && node == NULL)
 					{
@@ -515,7 +529,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					str = str_dup("");
 
-					get_nest_index(ses->list[LIST_VARIABLE], buf, &str, def);
+					get_nest_index(root, buf, &str, def);
 
 					substitute(ses, str, pto, flags_neol - SUB_VAR);
 

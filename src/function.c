@@ -43,7 +43,7 @@ DO_COMMAND(do_function)
 
 	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_FUNCTION) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_FUNCTION]) == FALSE)
 		{
 			show_message(ses, LIST_FUNCTION, "#FUNCTION: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

@@ -118,15 +118,15 @@ void suspend_handler(int signal)
 {
 	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
 
-	fflush(stdout);
+	fflush(NULL);
 
 	restore_terminal();
 
 	kill(0, SIGSTOP);
 
-	dirty_screen(gtd->ses);
-
 	init_terminal();
+
+	dirty_screen(gtd->ses);
 
 	tintin_puts(NULL, "#RETURNING BACK TO TINTIN++.");
 }
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 	{
 		syserr("signal SIGTERM");
 	}
-
+/*
 	if (signal(SIGINT, interrupt_handler) == BADSIG)
 	{
 		syserr("signal SIGINT");
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 	{
 		syserr("signal SIGSTOP");
 	}
-
+*/
 	if (signal(SIGPIPE, pipe_handler) == BADSIG)
 	{
 		syserr("signal SIGPIPE");
@@ -368,6 +368,8 @@ void init_tintin(int greeting)
 
 	init_screen_size(gts);
 
+	init_local(gts);
+
 	printf("\033="); // set application keypad mode
 
 	gtd->input_level++;
@@ -377,7 +379,7 @@ void init_tintin(int greeting)
 	do_configure(gts, "{COLOR PATCH}       {OFF}");
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
 	do_configure(gts, "{COMMAND ECHO}       {ON}");
-	do_configure(gts, "{CONNECT RETRY}      {15}");
+	do_configure(gts, "{CONNECT RETRY}       {0}");
 	do_configure(gts, "{CHARSET}         {ASCII}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");

@@ -507,16 +507,14 @@ void tintin_printf2(struct session *ses, char *format, ...)
 
 void tintin_printf(struct session *ses, char *format, ...)
 {
-	char *buffer;
+	char buffer[BUFFER_SIZE];
 	va_list args;
 
 	va_start(args, format);
-	vasprintf(&buffer, format, args);
+	vsprintf(buffer, format, args);
 	va_end(args);
 
 	tintin_puts(ses, buffer);
-
-	free(buffer);
 }
 
 /*

@@ -27,6 +27,7 @@
 
 #include "tintin.h"
 
+
 struct scriptdata
 {
 	long long              min;
@@ -66,8 +67,13 @@ struct scriptroot
 	struct scriptnode    * next;
 	struct scriptnode    * prev;
 	struct session       * ses;
+	struct listroot      * local;
 	int list;
 };
+
+struct scriptroot *script_stack[1001];
+
+int script_index;
 
 void debugtoken(struct session *ses, struct scriptroot *root, struct scriptnode *token)
 {
@@ -442,6 +448,32 @@ int find_command(char *command)
 	return -1;
 }
 
+void init_local(struct session *ses)
+{
+	struct scriptroot *root;
+
+	root = (struct scriptroot *) calloc(1, sizeof(struct scriptroot));
+
+	root->ses = ses;
+	root->list = LIST_VARIABLE;
+	root->local = init_list(ses, LIST_VARIABLE, LIST_SIZE);
+
+	script_stack[0] = root;
+
+	return;
+}
+
+struct listroot *local_list(struct session *ses)
+{
+	struct listroot *root;
+
+	push_call("local_list(%p)",ses);
+
+	root = script_stack[script_index]->local;
+
+	pop_call();
+	return root;
+}
 
 void tokenize_script(struct scriptroot *root, int lvl, char *str)
 {
@@ -1058,15 +1090,20 @@ struct session *script_driver(struct session *ses, int list, char *str)
 
 	root->ses = ses;
 	root->list = list;
+	root->local = init_list(ses, LIST_VARIABLE, LIST_SIZE);
 
 	debug = HAS_BIT(ses->list[list]->flags, LIST_FLAG_DEBUG);
 
 	gtd->debug_level += debug;
 	gtd->input_level += list != LIST_COMMAND;
 
+	script_stack[++script_index] = root;
+
 	tokenize_script(root, 0, str);
 
 	ses = (struct session *) parse_script(root, 0, root->next, root->prev);
+
+	script_index--;
 
 	gtd->debug_level -= debug;
 	gtd->input_level -= list != LIST_COMMAND;
@@ -1076,6 +1113,7 @@ struct session *script_driver(struct session *ses, int list, char *str)
 		deltoken(root, root->prev);
 	}
 
+	free_list(root->local);
 	free(root);
 
 	pop_call();

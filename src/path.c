@@ -535,7 +535,7 @@ DO_COMMAND(do_pathdir)
 	}
 	else if (*arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_PATHDIR) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_PATHDIR]) == FALSE)
 		{
 			show_message(ses, LIST_PATHDIR, "#NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

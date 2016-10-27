@@ -334,7 +334,18 @@ struct session *connect_session(struct session *ses)
 
 	if (ses->connect_retry > utime())
 	{
-		goto reconnect;
+		fd_set readfds;
+		static struct timeval to;
+
+		FD_ZERO(&readfds);
+		FD_SET(0, &readfds);
+
+		if (select(FD_SETSIZE, &readfds, NULL, NULL, &to) <= 0)
+		{
+			tintin_printf(ses, "#SESSION '%s' FAILED TO CONNECT. RETRYING FOR %d SECONDS.", ses->name, (ses->connect_retry - utime()) / 1000000);
+
+			goto reconnect;
+		}
 	}
 
 	if (ses->connect_error)

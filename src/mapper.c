@@ -184,9 +184,13 @@ DO_MAP(map_color)
 	{
 		RESTRING(ses->map->path_color, arg2);
 	}
+	else if (*arg1 && is_abbrev(arg1, "BACKGROUND"))
+	{
+		RESTRING(ses->map->back_color, arg2);
+	}
 	else
 	{
-		show_error(ses, LIST_COMMAND, "#SYNTAX: #MAP COLOR {EXIT|HERE|PATH|ROOM} {COLOR CODE}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #MAP COLOR {BACKGROUND|EXIT|HERE|PATH|ROOM} {COLOR CODE}");
 
 		return;
 	}
@@ -214,6 +218,21 @@ DO_MAP(map_debug)
 	tintin_printf2(ses, "             stamp: %d", ses->map->search->stamp);
 	tintin_printf2(ses, "            length: %f", ses->map->room_list[ses->map->in_room]->length);
 	tintin_printf2(ses, "          nofollow: %d", ses->map->nofollow);
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (*arg1)
+	{
+		if (is_abbrev(arg1, "undo"))
+		{
+			struct link_data *link;
+
+			for (link = ses->map->undo_head ; link ; link = link->next)
+			{
+				tintin_printf2(ses, "%05s %05s %s", link->str1, link->str2, link->str3);
+			}
+		}
+	}
 }
 
 DO_MAP(map_delete)
@@ -1340,6 +1359,9 @@ DO_MAP(map_read)
 						create_map(ses, buffer + 2);
 						break;
 
+					case 'B':
+						ses->map->back_color = strdup(buffer + 3);
+						break;
 					case 'E':
 						ses->map->exit_color = strdup(buffer + 3);
 						break;
@@ -1602,7 +1624,7 @@ DO_MAP(map_set)
 	char arg3[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN|SUB_ESC);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg3, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg3)
@@ -1998,7 +2020,7 @@ DO_MAP(map_write)
 
 	fprintf(file, "C %d\n\n", ses->map->size);
 
-	fprintf(file, "CE %s\nCH %s\nCP %s\nCR %s\n\n", ses->map->exit_color, ses->map->here_color, ses->map->path_color, ses->map->room_color);
+	fprintf(file, "CE %s\nCH %s\nCP %s\nCR %s\nCB %s\n\n", ses->map->exit_color, ses->map->here_color, ses->map->path_color, ses->map->room_color, ses->map->back_color);
 
 	fprintf(file, "F %d\n\n", ses->map->flags);
 
@@ -2068,10 +2090,11 @@ void create_map(struct session *ses, char *arg)
 
 	ses->map->flags = MAP_FLAG_ASCIIGRAPHICS;
 
-	ses->map->exit_color = strdup("<078>");
+	ses->map->exit_color = strdup("<278>");
 	ses->map->here_color = strdup("<118>");
 	ses->map->path_color = strdup("<138>");
 	ses->map->room_color = strdup("<178>");
+	ses->map->back_color = strdup("");
 
 	create_room(ses, "%s", "{1} {0} {} {} { } {} {} {} {} {} {1.0}");
 
@@ -2719,11 +2742,12 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 	{
 		if (room == NULL)
 		{
+			sprintf(buf, "%s      ", ses->map->back_color);
 			pop_call();
-			return "      ";
+			return buf;
 		}
 
-		sprintf(buf, "%s", ses->map->exit_color);
+		sprintf(buf, "%s%s", ses->map->back_color, ses->map->exit_color);
 
 		switch (line)
 		{

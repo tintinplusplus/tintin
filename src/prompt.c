@@ -47,7 +47,7 @@ DO_COMMAND(do_prompt)
 	}
 	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_PROMPT) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_PROMPT]) == FALSE)
 		{
 			show_message(ses, LIST_PROMPT, "#PROMPT: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

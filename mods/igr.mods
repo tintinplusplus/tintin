@@ -1,3 +1,27 @@
+Jun 2015       2.01.2
+
+tokenize.c     Added support for local variables with the #LOCAL command. Most
+               commands that manipulate variables will use a local variable
+               if it has been declared.
+
+utils.c        Fixed crash bug on substitutions on system messages.
+
+session.c      Showing all connect retry attempts and seconds left.
+
+session.c      Any manual input while connecting will cancel connect retry.
+
+main.c         Can create macros for ctrl-d and ctrl-z again.
+
+mapper.c       Added #map color background option to set a background color
+               for the map display.
+
+variable.c     Added optional width argument to #format %w. Also added UTF-8
+               support to %w.
+
+variable.c     Attempt to fix %p crash bug on OS X.
+
+               Fixed compilation issue for OS X.
+
 Jan 2014       2.01.1
 
 chat.c         Added CHAT MESSAGE event, %0 contains the chat color and prefix,

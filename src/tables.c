@@ -69,6 +69,7 @@ struct command_type command_table[] =
 	{    "killall",           do_kill,              TOKEN_TYPE_COMMAND },
 	{    "line",              do_line,              TOKEN_TYPE_COMMAND },
 	{    "list",              do_list,              TOKEN_TYPE_COMMAND },
+	{    "local",             do_local,             TOKEN_TYPE_COMMAND },
 	{    "log",               do_log,               TOKEN_TYPE_COMMAND },
 	{    "loop",              do_nop,               TOKEN_TYPE_LOOP    },
 	{    "macro",             do_macro,             TOKEN_TYPE_COMMAND },

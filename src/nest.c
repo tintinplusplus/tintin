@@ -389,6 +389,11 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 		}
 	}
 
+	if (search_node_list(local_list(NULL), name))
+	{
+		root = local_list(NULL);
+	}
+
 	node = search_node_list(root, name);
 
 	if (node && node->root)

@@ -502,9 +502,8 @@ void show_list(struct listroot *root, int level)
 }
 
 
-int show_node_with_wild(struct session *ses, char *text, int type)
+int show_node_with_wild(struct session *ses, char *text, struct listroot *root)
 {
-	struct listroot *root = ses->list[type];
 	struct listnode *node;
 	int i, flag = FALSE;
 

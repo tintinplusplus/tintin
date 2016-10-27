@@ -53,7 +53,7 @@ DO_COMMAND(do_tick)
 	}
 	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_TICKER) == FALSE) 
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_TICKER]) == FALSE) 
 		{
 			show_message(ses, LIST_TICKER, "#TICK, NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
@@ -90,7 +90,7 @@ DO_COMMAND(do_delay)
 	}
 	else if (*arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_DELAY) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_DELAY]) == FALSE)
 		{
 			show_message(ses, LIST_DELAY, "#DELAY: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

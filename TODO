@@ -1,6 +1,26 @@
+* Fixed
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=2319 (map background color)
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=2377 (\cd and \cz handling improv)
+
+  - When I try to use any #FORMAT with the "%p", tintin++ crashes (OS X).
+
 * Stuff that's going to be done.
 
-  - http://tintin.sourceforge.net/board/viewtopic.php?p=8944
+  - iso-8859-1 change to utf-8 in html logging?
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=9625 (map undo issue) (not a big issue)
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=2339 (map area data)
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?t=1707 (map locate patch)
+
+  - IPv6 for chat
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=9110 (map search stamp bug)
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=9109 (vt102 strip \e[2J\e[H )
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=8766#8766 (global verbose toggle?)
 
@@ -13,6 +33,12 @@
   - http://tintinplusplus.github.io/
 
   - Weirdness with joe
+
+  - See about adding ~/ handling for file names.
+
+
+
+  http://tintin.sourceforge.net/board/viewtopic.php?p=9657 BIG5 word wrapping
 
 --------------------------------------------------------------------------------
 

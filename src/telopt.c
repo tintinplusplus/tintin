@@ -142,6 +142,30 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 
 		switch (inflate(ses->mccp, Z_SYNC_FLUSH))
 		{
+			case Z_BUF_ERROR:
+				if (ses->mccp->avail_out == 0)
+				{
+					gtd->mccp_len *= 2;
+					gtd->mccp_buf  = (unsigned char *) realloc(gtd->mccp_buf, gtd->mccp_len);
+
+					ses->mccp->avail_out = gtd->mccp_len / 2;
+					ses->mccp->next_out  = gtd->mccp_buf + gtd->mccp_len / 2;
+
+					goto inflate;
+				}
+				else
+				{
+					tintin_puts2(ses, "");
+					tintin_puts2(ses, "#COMPRESSION ERROR, Z_BUF_ERROR, DISABLING MCCP.");
+					send_dont_mccp2(ses, 0, NULL);
+					inflateEnd(ses->mccp);
+					free(ses->mccp);
+					ses->mccp = NULL;
+					cpsrc = src;
+					cplen = 0;
+				}
+				break;
+
 			case Z_OK:
 				if (ses->mccp->avail_out == 0)
 				{

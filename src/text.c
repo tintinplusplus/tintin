@@ -186,7 +186,7 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 	return (cnt + 1);
 }
 
-// store whatever falls inbetween skip and keep.
+// store whatever falls inbetween skip and keep. Used by #buffer
 
 int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, int keep)
 {
@@ -321,3 +321,5 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, 
 	pop_call();
 	return (cnt + 1);
 }
+
+

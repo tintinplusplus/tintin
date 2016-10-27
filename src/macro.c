@@ -41,7 +41,7 @@ DO_COMMAND(do_macro)
 	}
 	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_MACRO) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_MACRO]) == FALSE)
 		{
 			show_message(ses, LIST_MACRO, "#MACRO: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

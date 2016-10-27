@@ -47,7 +47,7 @@ DO_COMMAND(do_substitute)
 	}
 	else if (*str == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_SUBSTITUTE) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_SUBSTITUTE]) == FALSE)
 		{
 			show_message(ses, LIST_SUBSTITUTE, "#SUBSTITUTE: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

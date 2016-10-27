@@ -1,4 +1,4 @@
-/******************************************************************************
+/*****************************************************************************
 *   TinTin++                                                                  *
 *   Copyright (C) 2007 (See CREDITS file)                                     *
 *                                                                             *
@@ -48,7 +48,7 @@ DO_COMMAND(do_event)
 	}
 	else if (*arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_EVENT) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_EVENT]) == FALSE)
 		{
 			show_message(ses, LIST_ALIAS, "#EVENT: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}
@@ -86,13 +86,13 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 	va_list list;
 	int cnt;
 
-	push_call("check_all_events(%p,%d,%d,%d, ...)",ses,flags,args,vars);
-
 	va_start(list, fmt);
 
 	vsprintf(name, fmt, list);
 
 	va_end(list); 
+
+	push_call("check_all_events(%p,%d,%d,%d,%s, ...)",ses,flags,args,vars,name);
 
 	for (ses_ptr = ses ? ses : gts ; ses_ptr ; ses_ptr = ses_ptr->next)
 	{
