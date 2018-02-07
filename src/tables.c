@@ -491,6 +491,7 @@ struct array_type array_table[] =
 	{     "INSERT",           array_insert        },
 	{     "LENGTH",           array_size          },
 	{     "SET",              array_set           },
+	{     "SIMPLIFY",         array_simplify      },
 	{     "SIZE",             array_size          },
 	{     "SORT",             array_sort          },
 	{     "SRT",              array_sort          },
@@ -680,6 +681,12 @@ struct cursor_type cursor_table[] =
 		cursor_home
 	},
 	{
+		"INFO",
+		"Print debugging information",
+		"",
+		cursor_info
+	},
+	{
 		"INSERT",
 		"Turn insert mode on or off",
 		"",
@@ -732,12 +739,6 @@ struct cursor_type cursor_table[] =
 		"Suspend program, return with fg",
 		"",
 		cursor_suspend
-	},
-	{
-		"TEST",
-		"Print debugging information",
-		"",
-		cursor_test
 	},
 	{
 		"TAB BACKWARD",

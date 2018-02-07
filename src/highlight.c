@@ -194,7 +194,10 @@ int get_highlight_codes(struct session *ses, char *string, char *result)
 		switch (*string)
 		{
 			case ' ':
+			case ';':
 			case ',':
+			case '{':
+			case '}':
 				string++;
 				break;
 

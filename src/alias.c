@@ -84,14 +84,6 @@ int check_all_aliases(struct session *ses, char *input)
 		return FALSE;
 	}
 
-	for (i = 1 ; i < 100 ; i++)
-	{
-		if (*gtd->vars[i])
-		{
-			RESTRING(gtd->vars[i], "");
-		}
-	}
-
 	substitute(ses, input, line, SUB_VAR|SUB_FUN);
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
@@ -113,11 +105,24 @@ int check_all_aliases(struct session *ses, char *input)
 
 				RESTRING(gtd->vars[0], arg)
 
-				for (i = 1 ; i < 100 && *arg ; i++)
+				for (i = 1 ; i < 100 ; i++)
 				{
 					arg = get_arg_in_braces(ses, arg, tmp, FALSE);
 
 					RESTRING(gtd->vars[i], tmp);
+
+					if (*arg == 0)
+					{
+						while (++i < 100)
+						{
+							if (*gtd->vars[i])
+							{
+								RESTRING(gtd->vars[i], "");
+							}
+						}
+						break;
+					}
+
 				}
 			}
 

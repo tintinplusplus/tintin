@@ -175,7 +175,146 @@ int delete_nest_node(struct listroot *root, char *variable)
 
 // Return the number of indices of a node.
 
-int get_nest_size(struct listroot *root, char *variable, char **result)
+int get_nest_size(struct listroot *root, char *variable)
+{
+	char name[BUFFER_SIZE], *arg;
+	int index, count;
+
+	arg = get_arg_to_brackets(root->ses, variable, name);
+
+	if (!strcmp(arg, "[]"))
+	{
+		if (*name == 0)
+		{
+			return root->used + 1;
+		}
+
+		if (search_nest_root(root, name) == NULL)
+		{
+			if (search_node_list(root, name))
+			{
+				return 1;
+			}
+		}
+	}
+
+	while (root && *name)
+	{
+		// Handle regex queries
+
+		if (search_nest_root(root, name) == NULL)
+		{
+			if (search_node_list(root, name) == NULL)
+			{
+				if (tintin_regexp_check(root->ses, name))
+				{
+					for (index = count = 0 ; index < root->used ; index++)
+					{
+						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
+						{
+							count++;
+						}
+					}
+					return count + 1;
+				}
+				else
+				{
+					return 0;
+				}
+			}
+		}
+
+		root = search_nest_root(root, name);
+
+		if (root)
+		{
+			if (!strcmp(arg, "[]"))
+			{
+				return root->used + 1;
+			}
+			arg = get_arg_in_brackets(root->ses, arg, name);
+		}
+	}
+
+	return 0;
+}
+
+int get_nest_size_key(struct listroot *root, char *variable, char **result)
+{
+	char name[BUFFER_SIZE], *arg;
+	int index, count;
+
+	arg = get_arg_to_brackets(root->ses, variable, name);
+
+	str_cpy(result, "");
+
+	if (!strcmp(arg, "[]"))
+	{
+		if (*name == 0)
+		{
+			for (index = 0 ; index < root->used ; index++)
+			{
+				str_cat_printf(result, "{%s}", root->list[index]->left);
+			}
+			return root->used + 1;
+		}
+
+		if (search_nest_root(root, name) == NULL)
+		{
+			if (search_node_list(root, name))
+			{
+				return 1;
+			}
+		}
+	}
+
+	while (root && *name)
+	{
+		// Handle regex queries
+
+		if (search_nest_root(root, name) == NULL)
+		{
+			if (search_node_list(root, name) == NULL)
+			{
+				if (tintin_regexp_check(root->ses, name))
+				{
+					for (index = count = 0 ; index < root->used ; index++)
+					{
+						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
+						{
+							str_cat_printf(result, "{%s}", root->list[index]->left);
+							count++;
+						}
+					}
+					return count + 1;
+				}
+				else
+				{
+					return 0;
+				}
+			}
+		}
+
+		root = search_nest_root(root, name);
+
+		if (root)
+		{
+			if (!strcmp(arg, "[]"))
+			{
+				for (index = 0 ; index < root->used ; index++)
+				{
+					str_cat_printf(result, "{%s}", root->list[index]->left);
+				}
+				return root->used + 1;
+			}
+			arg = get_arg_in_brackets(root->ses, arg, name);
+		}
+	}
+
+	return 0;
+}
+
+int get_nest_size_val(struct listroot *root, char *variable, char **result)
 {
 	char name[BUFFER_SIZE], *arg;
 	int index, count;
@@ -251,12 +390,46 @@ int get_nest_size(struct listroot *root, char *variable, char **result)
 }
 
 
-struct listnode *get_nest_node(struct listroot *root, char *variable, char **result, int def)
+struct listnode *get_nest_node_key(struct listroot *root, char *variable, char **result, int def)
 {
 	struct listnode *node;
 	int size;
 
-	size = get_nest_size(root, variable, result);
+	size = get_nest_size_key(root, variable, result); // will copy keys to result
+
+	if (size)
+	{
+		return NULL;
+	}
+
+	node = search_nest_node(root, variable);
+
+	if (node)
+	{
+		str_cpy_printf(result, "%s", node->left);
+
+		return node;
+	}
+
+	node = search_base_node(root, variable);
+
+	if (node || def)
+	{
+		str_cpy(result, "");
+	}
+	else
+	{
+		str_cpy_printf(result, "*%s", variable);
+	}
+	return NULL;
+}
+
+struct listnode *get_nest_node_val(struct listroot *root, char *variable, char **result, int def)
+{
+	struct listnode *node;
+	int size;
+
+	size = get_nest_size_val(root, variable, result);
 
 	if (size)
 	{
@@ -285,12 +458,13 @@ struct listnode *get_nest_node(struct listroot *root, char *variable, char **res
 	return NULL;
 }
 
+
 int get_nest_index(struct listroot *root, char *variable, char **result, int def)
 {
 	struct listnode *node;
 	int index, size;
 
-	size = get_nest_size(root, variable, result);
+	size = get_nest_size_val(root, variable, result);
 
 	if (size)
 	{

@@ -415,7 +415,18 @@ void init_tintin(int greeting)
 	{
 		do_advertise(gts, "");
 
-		do_help(gts, "GREETING");
+		if (gts->cols >= 80)
+		{
+			do_help(gts, "GREETING");
+		}
+		else
+		{
+			tintin_printf2(gts,
+				"\e[0;37mT I N T I N + +   %s"
+				"\n\n\e[0;36mT\e[0;37mhe K\e[0;36mi\e[0;37mcki\e[0;36mn\e[0;37m \e[0;36mT\e[0;37mickin D\e[0;36mi\e[0;37mkuMUD Clie\e[0;36mn\e[0;37mt\n\n"
+				"Code by Peter Unold, Bill Reis, and Igor van den Hoven\n",
+				CLIENT_VERSION);
+		}
 	}
 }
 
@@ -451,13 +462,14 @@ void quitmsg(char *message)
 
 	clean_screen(gts);
 
-	if (message)
+	if (message == NULL || message[0] != '\\' || message[1] != '\0')
 	{
-		printf("\n%s\n", message);
+		if (message)
+		{
+			printf("\n%s\n", message);
+		}
+		printf("\nGoodbye from TinTin++\n\n");
 	}
-
-	printf("\nGoodbye from TinTin++\n\n");
-
 	fflush(NULL);
 
 	exit(0);

@@ -71,7 +71,7 @@ DO_COMMAND(do_unsubstitute)
 
 void check_all_substitutions(struct session *ses, char *original, char *line)
 {
-	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], *ptl, *ptm, *pto;
+	char match[BUFFER_SIZE], subst[BUFFER_SIZE], output[BUFFER_SIZE], temp[BUFFER_SIZE], *ptl, *ptm, *pto;
 	struct listroot *root = ses->list[LIST_SUBSTITUTE];
 	struct listnode *node;
 	int len;
@@ -96,7 +96,8 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 				strcpy(match, gtd->vars[0]);
 
-				substitute(ses, node->right, subst, SUB_ARG|SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+				substitute(ses, node->right, temp, SUB_ARG);
+				substitute(ses, temp, subst, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
 				if (HAS_BIT(node->flags, NODE_FLAG_META))
 				{

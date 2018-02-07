@@ -35,13 +35,13 @@ unsigned short str_hash_len;
 	Performs as well as Jenkin's one-at-a-time hash.- Igor
 */
 
-unsigned short generate_hash_key(char *str)
+unsigned short generate_str_hash_key(char *str)
 {
-	unsigned int h;
+	unsigned int h = 4321;
 
-	for (h = str_hash_len = 0 ; *str != 0 ; str++, str_hash_len++)
+	for (str_hash_len = 0 ; *str != 0 ; str++, str_hash_len++)
 	{
-		h -= (4 - (h >> 7)) * *str;
+		h = ((h << 5) + h) + *str;
 	}
 
 	h += str_hash_len;
@@ -49,13 +49,26 @@ unsigned short generate_hash_key(char *str)
 	return h % MAX_STR_HASH;
 }
 
+unsigned int generate_hash_key(char *str)
+{
+	unsigned int len, h = 4321;
+
+	for (len = 0 ; *str != 0 ; str++, len++)
+	{
+		h = ((h << 5) + h) + *str;
+	}
+
+	h += len;
+
+	return h;
+}
 
 char *str_hash(char *str, int lines)
 {
 	unsigned short hash;
 	struct str_hash_data *hash_ptr;
 
-	hash = generate_hash_key(str);
+	hash = generate_str_hash_key(str);
 
 	for (hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
 	{
@@ -148,7 +161,7 @@ DO_BUFFER(buffer_info)
 
 		for (hash_cnt = 0, hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
 		{
-			if (hash != generate_hash_key((char *) hash_ptr + gtd->str_hash_size))
+			if (hash != generate_str_hash_key((char *) hash_ptr + gtd->str_hash_size))
 			{
 				tintin_printf2(ses, "corrupted hash node: %s", (char *) hash_ptr + gtd->str_hash_size);
 			}

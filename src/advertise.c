@@ -33,14 +33,16 @@ struct advertisement_type
 	time_t                  end;
 	int                     value;
 	char                  * desc;
+	char                  * wrap;
 };
 
 struct advertisement_type advertisement_table[] =
 {
 	{
 		1400000000, /* 2014 */
-		1600000000, /* 2023 */
+		1700000000, /* 2023 */
 		100,
+
 		"\n"
 		"<138>                     Lost Souls  -  http://lostsouls.org\n"
 		"\n"
@@ -54,12 +56,112 @@ struct advertisement_type advertisement_table[] =
 		"<078>Lost Souls: chaos in the wreckage of empire.  Be clever if you want to live.\n"
 		"\n"
                 "<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
-                "\n"
+                "\n",
+
+		"\n"
+		"<138>Lost Souls\n"
+		"<168>http://lostsoulds.org\n"
+		"\n"
+		"<078>\"Our world is fallen, boy.  Aedaris is a ruin.  My grandfather, he told me of days, not so long gone, when everything you see was part of a great empire. Peaceful, he said.  Full of wonders.  They called it eternal.  Funny, eh, boy? They thought it'd last forever, and it went crazy and tore itself apart.  But they left behind a few things for us, didn't they?  Ha!  Yes, lots for us.  Now give that wizard-stick here before you blow your fool horns off, and get to work.  Daylight's soon, and these faeries aren't going to skin themselves.\"  Lost Souls: chaos in the wreckage of empire.  Be clever if you want to live.\n"
+		"\n"
+		"<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
+		"\n"
 	},
 
 	{
 		1400000000, /* 2014 */
 		1700000000, /* 2023 */
+		100,
+		"\n"
+		"<138>                Legends of Kallisti - http://www.KallistiMUD.com\n"
+		"\n"
+		"<078>One of the longest running, most feature rich MUDs in the world with decades of\n"
+		"<078>development. Kallisti boasts a massive original world, great atmosphere of long\n"
+		"<078>time players, excellent combat system including group formations, ranged combat,\n"
+		"<078>optional PK and arena PvP, extensive character customization options, player\n"
+		"<078>lineages, clans, customizable player houses, item crafting, extensively\n"
+		"<078>customizable UI, Mud Sound Protocol (MSP), and so much more.\n"
+		"<078>This is an a amazing game that you could literally play for a decade and still\n"
+		"<078>discover more - you won't be disappointed!\n"
+		"\n"
+		"<178>To connect to Kallisti MUD enter: #session LoK kallistimud.com 4000\n"
+		"\n",
+
+		"\n"
+		"<138>Legends of Kallisti\n"
+		"<168>http://www.KallistiMUD.com\n"
+		"\n"
+		"<078>One of the longest running, most feature rich MUDs in the world with decades of development. Kallisti boasts a massive original world, great atmosphere of long time players, excellent combat system including group formations, ranged combat, optional PK and arena PvP, extensive character customization options, player lineages, clans, customizable player houses, item crafting, extensively customizable UI, Mud Sound Protocol (MSP), and so much more.\nThis is an a amazing game that you could literally play for a decade and still discover more - you won't be disappointed!\n"
+		"\n"
+		"<178>To connect to Kallisti MUD enter: #session LoK kallistimud.com 4000\n"
+		"\n",
+	},
+
+
+	{
+		1400000000, /* 2014 */
+ 		1700000000, /* 2023 */
+		100,
+
+		"\n"
+		"<138>                The Last Outpost - https://www.last-outpost.com\n"
+		"\n"
+		"<078>The Last Outpost has been serving up adventure since 1992.  Along with\n"
+		"<078>exploring and advancing through the game world, the game offers players the\n"
+		"<078>ability to lay claim to the zones that make up the land.  Once claimed, a zone\n"
+		"<078>can be taxed, and the player making the claim gets to decide policy within the\n"
+		"<078>zone.  Whoever claims the whole world is declared the Leader of the Last\n"
+		"<078>Outpost!  Whether you enjoy hack 'n slash, following quests, PvP, NPK, playing\n"
+		"<078>in clans, or soloing, the Last Outpost has it.\n"
+		"\n"
+		"<178>To connect to The Last Outpost enter: #session lo last-outpost.com 4000\n"
+		"\n",
+
+		"\n"
+		"<138>The Last Outpost\n"
+		"<168>https://www.last-outpost.com\n"
+		"\n"
+		"<078>The Last Outpost has been serving up adventure since 1992.  Along with exploring and advancing through the game world, the game offers players the ability to lay claim to the zones that make up the land.  Once claimed, a zone can be taxed, and the player making the claim gets to decide policy within the zone.  Whoever claims the whole world is declared the Leader of the Last Outpost!  Whether you enjoy hack 'n slash, following quests, PvP, NPK, playing in clans, or soloing, the Last Outpost has it.\n"
+		"\n"
+		"<178>To connect to The Last Outpost enter: #session lo last-outpost.com 4000\n"
+		"\n"
+	},
+
+	{
+		1400000000, /* 2014 */
+ 		1700000000, /* 2023 */
+		100,
+
+		"\n"
+		"<138>               Realm of Utopian Dreams (RUD) - http://rudmud.com\n"
+		"\n"
+		"<078>RUD is a custom hack'n'slash MUD, with character choices for a range of combat\n"
+		"<078>and roleplay. Every race and class has many unique spells and skills, and many\n"
+		"<078>advanced remort options. We're a fantasy MUD started in 1996 seeking new\n"
+		"<078>adventurers to become the next hero, buy a home, start a shop, and eventually\n"
+		"<078>become Nobles of the Realm! Experience a classic game showcasing the content and\n"
+		"<078>features we've built up. The Immortals are ready to help build quests and new\n"
+		"<078>features for the curious. Come visit Lantarea and explore your dream world. We\n"
+		"<078>have an OLC, auction house, and noble system! Explore class-only areas and more!\n"
+		"\n"
+		"<178>To connect to Realm of Utopian Dreams enter: #session rud rudmud.com 1701\n"
+		"\n",
+
+		"\n"
+		"<138>Realms of Utopian Dreams (RUD)\n"
+		"<168>http://rudmud.com\n"
+		"\n"
+		"<078>RUD is a custom hack'n'slash MUD, with character choices for a range of combat and roleplay. Every race and class has many unique spells and skills, and many advanced remort options. We're a fantasy MUD started in 1996 seeking new adventurers to become the next hero, buy a home, start a shop, and eventually become Nobles of the Realm! Experience a classic game showcasing the content and features we've built up. The Immortals are ready to help build quests and new features for the curious. Come visit Lantarea and explore your dream world. We have an OLC, auction house, and noble system! Explore class-only areas and more!\n"
+		"\n"
+		"<178>To connect to Realm of Utopian Dreams enter: #session rud rudmud.com 1701\n"
+		"\n"
+	},
+
+
+/*
+	{
+		1400000000, 
+		1700000000, 
 		100,
 		"\n"
 		"<138>               Carrion Fields  -  http://carrionfields.net\n"
@@ -77,8 +179,8 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1400000000, /* 2014 */
-		1700000000, /* 2023 */
+		1400000000, 
+		1700000000, 
 		100,
 		"\n"
 		"<138>                 Alter Aeon  -  http://www.alteraeon.com\n"
@@ -95,26 +197,6 @@ struct advertisement_type advertisement_table[] =
 		"\n"
 	},
 
-	{
-		1400000000, /* 2014 */
-		1700000000, /* 2023 */
-		100,
-		"\n"
-		"<138>             Legends of Kallisti - http://www.kallistimud.com\n"
-		"\n"
-		"<078>This is one of the longest running MUDs in the world.  Started in 1992, it has\n"
-		"<078>undergone decades of development to become one of the richest, most evolved\n"
-		"<078>games available. Massive original world, great long time players, excellent\n"
-		"<078>combat system including group formations and ranged weapons and spells, PK if\n"
-		"<078>you're so inclined, extensive character customization options, lineages, clans,\n"
-		"<078>customizable player houses, item crafting, highly customizable UI, and so much\n"
-		"<078>more.  This is an amazing game that you could literally play for a decade and\n"
-		"<078>still discover more.\n"
-		"\n"
-		"<178>To connect to Kallisti MUD enter: #session lok kallistimud.com 4000\n"
-		"\n"
-	},
-/*
 	{
 		1388166000, 
 		1600000000,
@@ -187,7 +269,14 @@ DO_COMMAND(do_advertise)
 		{
 			char *pto, *ptf;
 
-			substitute(ses, advertisement_table[i].desc, buf, SUB_COL);
+			if (ses->cols >= 80)
+			{
+				substitute(ses, advertisement_table[i].desc, buf, SUB_COL);
+			}
+			else
+			{
+				substitute(ses, advertisement_table[i].wrap, buf, SUB_COL);
+			}
 
 			pto = buf;
 

@@ -1,8 +1,46 @@
+Jan 2018       2.01.5
+--------------------------------------------------------------------------------
+
+tinexp.c       Added exception for %*{text} to be parsed as a regex and not
+               as a *{text} variable.
+
+variable.c     Added the %H #format option to generate a 32 bit hash for the
+               given string.
+
+substitute.c   Fixed argument substitution problem, never a good idea to
+               substitute arguments and functions at the same time, because
+               functions will access and overwrite the argument stack.
+
+main.c         Can use #end {\} to terminate tintin silently.
+
+Oct 2017       2.01.4
+--------------------------------------------------------------------------------
+
+main.c         Added proper greeting handling for narrow terminals, mainly for
+               people using tt++ on an android phone.
+
+variable.c     Added proper \ handling in string length calculations.
+
+variable.c     #unvariable takes additional arguments to unvar several
+               variables at once.
+
+tinexp.c       Added support for *{variable} to show variable/table keys. This
+               is useful when low level data processing is needed.
+
+               For example, *{+1} shows the key of the first variable.
+
+list.c         Added #list {var} simplify {variable} option which saves a
+               list (which internally is a table) as a semi-colon separated
+               list to the provided destination variable.
+               {{1}{bli}{2}{bla}{3}{blo}} becomes {bli;bla;blo}
+
+
 May 2017       2.01.3
+--------------------------------------------------------------------------------
 
 mapper.c       Added #map legend support to assign custom characters for
                the #map flag MUD FONT display mode. By default they're set
-               to map to the UTF-8 private use area.
+               to map to the unicode private use area.
 
 mapper.c       By default an UTF-8 #map legend is created for those who do
                not use ASCII graphics. The ANSI legend was pretty much
@@ -28,7 +66,9 @@ action.c       Fixed action crash bug that slipped in
 
 telopt.c       Added telnet events for IAC GA and IAC EOR
 
+
 Jun 2015       2.01.2
+--------------------------------------------------------------------------------
 
 mapper.c       Added map <radius> <variable name> {v} option to save the map
                output to a variable.
@@ -58,7 +98,9 @@ variable.c     Attempt to fix %p crash bug on OS X.
 
                Fixed compilation issue for OS X.
 
+
 Jan 2014       2.01.1
+--------------------------------------------------------------------------------
 
 chat.c         Added CHAT MESSAGE event, %0 contains the chat color and prefix,
                %1 omits chat color and prefix.
@@ -108,6 +150,7 @@ session.c      Added SESSION CREATED event.
 parse.c        Fixed command echoing when executing commands in another session.
 
 Mar 2013       2.01.0
+--------------------------------------------------------------------------------
 
 session.c      #session takes a filename as an additional argument, if the
                session succesfully connects the file will be read.
@@ -131,6 +174,7 @@ cursor.c       Added stripping of semi-colons when auto tabbing.
 configure.in   Better error handling by Slysven.
 
 Mar 2012       2.00.9
+--------------------------------------------------------------------------------
 
 line.c         Added a #line strip option to strip color and escape codes.
 
@@ -188,6 +232,7 @@ mapper.c       Added #map color here option to set the color of the current
 mapper.c       Fixed a path finding issue related to the avoid flag.
 
 Sep 2011       2.00.8
+--------------------------------------------------------------------------------
 
 main.c         No more advertisements.
 
@@ -234,6 +279,7 @@ variables.c    Added the %A #format option which prints the corresponding ASCII
                handling.
 
 Apr 2011       2.00.7
+--------------------------------------------------------------------------------
 
 main.c         Added -s option to launch tt++ with a custom seed, undocumented
                till I get to think it over.
@@ -307,6 +353,7 @@ log.c          Added a #log off option. #log append and overwrite can now be
 
 
 Jan 2011       2.00.6
+--------------------------------------------------------------------------------
 
 buffer.c       Added better multi-line scroll back handling when word wrap is
                disabled.

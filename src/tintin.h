@@ -141,7 +141,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.01.3  "
+#define CLIENT_VERSION           "2.01.4  "
 
 #define ESCAPE                          27
 
@@ -427,7 +427,7 @@ enum operators
 
 #define STR_HASH_FLAG_NOGREP          (1 <<  0)
 
-#define MAX_STR_HASH                  10000
+#define MAX_STR_HASH                  20000
 
 /*
 	Some macros to deal with double linked lists
@@ -1059,6 +1059,7 @@ extern DO_CURSOR(cursor_history_next);
 extern DO_CURSOR(cursor_history_prev);
 extern DO_CURSOR(cursor_history_search);
 extern DO_CURSOR(cursor_home);
+extern DO_CURSOR(cursor_info);
 extern DO_CURSOR(cursor_insert);
 extern DO_CURSOR(cursor_left);
 extern DO_CURSOR(cursor_left_word);
@@ -1069,7 +1070,7 @@ extern DO_CURSOR(cursor_right);
 extern DO_CURSOR(cursor_right_word);
 extern DO_CURSOR(cursor_set);
 extern DO_CURSOR(cursor_suspend);
-extern DO_CURSOR(cursor_test);
+
 extern DO_CURSOR(cursor_tab_backward);
 extern DO_CURSOR(cursor_tab_forward);
 extern DO_CURSOR(cursor_auto_tab_backward);
@@ -1105,6 +1106,7 @@ extern DO_ARRAY(array_insert);
 extern DO_ARRAY(array_delete);
 extern DO_ARRAY(array_find);
 extern DO_ARRAY(array_get);
+extern DO_ARRAY(array_simplify);
 extern DO_ARRAY(array_size);
 extern DO_ARRAY(array_set);
 extern DO_ARRAY(array_sort);
@@ -1395,6 +1397,7 @@ extern void macro_update(void);
 #ifndef __STRHASH_H__
 #define __STRHASH_H__
 
+extern unsigned int generate_hash_key(char *str);
 extern char *str_hash(char *str, int lines);
 extern char *str_unhash(char *str);
 extern unsigned short str_hash_lines(char *str);
@@ -1668,8 +1671,10 @@ extern int search_nest_index(struct listroot *root, char *variable);
 extern struct listroot *update_nest_root(struct listroot *root, char *arg);
 extern void update_nest_node(struct listroot *root, char *arg);
 extern int delete_nest_node(struct listroot *root, char *variable);
-extern int get_nest_size(struct listroot *root, char *variable, char **result);
-extern struct listnode *get_nest_node(struct listroot *root, char *variable, char **result, int def);
+extern int get_nest_size_key(struct listroot *root, char *variable, char **result);
+extern int get_nest_size_val(struct listroot *root, char *variable, char **result);
+extern struct listnode *get_nest_node_key(struct listroot *root, char *variable, char **result, int def);
+extern struct listnode *get_nest_node_val(struct listroot *root, char *variable, char **result, int def);
 extern int get_nest_index(struct listroot *root, char *variable, char **result, int def);
 extern void show_nest_node(struct listnode *node, char **result, int initialize);
 extern struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, ...);

@@ -396,7 +396,10 @@ struct help_type help_table[] =
 		"<178>Command<078>: #end {<message>}\n"
 		"\n"
 		"         Terminates tintin and return to unix.  On most systems, ctrl-c has\n"
-		"         the same result. The message is optional.\n"
+		"         the same result.\n"
+		"\n"
+		"         The message is optional and is printed before tintin exits. When\n"
+		"         using #end {\\} tintin will terminate silently.\n"
 	},
 	{
 		"ESCAPE CODES",
@@ -522,6 +525,7 @@ struct help_type help_table[] =
 		"                                         optional {{string}{width}} syntax\n"
 		"         #format {test} {%A}     {char}  print corresponding ascii value\n"
 		"         #format {cols} {%C}         {}  store the screen width in {cols}\n"
+		"         #format {hash} {%H}   {string}  store a 32 bit string hash in {hash}\n"
 		"         #format {test} {%L}   {string}  store the string length in {test}\n"
 		"         #format {rows} {%R}         {}  store the screen height in {rows}\n"
 		"         #format {time} {%T}         {}  store the epoch time in {time}\n"
@@ -540,7 +544,7 @@ struct help_type help_table[] =
 		"\n"
 		"         To use a function use the @ character before the function name.\n"
 		"         The function arguments should be placed between braces behind the\n"
-		"         function name with argument separated by semi-colons.\n"
+		"         function name with argument separated by semicolons.\n"
 		"\n"
 		"         The function itself can use the provided arguments which are stored\n"
 		"         in %1 to %9, with %0 holding all arguments.\n"
@@ -572,8 +576,7 @@ struct help_type help_table[] =
 		"<068>      #<078>                                                                  <068>#\n"
 		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
 		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,         <068>#\n"
-		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.      <068>#\n"
+		"<068>      #<078>     Code by Peter Unold, Bill Reis, and Igor van den Hoven.      <068>#\n"
 		"<068>      #<078>                                                                  <068>#\n"
 		"<068>      #<078>                             1992, 2012                           <068>#\n"
 		"<068>      #<068>##################################################################<068>#<088>\n"
@@ -585,10 +588,10 @@ struct help_type help_table[] =
 		"<068>      #<068>##################################################################<068>#\n"
 		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
 		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
+//		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
+		"<068>      #<078>                 <068>T<078>he K<068>i<078>cki<068>n<078> <068>T<078>ickin D<068>i<078>kuMUD Clie<068>n<078>t <068>                #\n"
 		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>         Code by Peter Unold, Bill Reis, David A. Wagner,         <068>#\n"
-		"<068>      #<078>      Rob Ellsworth, Jeremy C. Jack, and Igor van den Hoven.      <068>#\n"
+		"<068>      #<078>      Code by Peter Unold, Bill Reis, and Igor van den Hoven      <068>#\n"
 		"<068>      #<068>##################################################################<068>#<088>\n"
 	},
 	{
@@ -767,6 +770,7 @@ struct help_type help_table[] =
 		"         #list {var} {find} {string} {variable} Return the found index\n"
 		"         #list {var} {get} {index} {variable}   Copy an item to {variable}\n"
 		"         #list {var} {set} {index} {string}     Change the item at {index}\n"
+		"         #list {var} {simplify} {variable}      Copy simple list to {variable}\n"
 		"         #list {var} {size} {variable}          Copy list size to {variable}\n"
 		"         #list {var} {sort} {string}            Insert item in alphabetic order\n"
 		"         #list {var} {tokenize} {string}        Create a character list\n"
@@ -779,7 +783,7 @@ struct help_type help_table[] =
 		"         given index, while a negative index will append the item.\n"
 		"\n"
 		"         The add and create options allow using multiple items, as well\n"
-		"         as semi-colon separated items.\n"
+		"         as semicolon separated items.\n"
 		"\n"
 		"         A length of 0 is returned for an empty or non existant list.\n"
 		"\n"
@@ -1333,6 +1337,8 @@ struct help_type help_table[] =
 		"\n"
 		"         Sends the text directly to the MUD, useful if you want to start with an\n"
 		"         escape code.\n"
+		"\n"
+		"<178>Related<078>: textin\n"
 	},
 	{
 		"SESSION",
@@ -1357,6 +1363,9 @@ struct help_type help_table[] =
 		"         The startup session is named 'gts' and can be used for relog scripts.\n"
 		"\n"
 		"<178>Example<078>: #event {SESSION DISCONNECTED} {#gts #delay 10 #ses %0 mymud.com 4321}\n"
+		"\n"
+		"<178>Related<078>: all, snoop, and zap.\n"
+		"<178>Related<078>: port, run, ssl, \n"
 	},
 	{
 		"SHOWME",
@@ -1533,8 +1542,12 @@ struct help_type help_table[] =
 		"\n"
 		"         Textin allows the user to read in a file, and send its contents\n"
 		"         directly to the mud.  Useful for doing online creation, or message\n"
-		"         writing. The delay has a micro second precision and is cumulatively\n"
-		"         applied to each outgoing line.\n"
+		"         writing.\n"
+		"\n"
+		"         The delay is in seconds and takes a floating point number which is\n"
+		"         cumulatively applied to each outgoing line.\n"
+		"\n"
+		"<178>Related<078>: scan and send\n"
 	},
 	{
 		"TICKER",
@@ -1559,7 +1572,7 @@ struct help_type help_table[] =
 		"         name.\n"
 		"\n"
 		"<178>Example<078>: #alias {target} {#var target %0}\n"
-		"         #alias {x}      {flame $target}\n"
+		"         #alias {x}      {kick $target}\n"
 		"\n"
 		"         The name of a variable must exist of only letters, numbers and\n"
 		"         underscores in order to be substituted.  If you do not meet these\n"
@@ -1578,11 +1591,22 @@ struct help_type help_table[] =
 		"         second last variable, and so on. To show all indices use $variable[].\n"
 		"         To show all values use $variable[%*] or a less generic regex.\n"
 		"\n"
+		"         Nested variables are also known as tables, table generally being used\n"
+		"         to refer to several variables nested within one specific variable.\n"
+		"\n"
 		"<178>Example<078>: #showme {Targets starting with the letter A: $targets[A%*]\n"
 		"\n"
-		"<178>Comment<078>: To see the internal index of a variable use &<variable name>\n"
+		"         To see the internal index of a variable use &<variable name>. To see\n"
+		"         the size of a table you would use: &targets[] or &targets[%*]. A non\n"
+		"         existent nested variable will report itself as 0.\n"
+		"\n" 
+		"<178>Example<078>: #showme {Number of targets starting with A: &targets[A%*]\n"
 		"\n"
-		"<178>Comment<078>: A non existent nested variable will report itself as 0.\n"
+		"         In some scripts you need to know the name of a nested variable. This\n"
+		"         is also known as the key, and you can get it using *variable. For\n"
+		"         example *target[+1]. To get the first variable's name use *{+1}.\n"
+		"\n"
+		"<178>Comment<078>: Related commands are local, math, format, and list.\n"
 		"\n"
 		"<178>Comment<078>: You can remove a variable with the #unvariable command.\n"
 	},

@@ -30,7 +30,7 @@
 
 DO_COMMAND(do_variable)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
+	char arg1[BUFFER_SIZE], *str;
 	struct listroot *root = ses->list[LIST_VARIABLE];
 	struct listnode *node;
 
@@ -65,7 +65,7 @@ DO_COMMAND(do_variable)
 		{
 			arg = sub_arg_in_braces(ses, arg, str, GET_ALL, SUB_VAR|SUB_FUN);
 
-			if (*arg2)
+			if (*str)
 			{
 				add_nest_node(root, arg1, "%s", str);
 			}
@@ -82,7 +82,7 @@ DO_COMMAND(do_variable)
 
 DO_COMMAND(do_local)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *str;
+	char arg1[BUFFER_SIZE], *str;
 	struct listroot *root;
 	struct listnode *node;
 
@@ -119,7 +119,7 @@ DO_COMMAND(do_local)
 		{
 			arg = sub_arg_in_braces(ses, arg, str, GET_ALL, SUB_VAR|SUB_FUN);
 
-			if (*arg2)
+			if (*str)
 			{
 				add_nest_node(root, arg1, "%s", str);
 			}
@@ -136,19 +136,24 @@ DO_COMMAND(do_local)
 
 DO_COMMAND(do_unvariable)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
-	sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (delete_nest_node(ses->list[LIST_VARIABLE], arg2))
+	do
 	{
-		show_message(ses, LIST_VARIABLE, "#OK. {%s} IS NO LONGER A VARIABLE.", arg2);
+		if (delete_nest_node(ses->list[LIST_VARIABLE], arg1))
+		{
+			show_message(ses, LIST_VARIABLE, "#OK. {%s} IS NO LONGER A VARIABLE.", arg1);
+		}
+		else
+		{
+			delete_node_with_wild(ses, LIST_VARIABLE, arg1);
+		}
+		arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 	}
-	else
-	{
-		delete_node_with_wild(ses, LIST_VARIABLE, arg1);
-	}
+	while (*arg1);
+
 	return ses;
 }
 
@@ -534,6 +539,20 @@ int string_str_raw_len(struct session *ses, char *str, int start, int end)
 			break;
 		}
 
+		if (str[raw_cnt] == '\\')
+		{
+			ret_cnt += (str_cnt >= start) ? 1 : 0;
+			raw_cnt++;
+			
+			if (str[raw_cnt] == '\\')
+			{
+				ret_cnt += (str_cnt >= start) ? 1 : 0;
+				raw_cnt++;
+				str_cnt++;
+			}
+			continue;
+		}
+
 		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (str[raw_cnt] & 192) == 192)
 		{
 			ret_cnt += (str_cnt >= start) ? 1 : 0;
@@ -554,6 +573,8 @@ int string_str_raw_len(struct session *ses, char *str, int start, int end)
 	}
 	return ret_cnt;
 }
+
+// Returns the stripped length for the range
 
 int string_raw_str_len(struct session *ses, char *str, int start, int end)
 {
@@ -581,6 +602,18 @@ int string_raw_str_len(struct session *ses, char *str, int start, int end)
 		{
 			raw_cnt += 5;
 
+			continue;
+		}
+
+		if (str[raw_cnt] == '\\')
+		{
+			raw_cnt++;
+
+			if (str[raw_cnt] == '\\')
+			{
+				raw_cnt++;
+				ret_cnt++;
+			}
 			continue;
 		}
 
@@ -832,6 +865,10 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 
 					case 'G':
 						thousandgroupingstring(ses, arglist[i]);
+						break;
+
+					case 'H':
+						sprintf(arglist[i], "%u", generate_hash_key(arglist[i]));
 						break;
 
 					case 'L':

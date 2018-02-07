@@ -63,6 +63,11 @@ DO_COMMAND(do_line)
 
 DO_LINE(line_gag)
 {
+	char left[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+
+
 	SET_BIT(ses->flags, SES_FLAG_GAG);
 
 	return ses;

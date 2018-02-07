@@ -1,14 +1,26 @@
 * Stuff that's going to be done.
 
-  - \xEE\x80\x80 customer character range.
+  - see if #break 2 is possible
+
+  - fix $$ behavior in actions with unknown variables.
+
+  - make #path more awesome
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=10018 (truecolor)
+
+  - Add options to #cursor to implement custom behaviour.
+
+  - make #ignore more consistent.
+
+  - config setting to disable gts inheritance.
+
+  - \xEE\x80\x80 custom character range.
 
   - multiline gag
 
   - toggle global flags with #message all on, #debug all on, etc.
 
   - Add #map roomflag block option to block deathtrap rooms.
-
-  - remove multiple variables at once
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=9625 (map undo issue) (not a big issue)
 
@@ -69,6 +81,10 @@
   - add #line gag {lines} option or #lines {lines} {gag}.
 
   - Add something like #log append $dir/logs/log.txt {%D %H:%M:%S}
+
+  - compact map view mode http://tintin.sourceforge.net/board/viewtopic.php?p=9994
+
+  - https://github.com/eliukblau/pixterm
 
 --------------------------------------------------------------------------------
 

@@ -45,7 +45,7 @@ DO_COMMAND(do_list)
 
 	if (*arg1 == 0 || *arg2 == 0)
 	{
-		show_error(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} {ADD|CLE|CRE|DEL|FIN|GET|INS|SET|SIZ|SOR} {argument}");
+		show_error(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} {ADD|CLE|CRE|DEL|FIN|GET|INS|SET|SIM|SIZ|SOR} {argument}");
 	}
 	else
 	{
@@ -245,6 +245,7 @@ DO_ARRAY(array_find)
 	return ses;
 }
 
+
 DO_ARRAY(array_get)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
@@ -312,6 +313,43 @@ DO_ARRAY(array_insert)
 	set_nest_node(list->root, ntos(index + 1), "%s", arg2);
 
 //	insert_node_list(list->root, ntos(index + 1), arg2, "");
+
+	return ses;
+}
+
+DO_ARRAY(array_simplify)
+{
+	char arg1[BUFFER_SIZE], tmp[BUFFER_SIZE];
+	int index;
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (*arg1 == 0)
+	{
+		return show_error(ses, LIST_VARIABLE, "#SYNTAX: #LIST {variable} SIMPLIFY {variable}");
+	}
+
+	if (list->root)
+	{
+		for (index = 0 ; index < list->root->used ; index++)
+		{
+			if (index == 0)
+			{
+				strcpy(tmp, list->root->list[index]->right);
+			}
+			else
+			{
+				cat_sprintf(tmp, ";%s", list->root->list[index]->right);
+			}
+		}
+		set_nest_node(ses->list[LIST_VARIABLE], arg1, "%s", tmp);
+
+		return ses;
+	}
+	else
+	{
+		show_error(ses, LIST_VARIABLE, "#LIST SIMPLIFY: {%s} is not a list.", arg1);
+	}
 
 	return ses;
 }

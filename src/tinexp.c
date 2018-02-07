@@ -320,6 +320,13 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 						if (*pte == 0)
 						{
+							while (++i < 100)
+							{
+								if (*gtd->vars[i])
+								{
+									RESTRING(gtd->vars[i], "");
+								}
+							}
 							break;
 						}
 
@@ -337,6 +344,100 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					substitute(ses, "$result", pto, flags_neol|SUB_VAR);
 
 					pto += strlen(pto);
+				}
+				else
+				{
+					*pto++ = *pti++;
+				}
+				break;
+
+			case '*':
+				if (HAS_BIT(flags, SUB_VAR) && !HAS_BIT(ses->list[LIST_VARIABLE]->flags, LIST_FLAG_IGNORE) && pti[1])
+				{
+					int def = FALSE;
+					i = 1;
+					escape = FALSE;
+
+					while (pti[i] == '*')
+					{
+						escape = TRUE;
+
+						i++;
+					}
+
+					if (pti[i] == DEFAULT_OPEN)
+					{
+						def = TRUE;
+
+						ptt = get_arg_in_braces(ses, &pti[i], buf, TRUE);
+
+						i += strlen(buf) + 2;
+
+						substitute(ses, buf, temp, flags_neol);
+					}
+					else
+					{
+						ptt = temp;
+
+						while (isalnum((int) pti[i]) || pti[i] == '_')
+						{
+							*ptt++ = pti[i];
+
+							i++;
+						}
+						*ptt = 0;
+					}
+
+					if (*temp)
+					{
+						root = local_list(ses);
+
+						if ((node = search_node_list(root, temp)) == NULL)
+						{
+							root = ses->list[LIST_VARIABLE];
+
+							node = search_node_list(root, temp);
+						}
+					}
+					else
+					{
+						root = ses->list[LIST_VARIABLE];
+						node = NULL;
+					}
+
+					if (def == FALSE && node == NULL)
+					{
+						while (*pti == '*')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					if (escape)
+					{
+						pti++;
+
+						while (*pti == '*')
+						{
+							*pto++ = *pti++;
+						}
+						continue;
+					}
+
+					pti = get_arg_at_brackets(ses, &pti[i], temp + strlen(temp));
+
+					substitute(ses, temp, buf, flags_neol);
+
+					str = str_dup("");
+
+					get_nest_node_key(root, buf, &str, def);
+
+					substitute(ses, str, pto, flags_neol - SUB_VAR);
+
+					pto += strlen(pto);
+
+					str_free(str);
 				}
 				else
 				{
@@ -381,13 +482,21 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*ptt = 0;
 					}
 
-					root = local_list(ses);
+					if (*temp)
+					{
+						root = local_list(ses);
 
-					if ((node = search_node_list(root, temp)) == NULL)
+						if ((node = search_node_list(root, temp)) == NULL)
+						{
+							root = ses->list[LIST_VARIABLE];
+
+							node = search_node_list(root, temp);
+						}
+					}
+					else
 					{
 						root = ses->list[LIST_VARIABLE];
-
-						node = search_node_list(root, temp);
+						node = NULL;
 					}
 
 					if (def == FALSE && node == NULL)
@@ -416,7 +525,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					str = str_dup("");
 
-					get_nest_node(root, buf, &str, def);
+					get_nest_node_val(root, buf, &str, def);
 
 					substitute(ses, str, pto, flags_neol - SUB_VAR);
 
@@ -495,12 +604,20 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						*ptt = 0;
 					}
 
-					root = local_list(ses);
+					if (*temp)
+					{
+						root = local_list(ses);
 
-					if ((node = search_node_list(root, temp)) == NULL)
+						if ((node = search_node_list(root, temp)) == NULL)
+						{
+							root = ses->list[LIST_VARIABLE];
+							node = search_node_list(root, temp);
+						}
+					}
+					else
 					{
 						root = ses->list[LIST_VARIABLE];
-						node = search_node_list(root, temp);
+						node = NULL;
 					}
 
 					if (def == FALSE && node == NULL)
@@ -595,6 +712,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 									case '$':
 									case '@':
 									case '&':
+									case '*':
 										*pto++ = '\\';
 										*pto++ = *ptt;
 										break;
@@ -617,6 +735,11 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						}
 						pti += isdigit((int) pti[2]) ? 3 : 2;
 					}
+				}
+				if (HAS_BIT(flags, SUB_VAR) && pti[1] == '*')
+				{
+					*pto++ = *pti++;
+					*pto++ = *pti++;
 				}
 				else
 				{
@@ -844,6 +967,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						case '$':
 						case '@':
 						case '&':
+						case '*':
 							*pto++ = '\\';
 							*pto++ = *pti;
 							break;

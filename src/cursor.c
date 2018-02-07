@@ -1120,9 +1120,15 @@ DO_CURSOR(cursor_suspend)
 	do_suspend(ses, "");
 }
 
-DO_CURSOR(cursor_test)
+DO_CURSOR(cursor_info)
 {
-	tintin_printf2(ses, "bar_len %d off %d pos %d hid %d cur %d len %d max %d tot %d", inputline_max_str_len(), gtd->input_off, gtd->input_pos, gtd->input_hid, gtd->input_cur, gtd->input_len, inputline_max_str_len(), inputline_cur_str_len());
+	tintin_printf2(ses, "Width of input bar:             %10d", inputline_max_str_len());
+	tintin_printf2(ses, "Offset of input bar:            %10d", gtd->input_off);
+	tintin_printf2(ses, "Width of hidden text on left:   %10d", gtd->input_hid);
+	tintin_printf2(ses, "VT100 position of cursor:       %10d", gtd->input_pos);
+	tintin_printf2(ses, "internal position of cursor:    %10d", gtd->input_cur);
+	tintin_printf2(ses, "internal length of input line:  %10d", gtd->input_len);
+	tintin_printf2(ses, "VT100 length of displayed line: %10d", inputline_cur_str_len());
 }
 
 /*
