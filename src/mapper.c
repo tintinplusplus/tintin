@@ -84,18 +84,17 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map list     <location>               (shows list of matching rooms)");
 		tintin_printf2(ses, "#map map      <radius> <filename>      (shows an ascii map)");
 		tintin_printf2(ses, "#map move     <direction>              (move to given direction)");
-		tintin_printf2(ses, "#map name     <room name>              (set the room name)");
 		tintin_printf2(ses, "#map read     <filename>               (load a map from file)");
 		tintin_printf2(ses, "#map resize   <size>                   (resize the maximum size)");
 		tintin_printf2(ses, "#map roomflag <room flag>              (set room based flags)");
 		tintin_printf2(ses, "#map set      <option>     <value>     (set various values)");
 		tintin_printf2(ses, "#map return                            (return to last room.)");
-		tintin_printf2(ses, "#map run      <location>  <delay>      (run to given room)");
-		tintin_printf2(ses, "#map travel   <direction>  <delay>     (run in given direction)");
+		tintin_printf2(ses, "#map run      <location>   [delay]     (run to given room)");
+		tintin_printf2(ses, "#map travel   <direction>  [delay]     (run in given direction)");
 		tintin_printf2(ses, "#map undo                              (undo last move)");
 		tintin_printf2(ses, "#map uninsert <direction>              (opposite of insert)");
 		tintin_printf2(ses, "#map unlink   <direction> [both]       (deletes an exit)");
-		tintin_printf2(ses, "#map vnum     <low vnum> [high vnum]   (deletes an exit)");
+		tintin_printf2(ses, "#map vnum     <low vnum> [high vnum]   (change room vnum)");
 		tintin_printf2(ses, "#map write    <filename>               (save the map)");
 
 		return ses;
@@ -1155,7 +1154,7 @@ DO_MAP(map_map)
 {
 	char arg3[BUFFER_SIZE], buf[BUFFER_SIZE], out[BUFFER_SIZE];
 	FILE *logfile = NULL;
-	int x, y, line;
+	int x, y, line, var = 0;
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
@@ -1167,7 +1166,11 @@ DO_MAP(map_map)
 	{
 		if (*arg2)
 		{
-			if (tolower((int) *arg3) == 'a')
+			if (tolower((int) *arg3) == 'v')
+			{
+				var = 1;
+			}
+			else if (tolower((int) *arg3) == 'a')
 			{
 				logfile = fopen(arg2, "a");
 			}
@@ -1221,6 +1224,8 @@ DO_MAP(map_map)
 
 	displaygrid_build(ses, ses->map->in_room, map_grid_x, map_grid_y, 0);
 
+	*arg3 = 0;
+
 	if (HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS))
 	{
 		for (y = map_grid_y - 1 ; y >= 0 ; y--)
@@ -1236,7 +1241,11 @@ DO_MAP(map_map)
 
 				substitute(ses, buf, out, SUB_COL|SUB_CMP);
 
-				if (logfile)
+				if (var)
+				{
+					cat_sprintf(arg3, "%s\n", out);
+				}
+				else if (logfile)
 				{
 					fprintf(logfile, "%s\n", out);
 				}
@@ -1270,7 +1279,11 @@ DO_MAP(map_map)
 
 			substitute(ses, buf, out, SUB_COL|SUB_CMP);
 
-			if (logfile)
+			if (var)
+			{
+				cat_sprintf(arg3, "%s\n", out);
+			}
+			else if (logfile)
 			{
 				fprintf(logfile, "%s\n", out);
 			}
@@ -1281,7 +1294,11 @@ DO_MAP(map_map)
 		}
 	}
 
-	if (logfile)
+	if (var)
+	{
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", arg3);
+	}
+	else if (logfile)
 	{
 		fclose(logfile);
 	}

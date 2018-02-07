@@ -66,11 +66,11 @@ int is_color_code(char *str)
 		{
 			return TRUE;
 		}
-		else if (str[1] == 'g' && str[1] <= '9' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
+		else if (str[1] == 'g' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
 		{
 			return TRUE;
 		}
-		else if (str[1] == 'G' && str[1] <= '9' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
+		else if (str[1] == 'G' && str[2] >= '0' && str[2] <= '9' && str[3] >= '0' && str[3] <= '9')
 		{
 			return TRUE;
 		}

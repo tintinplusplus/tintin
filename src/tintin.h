@@ -140,7 +140,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.01.1  "
+#define CLIENT_VERSION           "2.01.2  "
 
 #define ESCAPE                          27
 
@@ -1550,7 +1550,7 @@ extern DO_LINE(line_verbose);
 
 extern void logit(struct session *ses, char *txt, FILE *file, int newline);
 extern DO_COMMAND(do_log);
-extern void write_html_header(FILE *fp);
+extern void write_html_header(struct session *ses, FILE *fp);
 extern void vt102_to_html(struct session *ses, char *txt, char *out);
 #endif
 

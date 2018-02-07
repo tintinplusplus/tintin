@@ -39,7 +39,7 @@ struct advertisement_type advertisement_table[] =
 {
 	{
 		1388166000, /* 2013 */
-		1500000000, /* 2017 */
+		1600000000, /* 2020 */
 		100,
 		"\n"
 		"<138>                     Lost Souls  -  http://lostsouls.org\n"
@@ -59,7 +59,7 @@ struct advertisement_type advertisement_table[] =
 
 	{
 		1388166000, /* 2013 */
-		1500000000, /* 2017 */
+		1600000000, /* 2020 */
 		100,
 		"\n"
 		"<138>               Carrion Fields  -  http://carrionfields.net\n"
@@ -78,7 +78,7 @@ struct advertisement_type advertisement_table[] =
 
 	{
 		1388166000, /* 2013 */
-		1500000000, /* 2017 */
+		1600000000, /* 2020 */
 		100,
 		"\n"
 		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
@@ -97,7 +97,7 @@ struct advertisement_type advertisement_table[] =
 
 	{
 		1388166000, /* 2013 */
-		1500000000, /* 2017 */
+		1600000000, /* 2020 */
 		100,
 		"\n"
 		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"

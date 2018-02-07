@@ -1,5 +1,11 @@
 Jun 2015       2.01.2
 
+mapper.c       Added map <radius> <variable name> {v} option to save the map
+               output to a variable.
+
+log.c          html log files now correctly set the charset to utf-8 or big5
+               if applicable.
+
 tokenize.c     Added support for local variables with the #LOCAL command. Most
                commands that manipulate variables will use a local variable
                if it has been declared.

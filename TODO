@@ -1,14 +1,10 @@
-* Fixed
-
-  - http://tintin.sourceforge.net/board/viewtopic.php?t=2319 (map background color)
-
-  - http://tintin.sourceforge.net/board/viewtopic.php?t=2377 (\cd and \cz handling improv)
-
-  - When I try to use any #FORMAT with the "%p", tintin++ crashes (OS X).
-
 * Stuff that's going to be done.
 
-  - iso-8859-1 change to utf-8 in html logging?
+  - Add #map roomflag block option to block deathtrap rooms.
+
+  - Fix #map exit direction to accept numbers.
+
+  - Check if IAC WILL EOR and WILL GA are properly triggered with event.
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=9625 (map undo issue) (not a big issue)
 

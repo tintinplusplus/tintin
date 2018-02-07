@@ -994,7 +994,7 @@ DO_BUFFER(buffer_write)
 
 			if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 			{
-				write_html_header(fp);
+				write_html_header(ses, fp);
 			}
 
 			cnt = ses->scroll_row;

@@ -86,7 +86,7 @@ DO_LINE(line_log)
 
 			if (ftell(logfile) == 0)
 			{
-				write_html_header(logfile);
+				write_html_header(ses, logfile);
 			}
 		}
 
@@ -131,7 +131,7 @@ DO_LINE(line_logverbatim)
 
 			if (ftell(logfile) == 0)
 			{
-				write_html_header(logfile);
+				write_html_header(ses, logfile);
 			}
 		}
 
