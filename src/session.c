@@ -91,7 +91,7 @@ void show_session(struct session *ses, struct session *ptr)
 {
 	char temp[BUFFER_SIZE];
 
-	sprintf(temp, "%-10s %18s:%-5s", ptr->name, ptr->host, ptr->port);
+	sprintf(temp, "%-10s %18s:%-5s", ptr->name, ptr->session_host, ptr->session_port);
 
 	strcat(temp, ptr == gtd->ses ? " (active)" :  "         ");
 
@@ -205,9 +205,9 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 	newses                = (struct session *) calloc(1, sizeof(struct session));
 
 	newses->name          = strdup(name);
-	newses->host          = strdup(host);
-	newses->ip            = strdup("");
-	newses->port          = strdup(port);
+	newses->session_host  = strdup(host);
+	newses->session_ip    = strdup("");
+	newses->session_port  = strdup(port);
 
 	newses->group         = strdup(gts->group);
 	newses->flags         = gts->flags;
@@ -233,24 +233,34 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 
 	init_buffer(newses, gts->scroll_max);
 
-	if (desc)
+	if (desc == 0)
 	{
-		tintin_printf(ses, "#TRYING TO LAUNCH '%s' RUNNING '%s'.", newses->name, newses->host);
+		tintin_printf(ses, "#TRYING TO CONNECT '%s' TO '%s' PORT '%s'.", newses->name, newses->session_host, newses->session_port);
+	}
+	else if (desc == -1)
+	{
+		// #PORT INITIALIZE {NAME} {PORT} {FILE}
 	}
 	else
 	{
-		tintin_printf(ses, "#TRYING TO CONNECT '%s' TO '%s' PORT '%s'.", newses->name, newses->host, newses->port);
+		tintin_printf(ses, "#TRYING TO LAUNCH '%s' RUNNING '%s'.", newses->name, newses->session_host);
 	}
 
 	gtd->ses = newses;
 
 	dirty_screen(newses);
 
-	check_all_events(newses, SUB_ARG|SUB_SEC, 0, 3, "SESSION CREATED", newses->name, newses->host, newses->port);
+	check_all_events(newses, SUB_ARG|SUB_SEC, 0, 3, "SESSION CREATED", newses->name, newses->session_host, newses->session_port);
 
 	if (desc == 0)
 	{
 		newses = connect_session(newses);
+	}
+	else if (desc == -1)
+	{
+		SET_BIT(newses->flags, SES_FLAG_PORT);
+
+		gtd->ses = newses;
 	}
 	else
 	{
@@ -296,6 +306,7 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 struct session *connect_session(struct session *ses)
 {
 	int sock;
+	static struct timeval to;
 
 	push_call("connect_session(%p)",ses);
 
@@ -303,7 +314,7 @@ struct session *connect_session(struct session *ses)
 
 	reconnect:
 
-	sock = connect_mud(ses, ses->host, ses->port);
+	sock = connect_mud(ses, ses->session_host, ses->session_port);
 
 	if (sock == -1)
 	{
@@ -324,9 +335,9 @@ struct session *connect_session(struct session *ses)
 
 		tintin_printf2(ses, "");
 
-		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'", ses->name, ses->host, ses->port);
+		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'", ses->name, ses->session_host, ses->session_port);
 
-		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION CONNECTED", ses->name, ses->host, ses->ip, ses->port);
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION CONNECTED", ses->name, ses->session_host, ses->session_ip, ses->session_port);
 
 		pop_call();
 		return ses;
@@ -335,14 +346,18 @@ struct session *connect_session(struct session *ses)
 	if (ses->connect_retry > utime())
 	{
 		fd_set readfds;
-		static struct timeval to;
 
 		FD_ZERO(&readfds);
 		FD_SET(0, &readfds);
 
 		if (select(FD_SETSIZE, &readfds, NULL, NULL, &to) <= 0)
 		{
-			tintin_printf(ses, "#SESSION '%s' FAILED TO CONNECT. RETRYING FOR %d SECONDS.", ses->name, (ses->connect_retry - utime()) / 1000000);
+			if (to.tv_sec == 0)
+			{
+				to.tv_sec = 1;
+
+				tintin_printf(ses, "#SESSION '%s' FAILED TO CONNECT. RETRYING FOR %d SECONDS.", ses->name, (ses->connect_retry - utime()) / 1000000);
+			}
 
 			goto reconnect;
 		}
@@ -350,6 +365,8 @@ struct session *connect_session(struct session *ses)
 
 	if (ses->connect_error)
 	{
+		to.tv_sec = 0;
+
 		tintin_printf(ses, "#SESSION '%s' FAILED TO CONNECT.", ses->name);
 	}
 
@@ -394,9 +411,14 @@ void cleanup_session(struct session *ses)
 
 		if (HAS_BIT(ses->flags, SES_FLAG_RUN))
 		{
-			kill(atoi(ses->port), SIGKILL);
+			kill(atoi(ses->session_port), SIGKILL);
 		}
 
+	}
+
+	if (ses->port)
+	{
+		port_uninitialize(ses, "", "", "");
 	}
 
 	SET_BIT(ses->flags, SES_FLAG_CLOSED);
@@ -405,13 +427,13 @@ void cleanup_session(struct session *ses)
 	{
 		DEL_BIT(ses->flags, SES_FLAG_CONNECTED);
 
-		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->host, ses->ip, ses->port);
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->session_host, ses->session_ip, ses->session_port);
 
 		tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
 	}
 	else
 	{
-		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION TIMED OUT", ses->name, ses->host, ses->ip, ses->port);
+		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION TIMED OUT", ses->name, ses->session_host, ses->session_ip, ses->session_port);
 
 		tintin_printf(gtd->ses, "#SESSION '%s' TIMED OUT.", ses->name);
 	}
@@ -473,9 +495,9 @@ void dispose_session(struct session *ses)
 	init_buffer(ses, 0);
 
 	free(ses->name);
-	free(ses->host);
-	free(ses->ip);
-	free(ses->port);
+	free(ses->session_host);
+	free(ses->session_ip);
+	free(ses->session_port);
 	free(ses->group);
 	free(ses->read_buf);
 	free(ses->cmd_color);

@@ -56,7 +56,8 @@ int connect_mud(struct session *ses, char *host, char *port)
 		return -1;
 	}
 
-	hints.ai_family   = AF_UNSPEC;
+//	hints.ai_family   = AF_UNSPEC;
+	hints.ai_family   = AF_INET;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -64,8 +65,16 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	if (error)
 	{
-		tintin_printf(ses, "#SESSION '%s' COULD NOT CONNECT - UNKNOWN HOST.", ses->name);
-		return -1;
+		hints.ai_family = AF_INET6;
+
+		error = getaddrinfo(host, port, &hints, &address);
+
+		if (error)
+		{
+			tintin_printf(ses, "#SESSION '%s' COULD NOT CONNECT - UNKNOWN HOST.", ses->name);
+
+			return -1;
+		}
 	}
 
 	sock = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
@@ -92,7 +101,7 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	getnameinfo(address->ai_addr, address->ai_addrlen, ip, 100, NULL, 0, NI_NUMERICHOST);
 
-	RESTRING(ses->ip, ip);
+	RESTRING(ses->session_ip, ip);
 
 	freeaddrinfo(address);
 
@@ -117,6 +126,7 @@ int connect_mud(struct session *ses, char *host, char *port)
 		if (!(hp = gethostbyname(host)))
 		{
 			tintin_puts2(ses, "#ERROR - UNKNOWN HOST.");
+
 			return -1;
 		}
 		memcpy((char *)&sockaddr.sin_addr, hp->h_addr, sizeof(sockaddr.sin_addr));

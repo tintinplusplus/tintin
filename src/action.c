@@ -46,7 +46,7 @@ DO_COMMAND(do_action)
 	}
 	else if (*arg1 && *arg2 == 0)
 	{
-		if (show_node_with_wild(ses, arg1, LIST_ACTION) == FALSE)
+		if (show_node_with_wild(ses, arg1, ses->list[LIST_ACTION]) == FALSE)
 		{
 			show_message(ses, LIST_ACTION, "#ACTION: NO MATCH(ES) FOUND FOR {%s}.", arg1);
 		}

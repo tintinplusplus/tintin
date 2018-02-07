@@ -79,6 +79,10 @@ DO_COMMAND(do_math)
 	return ses;
 }
 
+int is_math(struct session *ses, char *str)
+{
+	return mathexp_tokenize(ses, str, 0, 0);
+}
 
 double get_number(struct session *ses, char *str)
 {
@@ -120,6 +124,8 @@ double mathswitch(struct session *ses, char *left, char *right)
 
 /*
 	Flexible tokenized mathematical expression interpreter
+	
+	If seed is set it forces floating point math
 */
 
 void mathexp(struct session *ses, char *str, char *result, int seed)
@@ -128,7 +134,7 @@ void mathexp(struct session *ses, char *str, char *result, int seed)
 
 	substitute(ses, str, result, SUB_VAR|SUB_FUN);
 
-	if (mathexp_tokenize(ses, result, seed) == FALSE)
+	if (mathexp_tokenize(ses, result, seed, TRUE) == FALSE)
 	{
 		return;
 	}
@@ -152,19 +158,24 @@ void mathexp(struct session *ses, char *str, char *result, int seed)
 	strcpy(result, node->str3);
 }
 
-#define MATH_NODE(buffercheck, priority, newstatus)                  \
-{                                                                    \
-	if (buffercheck && pta == buf3)                              \
-	{                                                            \
-		return FALSE;                                        \
-	}                                                            \
-	*pta = 0;                                                    \
-	sprintf(buf1, "%02d", level);                                \
-	sprintf(buf2, "%02d", priority);                             \
-	add_math_node(buf1, buf2, buf3);                             \
-	status = newstatus;                                          \
-	pta = buf3;                                                  \
-	point = -1;                                                  \
+#define MATH_NODE(buffercheck, priority, newstatus)             \
+{                                                               \
+	if (buffercheck && pta == buf3)                         \
+	{                                                       \
+		return FALSE;                                   \
+	}                                                       \
+	if (badnumber && debug)                                 \
+	{                                                       \
+		badnumber = 0;                                  \
+		show_debug(ses, LIST_VARIABLE, "#MATH EXP: INVALID NUMBER %s.", buf3); \
+	}                                                       \
+	*pta = 0;                                               \
+	sprintf(buf1, "%02d", level);                           \
+	sprintf(buf2, "%02d", priority);                        \
+	add_math_node(buf1, buf2, buf3);                        \
+	status = newstatus;                                     \
+	pta = buf3;                                             \
+	point = -1;                                             \
 }
 
 void add_math_node(char *arg1, char *arg2, char *arg3)
@@ -191,15 +202,16 @@ void del_math_node(struct link_data *node)
 	free(node);
 }
 
-int mathexp_tokenize(struct session *ses, char *str, int seed)
+int mathexp_tokenize(struct session *ses, char *str, int seed, int debug)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[STRING_SIZE], *pti, *pta;
-	int level, status, point;
+	int level, status, point, badnumber;
 
 	level     = 0;
 	point     = -1;
 	status    = EXP_VARIABLE;
 	precision = seed;
+	badnumber = 0;
 
 	pta = buf3;
 	pti = str;
@@ -256,7 +268,10 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 					case '"':
 						if (pta != buf3)
 						{
-//							show_message(ses, LIST_VARIABLE, "MATH EXP: \" FOUND INSIDE A NUMBER");
+							if (debug)
+							{
+								show_debug(ses, LIST_VARIABLE, "MATH EXP: \" FOUND INSIDE A NUMBER");
+							}
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -266,7 +281,10 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 					case '(':
 						if (pta != buf3)
 						{
-//							show_message(ses, LIST_VARIABLE, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
+							if (debug)
+							{
+								show_debug(ses, LIST_VARIABLE, "#MATH EXP: PARANTESES FOUND INSIDE A NUMBER");
+							}
 							return FALSE;
 						}
 						*pta++ = *pti++;
@@ -286,7 +304,10 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 						*pta++ = *pti++;
 						if (point >= 0)
 						{
-//							show_message(ses, LIST_VARIABLE, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
+							if (debug)
+							{
+								show_debug(ses, LIST_VARIABLE, "#MATH EXP: MORE THAN ONE POINT FOUND INSIDE A NUMBER");
+							}
 							precision = 0;
 							return FALSE;
 						}
@@ -321,6 +342,14 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 
 					default:
 						*pta++ = *pti++;
+						*pta = 0;
+
+						badnumber = 1;
+
+						if (debug == 0)
+						{
+							return FALSE;
+						}
 						break;
 				}
 				break;
@@ -501,13 +530,19 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 								break;
 
 							default:
-								tintin_printf2(ses, "#MATH EXP: UNKNOWN OPERATOR: %c%c", pti[-1], pti[0]);
+								if (debug)
+								{
+									show_debug(ses, LIST_VARIABLE, "#MATH EXP: UNKNOWN OPERATOR: %c%c", pti[-1], pti[0]);
+								}
 								return FALSE;
 						}
 						break;
 
 					default:
-//						show_message(ses, LIST_VARIABLE, "#MATH EXP: UNKNOWN OPERATOR: %c", *pti);
+						if (debug)
+						{
+							show_debug(ses, LIST_VARIABLE, "#MATH EXP: UNKNOWN OPERATOR: %c", *pti);
+						}
 						return FALSE;
 				}
 				break;
@@ -516,7 +551,10 @@ int mathexp_tokenize(struct session *ses, char *str, int seed)
 
 	if (level != 0)
 	{
-//		show_message(ses, LIST_VARIABLE, "#MATH EXP: UNMATCHED PARENTHESES, LEVEL: %d", level);
+		if (debug)
+		{
+			show_debug(ses, LIST_VARIABLE, "#MATH EXP: UNMATCHED PARENTHESES, LEVEL: %d", level);
+		}
 		return FALSE;
 	}
 

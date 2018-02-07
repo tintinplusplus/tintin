@@ -49,7 +49,7 @@ DO_COMMAND(do_run)
 
 	if (*left == 0 || *right == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#RUN: TWO ARGUMENTS REQUIRED.");
+		return show_error(ses, LIST_COMMAND, "#SYNTAX: #RUN {NAME} {SYSTEM SHELL COMMAND}");
 	}
 
 	size.ws_row = get_scroll_size(ses);

@@ -80,6 +80,7 @@ struct command_type command_table[] =
 	{    "parse",             do_nop,               TOKEN_TYPE_PARSE   },
 	{    "path",              do_path,              TOKEN_TYPE_COMMAND },
 	{    "pathdir",           do_pathdir,           TOKEN_TYPE_COMMAND },
+	{    "port",              do_port,              TOKEN_TYPE_COMMAND },
 	{    "prompt",            do_prompt,            TOKEN_TYPE_COMMAND },
 	{    "read",              do_read,              TOKEN_TYPE_COMMAND },
 	{    "regexp",            do_regexp,            TOKEN_TYPE_REGEX   },
@@ -196,7 +197,7 @@ struct config_type config_table[] =
 	{
 		"CONNECT RETRY",
 		"",
-		"Seconds TinTin++ will try to connect before giving up",
+		"Seconds TinTin++ sessions try to connect on failure.",
 		config_connectretry
 	},
 
@@ -459,6 +460,23 @@ struct chat_type chat_table[] =
 	{     "",                 NULL,                0, 0, ""                                               }
 };
 
+struct port_type port_table[] =
+{
+	{     "CALL",             port_call,           0, 0, "Create outgoing socket connection"              },
+	{     "COLOR",            port_color,          1, 0, "Set the default port message color"             },
+	{     "DND",              port_dnd,            0, 0, "Decline new connections"                        },
+	{     "GROUP",            port_group,          0, 1, "Assign a group to a socket"                     },
+	{     "IGNORE",           port_ignore,         1, 0, "Ignore all messages from a socket"              },
+	{     "INITIALIZE",       port_initialize,     0, 0, "Initialize port with optional file name"        },
+	{     "INFO",             port_info,           0, 0, "Display the port settings"                      },
+	{     "NAME",             port_name,           0, 0, "Change a socket name"                           },
+	{     "PREFIX",           port_prefix,         1, 0, "Prefix before each port message"                },
+	{     "SEND",             port_send,           0, 1, "Send a message to a socket"                     },
+	{     "UNINITIALIZE",     port_uninitialize,   0, 0, "Uninitializes the port"                         },
+	{     "WHO",              port_who,            0, 0, "Show all socket connections"                    },
+	{     "ZAP",              port_zap,            1, 0, "Close the connection to a socket"               },
+	{     "",                 NULL,                0, 0, ""                                               }
+};
 
 struct array_type array_table[] =
 {
@@ -817,6 +835,7 @@ struct timer_type timer_table[] =
 	{    "Poll Stdin"                  },
 	{    "Poll Sessions"               },
 	{    "Poll Chat Server"            },
+	{    "Poll Port Sessions"          },
 	{    "Update Tickers"              },
 	{    "Update Delays"               },
 	{    "Update Packet Patcher"       },
@@ -841,6 +860,9 @@ struct event_type event_table[] =
 	{    "MAP EXIT ROOM",                          "Triggers when exiting a map room."       },
 	{    "MINUTE",                                 "Triggers each minute or given minute."   },
 	{    "MONTH",                                  "Triggers each month or given month."     },
+	{    "PORT CONNECTION",                        "Triggers when socket connects."          },
+	{    "PORT DISCONNECTION",                     "Triggers when socket disconnects."       },
+	{    "PORT MESSAGE",                           "Triggers when socket data is received."  },
 	{    "PROGRAM START",                          "Triggers when main session starts."      },
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."      },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },

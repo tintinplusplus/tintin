@@ -593,6 +593,14 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 {
 	SET_BIT(ses->telopts, TELOPT_FLAG_PROMPT);
 
+	if (cpsrc[1] == GA)
+	{
+		check_all_events(ses, SUB_ARG, 0, 0, "IAC GA");
+	}
+	else if (cpsrc[1] == EOR)
+	{
+		check_all_events(ses, SUB_ARG, 0, 0, "IAC EOR");
+	}
 	return 2;
 }
 

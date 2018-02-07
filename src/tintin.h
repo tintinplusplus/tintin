@@ -137,25 +137,27 @@
 #define STRING_SIZE                  65536
 #define BUFFER_SIZE                  32768
 #define NUMBER_SIZE                    100
+#define LEGEND_SIZE                     50
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.01.2  "
+#define CLIENT_VERSION           "2.01.3  "
 
 #define ESCAPE                          27
 
 #define TIMER_POLL_INPUT                 0
 #define TIMER_POLL_SESSIONS              1
 #define TIMER_POLL_CHAT                  2
-#define TIMER_UPDATE_TICKS               3
-#define TIMER_UPDATE_DELAYS              4
-#define TIMER_UPDATE_PACKETS             5
-#define TIMER_UPDATE_CHAT                6
-#define TIMER_UPDATE_TERMINAL            7
-#define TIMER_UPDATE_TIME                8
-#define TIMER_UPDATE_MEMORY              9
-#define TIMER_STALL_PROGRAM             10
-#define TIMER_CPU                       11
+#define TIMER_POLL_PORT                  3
+#define TIMER_UPDATE_TICKS               4
+#define TIMER_UPDATE_DELAYS              5
+#define TIMER_UPDATE_PACKETS             6
+#define TIMER_UPDATE_CHAT                7
+#define TIMER_UPDATE_TERMINAL            8
+#define TIMER_UPDATE_TIME                9
+#define TIMER_UPDATE_MEMORY             10
+#define TIMER_STALL_PROGRAM             11
+#define TIMER_CPU                       12
 
 
 #define PULSE_PER_SECOND                20
@@ -163,6 +165,7 @@
 #define PULSE_POLL_INPUT                 1
 #define PULSE_POLL_SESSIONS              1
 #define PULSE_POLL_CHAT                  2
+#define PULSE_POLL_PORT                  2
 #define PULSE_UPDATE_TICKS               1
 #define PULSE_UPDATE_DELAYS              1
 #define PULSE_UPDATE_PACKETS             2
@@ -338,6 +341,7 @@ enum operators
 #define SES_FLAG_256COLOR             (1 << 28)
 #define SES_FLAG_IGNORELINE           (1 << 29)
 #define SES_FLAG_CLOSED               (1 << 30)
+#define SES_FLAG_PORT                 (1 << 31)
 
 #define TELOPT_FLAG_SGA               (1 <<  0)
 #define TELOPT_FLAG_ECHO              (1 <<  1)
@@ -378,7 +382,7 @@ enum operators
 
 #define MAP_FLAG_STATIC               (1 <<  0)
 #define MAP_FLAG_VTMAP                (1 <<  1)
-#define MAP_FLAG_VTGRAPHICS           (1 <<  2)
+//#define MAP_FLAG_VTGRAPHICS           (1 <<  2)
 #define MAP_FLAG_ASCIIGRAPHICS        (1 <<  3)
 #define MAP_FLAG_ASCIIVNUMS           (1 <<  4)
 #define MAP_FLAG_MUDFONT              (1 <<  5)
@@ -555,6 +559,7 @@ enum operators
 #define DO_CONFIG(config) struct session *config (struct session *ses, char *arg, int index)
 #define DO_MAP(map) void map (struct session *ses, char *arg, char *arg1, char *arg2)
 #define DO_PATH(path) void path (struct session *ses, char *arg)
+#define DO_PORT(port) struct session *port (struct session *ses, char *left, char *right, char *arg)
 #define DO_LINE(line) struct session *line (struct session *ses, char *arg)
 #define DO_CURSOR(cursor) void cursor (struct session *ses, char *arg)
 #define DO_HISTORY(history) void history (struct session *ses, char *arg)
@@ -605,6 +610,7 @@ struct session
 	struct session        * prev;
 	struct map_data       * map;
 	z_stream              * mccp;
+	struct port_data      * port;
 	char                 ** buffer;
 	char                  * name;
 	char                  * group;
@@ -630,10 +636,10 @@ struct session
 	int                     socket;
 	int                     telopts;
 	int                     telopt_flag[8];
-	int                     flags;
-	char                  * host;
-	char                  * ip;
-	char                  * port;
+	long long               flags;
+	char                  * session_host;
+	char                  * session_ip;
+	char                  * session_port;
 	char                  * cmd_color;
 	unsigned char         * read_buf;
 	int                     read_len;
@@ -723,6 +729,20 @@ struct chat_data
 	long long               file_start_time;
 };
 
+struct port_data
+{
+	struct port_data      * next;
+	struct port_data      * prev;
+	char                  * name;
+	char                  * ip;
+	char                  * prefix;
+	char                  * color;
+	char                  * group;
+	int                     port;
+	int                     fd;
+	int                     flags;
+};
+
 struct link_data
 {
 	struct link_data     * next;
@@ -744,6 +764,7 @@ typedef struct session *COMMAND (struct session *ses, char *arg);
 typedef void            MAP     (struct session *ses, char *arg, char *arg1, char *arg2);
 typedef void            CURSOR  (struct session *ses, char *arg);
 typedef void            PATH    (struct session *ses, char *arg);
+typedef struct session *PORT    (struct session *ses, char *left, char *right, char *arg);
 typedef struct session *LINE    (struct session *ses, char *arg);
 typedef void            HISTORY (struct session *ses, char *arg);
 typedef void            BUFFER  (struct session *ses, char *arg);
@@ -809,6 +830,15 @@ struct list_type
 	int                     mode;
 	int                     args;
 	int                     flags;
+};
+
+struct port_type
+{
+	char                  * name;
+	PORT                  * fun;
+	int                     lval;
+	int                     rval;
+	char                  * desc;
 };
 
 struct substitution_type
@@ -921,7 +951,7 @@ struct map_data
 	int                     last_room;
 	short                   display_stamp;
 	short                   nofollow;
-	char                    legend[17][100];
+	char                    legend[128][LEGEND_SIZE];
 };
 
 struct room_data
@@ -1269,12 +1299,13 @@ extern void show_vtmap(struct session *ses);
 #define __TT_MATH_H__
 
 extern DO_COMMAND(do_math);
+extern int is_math(struct session *ses, char *str);
 extern double get_number(struct session *ses, char *str);
 extern double get_double(struct session *ses, char *str);
 extern void get_number_string(struct session *ses, char *str, char *result);
 extern double mathswitch(struct session *ses, char *left, char *right);
 extern void mathexp(struct session *ses, char *str, char *result, int seed);
-extern int mathexp_tokenize(struct session *ses, char *str, int seed);
+extern int mathexp_tokenize(struct session *ses, char *str, int seed, int debug);
 extern void mathexp_level(struct session *ses, struct link_data *node);
 extern void mathexp_compute(struct session *ses, struct link_data *node);
 extern double tintoi(char *str);
@@ -1745,6 +1776,42 @@ extern void check_insert_path(char *command, struct session *ses);
 
 #endif
 
+#ifndef __PORT_H__
+#define __PORT_H__
+
+
+extern DO_COMMAND(do_port);
+extern DO_PORT(port_call);
+extern DO_PORT(port_color);
+extern DO_PORT(port_dnd);
+extern DO_PORT(port_group);
+extern DO_PORT(port_ignore);
+extern DO_PORT(port_initialize);
+extern DO_PORT(port_info);
+extern DO_PORT(port_message);
+extern DO_PORT(port_name);
+extern DO_PORT(port_prefix);
+extern DO_PORT(port_send);
+extern DO_PORT(port_uninitialize);
+extern DO_PORT(port_who);
+extern DO_PORT(port_zap);
+
+extern  int port_new(struct session *ses, int s);
+extern void close_port(struct session *ses, struct port_data *buddy, int unlink);
+extern void process_port_connections(struct session *ses, fd_set *read_set, fd_set *write_set, fd_set *exc_set);
+extern void port_forward_session(struct session *ses, char *linelog);
+extern void port_socket_printf(struct session *ses, struct port_data *buddy, char *format, ...);
+extern void port_printf(struct session *ses, char *format, ...);
+extern  int process_port_input(struct session *ses, struct port_data *buddy);
+extern void get_port_commands(struct session *ses, struct port_data *buddy, char *buf, int len);
+extern void port_name_change(struct session *ses, struct port_data *buddy, char *txt);
+extern void port_receive_message(struct session *ses, struct port_data *buddy, char *txt);
+
+extern void port_puts(struct session *ses, char *arg);
+extern struct port_data *find_port_buddy(struct session *ses, char *arg);
+extern struct port_data *find_port_group(struct session *ses, char *arg);
+
+#endif
 
 #ifndef __RLTAB_H__
 #define __RLTAB_H__
@@ -1817,6 +1884,7 @@ extern struct substitution_type substitution_table[];
 extern struct map_type map_table[];
 extern struct timer_type timer_table[];
 extern struct path_type path_table[];
+extern struct port_type port_table[];
 extern struct line_type line_table[];
 extern struct history_type history_table[];
 extern struct buffer_type buffer_table[];
@@ -1861,6 +1929,7 @@ extern void mainloop(void);
 extern void poll_input(void);
 extern void poll_sessions(void);
 extern void poll_chat(void);
+extern void poll_port(void);
 extern void tick_update(void);
 extern void delay_update(void);
 extern void packet_update(void);

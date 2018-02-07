@@ -79,7 +79,7 @@ int is_color_code(char *str)
 }
 
 /*
-	Keep synched with tintoi()
+	Keep synched with tintoi() and is_math()
 */
 
 int is_number(char *str)
@@ -435,7 +435,11 @@ void show_debug(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 	{
+		gtd->noise_level++;
+
 		tintin_puts2(ses, buf);
+
+		gtd->noise_level--;
 
 		pop_call();
 		return;
@@ -496,6 +500,8 @@ void tintin_printf2(struct session *ses, char *format, ...)
 	char *buffer;
 	va_list args;
 
+	push_call("tintin_printf2(%p,%p,...)",ses,format);
+
 	va_start(args, format);
 	vasprintf(&buffer, format, args);
 	va_end(args);
@@ -503,6 +509,9 @@ void tintin_printf2(struct session *ses, char *format, ...)
 	tintin_puts2(ses, buffer);
 
 	free(buffer);
+
+	pop_call();
+	return;
 }
 
 void tintin_printf(struct session *ses, char *format, ...)

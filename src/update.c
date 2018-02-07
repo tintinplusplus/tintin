@@ -41,6 +41,7 @@ void mainloop(void)
 	short int pulse_poll_input      = 0 + PULSE_POLL_INPUT;
 	short int pulse_poll_sessions   = 0 + PULSE_POLL_SESSIONS;
 	short int pulse_poll_chat       = 0 + PULSE_POLL_CHAT;
+	short int pulse_poll_port       = 0 + PULSE_POLL_PORT;
 	short int pulse_update_ticks    = 0 + PULSE_UPDATE_TICKS;
 	short int pulse_update_delays   = 0 + PULSE_UPDATE_DELAYS;
 	short int pulse_update_packets  = 0 + PULSE_UPDATE_PACKETS;
@@ -78,6 +79,13 @@ void mainloop(void)
 			pulse_poll_chat = PULSE_POLL_CHAT;
 
 			poll_chat();
+		}	
+
+		if (--pulse_poll_port == 0)
+		{
+			pulse_poll_port = PULSE_POLL_PORT;
+
+			poll_port();
 		}	
 
 		if (--pulse_update_ticks == 0)
@@ -293,6 +301,51 @@ void poll_chat(void)
 	close_timer(TIMER_POLL_CHAT);
 }
 
+void poll_port(void)
+{
+	struct session *ses;
+	fd_set readfds, writefds, excfds;
+	static struct timeval to;
+	struct port_data *buddy;
+	int rv;
+
+	open_timer(TIMER_POLL_PORT);
+
+	for (ses = gts->next ; ses ; ses = gtd->update)
+	{
+		gtd->update = ses->next;
+
+		if (ses->port)
+		{
+			FD_ZERO(&readfds);
+			FD_ZERO(&writefds);
+			FD_ZERO(&excfds);
+
+			FD_SET(ses->port->fd, &readfds);
+
+			for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
+			{
+				FD_SET(buddy->fd, &readfds);
+				FD_SET(buddy->fd, &writefds);
+				FD_SET(buddy->fd, &excfds);
+			}
+
+			rv = select(FD_SETSIZE, &readfds, &writefds, &excfds, &to);
+
+			if (rv <= 0)
+			{
+				if (rv == 0 || errno == EINTR)
+				{
+					return;
+				}
+				syserr("select");
+			}
+			process_port_connections(ses, &readfds, &writefds, &excfds);
+		}
+	}
+	close_timer(TIMER_POLL_PORT);
+}
+
 void tick_update(void)
 {
 	struct session *ses;
@@ -438,6 +491,7 @@ void chat_update(void)
 	}
 	close_timer(TIMER_UPDATE_CHAT);
 }
+
 
 void terminal_update(void)
 {

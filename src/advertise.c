@@ -38,8 +38,8 @@ struct advertisement_type
 struct advertisement_type advertisement_table[] =
 {
 	{
-		1388166000, /* 2013 */
-		1600000000, /* 2020 */
+		1400000000, /* 2014 */
+		1600000000, /* 2023 */
 		100,
 		"\n"
 		"<138>                     Lost Souls  -  http://lostsouls.org\n"
@@ -58,8 +58,8 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1388166000, /* 2013 */
-		1600000000, /* 2020 */
+		1400000000, /* 2014 */
+		1700000000, /* 2023 */
 		100,
 		"\n"
 		"<138>               Carrion Fields  -  http://carrionfields.net\n"
@@ -77,11 +77,11 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1388166000, /* 2013 */
-		1600000000, /* 2020 */
+		1400000000, /* 2014 */
+		1700000000, /* 2023 */
 		100,
 		"\n"
-		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
+		"<138>                 Alter Aeon  -  http://www.alteraeon.com\n"
 		"\n"
 		"<078>Alter Aeon is a custom multiclass MUD, where each of the character\n"
 		"<078>classes can be combined to make very unique characters.  This huge\n"
@@ -96,8 +96,28 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1388166000, /* 2013 */
-		1600000000, /* 2020 */
+		1400000000, /* 2014 */
+		1700000000, /* 2023 */
+		100,
+		"\n"
+		"<138>             Legends of Kallisti - http://www.kallistimud.com\n"
+		"\n"
+		"<078>This is one of the longest running MUDs in the world.  Started in 1992, it has\n"
+		"<078>undergone decades of development to become one of the richest, most evolved\n"
+		"<078>games available. Massive original world, great long time players, excellent\n"
+		"<078>combat system including group formations and ranged weapons and spells, PK if\n"
+		"<078>you're so inclined, extensive character customization options, lineages, clans,\n"
+		"<078>customizable player houses, item crafting, highly customizable UI, and so much\n"
+		"<078>more.  This is an amazing game that you could literally play for a decade and\n"
+		"<078>still discover more.\n"
+		"\n"
+		"<178>To connect to Kallisti MUD enter: #session lok kallistimud.com 4000\n"
+		"\n"
+	},
+/*
+	{
+		1388166000, 
+		1600000000,
 		100,
 		"\n"
 		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"
@@ -112,7 +132,7 @@ struct advertisement_type advertisement_table[] =
 		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
 		"\n"
 	},
-
+*/
 	{
 		0,
 		0,

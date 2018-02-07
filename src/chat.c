@@ -184,7 +184,7 @@ DO_CHAT(chat_initialize)
 	gtd->chat->ip       = strdup("<Unknown>");
 	gtd->chat->name     = strdup("TinTin");
 	gtd->chat->reply    = strdup("");
-	gtd->chat->prefix   = strdup("<CHAT>");
+	gtd->chat->prefix   = strdup("<CHAT> ");
 
 	chat_printf("Initialized chat on port %d.", gtd->chat->port);
 }
@@ -716,9 +716,9 @@ void chat_printf(char *format, ...)
 	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
 	va_end(args);
 
-	if (strncmp(buf, "<CHAT>", 6))
+	if (strncmp(buf, gtd->chat->prefix, strlen(gtd->chat->prefix)))
 	{
-		sprintf(tmp, "<CHAT> %s", buf);
+		sprintf(tmp, "%s%s", gtd->chat->prefix, buf);
 	}
 	else
 	{

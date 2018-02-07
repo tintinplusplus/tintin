@@ -264,6 +264,8 @@ struct listnode *search_node_list(struct listroot *root, char *text)
 {
 	int index;
 
+	push_call("search_node_list(%p,%p)",root,text);
+
 	switch (list_table[root->type].mode)
 	{
 		case ALPHA:
@@ -277,10 +279,12 @@ struct listnode *search_node_list(struct listroot *root, char *text)
 
 	if (index != -1)
 	{
+		pop_call();
 		return root->list[index];
 	}
 	else
 	{
+		pop_call();
 		return NULL;
 	}
 }
@@ -328,35 +332,40 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 	long long bot, top, val;
 	double toi, toj, srt;
 
+	push_call("bsearch_alpha_list(%p,%p,%d)",root,text,seek);
+
 	bot = 0;
 	top = root->used - 1;
 	val = top;
 
 //	toi = get_number(root->ses, text);
 
-	if (seek == 0 && (*text == '+' || *text == '-') && HAS_BIT(list_table[root->type].flags, LIST_FLAG_NEST))
+	if (seek == 0 && (*text == '+' || *text == '-') && is_math(root->ses, text) && HAS_BIT(list_table[root->type].flags, LIST_FLAG_NEST))
 	{
 		toi = get_number(root->ses, text);
 
 		if (toi > 0 && toi <= root->used)
 		{
+			pop_call();
 			return toi - 1;
 		}
 		if (toi < 0 && toi + root->used >= 0)
 		{
+			pop_call();
 			return root->used + toi;
 		}
 		else
 		{
+			pop_call();
 			return -1;
 		}
 	}
 
-	toi = is_number(text) ? get_number(root->ses, text) : 0;
+	toi = is_number(text) ? tintoi(text) : 0;
 
 	while (bot <= top)
 	{
-		toj = is_number(root->list[val]->left) ? get_number(root->ses, root->list[val]->left) : 0;
+		toj = is_number(root->list[val]->left) ? tintoi(root->list[val]->left) : 0;
 
 		if (toi)
 		{
@@ -373,6 +382,7 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 
 		if (srt == 0)
 		{
+			pop_call();
 			return val;
 		}
 
@@ -390,10 +400,12 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 
 	if (seek)
 	{
+		pop_call();
 		return UMAX(0, val);
 	}
 	else
 	{
+		pop_call();
 		return -1;
 	}
 }
@@ -507,12 +519,15 @@ int show_node_with_wild(struct session *ses, char *text, struct listroot *root)
 	struct listnode *node;
 	int i, flag = FALSE;
 
+	push_call("show_node_with_wild(%p,%p,%p)",ses,text,root);
+
 	node = search_node_list(root, text);
 
 	if (node)
 	{
 		show_node(root, node, 0);
 
+		pop_call();
 		return TRUE;
 	}
 
@@ -525,6 +540,7 @@ int show_node_with_wild(struct session *ses, char *text, struct listroot *root)
 			flag = TRUE;
 		}
 	}
+	pop_call();
 	return flag;
 }
 
@@ -793,6 +809,7 @@ DO_COMMAND(do_debug)
 			else if (is_abbrev(right, "OFF"))
 			{
 				DEL_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG);
+				DEL_BIT(ses->list[index]->flags, LIST_FLAG_LOG);
 			}
 			else if (is_abbrev(right, "LOG"))
 			{

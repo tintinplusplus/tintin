@@ -990,6 +990,24 @@ int tintin_regexp(struct session *ses, pcre *nodepcre, char *str, char *exp, int
 		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
+
+			switch (*pti)
+			{
+				case '\\':
+				case '[':
+				case ']':
+				case '(':
+				case ')':
+				case '|':
+				case '.':
+				case '?':
+				case '+':
+				case '*':
+				case '$':
+				case '^':
+					*pto++ = '\\';
+					break;
+			}
 			*pto++ = *pti++;
 			continue;
 		}
@@ -1191,6 +1209,24 @@ pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *ex
 		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
 		{
 			*pto++ = *pti++;
+
+			switch (*pti)
+			{
+				case '\\':
+				case '[':
+				case ']':
+				case '(':
+				case ')':
+				case '|':
+				case '.':
+				case '?':
+				case '+':
+				case '*':
+				case '$':
+				case '^':
+					*pto++ = '\\';
+					break;
+			}
 			*pto++ = *pti++;
 			continue;
 		}

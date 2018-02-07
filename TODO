@@ -1,10 +1,14 @@
 * Stuff that's going to be done.
 
+  - \xEE\x80\x80 customer character range.
+
+  - multiline gag
+
+  - toggle global flags with #message all on, #debug all on, etc.
+
   - Add #map roomflag block option to block deathtrap rooms.
 
-  - Fix #map exit direction to accept numbers.
-
-  - Check if IAC WILL EOR and WILL GA are properly triggered with event.
+  - remove multiple variables at once
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=9625 (map undo issue) (not a big issue)
 
@@ -13,6 +17,8 @@
   - http://tintin.sourceforge.net/board/viewtopic.php?t=1707 (map locate patch)
 
   - IPv6 for chat
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=9915 (crash if #map map x y is too big)
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=9110 (map search stamp bug)
 
@@ -32,16 +38,21 @@
 
   - See about adding ~/ handling for file names.
 
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=9934 Strange #map pathdir bug
 
 
   http://tintin.sourceforge.net/board/viewtopic.php?p=9657 BIG5 word wrapping
+
+1.) Download 7-Zip
+2.) Go to C:/Windows
+3.) Go into fonts - 7-Zip allows you to see inside it
+4.) You will see lots of font files. Search for EUDC.EUF and EUDC.TTE. These are the font files!
+5.) Copy both of these files into the same location as you found them, but on the device you want to have the private characters by using the same you used to get into the Fonts file.
 
 --------------------------------------------------------------------------------
 
 
 * Stuff that might be implemented
-
-  - Make #map map save to variable.
 
   - Make &0 to &99 local.
 

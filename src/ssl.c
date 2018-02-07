@@ -106,7 +106,7 @@ static int get_cert_file(struct session *ses, char *result)
 {
 	char name[BUFFER_SIZE], *ptr;
 
-	sprintf(name, "%s_%s", ses->host, ses->port);
+	sprintf(name, "%s_%s", ses->session_host, ses->session_port);
 
 	ptr = name;
 

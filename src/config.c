@@ -327,7 +327,7 @@ DO_CONFIG(config_packetpatch)
 		return NULL;
 	}
 
-	gts->check_output = (long long) (get_number(ses, arg) * 1000000LL);
+	gts->check_output = (long long) (tintoi(arg) * 1000000LL);
 
 	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 

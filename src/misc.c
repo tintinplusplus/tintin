@@ -239,12 +239,13 @@ DO_COMMAND(do_info)
 		{
 			continue;
 		}
-		tintin_printf2(ses, "%-20s  %5d  IGNORE %3s  MESSAGE %3s  DEBUG %3s",
+		tintin_printf2(ses, "%-20s  %5d  IGNORE %3s  MESSAGE %3s  DEBUG %3s %3s",
 			list_table[cnt].name_multi,
 			ses->list[cnt]->used,
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ? "ON" : "OFF");
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE)  ?  "ON" : "OFF",
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ?  "ON" : "OFF",
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ?  "ON" : "OFF",
+			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_LOG)     ? "LOG" : "   ");
 	}
 	tintin_header(ses, "");
 

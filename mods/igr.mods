@@ -1,3 +1,33 @@
+May 2017       2.01.3
+
+mapper.c       Added #map legend support to assign custom characters for
+               the #map flag MUD FONT display mode. By default they're set
+               to map to the UTF-8 private use area.
+
+mapper.c       By default an UTF-8 #map legend is created for those who do
+               not use ASCII graphics. The ANSI legend was pretty much
+               unusable and most terminals are supporting UTF-8 now. Windows
+               does not support all box drawing characters, hopefully this
+               will be fixed in the future.
+
+mapper.c       Removed support for the vtgraphics drawing mode which worked
+               on very few terminals.
+
+utils.c        Verbosity is automatically enabled for debug mode to avoid
+               logging inconsistencies.
+
+port.c         Added #port command, similar to netcat.
+
+chat.c         #chat prefix works now
+
+math.c         Better #math debug through #debug VARIABLE on
+
+mapper.c       Added map exit <dir> dir <number> option.
+
+action.c       Fixed action crash bug that slipped in
+
+telopt.c       Added telnet events for IAC GA and IAC EOR
+
 Jun 2015       2.01.2
 
 mapper.c       Added map <radius> <variable name> {v} option to save the map

@@ -555,11 +555,12 @@ DO_COMMAND(do_pathdir)
 		}
 		else
 		{
-			if (atoi(arg3) < 0 || atoi(arg3) >= 64)
+			if (!is_math(ses, arg3) || get_number(ses, arg3) < 0 || get_number(ses, arg3) >= 64)
 			{
 				show_message(ses, LIST_PATHDIR, "#PATHDIR: THE THIRD ARGUMENT MUST BE A NUMBER BETWEEN 0 and 63.");
 				return ses;
 			}
+			get_number_string(ses, arg3, arg3);
 		}
 		update_node_list(ses->list[LIST_PATHDIR], arg1, arg2, arg3);
 

@@ -216,13 +216,13 @@ int main(int argc, char **argv)
 
 		while ((c = getopt(argc, argv, "e: G h r: s: t: v")) != EOF)
 		{
-			if (c == 'G')
+			switch (c)
 			{
-				greeting = FALSE;
+				case 'G':
+					greeting = FALSE;
+					break;
 			}
 		}
-
-		optind = 1;
 	}
 
 	init_tintin(greeting);
@@ -322,8 +322,8 @@ void init_tintin(int greeting)
 
 	gts->name           = strdup("gts");
 	gts->group          = strdup("");
-	gts->host           = strdup("");
-	gts->port           = strdup("");
+	gts->session_host   = strdup("");
+	gts->session_port   = strdup("");
 	gts->cmd_color      = strdup("");
 	gts->telopts        = TELOPT_FLAG_ECHO;
 	gts->flags          = SES_FLAG_MCCP;

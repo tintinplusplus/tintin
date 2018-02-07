@@ -44,6 +44,14 @@ int                 map_grid_y;
 
 	#map legend {128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 161}
 	#map legend {144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 161}
+
+	Windows Private Character font
+	
+	First character starts at \xEE\x80\x80
+
+	VT Graphics
+	
+	\033[12m ... \033[10m 
 */
 
 unsigned char	map_palet0[]	= { 42, 35, 35, 43, 35,124, 43, 43, 35, 43, 45, 43, 43, 43, 43, 43, 120};
@@ -73,7 +81,7 @@ DO_COMMAND(do_map)
 		tintin_printf2(ses, "#map explore  <direction>              (saves path to #path)");
 		tintin_printf2(ses, "#map info                              (info on map and current room)");
 		tintin_printf2(ses, "#map insert   <direction>  [room flag] (insert a new room)");
-		tintin_printf2(ses, "#map jump     <x> <y>                  (go to given coordinate)");
+		tintin_printf2(ses, "#map jump     <x> <y> <z>              (go to given coordinate)");
 		tintin_printf2(ses, "#map find     <location> [exits]       (saves path to #path)");
 		tintin_printf2(ses, "#map flag     <map flag>               (set map wide flags)");
 		tintin_printf2(ses, "#map get      <option>     <variable>  (get various values)");
@@ -430,7 +438,11 @@ DO_MAP(map_exit)
 	}
 	else if (is_abbrev(arg2, "DIRECTION"))
 	{
-		if ((dir = get_exit_dir(ses, arg3)) == 0)
+		if (is_math(ses, arg3))
+		{
+			dir = (int) get_number(ses, arg3);
+		}
+		else if ((dir = get_exit_dir(ses, arg3)) == 0)
 		{
 			show_error(ses, LIST_COMMAND, "#MAP EXIT {%s} : DIRECTION {%s} NOT FOUND.", arg1, arg3);
 			
@@ -441,11 +453,11 @@ DO_MAP(map_exit)
 
 		set_room_exits(ses, ses->map->in_room);
 
-		show_message(ses, LIST_COMMAND, "#MAP EXIT {%s} : DIRECTION SET TO {%s}.", arg1, arg3);
+		show_message(ses, LIST_COMMAND, "#MAP EXIT {%s} : DIRECTION {%s} SET TO {%d}.", arg1, arg3, dir);
 	}
 	else if (is_abbrev(arg2, "FLAGS"))
 	{
-		exit->flags = atoi(arg3);
+		exit->flags = (int) get_number(ses, arg3);
 
 		show_message(ses, LIST_COMMAND, "#MAP EXIT {%s} : FLAGS SET TO {%d}.", arg1, exit->flags);
 	}
@@ -600,11 +612,6 @@ DO_MAP(map_flag)
 		{
 			flag = MAP_FLAG_STATIC;
 		}
-		else if (is_abbrev(arg1, "vtgraphics"))
-		{
-			flag = MAP_FLAG_VTGRAPHICS;
-			unflag = MAP_FLAG_MUDFONT|MAP_FLAG_ASCIIGRAPHICS;
-		}
 		else if (is_abbrev(arg1, "vtmap"))
 		{
 			flag = MAP_FLAG_VTMAP;
@@ -612,7 +619,7 @@ DO_MAP(map_flag)
 		else if (is_abbrev(arg1, "asciigraphics"))
 		{
 			flag = MAP_FLAG_ASCIIGRAPHICS;
-			unflag = MAP_FLAG_MUDFONT|MAP_FLAG_VTGRAPHICS;
+			unflag = MAP_FLAG_MUDFONT;
 		}
 		else if (is_abbrev(arg1, "asciivnums"))
 		{
@@ -621,7 +628,7 @@ DO_MAP(map_flag)
 		else if (is_abbrev(arg1, "mudfont"))
 		{
 			flag = MAP_FLAG_MUDFONT;
-			unflag = MAP_FLAG_ASCIIGRAPHICS|MAP_FLAG_VTGRAPHICS;
+			unflag = MAP_FLAG_ASCIIGRAPHICS;
 		}
 		else if (is_abbrev(arg1, "nofollow"))
 		{
@@ -648,9 +655,6 @@ DO_MAP(map_flag)
 		tintin_printf2(ses, "#MAP: Static flag is set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off");
 		tintin_printf2(ses, "#MAP: SymbolGraphics flag is set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_SYMBOLGRAPHICS) ? "on" : "off");
 		tintin_printf2(ses, "#MAP: VTmap flag is set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off");
-		tintin_printf2(ses, "#MAP: VTgraphics flag is set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
-
-
 
 		return;
 	}
@@ -696,10 +700,6 @@ DO_MAP(map_flag)
 	else if (is_abbrev(arg1, "symbolgraphics"))
 	{
 		show_message(ses, LIST_COMMAND, "#MAP: Symbolgraphics flag set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_SYMBOLGRAPHICS) ? "on" : "off");
-	}
-	else if (is_abbrev(arg1, "vtgraphics"))
-	{
-		show_message(ses, LIST_COMMAND, "#MAP: VTgraphics flag set to %s.", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
 	}
 	else if (is_abbrev(arg1, "vtmap"))
 	{
@@ -874,15 +874,13 @@ DO_MAP(map_info)
 
 	tintin_printf2(ses, "");
 
-	tintin_printf2(ses, "%+16s %-7s %+16s %-7s %+16s %-7s", "Vtmap:", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off", "Static:", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off", "Vtgraphics:", HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS) ? "on" : "off");
+	tintin_printf2(ses, "%+16s %-7s %+16s %-7s %+16s %-7s", "Vtmap:", HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP) ? "on" : "off", "Static:", HAS_BIT(ses->map->flags, MAP_FLAG_STATIC) ? "on" : "off", "Vtgraphics:", HAS_BIT(ses->map->flags, MAP_FLAG_SYMBOLGRAPHICS) ? "on" : "off");
 	tintin_printf2(ses, "%+16s %-7s %+16s %-7s %+16s %-7s", "Asciigraphics:", HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIGRAPHICS) ? "on" : "off", "Asciivnums:", HAS_BIT(ses->map->flags, MAP_FLAG_ASCIIVNUMS) ? "on" : "off", "Nofollow:", HAS_BIT(ses->map->flags, MAP_FLAG_NOFOLLOW) ? "on" : "off");
 
 	if (ses->map->in_room == 0)
 	{
 		return;
 	}
-
-
 
 	tintin_printf2(ses, "");
 
@@ -1049,26 +1047,29 @@ DO_MAP(map_legend)
 
 	if (*arg1 == 0)
 	{
-		if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
-		{
-			tintin_printf2(ses, "#MAP: Current legend: \033[12m%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\033[10m",
-				ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],
-				ses->map->legend[3],  ses->map->legend[4],  ses->map->legend[5],
-				ses->map->legend[6],  ses->map->legend[7],  ses->map->legend[8],
-				ses->map->legend[9],  ses->map->legend[10], ses->map->legend[11],
-				ses->map->legend[12], ses->map->legend[13], ses->map->legend[14],
-				ses->map->legend[15], ses->map->legend[16]);
-		}
-		else
-		{
-			tintin_printf2(ses, "#MAP: Current legend: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s",
-				ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],
-				ses->map->legend[3],  ses->map->legend[4],  ses->map->legend[5],
-				ses->map->legend[6],  ses->map->legend[7],  ses->map->legend[8],
-				ses->map->legend[9],  ses->map->legend[10], ses->map->legend[11],
-				ses->map->legend[12], ses->map->legend[13], ses->map->legend[14],
-				ses->map->legend[15], ses->map->legend[16]);
-		}
+		tintin_printf2(ses, "#MAP LEGEND: UTF-8 BOX DRAWING N E S W\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			ses->map->legend[0],  ses->map->legend[1],  ses->map->legend[2],  ses->map->legend[3],
+			ses->map->legend[4],  ses->map->legend[5],  ses->map->legend[6],  ses->map->legend[7],
+			ses->map->legend[8],  ses->map->legend[9],  ses->map->legend[10], ses->map->legend[11],
+			ses->map->legend[12], ses->map->legend[13], ses->map->legend[14], ses->map->legend[15]);
+
+		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MISCELLANEOUS\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			ses->map->legend[16], ses->map->legend[17], ses->map->legend[18], ses->map->legend[19],
+			ses->map->legend[20], ses->map->legend[21], ses->map->legend[22], ses->map->legend[23],
+			ses->map->legend[24], ses->map->legend[25], ses->map->legend[26], ses->map->legend[27],
+			ses->map->legend[28], ses->map->legend[29], ses->map->legend[30], ses->map->legend[31]);
+
+		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MUDFONT N NW W SW S\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			ses->map->legend[32], ses->map->legend[33], ses->map->legend[34], ses->map->legend[35],
+			ses->map->legend[36], ses->map->legend[37], ses->map->legend[38], ses->map->legend[39],
+			ses->map->legend[40], ses->map->legend[41], ses->map->legend[42], ses->map->legend[43],
+			ses->map->legend[44], ses->map->legend[45], ses->map->legend[46], ses->map->legend[47]);
+
+		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MUDFONT N NE E SE S\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			ses->map->legend[48], ses->map->legend[49], ses->map->legend[50], ses->map->legend[51],
+			ses->map->legend[52], ses->map->legend[53], ses->map->legend[54], ses->map->legend[55],
+			ses->map->legend[56], ses->map->legend[57], ses->map->legend[58], ses->map->legend[59],
+			ses->map->legend[60], ses->map->legend[61], ses->map->legend[62], ses->map->legend[63]);
 	}
 	else
 	{
@@ -2115,13 +2116,31 @@ void create_map(struct session *ses, char *arg)
 
 	create_room(ses, "%s", "{1} {0} {} {} { } {} {} {} {} {} {1.0}");
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_UTF8))
+	if (NULL /* !HAS_BIT(ses->flags, SES_FLAG_UTF8) */)
 	{
 		create_legend(ses, "{*}{#}{#}{+}{#}{|}{+}{+}{#}{+}{-}{+}{+}{+}{+}{+}{x}");
 	}
 	else
 	{
-		create_legend(ses, "{\xE2\x80\xA2}{\xE2\x95\xB9}{\xE2\x95\xBA}{\xE2\x94\x97}{\xE2\x95\xBB}{\xE2\x94\x83}{\xE2\x94\x8F}{\xE2\x94\xA3}{\xE2\x95\xB8}{\xE2\x94\x9B}{\xE2\x94\x81}{\xE2\x94\xBB}{\xE2\x94\x93}{\xE2\x94\xAB}{\xE2\x94\xB3}{\xE2\x95\x8B}{X}");
+//		create_legend(ses, "{\xE2\x80\xA2}{\xE2\x95\xB9}{\xE2\x95\xBA}{\xE2\x94\x97}{\xE2\x95\xBB}{\xE2\x94\x83}{\xE2\x94\x8F}{\xE2\x94\xA3}{\xE2\x95\xB8}{\xE2\x94\x9B}{\xE2\x94\x81}{\xE2\x94\xBB}{\xE2\x94\x93}{\xE2\x94\xAB}{\xE2\x94\xB3}{\xE2\x95\x8B}{X}");
+
+		create_legend(ses,
+		"{\xE2\x96\xAA}{\xE2\x95\xB9}{\xE2\x95\xBA}{\xE2\x94\x97}{\xE2\x95\xBB}{\xE2\x94\x83}{\xE2\x94\x8F}{\xE2\x94\xA3}"
+		"{\xE2\x95\xB8}{\xE2\x94\x9B}{\xE2\x94\x81}{\xE2\x94\xBB}{\xE2\x94\x93}{\xE2\x94\xAB}{\xE2\x94\xB3}{\xE2\x95\x8B}"
+
+		"{X}{\xE2\x97\x84}{\xE2\x96\xBA} { } { } { } { } { } { } { } { } { } { } { } { } { }"
+
+		"{\xEE\x80\x80}{\xEE\x80\x81}{\xEE\x80\x82}{\xEE\x80\x83}{\xEE\x80\x84}{\xEE\x80\x85}{\xEE\x80\x86}{\xEE\x80\x87}"
+		"{\xEE\x80\x88}{\xEE\x80\x89}{\xEE\x80\x8A}{\xEE\x80\x8B}{\xEE\x80\x8C}{\xEE\x80\x8D}{\xEE\x80\x8E}{\xEE\x80\x8F}"
+		"{\xEE\x80\x90}{\xEE\x80\x91}{\xEE\x80\x92}{\xEE\x80\x93}{\xEE\x80\x94}{\xEE\x80\x95}{\xEE\x80\x96}{\xEE\x80\x97}"
+		"{\xEE\x80\x98}{\xEE\x80\x99}{\xEE\x80\x9A}{\xEE\x80\x9B}{\xEE\x80\x9C}{\xEE\x80\x9D}{\xEE\x80\x9E}{\xEE\x80\x9F}"
+
+		"{\xEE\x80\xA0}{\xEE\x80\xA1}{\xEE\x80\xA2}{\xEE\x80\xA3}{\xEE\x80\xA4}{\xEE\x80\xA5}{\xEE\x80\xA6}{\xEE\x80\xA7}"
+		"{\xEE\x80\xA8}{\xEE\x80\xA9}{\xEE\x80\xAA}{\xEE\x80\xAB}{\xEE\x80\xAC}{\xEE\x80\xAD}{\xEE\x80\xAE}{\xEE\x80\xAF}"
+		"{\xEE\x80\xB0}{\xEE\x80\xB1}{\xEE\x80\xB2}{\xEE\x80\xB3}{\xEE\x80\xB4}{\xEE\x80\xB5}{\xEE\x80\xB6}{\xEE\x80\xB7}"
+		"{\xEE\x80\xB8}{\xEE\x80\xB9}{\xEE\x80\xBA}{\xEE\x80\xBB}{\xEE\x80\xBC}{\xEE\x80\xBD}{\xEE\x80\xBE}{\xEE\x80\xBF}"
+
+		);
 	}
 }
 
@@ -2153,7 +2172,7 @@ void create_legend(struct session *ses, char *arg)
 	int cnt;
 	char buf[BUFFER_SIZE];
 
-	for (cnt = 0 ; cnt < 17 ; cnt++)
+	for (cnt = 0 ; cnt < 128 ; cnt++)
 	{
 		arg = get_arg_in_braces(ses, arg, buf, FALSE);
 
@@ -2165,7 +2184,12 @@ void create_legend(struct session *ses, char *arg)
 		}
 		else
 		{
-			sprintf(ses->map->legend[cnt], "%s", buf);
+			snprintf(ses->map->legend[cnt], LEGEND_SIZE - 1, "%s", buf);
+		}
+
+		if (*arg == 0)
+		{
+			break;
 		}
 	}
 }
@@ -2871,11 +2895,7 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 	{
 		if (HAS_BIT(ses->map->flags, MAP_FLAG_MUDFONT))
 		{
-			sprintf(buf, "%s%c%c", ses->map->here_color, 199, 207);
-		}
-		else if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
-		{
-			sprintf(buf, "%s\033[12m%s\033[10m", ses->map->here_color, ses->map->legend[16]);
+			sprintf(buf, "%s%s%s", ses->map->here_color, ses->map->legend[17], ses->map->legend[18]);
 		}
 		else
 		{
@@ -2938,9 +2958,9 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 			SET_BIT(exits, MAP_EXIT_SE);
 		}
 
-		room1 = exit1 + 128;
-		room2 = exit2 + 160;
-
+		room1 = exit1 + 32;
+		room2 = exit2 + 64;
+/*
 		if (HAS_BIT(room->flags, ROOM_FLAG_RIVER))
 		{
 			switch (exits)
@@ -2991,18 +3011,8 @@ char *draw_room(struct session *ses, struct room_data *room, int line)
 					break;
 			}
 		}
-		sprintf(buf, "%s%c%c", *room->color ? room->color : ses->map->room_color, room1, room2);
-	}
-	else if (HAS_BIT(ses->map->flags, MAP_FLAG_VTGRAPHICS))
-	{
-		if (HAS_BIT(ses->map->flags, MAP_FLAG_SYMBOLGRAPHICS) && room->symbol[0] && room->symbol[0] != ' ')
-		{
-			sprintf(buf, "%s%-1s", *room->color ? room->color : ses->map->room_color, room->symbol);
-		}
-		else
-		{
-			sprintf(buf, "%s\033[12m%s\033[10m", *room->color ? room->color : ses->map->room_color, ses->map->legend[exits]);
-		}
+*/
+		sprintf(buf, "%s%s%s", *room->color ? room->color : ses->map->room_color, ses->map->legend[room1], ses->map->legend[room2]);
 	}
 	else
 	{
@@ -3105,7 +3115,7 @@ void map_search_compile(struct session *ses, char *arg, char *var)
 
 	arg = sub_arg_in_braces(ses, tmp, buf, GET_ALL, SUB_VAR|SUB_FUN); // name
 
-	ses->map->search->vnum = (int) tintoi(buf);
+	ses->map->search->vnum = (int) get_number(ses, buf);
 
 	if (ses->map->search->vnum)
 	{
@@ -3246,7 +3256,7 @@ void map_search_compile(struct session *ses, char *arg, char *var)
 
 	if (*buf)
 	{
-		ses->map->search->flag = tintoi(buf);
+		ses->map->search->flag = get_number(ses, buf);
 
 		if (is_abbrev(buf, "avoid"))
 		{
