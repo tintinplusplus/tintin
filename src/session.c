@@ -340,6 +340,7 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 
 	newses->lognext_name  = strdup("");
 	newses->logline_name  = strdup("");
+	newses->rand          = utime();
 
 	LINK(newses, gts->next, gts->prev);
 

@@ -389,21 +389,33 @@ int unicode_21_bit(char *str, char *out)
 	}
 }
 
-long long utime()
+unsigned long long utime()
 {
 	struct timeval now_time;
 
 	gettimeofday(&now_time, NULL);
 
-	if (gtd->time >= now_time.tv_sec * 1000000LL + now_time.tv_usec)
+	if (gtd->time >= now_time.tv_sec * 1000000ULL + now_time.tv_usec)
 	{
 		gtd->time++;
 	}
 	else
 	{
-		gtd->time = now_time.tv_sec * 1000000LL + now_time.tv_usec;
+		gtd->time = now_time.tv_sec * 1000000ULL + now_time.tv_usec;
 	}
 	return gtd->time;
+}
+
+void seed_rand(struct session *ses, unsigned long long seed)
+{
+	ses->rand = seed;
+}
+
+unsigned long long generate_rand(struct session *ses)
+{
+	ses->rand = 6364136223846793005ULL * ses->rand + 1ULL;
+
+	return ses->rand;
 }
 
 char *capitalize(char *str)
@@ -637,6 +649,38 @@ void show_debug(struct session *ses, int index, char *format, ...)
 	return;
 }
 
+void show_info(struct session *ses, int index, char *format, ...)
+{
+	struct listroot *root;
+	char buf[STRING_SIZE];
+	va_list args;
+
+	push_call("show_info(%p,%p,%p)",ses,index,format);
+
+	root = ses->list[index];
+
+	if (!HAS_BIT(root->flags, LIST_FLAG_INFO))
+	{
+		pop_call();
+		return;
+	}
+
+	va_start(args, format);
+
+	vsprintf(buf, format, args);
+
+	va_end(args);
+
+	gtd->verbose_level++;
+
+	tintin_puts(ses, buf);
+
+	gtd->verbose_level--;
+
+	pop_call();
+	return;
+}
+
 void tintin_header(struct session *ses, char *format, ...)
 {
 	char arg[BUFFER_SIZE], buf[BUFFER_SIZE];
@@ -837,13 +881,15 @@ void tintin_puts(struct session *ses, char *string)
 
 	do_one_line(string, ses);
 
-	if (!HAS_BIT(ses->flags, SES_FLAG_GAG))
+	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
-		tintin_puts2(ses, string);
+		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
+		show_info(ses, LIST_GAG, "#INFO GAG {%s}", string);
 	}
 	else
 	{
-		DEL_BIT(ses->flags, SES_FLAG_GAG);
+		tintin_puts2(ses, string);
 	}
 }
 
@@ -881,8 +927,8 @@ void show_cpu(struct session *ses)
 
 	tintin_printf2(ses, "");
 
-	tintin_printf2(ses, "Unknown CPU Usage:              %6.2f percent", (gtd->total_io_exec - total_cpu) * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
-	tintin_printf2(ses, "Average CPU Usage:              %6.2f percent", (gtd->total_io_exec)             * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
+	tintin_printf2(ses, "Unknown CPU Usage:             %7.3f percent", (gtd->total_io_exec - total_cpu) * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
+	tintin_printf2(ses, "Average CPU Usage:             %7.3f percent", (gtd->total_io_exec)             * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
 }
 
 
@@ -904,7 +950,7 @@ long long display_timer(struct session *ses, int timer)
 
 	indicated_usage = gtd->timer[timer][0] / gtd->timer[timer][1] * gtd->timer[timer][4];
 
-	tintin_printf2(ses, "%-30s%8lld       %8lld      %8.2f     %8.2f",
+	tintin_printf2(ses, "%-30s%8lld       %8lld      %8.2f     %8.3f",
 		timer_table[timer].name,
 		gtd->timer[timer][0] / gtd->timer[timer][1],
 		gtd->timer[timer][3] / gtd->timer[timer][4] / 1000,

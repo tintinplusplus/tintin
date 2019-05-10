@@ -63,6 +63,8 @@ void check_all_gags(struct session *ses, char *original, char *line)
 	{
 		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
+			show_debug(ses, LIST_GAG, "#DEBUG GAG {%s}", root->list[root->update]->left);
+
 			SET_BIT(ses->flags, SES_FLAG_GAG);
 
 			return;

@@ -99,7 +99,7 @@ DO_COMMAND(do_delay)
 	{
 		if (*arg3 == 0)
 		{
-			sprintf(arg3, "%lld", utime());
+			sprintf(arg3, "%lld", utime() + (long long) (1000000 * get_number(ses, arg1)));
 
 			get_number_string(ses, arg1, temp);
 

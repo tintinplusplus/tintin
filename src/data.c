@@ -158,6 +158,11 @@ struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtex
 
 	if (index != -1)
 	{
+		if (list_table[root->type].mode == SORT_DELAY && is_number(ltext))
+		{
+			return insert_node_list(root, ltext, rtext, prtext);
+		}
+
 		node = root->list[index];
 
 		if (strcmp(node->right, rtext) != 0)
@@ -170,7 +175,7 @@ struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtex
 
 		switch (list_table[root->type].mode)
 		{
-			case PRIORITY:
+			case SORT_PRIORITY:
 				if (atof(node->pr) != atof(prtext))
 				{
 					delete_index_list(root, index);
@@ -178,12 +183,13 @@ struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtex
 				}
 				break;
 
-			case APPEND:
+			case SORT_APPEND:
 				delete_index_list(root, index);
 				return insert_node_list(root, ltext, rtext, prtext);
 				break;
 
-			case ALPHA:
+			case SORT_ALPHA:
+			case SORT_DELAY:
 				if (strcmp(node->pr, prtext) != 0)
 				{
 					free(node->pr);
@@ -268,7 +274,8 @@ struct listnode *search_node_list(struct listroot *root, char *text)
 
 	switch (list_table[root->type].mode)
 	{
-		case ALPHA:
+		case SORT_ALPHA:
+		case SORT_DELAY:
 			index = bsearch_alpha_list(root, text, 0);
 			break;
 
@@ -291,12 +298,12 @@ struct listnode *search_node_list(struct listroot *root, char *text)
 
 int search_index_list(struct listroot *root, char *text, char *priority)
 {
-	if (list_table[root->type].mode == ALPHA)
+	if (list_table[root->type].mode == SORT_ALPHA || list_table[root->type].mode == SORT_DELAY)
 	{
 		return bsearch_alpha_list(root, text, 0);
 	}
 
-	if (list_table[root->type].mode == PRIORITY && priority)
+	if (list_table[root->type].mode == SORT_PRIORITY && priority)
 	{
 		return bsearch_priority_list(root, text, priority, 0);
 	}
@@ -312,10 +319,11 @@ int locate_index_list(struct listroot *root, char *text, char *priority)
 {
 	switch (list_table[root->type].mode)
 	{
-		case ALPHA:
+		case SORT_ALPHA:
+		case SORT_DELAY:
 			return bsearch_alpha_list(root, text, 1);
 
-		case PRIORITY:
+		case SORT_PRIORITY:
 			return bsearch_priority_list(root, text, priority, 1);
 
 		default:
@@ -841,7 +849,6 @@ DO_COMMAND(do_debug)
 	return ses;
 }
 
-
 DO_COMMAND(do_info)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], name[BUFFER_SIZE];
@@ -859,11 +866,12 @@ DO_COMMAND(do_info)
 		{
 			if (!HAS_BIT(ses->list[index]->flags, LIST_FLAG_HIDE))
 			{
-				tintin_printf2(ses, "%-20s  %5d  IGNORE %3s  MESSAGE %3s  DEBUG %3s %3s",
+				tintin_printf2(ses, "%-15s   %5d   IGNORE %3s   MESSAGE %3s   INFO %3s   DEBUG %3s %3s",
 					list_table[index].name_multi,
 					ses->list[index]->used,
 					HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE)  ?  "ON" : "OFF",
 					HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ?  "ON" : "OFF",
+					HAS_BIT(ses->list[index]->flags, LIST_FLAG_INFO)    ?  "ON" : "OFF",
 					HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG)   ?  "ON" : "OFF",
 					HAS_BIT(ses->list[index]->flags, LIST_FLAG_LOG)     ? "LOG" : "   ");
 			}
@@ -875,8 +883,6 @@ DO_COMMAND(do_info)
 	{
 		for (index = found = 0 ; index < LIST_MAX ; index++)
 		{
-			root = ses->list[index];
-
 			if (HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
 			{
 				continue;
@@ -887,32 +893,52 @@ DO_COMMAND(do_info)
 				continue;
 			}
 
-			root = ses->list[index];
-
-			if (is_abbrev(right, "LIST"))
+			if (*right == 0)
 			{
-				for (cnt = 0 ; cnt < root->used ; cnt++)
-				{
-					tintin_printf2(ses, "#INFO %s %4d {arg1}{%s} {arg2}{%s} {arg3}{%s} {class}{%s} {data}{%lld}", list_table[index].name, cnt, root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
-				}
+				TOG_BIT(ses->list[index]->flags, LIST_FLAG_INFO);
 			}
-			else if (is_abbrev(right, "SAVE"))
+			else if (is_abbrev(right, "ON"))
 			{
-				sprintf(name, "info[%s]", list_table[index].name);
-				delete_nest_node(ses->list[LIST_VARIABLE], name);
-
-				for (cnt = 0 ; cnt < root->used ; cnt++)
-				{
-					sprintf(name, "info[%s][%d]", list_table[index].name, cnt);
-
-					set_nest_node(ses->list[LIST_VARIABLE], name, "{arg1}{%s}{arg2}{%s}{arg3}{%s}{class}{%s}{data}{%lld}", root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
-				}
-				show_message(ses, LIST_COMMAND, "#INFO: DATA WRITTEN TO {info[%s]}", list_table[index].name);
+				SET_BIT(ses->list[index]->flags, LIST_FLAG_INFO);
+			}
+			else if (is_abbrev(right, "OFF"))
+			{
+				DEL_BIT(ses->list[index]->flags, LIST_FLAG_INFO);
 			}
 			else
 			{
-				return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [LIST|SAVE]", left);
+				root = ses->list[index];
+
+				if (is_abbrev(right, "LIST"))
+				{
+					for (cnt = 0 ; cnt < root->used ; cnt++)
+					{
+						tintin_printf2(ses, "#INFO %s %4d {arg1}{%s} {arg2}{%s} {arg3}{%s} {class}{%s} {data}{%lld}", list_table[index].name, cnt, root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
+					}
+				}
+				else if (is_abbrev(right, "SAVE"))
+				{
+					sprintf(name, "info[%s]", list_table[index].name);
+					delete_nest_node(ses->list[LIST_VARIABLE], name);
+
+					for (cnt = 0 ; cnt < root->used ; cnt++)
+					{
+						sprintf(name, "info[%s][%d]", list_table[index].name, cnt);
+
+						set_nest_node(ses->list[LIST_VARIABLE], name, "{arg1}{%s}{arg2}{%s}{arg3}{%s}{class}{%s}{data}{%lld}", root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
+					}
+					show_message(ses, LIST_COMMAND, "#INFO: DATA WRITTEN TO {info[%s]}", list_table[index].name);
+				}
+				else
+				{
+					return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF|LIST|SAVE]", left);
+				}
+				found = TRUE;
+
+				return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF]", left);
 			}
+			show_message(ses, LIST_COMMAND, "#OK: #%s INFO STATUS HAS BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_INFO) ? "ON" : "OFF");
+
 			found = TRUE;
 		}
 

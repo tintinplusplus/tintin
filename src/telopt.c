@@ -74,12 +74,12 @@ struct iac_type
 
 struct iac_type iac_table [] =
 {
-	{   3,  iac_do_sga,           &send_will_sga           },
-	{   3,  iac_will_sga,         &send_do_sga             },
+	{   3,  iac_do_sga,           &recv_do_sga             },
+	{   3,  iac_will_sga,         &recv_will_sga           },
 	{   3,  iac_do_naws,          &recv_do_naws            },
-	{   3,  iac_do_echo,          &send_echo_will          },
-	{   3,  iac_will_echo,        &send_echo_off           },
-	{   3,  iac_wont_echo,        &send_echo_on            },
+	{   3,  iac_do_echo,          &recv_do_echo            },
+	{   3,  iac_will_echo,        &recv_will_echo          },
+	{   3,  iac_wont_echo,        &recv_wont_echo          },
 	{   3,  iac_will_mccp2,       &send_do_mccp2           },
 	{   3,  iac_will_mssp,        &send_do_mssp            },
 	{   3,  iac_sb_mssp,          &recv_sb_mssp            },
@@ -561,8 +561,13 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 	SGA
 */
 
-int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
+int recv_will_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 {
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC WILL SGA"))
+	{
+		return 3;
+	}
+
 	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
 
 	if (!HAS_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32))
@@ -576,8 +581,15 @@ int send_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 3;
 }
 
-int send_will_sga(struct session *ses, int cplen, unsigned char *cpsrc)
+int recv_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 {
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC DO SGA"))
+	{
+		return 3;
+	}
+
+	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
+
 	if (!HAS_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32))
 	{
 		SET_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32);
@@ -610,51 +622,56 @@ int mark_prompt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DONT TTYPE"))
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC DONT TTYPE"))
 	{
-		DEL_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
-
-		DEL_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
+		return 3;
 	}
+
+	DEL_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
+
+	DEL_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
+
 	return 3;
 }
 
 int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "IAC SB TTYPE", ntos(cpsrc[3])))
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "CATCH IAC SB TTYPE", ntos(cpsrc[3])))
 	{
-		if (HAS_BIT(ses->telopts, TELOPT_FLAG_MTTS))
-		{
-			char mtts[BUFFER_SIZE];
+		return 6;
+	}
 
-			sprintf(mtts, "MTTS %d",
-				(HAS_BIT(ses->flags, SES_FLAG_ANSICOLOR) ? 1 : 0) +
-				(HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? 0 : 2) +
-				(HAS_BIT(ses->flags, SES_FLAG_UTF8) ? 4 : 0) +
-				(HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? 8 : 0) +
-				(HAS_BIT(ses->flags, SES_FLAG_SCREENREADER) ? 64 : 0) +
-				(HAS_BIT(ses->flags, SES_FLAG_TRUECOLOR) ? 256 : 0));
+	if (HAS_BIT(ses->telopts, TELOPT_FLAG_MTTS))
+	{
+		char mtts[BUFFER_SIZE];
 
-			socket_printf(ses, 6 + strlen(mtts), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, mtts, IAC, SE);
+		sprintf(mtts, "MTTS %d",
+			(HAS_BIT(ses->flags, SES_FLAG_ANSICOLOR) ? 1 : 0) +
+			(HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? 0 : 2) +
+			(HAS_BIT(ses->flags, SES_FLAG_UTF8) ? 4 : 0) +
+			(HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? 8 : 0) +
+			(HAS_BIT(ses->flags, SES_FLAG_SCREENREADER) ? 64 : 0) +
+			(HAS_BIT(ses->flags, SES_FLAG_TRUECOLOR) ? 256 : 0));
 
-			telopt_debug(ses, "SENT IAC SB TTYPE %s", mtts);
-		}
-		else if (HAS_BIT(ses->telopts, TELOPT_FLAG_TTYPE))
-		{
-			socket_printf(ses, 6 + strlen(gtd->term), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, gtd->term, IAC, SE);
+		socket_printf(ses, 6 + strlen(mtts), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, mtts, IAC, SE);
 
-			telopt_debug(ses, "SENT IAC SB TTYPE %s", gtd->term);
+		telopt_debug(ses, "SENT IAC SB TTYPE %s", mtts);
+	}
+	else if (HAS_BIT(ses->telopts, TELOPT_FLAG_TTYPE))
+	{
+		socket_printf(ses, 6 + strlen(gtd->term), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, gtd->term, IAC, SE);
 
-			SET_BIT(ses->telopts, TELOPT_FLAG_MTTS);
-		}
-		else
-		{
-			socket_printf(ses, 14, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
+		telopt_debug(ses, "SENT IAC SB TTYPE %s", gtd->term);
 
-			telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
+		SET_BIT(ses->telopts, TELOPT_FLAG_MTTS);
+	}
+	else
+	{
+		socket_printf(ses, 14, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, "TINTIN++", IAC, SE);
 
-			SET_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
-		}
+		telopt_debug(ses, "SENT IAC SB TTYPE %s", "TINTIN++");
+
+		SET_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
 	}
 	return 6;
 }
@@ -666,14 +683,17 @@ int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 {
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "CATCH IAC SB TSPEED", ntos(cpsrc[3])))
+	{
+		return 6;
+	}
+
 	SET_BIT(ses->telopts, TELOPT_FLAG_TSPEED);
 
-	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "IAC SB TSPEED", ntos(cpsrc[3])))
-	{
-		socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
+	socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
 
-		telopt_debug(ses, "SENT IAC SB 0 %s 38400,38400 IAC SB", telopt_table[TELOPT_TSPEED].name);
-	}
+	telopt_debug(ses, "SENT IAC SB 0 %s 38400,38400 IAC SB", telopt_table[TELOPT_TSPEED].name);
+
 	return 6;
 }
 
@@ -684,7 +704,7 @@ int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int recv_do_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DO NAWS"))
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC DO NAWS"))
 	{
 		return 3;
 	}
@@ -733,39 +753,82 @@ int send_sb_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 	return 3;
 }
 
-/*
-	ECHO
-*/
+// Server requests client to enable local echo
 
-int send_echo_on(struct session *ses, int cplen, unsigned char *cpsrc)
+int recv_wont_echo(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, DONT, TELOPT_ECHO);
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC WONT ECHO"))
+	{
+		return 3;
+	}
 
 	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
-	telopt_debug(ses, "SENT IAC DONT ECHO");
+	if (HAS_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32))
+	{
+		DEL_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32);
+
+		socket_printf(ses, 3, "%c%c%c", IAC, DONT, TELOPT_ECHO);
+
+		telopt_debug(ses, "SENT IAC DONT ECHO");
+	}
+	else
+	{
+		telopt_debug(ses, "DID NOT SEND IAC DONT ECHO, INFINITE LOOP PROTECTION.");
+	}
 
 	return 3;
 }
 
-int send_echo_off(struct session *ses, int cplen, unsigned char *cpsrc)
+// Server requests client to disable local echo
+
+int recv_will_echo(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_ECHO);
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC WILL ECHO"))
+	{
+		return 3;
+	}
 
 	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
-	telopt_debug(ses, "SENT IAC DO ECHO");
+	if (!HAS_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32))
+	{
+		SET_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32);
 
+		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_ECHO);
+
+		telopt_debug(ses, "SENT IAC DO ECHO");
+	}
+	else
+	{
+		telopt_debug(ses, "DID NOT SEND IAC DO ECHO, INFINITE LOOP PROTECTION.");
+	}
 	return 3;
 }
 
-int send_echo_will(struct session *ses, int cplen, unsigned char *cpsrc)
+// Shouldn't be received, but we'll handle it as a disable local echo request
+
+int recv_do_echo(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_ECHO);
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC DO ECHO"))
+	{
+		return 3;
+	}
 
 	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
-	telopt_debug(ses, "SENT IAC WILL ECHO");
+	if (!HAS_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32))
+	{
+		SET_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32);
+
+		socket_printf(ses, 3, "%c%c%c", IAC, WILL, TELOPT_ECHO);
+
+		telopt_debug(ses, "SENT IAC WILL ECHO");
+	}
+	else
+	{
+		telopt_debug(ses, "DID NOT SEND IAC WILL ECHO, INFINITE LOOP PROTECTION.");
+	}
 
 	return 3;
 }
@@ -1635,20 +1698,22 @@ int recv_sb_gmcp(struct session *ses, int cplen, unsigned char *src)
 
 int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL MCCP2"))
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC WILL MCCP2"))
 	{
-		if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
-		{
-			socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP2);
+		return 3;
+	}
 
-			telopt_debug(ses, "SENT IAC DO MCCP2");
-		}
-		else
-		{
-			socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP2);
+	if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, DO, TELOPT_MCCP2);
 
-			telopt_debug(ses, "SENT IAC WONT MCCP2 (MCCP HAS BEEN DISABLED)");
-		}
+		telopt_debug(ses, "SENT IAC DO MCCP2");
+	}
+	else
+	{
+		socket_printf(ses, 3, "%c%c%c", IAC, WONT, TELOPT_MCCP2);
+
+		telopt_debug(ses, "SENT IAC WONT MCCP2 (MCCP HAS BEEN DISABLED)");
 	}
 	return 3;
 }

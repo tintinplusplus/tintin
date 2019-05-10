@@ -1542,3 +1542,13 @@ DO_CURSOR(cursor_mixed_tab_backward)
 
 	cursor_show_completion(gtd->input_tab, TRUE);
 }
+
+DO_CURSOR(cursor_win_focus_in)
+{
+	check_all_events(gts, SUB_ARG, 0, 1, "WINDOW FOCUS IN", gtd->ses->name);
+}
+
+DO_CURSOR(cursor_win_focus_out)
+{
+	check_all_events(gts, SUB_ARG, 0, 1, "WINDOW FOCUS OUT", gtd->ses->name);
+}

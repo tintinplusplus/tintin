@@ -74,7 +74,7 @@ int check_all_aliases(struct session *ses, char *input)
 {
 	struct listnode *node;
 	struct listroot *root;
-	char tmp[BUFFER_SIZE], *arg;
+	char tmp[BUFFER_SIZE], line[BUFFER_SIZE], *arg;
 	int i;
 
 	root = ses->list[LIST_ALIAS];
@@ -84,24 +84,24 @@ int check_all_aliases(struct session *ses, char *input)
 		return FALSE;
 	}
 
-//	substitute(ses, input, line, SUB_VAR|SUB_FUN);
+	substitute(ses, input, line, SUB_VAR|SUB_FUN);
 
 	for (root->update = 0 ; root->update < root->used ; root->update++)
 	{
-		if (check_one_regexp(ses, root->list[root->update], input, input, PCRE_ANCHORED))
+		if (check_one_regexp(ses, root->list[root->update], line, line, PCRE_ANCHORED))
 		{
 			node = root->list[root->update];
 
 			i = strlen(node->left);
 
-			if (!strncmp(node->left, input, i))
+			if (!strncmp(node->left, line, i))
 			{
-				if (input[i] && input[i] != ' ')
+				if (line[i] && line[i] != ' ')
 				{
 					continue;
 				}
 				
-				arg = get_arg_in_braces(ses, input, tmp, FALSE);
+				arg = get_arg_in_braces(ses, line, tmp, FALSE);
 
 				RESTRING(gtd->vars[0], arg)
 
@@ -128,7 +128,7 @@ int check_all_aliases(struct session *ses, char *input)
 
 			substitute(ses, node->right, tmp, SUB_ARG);
 
-			if (!strncmp(node->left, input, strlen(node->left)) && !strcmp(node->right, tmp) && *gtd->vars[0])
+			if (!strncmp(node->left, line, strlen(node->left)) && !strcmp(node->right, tmp) && *gtd->vars[0])
 			{
 				sprintf(input, "%s %s", tmp, gtd->vars[0]);
 			}

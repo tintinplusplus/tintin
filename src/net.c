@@ -392,13 +392,15 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
-		strip_non_vt102_codes(linebuf, ses->more_output);
-
-		printf("%s", ses->more_output);
-
-		ses->more_output[0] = 0;
-
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
+		strip_non_vt102_codes(linebuf, line);
+
+		printf("%s", line);
+
+		strip_vt102_codes(linebuf,line);
+
+		show_info(ses, LIST_GAG, "#INFO GAG {%s}", line);
 
 		pop_call();
 		return;

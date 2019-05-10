@@ -31,7 +31,7 @@ DO_COMMAND(do_action)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg1, 1);
 	arg = get_arg_in_braces(ses, arg, arg2, 1);
 	arg = get_arg_in_braces(ses, arg, arg3, 1);
 

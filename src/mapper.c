@@ -484,7 +484,7 @@ DO_MAP(map_exit)
 	{
 		if (*arg3)
 		{
-			set_nest_node(ses->list[LIST_VARIABLE], arg3, "{command}{%s}{destination}{%d}{dir}{%d}{flags}{%d}{name}{%s}{vnum}{%d}{weight}{%.3f}", exit->cmd, tunnel_void(ses, ses->map->in_room, exit->vnum, exit->dir), exit->dir, exit->flags, exit->name, exit->vnum,exit->weight);
+			set_nest_node(ses->list[LIST_VARIABLE], arg3, "{command}{%s}{destination}{%d}{dir}{%d}{flags}{%d}{name}{%s}{vnum}{%d}{weight}{%.3f}", exit->cmd, tunnel_void(ses, ses->map->in_room, exit->vnum, exit->dir), exit->dir, exit->flags, exit->name, exit->vnum, exit->weight);
 		}
 		else
 		{
@@ -3802,7 +3802,7 @@ void shortest_path(struct session *ses, int run, char *delay, char *arg)
 	struct room_data *room;
 	int vnum, dest;
 
-	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
 		show_error(ses, LIST_COMMAND, "#SHORTEST PATH: You have to use #PATH END first.");
 
@@ -4024,7 +4024,7 @@ void explore_path(struct session *ses, int run, char *arg1, char *arg2)
 		}
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
 		show_error(ses, LIST_COMMAND, "#MAP EXPLORE: You have to use #PATH END first.");
 

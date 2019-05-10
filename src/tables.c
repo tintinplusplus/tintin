@@ -127,25 +127,25 @@ struct command_type command_table[] =
 
 struct list_type list_table[LIST_MAX] =
 {
-	{    "ACTION",            "ACTIONS",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "ALIAS",             "ALIASES",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "CLASS",             "CLASSES",            ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
-	{    "COMMAND",           "COMMANDS",           APPEND,      1,  LIST_FLAG_MESSAGE                                                                  },
-	{    "CONFIG",            "CONFIGURATIONS",     ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
-	{    "DELAY",             "DELAYS",             ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
-	{    "EVENT",             "EVENTS",             ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "FUNCTION",          "FUNCTIONS",          ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "GAG",               "GAGS",               ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "HIGHLIGHT",         "HIGHLIGHTS",         PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "HISTORY",           "HISTORIES",          APPEND,      1,  LIST_FLAG_MESSAGE                                                                  },
-	{    "MACRO",             "MACROS",             ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_MESSAGE                                                                  },
-	{    "PATHDIR",           "PATHDIRS",           ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "SUBSTITUTE",        "SUBSTITUTES",        PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "TICKER",            "TICKERS",            ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT|LIST_FLAG_NEST }
+	{    "ACTION",            "ACTIONS",            SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "ALIAS",             "ALIASES",            SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "CLASS",             "CLASSES",            SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
+	{    "COMMAND",           "COMMANDS",           SORT_APPEND,      1,  LIST_FLAG_MESSAGE                                                                  },
+	{    "CONFIG",            "CONFIGURATIONS",     SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
+	{    "DELAY",             "DELAYS",             SORT_DELAY,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
+	{    "EVENT",             "EVENTS",             SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "FUNCTION",          "FUNCTIONS",          SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "GAG",               "GAGS",               SORT_ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HIGHLIGHT",         "HIGHLIGHTS",         SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "HISTORY",           "HISTORIES",          SORT_APPEND,      1,  LIST_FLAG_MESSAGE                                                                  },
+	{    "MACRO",             "MACROS",             SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PATH",              "PATHS",              SORT_APPEND,      2,  LIST_FLAG_MESSAGE                                                                  },
+	{    "PATHDIR",           "PATHDIRS",           SORT_ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "PROMPT",            "PROMPTS",            SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "SUBSTITUTE",        "SUBSTITUTES",        SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TAB",               "TABS",               SORT_ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "TICKER",            "TICKERS",            SORT_ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "VARIABLE",          "VARIABLES",          SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT|LIST_FLAG_NEST }
 };
 
 struct substitution_type substitution_table[] =
@@ -204,7 +204,7 @@ struct config_type config_table[] =
 	{
 		"CONNECT RETRY",
 		"",
-		"Seconds TinTin++ sessions try to connect on failure.",
+		"Seconds TinTin++ sessions try to connect on failure",
 		config_connectretry
 	},
 
@@ -271,6 +271,13 @@ struct config_type config_table[] =
 		"MCCP is enabled.",
 		"MCCP is disabled.",
 		config_mccp
+	},
+
+	{
+		"MOUSE TRACKING",
+		"Your terminal generates mouse events.",
+		"Your terminal does not generate mouse events.",
+		config_mousetracking
 	},
 
 	{
@@ -789,7 +796,18 @@ struct cursor_type cursor_table[] =
 		"",
 		cursor_tab_forward
 	},
-
+	{
+		"WINDOW FOCUS IN",
+		"Window is focussed in event",
+		"[I",
+		cursor_win_focus_in
+	},
+	{
+		"WINDOW FOCUS OUT",
+		"Window is focussed out event",
+		"[O",
+		cursor_win_focus_out
+	},
 	{
 		"", "", "[5~",   cursor_buffer_up
 	},
@@ -886,9 +904,11 @@ struct timer_type timer_table[] =
 
 struct event_type event_table[] =
 {
+	{    "CATCH ",                                 "Triggers on catch events."               },
 	{    "CHAT MESSAGE",                           "Triggers on any chat related message."   },
 	{    "DATE",                                   "Triggers on the given date."             },
 	{    "DAY",                                    "Triggers each day or given day."         },
+	{    "DOUBLE-CLICKED ",                        "Triggers when mouse is double-clicked"   },
 	{    "HOUR",                                   "Triggers each hour or given hour."       },
 	{    "END OF PATH",                            "Triggers when walking the last room."    },
 	{    "IAC ",                                   "Triggers on telopt negotiation."         },
@@ -898,16 +918,24 @@ struct event_type event_table[] =
 	{    "MAP EXIT ROOM",                          "Triggers when exiting a map room."       },
 	{    "MINUTE",                                 "Triggers each minute or given minute."   },
 	{    "MONTH",                                  "Triggers each month or given month."     },
+	{    "MOVED ",                                 "Triggers when mouse is moved."           },
 	{    "PORT CONNECTION",                        "Triggers when socket connects."          },
 	{    "PORT DISCONNECTION",                     "Triggers when socket disconnects."       },
 	{    "PORT MESSAGE",                           "Triggers when socket data is received."  },
+	{    "PRESSED ",                               "Triggers when mouse button is pressed."  },
 	{    "PROGRAM START",                          "Triggers when main session starts."      },
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."      },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },
 	{    "RECEIVED LINE",                          "Triggers when a new line is received."   },
 	{    "RECEIVED OUTPUT",                        "Triggers when new output is received."   },
 	{    "RECEIVED PROMPT",                        "Triggers when a prompt is received."     },
+	{    "RELEASED ",                              "Triggers when mouse button is released." },
+	{    "SCAN CSV HEADER",                        "Triggers when scanning a csv file."      },
+	{    "SCAN CSV LINE",                          "Triggers when scanning a csv file."      },
+	{    "SCAN TSV HEADER",                        "Triggers when scanning a tsv file."      },
+	{    "SCAN TSV LINE",                          "Triggers when scanning a tsv file."      },
 	{    "SCREEN RESIZE",                          "Triggers when the screen is resized."    },
+	{    "SCROLLED ",                              "Triggers when mouse wheel is scrolled."  },
 	{    "SECOND",                                 "Trigers each second or given second."    },
 	{    "SEND OUTPUT",                            "Triggers when sending output."           },
 	{    "SESSION ACTIVATED",                      "Triggers when a session is activated."   },
@@ -917,6 +945,7 @@ struct event_type event_table[] =
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
 	{    "SESSION TIMED OUT",                      "Triggers when a session doesn't connect."},
 	{    "TIME",                                   "Triggers on the given time."             },
+	{    "TRIPLE-CLICKED",                         "Triggers when mouse is triple-clicked."  },
 	{    "VARIABLE UPDATE ",                       "Triggers on a variable update."          },
 	{    "VT100 CPR",                              "Triggers on an ESC [ 6 n call."          },
 	{    "VT100 DA",                               "Triggers on an ESC [ c call."            },
@@ -924,6 +953,8 @@ struct event_type event_table[] =
 	{    "VT100 DSR",                              "Triggers on an ESC [ 5 n call."          },
 	{    "VT100 ENQ",                              "Triggers on an \\x05 call."              },
 	{    "WEEK",                                   "Triggers each week or given week."       },
+	{    "WINDOW FOCUS IN",                        "Triggers on window focussing in."        },
+	{    "WINDOW FOCUS OUT",                       "Triggers on window focussing out."       },
 	{    "YEAR",                                   "Triggers each year or given year."       },
 	{    "",                                       ""                                        }
 };
@@ -1040,7 +1071,7 @@ struct telopt_type telopt_table[] =
 	{    "KERMIT",            TEL_N,               NEG_U },
 	{    "SEND-URL",          TEL_N,               NEG_U },
 	{    "FORWARD_X",         TEL_N,               NEG_U },
-	{    "50",                TEL_N,               NEG_U },
+	{    "50",                TEL_N,               NEG_U }, /* 50 */
 	{    "51",                TEL_N,               NEG_U },
 	{    "52",                TEL_N,               NEG_U },
 	{    "53",                TEL_N,               NEG_U },
@@ -1050,7 +1081,7 @@ struct telopt_type telopt_table[] =
 	{    "57",                TEL_N,               NEG_U },
 	{    "58",                TEL_N,               NEG_U },
 	{    "59",                TEL_N,               NEG_U },
-	{    "60",                TEL_N,               NEG_U },
+	{    "60",                TEL_N,               NEG_U }, /* 60 */
 	{    "61",                TEL_N,               NEG_U },
 	{    "62",                TEL_N,               NEG_U },
 	{    "63",                TEL_N,               NEG_U },
@@ -1070,7 +1101,7 @@ struct telopt_type telopt_table[] =
 	{    "77",                TEL_N,               NEG_U },
 	{    "78",                TEL_N,               NEG_U },
 	{    "79",                TEL_N,               NEG_U },
-	{    "80",                TEL_N,               NEG_U },
+	{    "80",                TEL_N,               NEG_U }, /* 80 */
 	{    "81",                TEL_N,               NEG_U },
 	{    "82",                TEL_N,               NEG_U },
 	{    "83",                TEL_N,               NEG_U },

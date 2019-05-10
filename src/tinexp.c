@@ -863,21 +863,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				}
 				else
 				{
-					if (HAS_BIT(flags, SUB_VAR) && pti[1] == '*')
-					{
-						*pto++ = *pti++;
-						*pto++ = *pti++;
-					}
-					if (HAS_BIT(flags, SUB_VAR) && pti[1] == '!' && pti[2] == '*')
-					{
-						*pto++ = *pti++;
-						*pto++ = *pti++;
-						*pto++ = *pti++;
-					}
-					else
-					{
-						*pto++ = *pti++;
-					}
+					*pto++ = *pti++;
 				}
 				break;
 

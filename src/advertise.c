@@ -77,7 +77,7 @@ struct advertisement_type advertisement_table[] =
 		1800000000, /* 2027 */
 		100,
 		"\n"
-		"<138>                Legends of Kallisti - http://www.KallistiMUD.com\n"
+		"<138>               Legends of Kallisti  -  http://www.KallistiMUD.com\n"
 		"\n"
 		"<078>One of the longest running, most feature rich MUDs in the world with decades of\n"
 		"<078>development. Kallisti boasts a massive original world, great atmosphere of long\n"
@@ -108,7 +108,7 @@ struct advertisement_type advertisement_table[] =
 		100,
 
 		"\n"
-		"<138>                The Last Outpost - https://www.last-outpost.com\n"
+		"<138>                The Last Outpost  -  https://www.last-outpost.com\n"
 		"\n"
 		"<078>The Last Outpost has been serving up adventure since 1992.  Along with\n"
 		"<078>exploring and advancing through the game world, the game offers players the\n"
@@ -139,7 +139,7 @@ struct advertisement_type advertisement_table[] =
 		"\n"
 		"<138>                New Worlds Ateraan  -  http://www.ateraan.com\n"
 		"\n"
-		"<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful\n"
+		"<078>Ateraan is a world of Intensive Roleplaying offering many unique and powerful\n"
 		"<078>guilds, races, politics, religion, justice, economy, and a storyline that is\n"
 		"<078>dominantly player controlled and based on a novel. The game is based on a\n"
 		"<078>Kingdom with fighters, merchants, mages, and thieves, and a fierce southern\n"
@@ -155,13 +155,42 @@ struct advertisement_type advertisement_table[] =
                 "<138>New Worlds Ateraan\n"
                 "<168>http://www.ateraan.com\n"
                 "\n"
-                "<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful guilds, races, politics, religion, justice, economy, and a storyline that is dominantly player controlled and based on a novel. The game is based on a >Kingdom with fighters, merchants, mages, and thieves, and a fierce southern state that has warriors, shaman, slaves, and servants. Ships rule the seas and caravans travel the lands. With 100's of players and features like invasions, >ship creation, house building, clans, theaters, leatherball fields, and massive events, the game is incredibly robust and diverse.\n"
+                "<078>Ateraan is a world of Intensive Roleplaying offering many unique and powerful guilds, races, politics, religion, justice, economy, and a storyline that is dominantly player controlled and based on a novel. The game is based on a Kingdom with fighters, merchants, mages, and thieves, and a fierce southern state that has warriors, shaman, slaves, and servants. Ships rule the seas and caravans travel the lands. With 100's of players and features like invasions, ship creation, house building, clans, theaters, leatherball fields, and massive events, the game is incredibly robust and diverse.\n"
                 "\n"
                 "<178>To connect to New Worlds Ateraan enter: #session nwa ateraan.com 4002\n"
                 "\n"
 
 	},
 
+	{
+		1400000000,  /* 2014 */ 
+		1800000000,  /* 2027 */ 
+		100,
+
+		"\n"
+		"<138>                 Primal Darkness  -  http://www.primaldarkness.com\n"
+		"\n"
+		"<078>Primal Darkness boasts twenty three start races, three quest races, five start\n"
+		"<078>classes and twenty one subclasses to suit your adventuring needs, and a custom\n"
+		"<078>remort system allowing you to save all your hard work while trying out new\n"
+		"<078>races and/or classes. The world has zoned player killing (pk) supported by a\n"
+		"<078>justice system, player built and ran guilds, a fully sail-able ocean with\n"
+		"<078>customizable ships and ship battle system, a fully flyable sky with mapping\n"
+		"<078>system, mud-wide auction line, a colosseum in which to prove your battle\n"
+		"<078>prowess (harmless/free pk), and 30+ areas on multiple continents to explore.\n"
+		"\n"
+		"<178>To connect to Primal Darkness enter: #session pd mud.primaldarkness.com 5000\n"
+		"\n",
+		
+		"\n"
+		"<138>Primal Darkness\n"
+		"<168>http://www.primaldarkness.com\n"
+		"\n"
+		"<078>Primal Darkness boasts twenty three start races, three quest races, five start classes and twenty one subclasses to suit your adventuring needs, and a custom remort system allowing you to save all your hard work while trying out new races and/or classes. The world has zoned player killing (pk) supported by a justice system, player built and ran guilds, a fully sail-able ocean with customizable ships and ship battle system, a fully flyable sky with mapping system, mud-wide auction line, a colosseum in which to prove your battle prowess (harmless/free pk), and 30+ areas on multiple continents to explore.\n"
+		"\n"
+		"<178>To connect to Primal Darkness enter: #session pd mud.primaldarkness.com 5000\n"
+		"\n"
+	},
 /*
 	{
 		1400000000,
@@ -169,7 +198,7 @@ struct advertisement_type advertisement_table[] =
 		100,
 
 		"\n"
-		"<138>               Realm of Utopian Dreams (RUD) - http://rudmud.com\n"
+		"<138>              Realm of Utopian Dreams (RUD)  -  http://rudmud.com\n"
 		"\n"
 		"<078>RUD is a custom hack'n'slash MUD, with character choices for a range of combat\n"
 		"<078>and roleplay. Every race and class has many unique spells and skills, and many\n"
@@ -331,7 +360,7 @@ DO_COMMAND(do_advertise)
 
 		cnt = advertisement_table[i].value;
 
-		if (rand() % max < cnt)
+		if (generate_rand(ses) % max < cnt)
 		{
 			char *pto, *ptf;
 

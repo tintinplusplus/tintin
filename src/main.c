@@ -374,6 +374,7 @@ void init_tintin(int greeting)
 	init_local(gts);
 
 	printf("\e="); // set application keypad mode
+	printf("\e[?1004h"); // set window focus tracking mode
 
 	gtd->input_level++;
 
@@ -387,6 +388,7 @@ void init_tintin(int greeting)
 	do_configure(gts, "{CHARSET}          {AUTO}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
+	do_configure(gts, "{MOUSE TRACKING}    {OFF}");
 	do_configure(gts, "{PACKET PATCH}     {0.00}");
 	do_configure(gts, "{RANDOM SEED}      {AUTO}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
@@ -452,7 +454,7 @@ void quitmsg(char *message)
 		close(gtd->chat->fd);
 	}
 
-	check_all_events(gts, SUB_ARG, 0, 0, "PROGRAM TERMINATION");
+	check_all_events(gts, SUB_ARG, 0, 1, "PROGRAM TERMINATION", message ? message : "");
 
 	if (gtd->history_size)
 	{

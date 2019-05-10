@@ -92,6 +92,8 @@ void init_terminal()
 void restore_terminal(void)
 {
 	tcsetattr(0, TCSANOW, &gtd->old_terminal);
+
+	printf("\e[?1000l\e[?1002l\e[?1004l\e[?1006l");
 }
 
 void refresh_terminal(void)

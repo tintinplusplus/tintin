@@ -23,7 +23,6 @@ $         The dollar sign is used to retrieve the value of a variable.
           associative array. Associative arrays are also known as tables and
           maps.
 
-
 <000>     Three alphanumeric characters encapsulated by the less- and greater-
           than signs are used for 4 and 8 bit color codes.
 

@@ -634,7 +634,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 			}
 			else
 			{
-				value = tindice(node->prev->str3, node->next->str3);
+				value = tindice(ses, node->prev->str3, node->next->str3);
 			}
 			break;
 		case '*':
@@ -1015,16 +1015,16 @@ double tineval(struct session *ses, char *left, char *right)
 	}
 }
 
-double tindice(char *left, char *right)
+double tindice(struct session *ses, char *left, char *right)
 {
-	long long cnt, numdice, sizedice, sum;
+	unsigned long long cnt, numdice, sizedice, sum;
 
-	numdice  = (long long) tintoi(left);
-	sizedice = (long long) tintoi(right);
+	numdice  = (unsigned long long) tintoi(left);
+	sizedice = (unsigned long long) tintoi(right);
 
 	for (cnt = sum = 0 ; cnt < numdice ; cnt++)
 	{
-		sum += rand() % sizedice + 1;
+		sum += generate_rand(ses) % sizedice + 1;
 	}
 
 	return (double) sum;

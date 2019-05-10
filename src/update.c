@@ -369,11 +369,15 @@ void tick_update(void)
 			if (node->data == 0)
 			{
 				node->data = gtd->time + (long long) (get_number(ses, node->pr) * 1000000LL);
+
+				show_info(ses, LIST_DELAY, "#INFO TICK {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->left, node->data);
 			}
 
 			if (node->data <= gtd->time)
 			{
 				node->data += (long long) (get_number(ses, node->pr) * 1000000LL);
+
+				show_info(ses, LIST_DELAY, "#INFO TICK {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->left, node->data);
 
 				if (!HAS_BIT(root->flags, LIST_FLAG_IGNORE))
 				{
@@ -409,6 +413,8 @@ void delay_update(void)
 			if (node->data == 0)
 			{
 				node->data = gtd->time + (long long) (get_number(ses, node->pr) * 1000000LL);
+
+				show_info(ses, LIST_DELAY, "#INFO DELAY {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->left, node->data);
 			}
 
 			if (node->data <= gtd->time)

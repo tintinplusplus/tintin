@@ -159,38 +159,8 @@ DO_COMMAND(do_end)
 
 DO_COMMAND(do_forall)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	tintin_printf2(ses, "\e[1;31m#NOTICE: The #forall command no longer exists, please switch to the #foreach command.\n");
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
-
-	tintin_printf2(ses, "\e[1;31m#NOTICE: The #forall command is going to be removed in the next release, please switch to the #foreach command.\n");
-
-	if (*left == 0 || *right == 0)
-	{
-		tintin_printf2(ses, "#ERROR: #FORALL - PROVIDE 2 ARGUMENTS");
-	}
-	else
-	{
-		arg = left;
-
-		while (*arg)
-		{
-			arg = get_arg_in_braces(ses, arg, temp, TRUE);
-
-			RESTRING(gtd->cmds[0], temp);
-
-			substitute(ses, right, temp, SUB_CMD);
-
-			ses = script_driver(ses, LIST_COMMAND, temp);
-
-			if (*arg == COMMAND_SEPARATOR)
-			{
-				arg++;
-			}
-
-		}
-	}
 	return ses;
 }
 
@@ -235,6 +205,8 @@ DO_COMMAND(do_showme)
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
+
+		show_info(ses, LIST_GAG, "#INFO GAG {%s}", left);
 
 		return ses;
 	}

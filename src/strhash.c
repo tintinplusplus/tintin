@@ -49,9 +49,9 @@ unsigned short generate_str_hash_key(char *str)
 	return h % MAX_STR_HASH;
 }
 
-unsigned int generate_hash_key(char *str)
+unsigned long long generate_hash_key(char *str)
 {
-	unsigned int len, h = 4321;
+	unsigned long long len, h = 4321;
 
 	for (len = 0 ; *str != 0 ; str++, len++)
 	{

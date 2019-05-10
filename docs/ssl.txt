@@ -74,7 +74,7 @@ probably be around 4 processes running (For some odd reason). For
 Windows, you should have an icon in the system tray.
 
 With tintin you can now connect to the port using the #ssl command. To
-connect to a chat port you'd have to run the connetion through another
+connect to a chat port you'd have to run the connection through another
 stunnel proxy. If there are problems check the logs and verify you opened
 the port on your firewall, etc.
 
@@ -105,9 +105,9 @@ set client=yes here.
 
 Run stunnel, and you will get a new icon in your systray. You can right-click
 it and 'View Log' to see what's going on, if you like. Run tintin and create
-a sessuib connection to localhost, port 12345 (or whatever you configured).
+a chat connection to localhost, port 12345 (or whatever you configured).
 
-You should be momentarily connected to the given ssl port.
+You should be momentarily connected to the given ssl server.
 
 
 Special thanks to Vilentus for the original documentation.

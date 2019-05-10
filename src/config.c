@@ -48,7 +48,7 @@ DO_COMMAND(do_configure)
 
 			if (node)
 			{
-				tintin_printf2(ses, "[%-13s] [%8s] %s", 
+				tintin_printf2(ses, "[%-14s] [%8s] %s", 
 					node->left,
 					node->right,
 					strcmp(node->right, "ON") == 0 ? config_table[index].msg_on : config_table[index].msg_off);
@@ -654,11 +654,11 @@ DO_CONFIG(config_randomseed)
 	{
 		strcpy(arg, "AUTO");
 
-		srand(utime() % 1000000LL);
+		seed_rand(ses, utime());
 	}
 	else if (is_number(arg))
 	{
-		srand(atoi(arg));
+		seed_rand(ses, get_number(ses, arg));
 	}
 	else
 	{
@@ -667,6 +667,29 @@ DO_CONFIG(config_randomseed)
 		return NULL;
 	}
 	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+
+	return ses;
+}
+
+DO_CONFIG(config_mousetracking)
+{
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(gtd->flags, TINTIN_FLAG_MOUSETRACKING);
+		printf("\e[?1000h\e[?1002h\e[?1006h");
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_MOUSETRACKING);
+		printf("\e[?1000l\e[?1002l\e[?1006l");
+	}
+	else
+	{
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
 	return ses;
 }

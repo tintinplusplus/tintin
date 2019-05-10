@@ -64,7 +64,7 @@ DO_COMMAND(do_path)
 
 DO_PATH(path_new)
 {
-	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
 		show_message(ses, LIST_PATH, "#PATH: YOU ARE ALREADY MAPPING A PATH.");
 	}
@@ -74,17 +74,17 @@ DO_PATH(path_new)
 
 		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOW MAPPING A PATH.");
 
-		SET_BIT(ses->flags, SES_FLAG_MAPPING);
+		SET_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 	}
 }
 
 DO_PATH(path_end)
 {
-	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
 		show_message(ses, LIST_PATH, "#PATH: YOU ARE NO LONGER MAPPING A PATH.");
 
-		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 	}
 	else
 	{
@@ -270,7 +270,7 @@ DO_PATH(path_run)
 	}
 	else
 	{
-		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
 		if (*left)
 		{
@@ -313,7 +313,7 @@ DO_PATH(path_walk)
 	}
 	else
 	{
-		DEL_BIT(ses->flags, SES_FLAG_MAPPING);
+		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
 		switch (tolower((int) *left))
 		{

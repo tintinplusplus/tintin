@@ -869,7 +869,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						break;
 
 					case 'H':
-						sprintf(arglist[i], "%u", generate_hash_key(arglist[i]));
+						sprintf(arglist[i], "%llu", generate_hash_key(arglist[i]));
 						break;
 
 					case 'L':

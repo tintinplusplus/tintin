@@ -1,3 +1,69 @@
+Jan 2019       2.01.6
+------------------------------------------------------------------------------
+
+tinexp.c       Using $$variable in #action triggers is no longer valid. Use
+               $variable instead. If the variable needs to be substituted
+               right away use:
+
+               #line sub var {#action {$var} {#loop 1 3 cnt #showme $$cnt}}
+
+event.c        Added {DOUBLE-CLICKED} and {TRIPLE-CLICKED} mouse events.
+
+event.c        Added {MOVED }, {PRESSED }, {RELEASED } and {SCROLLED } mouse
+               events. Use #INFO EVENT ON to see the full events. The row
+               position is reported using the same method as with #prompt.
+
+               For each click three events are generated, one generic one,
+               one with the row position as measured from the top, and one
+               with the row position as measured from the bottom.
+
+               The MOVED event only triggers when the mouse is moved while a
+               button is pressed.
+
+               %0 contains the column and %1 the row.
+
+config.c       Added MOUSE TRACKING config option which enables mouse
+               tracking events. While mouse tracking is
+               enabled shift needs to be hold in order to select text with
+               the mouse if you want to copy and paste text.
+
+cursor.c       Added WINDOW FOCUS IN and WINDOW FOCUS OUT events.
+
+tick.c         Fixed micro delays not getting properly sorted.
+
+event.c        Added #info {events} {on} option to display messages when
+               events are thrown. As this can get quite spammy these
+               messages can be gagged as well.
+
+gag.c          Added #debug and #info messages for gags.
+
+telopt.c       Renamed all telnet events that prevent the execution of the
+               default telnet handling code to CATCH IAC <TELNET CODE> adding
+               several events that did not yet exist.
+
+               Telnet events without default handling code like MSDP and GMCP
+               were not renamed.
+
+telopt.c       Added better telnet loop protection for echo negotiations.
+
+scan.c         Changed #scan syntax to #scan {ABORT|CSV|TSV|TXT} {filename}
+
+               CSV reads a comma separated file which triggers the
+               SCAN CSV HEADER (first line) and SCAN CSV LINE (subsequent
+               lines) events. Values containing spaces require quotes, and
+               two quotes "" are required to escape a quote.
+
+               TSV reads a tab separated file which triggers the
+               SCAN TSV HEADER and SCAN TSV LINE events.
+
+               TXT is an updated and faster version of the old #scan.
+
+               The old #scan syntax is no longer supported.
+
+config.c       Changed the random number generator to 64 bit with each
+               session having its own unique seed that can be set with
+               #config {random seed}.
+
 Jan 2018       2.01.5
 ------------------------------------------------------------------------------
 
@@ -18,10 +84,6 @@ session.c      Added on|off option to #snoop.
 
 data.c         Added #info {list} {LIST|SAVE} option to list the content of a
                list or save it to a variable.
-
-alias.c        Aliases no longer substitutes variables and functions passed
-               along as arguments. Use: #line sub {var;fun} {<argument>} to
-               force variable and function substitutions.
 
 tokenize.c     Improved trailing space parsing.
 

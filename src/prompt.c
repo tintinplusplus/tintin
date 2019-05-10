@@ -93,6 +93,7 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 			}
 
 			show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", node->left);
+			show_debug(ses, LIST_GAG, "#DEBUG GAG {%s}", node->left);
 
 			do_one_prompt(ses, original, atoi(node->pr));
 

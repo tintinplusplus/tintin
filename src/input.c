@@ -88,7 +88,7 @@ void read_line()
 	char buffer[STRING_SIZE];
 	struct listnode *node;
 	struct listroot *root;
-	int len, cnt, match;
+	int len, cnt, match, val[3];
 
 	gtd->input_buf[gtd->input_len] = 0;
 
@@ -148,6 +148,42 @@ void read_line()
 
 		if (match)
 		{
+			return;
+		}
+
+		if (!strncmp(gtd->macro_buf, "\e[<", 3))
+		{
+			val[0] = val[1] = val[2] = cnt = buffer[0] = 0;
+
+			for (len = 3 ; gtd->macro_buf[len] ; len++)
+			{
+				if (isdigit(gtd->macro_buf[len]))
+				{
+					cat_sprintf(buffer, "%c", gtd->macro_buf[len]);
+				}
+				else
+				{
+					switch (gtd->macro_buf[len])
+					{
+						case ';':
+							val[cnt++] = get_number(gtd->ses, buffer);
+							buffer[0] = 0;
+							break;
+
+						case 'm':
+						case 'M':
+							val[cnt++] = get_number(gtd->ses, buffer);
+							mouse_handler(gtd->ses, val[0], val[1], val[2], gtd->macro_buf[len]);
+							gtd->macro_buf[0] = 0;
+							return;
+
+						default:
+							printf("mouse input error (%s)\n", gtd->macro_buf);
+							gtd->macro_buf[0] = 0;
+							return;
+					}
+				}
+			}
 			return;
 		}
 	}

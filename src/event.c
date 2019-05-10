@@ -98,6 +98,8 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 	{
 		if (!HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_IGNORE))
 		{
+			show_info(ses_ptr, LIST_EVENT, "#INFO EVENT {%s}", name);
+
 			node = search_node_list(ses_ptr->list[LIST_EVENT], name);
 
 			if (node)
@@ -141,4 +143,160 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 	}
 	pop_call();
 	return 0;
+}
+
+void mouse_handler(struct session *ses, int flags, int x, int y, char type)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	static char last[100];
+	static long long click[3];
+
+	if (HAS_BIT(flags, MOUSE_FLAG_MOTION))
+	{
+		strcpy(left, "MOVED");
+	}
+	else
+	{
+		switch (type)
+		{
+			case 'M':
+				if (HAS_BIT(flags, MOUSE_FLAG_WHEEL))
+				{
+					strcpy(left, "SCROLLED");
+				}
+				else
+				{
+					strcpy(left, "PRESSED");
+				}
+				break;
+			case 'm':
+				strcpy(left, "RELEASED");
+				break;
+			default:
+				strcpy(left, "UNKNOWN");
+				break;
+		}
+	}
+
+	right[0] = 0;
+
+	if (HAS_BIT(flags, MOUSE_FLAG_CTRL))
+	{
+		strcat(right, "CTRL ");
+	}
+	if (HAS_BIT(flags, MOUSE_FLAG_ALT))
+	{
+		strcat(right, "ALT ");
+	}
+	if (HAS_BIT(flags, MOUSE_FLAG_SHIFT))
+	{
+		strcat(right, "SHIFT ");
+	}
+
+	if (HAS_BIT(flags, MOUSE_FLAG_EXTRA))
+	{
+		strcat(right, "EXTRA ");
+	}
+
+	if (HAS_BIT(flags, MOUSE_FLAG_UNKNOWN))
+	{
+		strcat(right, "256 ");
+	}
+
+	if (HAS_BIT(flags, MOUSE_FLAG_WHEEL))
+	{
+		strcat(right, "MOUSE WHEEL ");
+	}
+	else
+	{
+		strcat(right, "MOUSE BUTTON ");
+	}
+
+	if (HAS_BIT(flags, MOUSE_FLAG_WHEEL))
+	{
+		if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_A) && HAS_BIT(flags, MOUSE_FLAG_BUTTON_B))
+		{
+			strcat(right, "FOUR");
+		}
+		else if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_B))
+		{
+			strcat(right, "THREE");
+		}
+		else if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_A))
+		{
+			strcat(right, "DOWN");
+		}
+		else
+		{
+			strcat(right, "UP");
+		}
+	}
+	else
+	{
+		if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_A) && HAS_BIT(flags, MOUSE_FLAG_BUTTON_B))
+		{
+			strcat(right, "FOUR");
+		}
+		else if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_B))
+		{
+			strcat(right, "THREE");
+		}
+		else if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_A))
+		{
+			strcat(right, "TWO");
+		}
+		else
+		{
+			strcat(right, "ONE");
+		}
+	}
+
+	check_all_events(ses, SUB_ARG, 2, 2, "%s %s", left, right, ntos(x), ntos(ses->rows - y));
+
+	check_all_events(ses, SUB_ARG, 3, 2, "%s %s %d", left, right, 0 - y, ntos(x), ntos(ses->rows - y));
+
+	check_all_events(ses, SUB_ARG, 3, 2, "%s %s %d", left, right, ses->rows - y, ntos(x), ntos(ses->rows - y));
+
+	if (!strcmp(left, "PRESSED"))
+	{
+		sprintf(left, "PRESSED %s %d %d", right, x, y);
+
+		if (!strcmp(left, last))
+		{
+			click[2] = click[1];
+			click[1] = click[0];
+			click[0] = utime();
+
+			if (click[0] - click[1] < 500000)
+			{
+				if (click[0] - click[2] < 500000)
+				{
+					check_all_events(ses, SUB_ARG, 1, 2, "TRIPLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y));
+
+					check_all_events(ses, SUB_ARG, 2, 2, "TRIPLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y));
+
+					check_all_events(ses, SUB_ARG, 2, 2, "TRIPLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y));
+
+					click[0] = 0;
+				}
+				else
+				{
+					check_all_events(ses, SUB_ARG, 1, 2, "DOUBLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y));
+
+					check_all_events(ses, SUB_ARG, 2, 2, "DOUBLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y));
+
+					check_all_events(ses, SUB_ARG, 2, 2, "DOUBLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y));
+				}
+			}
+		}
+		else
+		{
+			click[2] = 0;
+			click[1] = 0;
+			click[0] = utime();
+
+			sprintf(last, "PRESSED %s %d %d", right, x, y);
+		}
+	}
+	return;
 }

@@ -67,6 +67,7 @@ DO_LINE(line_gag)
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
+	show_debug(ses, LIST_GAG, "#DEBUG LINE GAG");
 
 	SET_BIT(ses->flags, SES_FLAG_GAG);
 

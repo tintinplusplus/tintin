@@ -314,6 +314,7 @@ char *get_arg_all(struct session *ses, char *string, char *result, int verbatim)
 	return pti;
 }
 
+
 /*
 	Braces are stripped in braced arguments leaving all else as is.
 */
@@ -369,7 +370,7 @@ char *get_arg_in_braces(struct session *ses, char *string, char *result, int fla
 
 	if (*pti == 0)
 	{
-		tintin_printf2(NULL, "#Unmatched braces error!");
+		tintin_printf2(ses, "#ERROR: GET BRACED ARGUMENT: UNMATCHED BRACE.");
 	}
 	else
 	{
@@ -620,7 +621,7 @@ char *get_arg_at_brackets(struct session *ses, char *string, char *result)
 
 	if (nest)
 	{
-		tintin_printf2(NULL, "#UNMATCHED AT BRACKETS ERROR.");
+		tintin_printf2(NULL, "#ERROR: GET BRACKETED VARIABLE: UNMATCHED BRACKET.");
 	}
 	*pto = 0;
 
@@ -671,7 +672,7 @@ char *get_arg_in_brackets(struct session *ses, char *string, char *result)
 
 	if (*pti == 0)
 	{
-		tintin_printf2(NULL, "#UNMATCHED IN BRACKETS ERROR.");
+		tintin_printf2(NULL, "#ERROR: GET BRACKETED ARGUMENT: UNMATCHED BRACKET.");
 	}
 	else
 	{
@@ -693,7 +694,7 @@ void write_mud(struct session *ses, char *command, int flags)
 
 	size = substitute(ses, command, output, flags);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_MAPPING))
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
 		if (ses->map == NULL || ses->map->nofollow == 0)
 		{
