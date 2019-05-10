@@ -293,6 +293,33 @@ DO_CURSOR(cursor_backspace)
 	modified_input();
 }
 
+DO_CURSOR(cursor_brace_open)
+{
+	ins_sprintf(&gtd->input_buf[gtd->input_cur], "{");
+
+	gtd->input_len++;
+	gtd->input_cur++;
+
+	gtd->input_pos += inputline_raw_str_len(gtd->input_cur - 1, gtd->input_cur);
+
+	cursor_redraw_line(ses, "");
+
+	modified_input();
+}
+
+DO_CURSOR(cursor_brace_close)
+{
+	ins_sprintf(&gtd->input_buf[gtd->input_cur], "}");
+
+	gtd->input_len++;
+	gtd->input_cur++;
+
+	gtd->input_pos += inputline_raw_str_len(gtd->input_cur - 1, gtd->input_cur);
+
+	cursor_redraw_line(ses, "");
+
+	modified_input();
+}
 
 DO_CURSOR(cursor_buffer_down)
 {
@@ -352,7 +379,7 @@ DO_CURSOR(cursor_clear_left)
 
 	sprintf(gtd->paste_buf, "%.*s", gtd->input_cur, gtd->input_buf);
 
-	input_printf("\033[%dG\033[%dP", gtd->input_off, gtd->input_pos - gtd->input_hid);
+	input_printf("\e[%dG\e[%dP", gtd->input_off, gtd->input_pos - gtd->input_hid);
 
 	memmove(&gtd->input_buf[0], &gtd->input_buf[gtd->input_cur], gtd->input_len - gtd->input_cur);
 
@@ -377,7 +404,7 @@ DO_CURSOR(cursor_clear_line)
 
 	sprintf(gtd->paste_buf, "%s", gtd->input_buf);
 
-	input_printf("\033[%dG\033[%dP", gtd->input_off, inputline_cur_str_len());
+	input_printf("\e[%dG\e[%dP", gtd->input_off, inputline_cur_str_len());
 
 	gtd->input_len = 0;
 	gtd->input_cur = 0;
@@ -397,7 +424,7 @@ DO_CURSOR(cursor_clear_right)
 
 	strcpy(gtd->paste_buf, &gtd->input_buf[gtd->input_cur]);
 
-	input_printf("\033[%dP", inputline_max_str_len() - inputline_str_str_len(gtd->input_hid, gtd->input_pos));
+	input_printf("\e[%dP", inputline_max_str_len() - inputline_str_str_len(gtd->input_hid, gtd->input_pos));
 
 	gtd->input_buf[gtd->input_cur] = 0;
 
@@ -443,7 +470,7 @@ DO_CURSOR(cursor_delete)
 
 			gtd->input_len--;
 
-			input_printf("\033[1P");
+			input_printf("\e[1P");
 		}
 	}
 	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[gtd->input_cur] & 192) == 192)
@@ -466,7 +493,7 @@ DO_CURSOR(cursor_delete)
 	}
 	else
 	{
-		input_printf("\033[1P");
+		input_printf("\e[1P");
 	}
 
 	modified_input();
@@ -503,7 +530,7 @@ DO_CURSOR(cursor_delete_word_left)
 
 	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[index_cur], gtd->input_len - index_cur + 1);
 
-//	input_printf("\033[%dD\033[%dP", index_cur - gtd->input_cur, index_cur - gtd->input_cur);
+//	input_printf("\e[%dD\e[%dP", index_cur - gtd->input_cur, index_cur - gtd->input_cur);
 
 	gtd->input_len -= index_cur - gtd->input_cur;
 
@@ -538,7 +565,7 @@ DO_CURSOR(cursor_delete_word_right)
 
 	memmove(&gtd->input_buf[index_cur], &gtd->input_buf[gtd->input_cur], gtd->input_len - gtd->input_cur + 1);
 
-//	input_printf("\033[%dP", gtd->input_cur - index_cur);
+//	input_printf("\e[%dP", gtd->input_cur - index_cur);
 
 	gtd->input_len -= gtd->input_cur - index_cur;
 
@@ -604,7 +631,7 @@ DO_CURSOR(cursor_exit)
 {
 	if (ses == gts)
 	{
-		do_end(NULL, "");
+		do_end(ses, "");
 	}
 	else
 	{
@@ -645,7 +672,7 @@ DO_CURSOR(cursor_history_next)
 
 		if (root->update < root->used)
 		{
-			input_printf("\033[%dG  \033[0K%.*s\033[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("\e[%dG  \e[0K%.*s\e[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		return;
 	}
@@ -709,7 +736,7 @@ DO_CURSOR(cursor_history_prev)
 
 		if (root->update >= 0)
 		{
-			input_printf("\033[%dG  \033[0K%.*s\033[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("\e[%dG  \e[0K%.*s\e[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		return;
 	}
@@ -781,7 +808,7 @@ DO_CURSOR(cursor_history_search)
 
 		root->update = root->used - 1;
 
-		input_printf("(search) [ ] \033[3D");
+		input_printf("(search) [ ] \e[3D");
 	}
 	else
 	{
@@ -789,7 +816,7 @@ DO_CURSOR(cursor_history_search)
 		{
 			strcpy(gtd->input_buf, root->list[root->update]->left);
 		}
-		input_printf("\033[1G\033[0K");
+		input_printf("\e[1G\e[0K");
 
 		gtd->input_len = strlen(gtd->input_buf);
 		gtd->input_cur = gtd->input_len;
@@ -830,11 +857,11 @@ DO_CURSOR(cursor_history_find)
 
 	if (root->update >= 0)
 	{
-		input_printf("\033[%dG ]  %.*s\033[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
+		input_printf("\e[%dG ]  %.*s\e[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
 	}
 	else
 	{
-		input_printf("\033[%dG ] \033[0K\033[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + gtd->input_pos - gtd->input_hid);
+		input_printf("\e[%dG ] \e[0K\e[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + gtd->input_pos - gtd->input_hid);
 	}
 	pop_call();
 	return;
@@ -847,7 +874,7 @@ DO_CURSOR(cursor_home)
 		return;
 	}
 
-	input_printf("\033[%dD", gtd->input_pos - gtd->input_hid);
+	input_printf("\e[%dD", gtd->input_pos - gtd->input_hid);
 
 	gtd->input_cur = 0;
 	gtd->input_pos = 0;
@@ -893,7 +920,7 @@ DO_CURSOR(cursor_left)
 			gtd->input_cur--;
 			gtd->input_pos--;
 
-			input_printf("\033[1D");
+			input_printf("\e[1D");
 		}
 		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
 		{
@@ -903,7 +930,7 @@ DO_CURSOR(cursor_left)
 			}
 		}
 
-		input_printf("\033[1D");
+		input_printf("\e[1D");
 
 		cursor_check_line(ses, "");
 	}
@@ -935,7 +962,7 @@ DO_CURSOR(cursor_left_word)
 		gtd->input_cur--;
 	}
 
-//	input_printf("\033[%dD", index_pos - gtd->input_pos);
+//	input_printf("\e[%dD", index_pos - gtd->input_pos);
 
 	cursor_redraw_line(ses, "");
 }
@@ -969,7 +996,7 @@ DO_CURSOR(cursor_redraw_input)
 	}
 	else
 	{
-		input_printf("\033[1G\033[0K%s%s\033[0K", ses->more_output, gtd->input_buf);
+		input_printf("\e[1G\e[0K%s%s\e[0K", ses->more_output, gtd->input_buf);
 
 		gtd->input_cur = gtd->input_len;
 
@@ -990,7 +1017,7 @@ DO_CURSOR(cursor_redraw_line)
 
 	// Erase current input
 
-	input_printf("\033[%dG\033[%dP", gtd->input_off, inputline_max_str_len());
+	input_printf("\e[%dG\e[%dP", gtd->input_off, inputline_max_str_len());
 
 	// Center long lines of input
 
@@ -1020,22 +1047,22 @@ DO_CURSOR(cursor_redraw_line)
 	{
 		if (gtd->input_hid + inputline_max_str_len() >= inputline_raw_str_len(0, gtd->input_len))
 		{
-			input_printf("<%.*s\033[%dG",  inputline_str_raw_len(gtd->input_hid + 1, gtd->input_hid + inputline_max_str_len() - 0), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 1)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("<%.*s\e[%dG",  inputline_str_raw_len(gtd->input_hid + 1, gtd->input_hid + inputline_max_str_len() - 0), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 1)], gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		else
 		{
-			input_printf("<%.*s>\033[%dG", inputline_str_raw_len(gtd->input_hid + 1, gtd->input_hid + inputline_max_str_len() - 1), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 1)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("<%.*s>\e[%dG", inputline_str_raw_len(gtd->input_hid + 1, gtd->input_hid + inputline_max_str_len() - 1), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 1)], gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 	}
 	else
 	{
 		if (gtd->input_hid + inputline_max_str_len() >= inputline_raw_str_len(0, gtd->input_len))
 		{
-			input_printf("%.*s\033[%dG",   inputline_str_raw_len(gtd->input_hid + 0, gtd->input_hid + inputline_max_str_len() - 0), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 0)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("%.*s\e[%dG",   inputline_str_raw_len(gtd->input_hid + 0, gtd->input_hid + inputline_max_str_len() - 0), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 0)], gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		else
 		{
-			input_printf("%.*s>\033[%dG",  inputline_str_raw_len(gtd->input_hid + 0, gtd->input_hid + inputline_max_str_len() - 1), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 0)], gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("%.*s>\e[%dG",  inputline_str_raw_len(gtd->input_hid + 0, gtd->input_hid + inputline_max_str_len() - 1), &gtd->input_buf[inputline_str_raw_len(0, gtd->input_hid + 0)], gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 	}
 }
@@ -1054,7 +1081,7 @@ DO_CURSOR(cursor_right)
 				gtd->input_cur++;
 				gtd->input_pos++;
 
-				input_printf("\033[1C");
+				input_printf("\e[1C");
 			}
 		}
 		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
@@ -1065,7 +1092,7 @@ DO_CURSOR(cursor_right)
 			}
 		}
 
-		input_printf("\033[1C");
+		input_printf("\e[1C");
 	}
 
 	cursor_check_line(ses, "");
@@ -1264,9 +1291,9 @@ void cursor_hide_completion(int input_now)
 /*
 			if (gtd->input_cur < gtd->input_len)
 			{
-				input_printf("\033[%dC", gtd->input_len - gtd->input_cur);
+				input_printf("\e[%dC", gtd->input_len - gtd->input_cur);
 			}
-			input_printf("\033[%dD\033[%dP", len_change, len_change);
+			input_printf("\e[%dD\e[%dP", len_change, len_change);
 */
 			gtd->input_len = gtd->input_len - len_change;
 			gtd->input_buf[gtd->input_len] = 0;
@@ -1291,11 +1318,11 @@ void cursor_show_completion(int input_now, int show_last_node)
 /*
 	if (gtd->input_cur < gtd->input_len)
 	{
-		input_printf("\033[%dC", gtd->input_len - gtd->input_cur);
+		input_printf("\e[%dC", gtd->input_len - gtd->input_cur);
 	}
 	if (gtd->input_len > input_now)
 	{
-		input_printf("\033[%dD\033[%dP", gtd->input_len - input_now, gtd->input_len - input_now);
+		input_printf("\e[%dD\e[%dP", gtd->input_len - input_now, gtd->input_len - input_now);
 	}
 	if (input_now + (int) strlen(node->left) < gtd->ses->cols - 2)
 	{

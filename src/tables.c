@@ -142,9 +142,8 @@ struct list_type list_table[LIST_MAX] =
 	{    "PATH",              "PATHS",              APPEND,      2,  LIST_FLAG_MESSAGE                                                                  },
 	{    "PATHDIR",           "PATHDIRS",           ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "PROMPT",            "PROMPTS",            PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "SUBSTITUTE",        "SUBSTITUTIONS",      PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
+	{    "SUBSTITUTE",        "SUBSTITUTES",        PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "TAB",               "TABS",               ALPHA,       1,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-//	{    "TABCYCLE",          "TABCYCLE",           APPEND,      1,  LIST_FLAG_MESSAGE|LIST_FLAG_HIDE                                                   },
 	{    "TICKER",            "TICKERS",            ALPHA,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "VARIABLE",          "VARIABLES",          ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT|LIST_FLAG_NEST }
 };
@@ -160,7 +159,8 @@ struct substitution_type substitution_table[] =
 	{    "SECURE",              64  },
 	{    "EOL",                128  },
 	{    "LNF",                256  },
-//	{    "FIX",               1024  },
+//	{    "FIX",                512  },
+        {    "COMPRESS",          1024  },
 	{    "",                  0     }
 };
 
@@ -185,6 +185,13 @@ struct config_type config_table[] =
 		"",
 		"The character set encoding used by TinTin++",
 		config_charset
+	},
+
+	{
+		"COLOR MODE",
+		"",
+		"The color code encoding used by TinTin++",
+		config_colormode
 	},
 
 	{
@@ -239,6 +246,13 @@ struct config_type config_table[] =
 	},
 
 	{
+		"INHERITANCE",
+		"The startup session is inherited",
+		"The startup session is not inherited",
+		config_inheritance
+	},
+
+	{
 		"LOG",
 		"",
 		"The data format of the log files",
@@ -267,6 +281,13 @@ struct config_type config_table[] =
 	},
 
 	{
+		"RANDOM SEED",
+		"",
+		"Seed value used for the random number engine",
+		config_randomseed
+	},
+
+	{
 		"REPEAT ENTER",
 		"You send the last command on an enter",
 		"You send a carriage return on an enter",
@@ -278,6 +299,13 @@ struct config_type config_table[] =
 		"",
 		"The character used for repeating commands",
 		config_repeatchar
+	},
+
+	{
+		"SCREEN READER",
+		"You are using a screen reader",
+		"You are not using a screen reader",
+		config_screenreader
 	},
 
 	{
@@ -329,12 +357,6 @@ struct config_type config_table[] =
 		config_wordwrap
 	},
 
-	{
-		"256 COLORS",
-		"Your terminal is 256 color capable",
-		"Your terminal is not 256 color capable",
-		config_256color
-	},
 
 	{
 		"",
@@ -560,6 +582,21 @@ struct cursor_type cursor_table[] =
 		"",
 		cursor_backspace
 	},
+
+	{
+		"BRACE OPEN",
+		"Insert the { character",
+		"",
+		cursor_brace_open
+	},
+
+	{
+		"BRACE CLOSE",
+		"Insert the } character",
+		"",
+		cursor_brace_close
+	},
+
 	{
 		"BACKWARD",
 		"Move cursor backward",
@@ -885,6 +922,7 @@ struct event_type event_table[] =
 	{    "VT100 DA",                               "Triggers on an ESC [ c call."            },
 	{    "VT100 DECID",                            "Triggers on an ESC Z call."              },
 	{    "VT100 DSR",                              "Triggers on an ESC [ 5 n call."          },
+	{    "VT100 ENQ",                              "Triggers on an \\x05 call."              },
 	{    "WEEK",                                   "Triggers each week or given week."       },
 	{    "YEAR",                                   "Triggers each year or given year."       },
 	{    "",                                       ""                                        }
@@ -916,6 +954,7 @@ struct line_type line_table[] =
 	{    "QUIET",             line_quiet             },
 	{    "STRIP",             line_strip             },
 	{    "SUBSTITUTE",        line_substitute        },
+	{    "VERBATIM",          line_verbatim          },
 	{    "VERBOSE",           line_verbose           },
 	{    "",                  NULL                   }
 };

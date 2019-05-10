@@ -324,7 +324,7 @@ int locate_index_list(struct listroot *root, char *text, char *priority)
 }
 
 /*
-	Yup, all this for a bloody binary search.
+	binary search on alphabetically sorted list
 */
 
 int bsearch_alpha_list(struct listroot *root, char *text, int seek)
@@ -340,7 +340,7 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 
 //	toi = get_number(root->ses, text);
 
-	if (seek == 0 && (*text == '+' || *text == '-') && is_math(root->ses, text) && HAS_BIT(list_table[root->type].flags, LIST_FLAG_NEST))
+	if (seek == 0 && (*text == '+' || *text == '-') && is_math(root->ses, text) && HAS_BIT(root->flags, LIST_FLAG_NEST))
 	{
 		toi = get_number(root->ses, text);
 
@@ -410,6 +410,10 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 	}
 }
 
+/*
+	Binary search on priorially and alphabetically sorted list
+*/
+
 int bsearch_priority_list(struct listroot *root, char *text, char *priority, int seek)
 {
 	int bot, top, val;
@@ -455,6 +459,10 @@ int bsearch_priority_list(struct listroot *root, char *text, char *priority, int
 	}
 }
 
+/*
+	Linear search
+*/
+
 int nsearch_list(struct listroot *root, char *text)
 {
 	int i;
@@ -470,7 +478,7 @@ int nsearch_list(struct listroot *root, char *text)
 }
 
 /*
-	show contens of a node on screen
+	show content of a node on screen
 */
 
 void show_node(struct listroot *root, struct listnode *node, int level)
@@ -482,20 +490,20 @@ void show_node(struct listroot *root, struct listnode *node, int level)
 	switch (list_table[root->type].args)
 	{
 		case 3:
-			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m} \033[1;36m@ \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, str, node->pr);
+			tintin_printf2(root->ses, "%*s#%s \e[1;31m{\e[0m%s\e[1;31m}\e[1;36m=\e[1;31m{\e[0m%s\e[1;31m} \e[1;36m@ \e[1;31m{\e[0m%s\e[1;31m}", level * 2, "", list_table[root->type].name, node->left, str, node->pr);
 			break;
 		case 2:
-			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}\033[1;36m=\033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left, str);
+			tintin_printf2(root->ses, "%*s#%s \e[1;31m{\e[0m%s\e[1;31m}\e[1;36m=\e[1;31m{\e[0m%s\e[1;31m}", level * 2, "", list_table[root->type].name, node->left, str);
 			break;
 		case 1:
-			tintin_printf2(root->ses, "%*s#%s \033[1;31m{\033[0m%s\033[1;31m}", level * 2, "", list_table[root->type].name, node->left);
+			tintin_printf2(root->ses, "%*s#%s \e[1;31m{\e[0m%s\e[1;31m}", level * 2, "", list_table[root->type].name, node->left);
 			break;
 	}
 	str_free(str);
 }
 
 /*
-	list contens of a list on screen
+	list content of a list on screen
 */
 
 void show_list(struct listroot *root, int level)
@@ -605,7 +613,7 @@ DO_COMMAND(do_kill)
 
 	for (index = 0 ; index < LIST_MAX ; index++)
 	{
-		if (!is_abbrev(arg1, list_table[index].name_multi))
+		if (!is_abbrev(arg1, list_table[index].name) && !is_abbrev(arg1, list_table[index].name_multi))
 		{
 			continue;
 		}
@@ -629,6 +637,7 @@ DO_COMMAND(do_kill)
 	}
 	return ses;
 }
+
 
 DO_COMMAND(do_message)
 {
@@ -661,7 +670,7 @@ DO_COMMAND(do_message)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
 			{
 				continue;
 			}
@@ -727,7 +736,7 @@ DO_COMMAND(do_ignore)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
 			{
 				continue;
 			}
@@ -793,7 +802,7 @@ DO_COMMAND(do_debug)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
 			{
 				continue;
 			}
@@ -830,4 +839,99 @@ DO_COMMAND(do_debug)
 		}
 	}
 	return ses;
+}
+
+
+DO_COMMAND(do_info)
+{
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], name[BUFFER_SIZE];
+	int cnt, index, found = FALSE;
+	struct listroot *root;
+
+	arg = get_arg_in_braces(ses, arg, left,  0);
+	arg = get_arg_in_braces(ses, arg, right, 0);
+
+	if (*left == 0)
+	{
+		tintin_header(ses, " INFORMATION ");
+
+		for (index = 0 ; index < LIST_MAX ; index++)
+		{
+			if (!HAS_BIT(ses->list[index]->flags, LIST_FLAG_HIDE))
+			{
+				tintin_printf2(ses, "%-20s  %5d  IGNORE %3s  MESSAGE %3s  DEBUG %3s %3s",
+					list_table[index].name_multi,
+					ses->list[index]->used,
+					HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE)  ?  "ON" : "OFF",
+					HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ?  "ON" : "OFF",
+					HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG)   ?  "ON" : "OFF",
+					HAS_BIT(ses->list[index]->flags, LIST_FLAG_LOG)     ? "LOG" : "   ");
+			}
+
+		}
+		tintin_header(ses, "");
+	}
+	else
+	{
+		for (index = found = 0 ; index < LIST_MAX ; index++)
+		{
+			root = ses->list[index];
+
+			if (HAS_BIT(list_table[index].flags, LIST_FLAG_HIDE))
+			{
+				continue;
+			}
+
+			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			{
+				continue;
+			}
+
+			root = ses->list[index];
+
+			if (is_abbrev(right, "LIST"))
+			{
+				for (cnt = 0 ; cnt < root->used ; cnt++)
+				{
+					tintin_printf2(ses, "#INFO %s %4d {arg1}{%s} {arg2}{%s} {arg3}{%s} {class}{%s} {data}{%lld}", list_table[index].name, cnt, root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
+				}
+			}
+			else if (is_abbrev(right, "SAVE"))
+			{
+				sprintf(name, "info[%s]", list_table[index].name);
+				delete_nest_node(ses->list[LIST_VARIABLE], name);
+
+				for (cnt = 0 ; cnt < root->used ; cnt++)
+				{
+					sprintf(name, "info[%s][%d]", list_table[index].name, cnt);
+
+					set_nest_node(ses->list[LIST_VARIABLE], name, "{arg1}{%s}{arg2}{%s}{arg3}{%s}{class}{%s}{data}{%lld}", root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
+				}
+				show_message(ses, LIST_COMMAND, "#INFO: DATA WRITTEN TO {info[%s]}", list_table[index].name);
+			}
+			else
+			{
+				return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [LIST|SAVE]", left);
+			}
+			found = TRUE;
+		}
+
+		if (found == FALSE)
+		{
+			if (is_abbrev(left, "CPU"))
+			{
+				show_cpu(ses);
+			}
+			else if (is_abbrev(left, "STACK"))
+			{
+				dump_stack();
+			}
+			else
+			{
+				show_error(ses, LIST_COMMAND, "#INFO {%s} - NO MATCH FOUND.", left);
+			}
+		}
+	}
+	return ses;
+
 }

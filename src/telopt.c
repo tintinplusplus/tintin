@@ -627,7 +627,13 @@ int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 		{
 			char mtts[BUFFER_SIZE];
 
-			sprintf(mtts, "MTTS %d", 1 + (HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? 0 : 2) + (HAS_BIT(ses->flags, SES_FLAG_UTF8) ? 4 : 0) + (HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? 8 : 0));
+			sprintf(mtts, "MTTS %d",
+				(HAS_BIT(ses->flags, SES_FLAG_ANSICOLOR) ? 1 : 0) +
+				(HAS_BIT(ses->flags, SES_FLAG_SPLIT) ? 0 : 2) +
+				(HAS_BIT(ses->flags, SES_FLAG_UTF8) ? 4 : 0) +
+				(HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? 8 : 0) +
+				(HAS_BIT(ses->flags, SES_FLAG_SCREENREADER) ? 64 : 0) +
+				(HAS_BIT(ses->flags, SES_FLAG_TRUECOLOR) ? 256 : 0));
 
 			socket_printf(ses, 6 + strlen(mtts), "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE, 0, mtts, IAC, SE);
 

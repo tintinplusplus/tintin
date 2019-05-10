@@ -134,7 +134,7 @@ void clean_screen(struct session *ses)
 
 void dirty_screen(struct session *ses)
 {
-	printf("\033=");
+	printf("\e=");
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{

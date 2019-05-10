@@ -1,13 +1,3 @@
-
-10/30/01	Changing all toggle-able commands to the following format:
-		#<command> -> toggle command on/off.
-		#<command> on -> turns the command on.
-		#<command> off -> turns the command off.
-
-		So far, only #brokentelnet, #fixedmath, #appendlog has been changed.
-
-		Changed: misc.c, include/misc.h, parse.c -- dsc
-
 7/12/01		Released tintin v1.86 -- dsc
 
 7/12/01		Updated the copyright notice to reflect the GPL license.

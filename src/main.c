@@ -37,13 +37,13 @@ struct tintin_data *gtd;
 
 void pipe_handler(int signal)
 {
-	restore_terminal();
+//	restore_terminal();
 
-	clean_screen(gtd->ses);
+//	clean_screen(gtd->ses);
 
-	tintin_printf(NULL, "broken_pipe: dumping stack");
+	tintin_printf(NULL, "#SOCKET ERROR: RECEIVED SIGPIPE.");
 
-	dump_stack();
+//	dump_stack();
 }
 
 /*
@@ -116,7 +116,7 @@ void interrupt_handler(int signal)
 
 void suspend_handler(int signal)
 {
-	printf("\033[r\033[%d;%dH", gtd->ses->rows, 1);
+	printf("\e[r\e[%d;%dH", gtd->ses->rows, 1);
 
 	fflush(NULL);
 
@@ -162,6 +162,7 @@ int main(int argc, char **argv)
 {
 	int greeting = TRUE;
 	char filename[256];
+	char arg[BUFFER_SIZE];
 
 	#ifdef SOCKS
 		SOCKSinit(argv[0]);
@@ -207,14 +208,11 @@ int main(int argc, char **argv)
 		syserr("signal SIGWINCH");
 	}
 
-
-	srand(time(NULL));
-
 	if (argc > 1)
 	{
 		int c;
 
-		while ((c = getopt(argc, argv, "e: G h r: s: t: v")) != EOF)
+		while ((c = getopt(argc, argv, "a: e: G h r: s: t: v")) != EOF)
 		{
 			switch (c)
 			{
@@ -245,10 +243,14 @@ int main(int argc, char **argv)
 
 		optind = 1;
 
-		while ((c = getopt(argc, argv, "e: G h r: s: t: v")) != EOF)
+		while ((c = getopt(argc, argv, "a: e: G h r: s: t: v")) != EOF)
 		{
 			switch (c)
 			{
+				case 'a':
+					strcpy(arg, optarg);
+					break;
+
 				case 'e':
 					gtd->quiet++;
 					gtd->ses = script_driver(gtd->ses, LIST_COMMAND, optarg);
@@ -261,6 +263,7 @@ int main(int argc, char **argv)
 				case 'h':
 					tintin_printf(NULL, "Usage: %s [OPTION]... [FILE]...", argv[0]);
 					tintin_printf(NULL, "");
+					tintin_printf(NULL, "  -a  Set argument for PROGRAM START event.");
 					tintin_printf(NULL, "  -e  Execute given command.");
 					tintin_printf(NULL, "  -G  Don't show the greeting screen.");
 					tintin_printf(NULL, "  -h  This help section.");
@@ -277,11 +280,7 @@ int main(int argc, char **argv)
 					break;
 
 				case 't':
-					printf("\033]0;%s\007", optarg);
-					break;
-
-				case 's':
-					srand((unsigned int) atoll(optarg));
+					printf("\e]0;%s\007", optarg);
 					break;
 
 				case 'v':
@@ -300,9 +299,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-
-	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 2, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION);
-	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
+	check_all_events(gts, SUB_ARG, 0, 3, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION, arg);
+	check_all_events(gts, SUB_ARG, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
 
 	mainloop();
 
@@ -329,10 +327,14 @@ void init_tintin(int greeting)
 	gts->flags          = SES_FLAG_MCCP;
 	gts->socket         = 1;
 	gts->read_max       = 16384;
+	gts->lognext_name   = strdup("");
+	gts->logline_name   = strdup("");
 
 	gtd                 = (struct tintin_data *) calloc(1, sizeof(struct tintin_data));
 
 	gtd->ses            = gts;
+
+	gtd->flags          = TINTIN_FLAG_INHERITANCE;
 
 	gtd->str_size       = sizeof(struct str_data);
 	gtd->str_hash_size  = sizeof(struct str_hash_data);
@@ -346,6 +348,7 @@ void init_tintin(int greeting)
 	gtd->input_off      = 1;
 
 	gtd->home           = strdup(getenv("HOME") ? getenv("HOME") : ".");
+	gtd->lang           = strdup(getenv("LANG") ? getenv("LANG") : "UNKNOWN");
 	gtd->term           = strdup(getenv("TERM") ? getenv("TERM") : "UNKNOWN");
 
 	for (index = 0 ; index < 100 ; index++)
@@ -370,22 +373,25 @@ void init_tintin(int greeting)
 
 	init_local(gts);
 
-	printf("\033="); // set application keypad mode
+	printf("\e="); // set application keypad mode
 
 	gtd->input_level++;
 
 	do_configure(gts, "{AUTO TAB}         {5000}");
 	do_configure(gts, "{BUFFER SIZE}     {20000}");
+	do_configure(gts, "{COLOR MODE}       {AUTO}");
 	do_configure(gts, "{COLOR PATCH}       {OFF}");
 	do_configure(gts, "{COMMAND COLOR}   {<078>}");
 	do_configure(gts, "{COMMAND ECHO}       {ON}");
 	do_configure(gts, "{CONNECT RETRY}       {0}");
-	do_configure(gts, "{CHARSET}         {ASCII}");
+	do_configure(gts, "{CHARSET}          {AUTO}");
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
 	do_configure(gts, "{PACKET PATCH}     {0.00}");
+	do_configure(gts, "{RANDOM SEED}      {AUTO}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
+	do_configure(gts, "{SCREEN READER}     {OFF}");
 	do_configure(gts, "{SCROLL LOCK}        {ON}");
 	do_configure(gts, "{SPEEDWALK}         {OFF}");
 	do_configure(gts, "{TINTIN CHAR}         {#}");
@@ -393,7 +399,6 @@ void init_tintin(int greeting)
 	do_configure(gts, "{VERBATIM CHAR}      {\\}");
 	do_configure(gts, "{VERBOSE}           {OFF}");
 	do_configure(gts, "{WORDWRAP}           {ON}");
-	do_configure(gts, "{256 COLORS}       {AUTO}");
 
 	gtd->input_level--;
 
@@ -447,7 +452,7 @@ void quitmsg(char *message)
 		close(gtd->chat->fd);
 	}
 
-	check_all_events(gts, SUB_ARG|SUB_SEC, 0, 0, "PROGRAM TERMINATION");
+	check_all_events(gts, SUB_ARG, 0, 0, "PROGRAM TERMINATION");
 
 	if (gtd->history_size)
 	{
@@ -462,11 +467,11 @@ void quitmsg(char *message)
 
 	clean_screen(gts);
 
-	if (message == NULL || message[0] != '\\' || message[1] != '\0')
+	if (message == NULL || *message)
 	{
 		if (message)
 		{
-			printf("\n%s\n", message);
+			printf("\n%s", message);
 		}
 		printf("\nGoodbye from TinTin++\n\n");
 	}

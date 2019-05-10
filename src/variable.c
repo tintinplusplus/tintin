@@ -164,7 +164,7 @@ DO_COMMAND(do_replace)
 	struct listroot *root;
 	struct listnode *node;
 
-	arg = get_arg_in_braces(ses, arg, arg1, GET_NST);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg3, GET_ALL, SUB_VAR|SUB_FUN);
 
@@ -664,14 +664,15 @@ void timestring(struct session *ses, char *str)
 	strftime(str, BUFFER_SIZE, left, &timeval_tm);
 }
 
+
 void format_string(struct session *ses, char *format, char *arg, char *out)
 {
-	char temp[BUFFER_SIZE], newformat[BUFFER_SIZE], arglist[20][BUFFER_SIZE], *ptf, *ptt, *pts, *ptn;
+	char temp[BUFFER_SIZE], newformat[BUFFER_SIZE], arglist[30][20000], *ptf, *ptt, *pts, *ptn;
 	struct tm timeval_tm;
 	time_t    timeval_t;
 	int i;
 
-	for (i = 0 ; i < 20 ; i++)
+	for (i = 0 ; i < 30 ; i++)
 	{
 		arg = sub_arg_in_braces(ses, arg, arglist[i], GET_ONE, SUB_VAR|SUB_FUN);
 	}
@@ -683,7 +684,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 
 	while (*ptf)
 	{
-		if (i == 20)
+		if (i == 30)
 		{
 			break;
 		}
@@ -885,6 +886,10 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						sprintf(arglist[i], "%d", ses->rows);
 						break;
 
+					case 'S':
+						sprintf(arglist[i], "%s", ses->name);
+						break;
+
 					case 'T':
 						sprintf(arglist[i], "%d", (int) time(NULL));
 						break;
@@ -915,7 +920,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 	}
 	*ptn = 0;
 
-	sprintf(out, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19]);
+	sprintf(out, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19], arglist[20], arglist[21], arglist[22], arglist[23], arglist[24], arglist[25], arglist[26], arglist[27], arglist[28], arglist[29]);
 
 	return;
 }

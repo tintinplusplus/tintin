@@ -164,8 +164,9 @@ void write_html_header(struct session *ses, FILE *fp)
 
 void vt102_to_html(struct session *ses, char *txt, char *out)
 {
-	char tmp[BUFFER_SIZE], *pti, *pto, x[] = { '0', '5', '8', 'B', 'D', 'F' };
-	int vtc, fgc, bgc, cnt;
+	char tmp[BUFFER_SIZE], *pti, *pto;
+	char xtc[] = { '0', '6', '8', 'B', 'D', 'F' };
+	int vtc, fgc, bgc, cnt, rgb[6];
 
 	vtc = ses->vtc;
 	fgc = ses->fgc;
@@ -197,16 +198,56 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 						cnt = -1;
 						pti += 1 + strlen(tmp);
 
-						if (HAS_BIT(vtc, COL_256) && (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB)))
+						if (HAS_BIT(vtc, COL_XTF_R))
 						{
-							if (HAS_BIT(vtc, COL_XTF))
+							fgc = URANGE(0, atoi(tmp), 255);
+							DEL_BIT(vtc, COL_XTF_R);
+							SET_BIT(vtc, COL_XTF);
+						}
+						else if (HAS_BIT(vtc, COL_XTB_R))
+						{
+							bgc = URANGE(0, atoi(tmp), 255);
+							DEL_BIT(vtc, COL_XTB_R);
+							SET_BIT(vtc, COL_XTB);
+						}
+						else if (HAS_BIT(vtc, COL_TCF_R))
+						{
+							if (rgb[0] == 256)
 							{
-								fgc = URANGE(0, atoi(tmp), 255);
+								rgb[0] = URANGE(0, atoi(tmp), 255);
 							}
-
-							if (HAS_BIT(vtc, COL_XTB))
+							else if (rgb[1] == 256)
 							{
-								bgc = URANGE(0, atoi(tmp), 255);
+								rgb[1] = URANGE(0, atoi(tmp), 255);
+							}
+							else if (rgb[2] == 256)
+							{
+								rgb[2] = URANGE(0, atoi(tmp), 255);
+
+								fgc = rgb[0] * 256 * 256 + rgb[1] * 256 + rgb[2];
+	
+								DEL_BIT(vtc, COL_TCF_R);
+								SET_BIT(vtc, COL_TCF);
+							}
+						}
+						else if (HAS_BIT(vtc, COL_TCB_R))
+						{
+							if (rgb[3] == 256)
+							{
+								rgb[3] = URANGE(0, atoi(tmp), 255);
+							}
+							else if (rgb[4] == 256)
+							{
+								rgb[4] = URANGE(0, atoi(tmp), 255);
+							}
+							else if (rgb[5] == 256)
+							{
+								rgb[5] = URANGE(0, atoi(tmp), 255);
+
+								bgc = rgb[3] * 256 * 256 + rgb[4] * 256 + rgb[5];
+
+								DEL_BIT(vtc, COL_TCB_R);
+								SET_BIT(vtc, COL_TCB);
 							}
 						}
 						else
@@ -221,16 +262,39 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 								case 1:
 									SET_BIT(vtc, COL_BLD);
 									break;
-								case 5:
-									if (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB))
+								case 2:
+									if (HAS_BIT(vtc, COL_TCF_2))
 									{
-										SET_BIT(vtc, COL_256);
+										DEL_BIT(vtc, COL_XTF_5|COL_TCF_2);
+										SET_BIT(vtc, COL_TCF_R);
+										rgb[0] = 256; rgb[1] = 256; rgb[2] = 256;
+									}
+									else if (HAS_BIT(vtc, COL_TCB_2))
+									{
+										DEL_BIT(vtc, COL_XTB_5|COL_TCF_2);
+										SET_BIT(vtc, COL_TCB_R);
+										rgb[3] = 256; rgb[4] = 256; rgb[5] = 256;
+									}
+									else
+									{
+										DEL_BIT(vtc, COL_BLD);
+									}
+									break;
+								case 5:
+									if (HAS_BIT(vtc, COL_XTF_5))
+									{
+										DEL_BIT(vtc, COL_XTF_5|COL_TCF_2);
+										SET_BIT(vtc, COL_XTF_R);
+									}
+									else if (HAS_BIT(vtc, COL_XTB_5))
+									{
+										DEL_BIT(vtc, COL_XTB_5|COL_TCF_2);
+										SET_BIT(vtc, COL_XTB_R);
 									}
 									break;
 								case 7:
 									SET_BIT(vtc, COL_REV);
 									break;
-								case  2:
 								case 21:
 								case 22:
 									DEL_BIT(vtc, COL_BLD);
@@ -239,16 +303,25 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 									DEL_BIT(vtc, COL_REV);
 									break;
 								case 38:
-									DEL_BIT(vtc, COL_XTB);
-									SET_BIT(vtc, COL_XTF);
+									SET_BIT(vtc, COL_XTF_5|COL_TCF_2);
 									fgc = 38;
 									break;
 								case 48:
-									DEL_BIT(vtc, COL_XTF);
-									SET_BIT(vtc, COL_XTB);
+									SET_BIT(vtc, COL_XTB_5|COL_TCB_2);
 									bgc = 48;
 									break;
 								default:
+									switch (atoi(tmp) / 10)
+									{
+										case 3:
+										case 9:
+											DEL_BIT(vtc, COL_XTF|COL_TCF);
+											break;
+										case 4:
+										case 10:
+											DEL_BIT(vtc, COL_XTB|COL_TCB);
+											break;
+									}
 									if (atoi(tmp) / 10 == 4)
 									{
 										bgc = atoi(tmp);
@@ -279,7 +352,6 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 					}
 				}
 
-
 				if (!HAS_BIT(vtc, COL_REV) && HAS_BIT(ses->vtc, COL_REV))
 				{
 					cnt = fgc;
@@ -294,7 +366,7 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 
 					if (bgc != ses->bgc)
 					{
-						if (HAS_BIT(vtc, COL_256) && HAS_BIT(vtc, COL_XTB))
+						if (HAS_BIT(vtc, COL_XTB))
 						{
 							if (bgc < 8)
 							{
@@ -306,12 +378,16 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 							}
 							else if (bgc < 232)
 							{
-								sprintf(pto, "</span><span style='background-color: #%c%c%c;'>", x[(bgc-16) / 36], x[(bgc-16) % 36 / 6], x[(bgc-16) % 6]);
+								sprintf(pto, "</span><span style='background-color: #%c%c%c;'>", xtc[(bgc-16) / 36], xtc[(bgc-16) % 36 / 6], xtc[(bgc-16) % 6]);
 							}
 							else
 							{
 								sprintf(pto, "</span><span style='background-color: rgb(%d,%d,%d);'>", (bgc-232) * 10 + 8, (bgc-232) * 10 + 8,(bgc-232) * 10 + 8);
 							}
+						}
+						else if (HAS_BIT(vtc, COL_TCB))
+						{
+							sprintf(pto, "</span><span style='background-color: rgb(%d,%d,%d);'>", rgb[3], rgb[4], rgb[5]);
 						}
 						else
 						{
@@ -320,24 +396,28 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 						pto += strlen(pto);
 					}
 
-					if (HAS_BIT(vtc, COL_256) && HAS_BIT(vtc, COL_XTF))
+					if (HAS_BIT(vtc, COL_XTF))
 					{
 						if (fgc < 8)
 						{
-							sprintf(pto, "</span><span class='d%d'>", 30+fgc);
+							sprintf(pto, "<span class='d%d'>", 30+fgc);
 						}
 						else if (fgc < 16)
 						{
-							sprintf(pto, "</span><span class='l%d'>", 30+fgc-8);
+							sprintf(pto, "<span class='l%d'>", 30+fgc-8);
 						}
 						else if (fgc < 232)
 						{
-							sprintf(pto, "<span style='color: #%c%c%c;'>", x[(fgc-16) / 36], x[(fgc-16) % 36 / 6], x[(fgc-16) % 6]);
+							sprintf(pto, "<span style='color: #%c%c%c;'>", xtc[(fgc-16) / 36], xtc[(fgc-16) % 36 / 6], xtc[(fgc-16) % 6]);
 						}
 						else
 						{
 							sprintf(pto, "<span style='color: rgb(%d,%d,%d);'>", (fgc-232) * 10 + 8, (fgc-232) * 10 + 8,(fgc-232) * 10 + 8);
 						}
+					}
+					else if (HAS_BIT(vtc, COL_TCF))
+					{
+						sprintf(pto, "<span style='color: rgb(%d,%d,%d);'>", fgc / 256 / 256, fgc / 256 % 256, fgc % 256);
 					}
 					else
 					{
@@ -359,9 +439,6 @@ void vt102_to_html(struct session *ses, char *txt, char *out)
 					fgc = ses->fgc = bgc - 10;
 					bgc = ses->bgc = cnt + 10;
 				}
-				DEL_BIT(vtc, COL_XTF);
-				DEL_BIT(vtc, COL_XTB);
-				DEL_BIT(vtc, COL_256);
 
 				ses->vtc = vtc;
 				ses->fgc = fgc;

@@ -162,7 +162,7 @@ DO_CLASS(class_list)
 
 		for (i = 0 ; i < LIST_MAX ; i++)
 		{
-			if (*right && !is_abbrev(right, list_table[i].name_multi))
+			if (*right && !is_abbrev(right, list_table[i].name) && !is_abbrev(right, list_table[i].name_multi))
 			{
 				continue;
 			}

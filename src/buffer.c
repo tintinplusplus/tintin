@@ -759,18 +759,33 @@ DO_BUFFER(buffer_end)
 
 DO_BUFFER(buffer_lock)
 {
+	char left[BUFFER_SIZE];
+
 	if (ses->buffer == NULL)
 	{
 		return;
 	}
 
-	if (ses->scroll_line == -1)
+	sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+
+	if (!strcasecmp(left, "ON"))
 	{
 		ses->scroll_line = ses->scroll_row + 1;
 	}
+	else if (!strcasecmp(left, "OFF"))
+	{
+		 buffer_end(ses, "");
+	}
 	else
 	{
-		buffer_end(ses, "");
+		if (ses->scroll_line == -1)
+		{
+			ses->scroll_line = ses->scroll_row + 1;
+		}
+		else
+		{
+			buffer_end(ses, "");
+		}
 	}
 }
 

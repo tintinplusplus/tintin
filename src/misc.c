@@ -27,31 +27,6 @@
 
 #include "tintin.h"
 
-DO_COMMAND(do_all)
-{
-	char left[BUFFER_SIZE];
-	struct session *sesptr, *next_ses;
-
-	if (gts->next)
-	{
-		get_arg_in_braces(ses, arg, left, TRUE);
-
-		substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
-		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
-		{
-			next_ses = sesptr->next;
-
-			script_driver(sesptr, LIST_COMMAND, left);
-		}
-	}
-	else
-	{
-		show_error(ses, LIST_COMMAND, "#ALL: THERE AREN'T ANY SESSIONS.");
-	}
-	return ses;
-}
-
 
 DO_COMMAND(do_bell)
 {
@@ -134,11 +109,11 @@ DO_COMMAND(do_echo)
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		output = str_dup_printf("\n\033[0m%s\033[0m", temp);
+		output = str_dup_printf("\n\e[0m%s\e[0m", temp);
 	}
 	else
 	{
-		output = str_dup_printf("\033[0m%s\033[0m", temp);
+		output = str_dup_printf("\e[0m%s\e[0m", temp);
 	}
 
 	add_line_buffer(ses, output, lnf);
@@ -163,11 +138,16 @@ DO_COMMAND(do_echo)
 	return ses;
 }
 
+
 DO_COMMAND(do_end)
 {
+	char left[BUFFER_SIZE];
+
 	if (*arg)
 	{
-		quitmsg(arg);
+		sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC|SUB_LNF);
+
+		quitmsg(left);
 	}
 	else
 	{
@@ -183,6 +163,8 @@ DO_COMMAND(do_forall)
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
 	arg = get_arg_in_braces(ses, arg, right, TRUE);
+
+	tintin_printf2(ses, "\e[1;31m#NOTICE: The #forall command is going to be removed in the next release, please switch to the #foreach command.\n");
 
 	if (*left == 0 || *right == 0)
 	{
@@ -213,50 +195,11 @@ DO_COMMAND(do_forall)
 }
 
 
-DO_COMMAND(do_info)
-{
-	int cnt;
-
-	if (*arg == 'c')
-	{
-		show_cpu(ses);
-
-		return ses;
-	}
-
-	if (*arg == 's')
-	{
-		dump_stack();
-
-		return ses;
-	}
-
-	tintin_header(ses, " INFORMATION ");
-
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
-	{
-		if (HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_HIDE))
-		{
-			continue;
-		}
-		tintin_printf2(ses, "%-20s  %5d  IGNORE %3s  MESSAGE %3s  DEBUG %3s %3s",
-			list_table[cnt].name_multi,
-			ses->list[cnt]->used,
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_IGNORE)  ?  "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_MESSAGE) ?  "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_DEBUG)   ?  "ON" : "OFF",
-			HAS_BIT(ses->list[cnt]->flags, LIST_FLAG_LOG)     ? "LOG" : "   ");
-	}
-	tintin_header(ses, "");
-
-	return ses;
-}
-
-
 DO_COMMAND(do_nop)
 {
 	return ses;
 }
+
 
 DO_COMMAND(do_send)
 {
@@ -271,6 +214,7 @@ DO_COMMAND(do_send)
 	pop_call();
 	return ses;
 }
+
 
 DO_COMMAND(do_showme)
 {
@@ -304,11 +248,11 @@ DO_COMMAND(do_showme)
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		output = str_dup_printf("\n\033[0m%s\033[0m", left);
+		output = str_dup_printf("\n\e[0m%s\e[0m", left);
 	}
 	else
 	{
-		output = str_dup_printf("\033[0m%s\033[0m", left);
+		output = str_dup_printf("\e[0m%s\e[0m", left);
 	}
 
 	add_line_buffer(ses, output, lnf);
@@ -334,57 +278,16 @@ DO_COMMAND(do_showme)
 	return ses;
 }
 
-DO_COMMAND(do_snoop)
-{
-	struct session *sesptr = ses;
-	char left[BUFFER_SIZE];
-
-	get_arg_in_braces(ses, arg, left, 1);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
-	if (*left)
-	{
-		sesptr = find_session(left);
-
-		if (sesptr == NULL)
-		{
-			return show_error(ses, LIST_COMMAND, "#SNOOP: THERE'S NO SESSION NAMED {%s}", left);
-		}
-	}
-	else
-	{
-		sesptr = ses;
-	}
-
-	if (HAS_BIT(sesptr->flags, SES_FLAG_SNOOP))
-	{
-		show_message(ses, LIST_COMMAND, "#NO LONGER SNOOPING SESSION '%s'", sesptr->name);
-	}
-	else
-	{
-		show_message(ses, LIST_COMMAND, "#SNOOPING SESSION '%s'", sesptr->name);
-	}
-	TOG_BIT(sesptr->flags, SES_FLAG_SNOOP);
-
-	return ses;
-}
-
-DO_COMMAND(do_suspend)
-{
-	suspend_handler(0);
-
-	return ses;
-}
 
 DO_COMMAND(do_test)
 {
 	long long x, time1, time2;
 	char *str, buf[100001];
 
-	tintin_printf2(ses, "input_level %d", gtd->input_level);
-	tintin_printf2(ses, "noise_level %d", gtd->noise_level);
-	tintin_printf2(ses, "quiet_level %d", gtd->quiet);
-	tintin_printf2(ses, "debug_level %d", gtd->debug_level);
+	tintin_printf2(ses, "  input_level %d", gtd->input_level);
+	tintin_printf2(ses, "verbose_level %d", gtd->verbose_level);
+	tintin_printf2(ses, "  quiet_level %d", gtd->quiet);
+	tintin_printf2(ses, "  debug_level %d", gtd->debug_level);
 
 	return ses;
 
@@ -423,45 +326,3 @@ DO_COMMAND(do_test)
 
 	return ses;
 }
-
-DO_COMMAND(do_zap)
-{
-	struct session *sesptr;
-	char left[BUFFER_SIZE];
-
-	push_call("do_zap(%p,%p)",ses,arg);
-
-	sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
-
-	if (*left)
-	{
-		sesptr = find_session(left);
-
-		if (sesptr == NULL)
-		{
-			show_error(ses, LIST_COMMAND, "#ZAP: THERE'S NO SESSION WITH THAT NAME!");
-
-			pop_call();
-			return ses;
-		}
-	}
-	else
-	{
-		sesptr = ses;
-	}
-
-	tintin_puts(sesptr, "");
-
-	tintin_puts(sesptr, "#ZZZZZZZAAAAAAAAPPPP!!!!!!!!! LET'S GET OUTTA HERE!!!!!!!!");
-
-	if (sesptr == gts)
-	{
-		pop_call();
-		return do_end(NULL, "");
-	}
-	cleanup_session(sesptr);
-
-	pop_call();
-	return gtd->ses;
-}
-

@@ -90,24 +90,24 @@ void debugtoken(struct session *ses, struct scriptroot *root, struct scriptnode 
 
 			case TOKEN_TYPE_ELSE:
 			case TOKEN_TYPE_END:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;32m%s\033[0m", token->type, token->lvl * 4, "", token->str);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;32m%s\e[0m", token->type, token->lvl * 4, "", token->str);
 				break;
 
 			case TOKEN_TYPE_DEFAULT:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;32m%s\033[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;32m%s\e[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name);
 				break;
 
 			case TOKEN_TYPE_BREAK:
 			case TOKEN_TYPE_CONTINUE:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;31m%s\033[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;31m%s\e[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name);
 				break;
 
 			case TOKEN_TYPE_COMMAND:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;36m%s\033[0m %s\033[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;36m%s\e[0m %s\e[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str);
 				break;
 
 			case TOKEN_TYPE_RETURN:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;31m%s\033[0m %s\033[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;31m%s\e[0m %s\e[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str);
 				break;
 
 			case TOKEN_TYPE_CASE:
@@ -118,11 +118,11 @@ void debugtoken(struct session *ses, struct scriptroot *root, struct scriptnode 
 			case TOKEN_TYPE_PARSE:
 			case TOKEN_TYPE_SWITCH:
 			case TOKEN_TYPE_WHILE:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;32m%s {\033[0m%s\033[1;32m}\033[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;32m%s {\e[0m%s\e[1;32m}\e[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str);
 				break;
 
 			case TOKEN_TYPE_REGEX:
-				show_debug(ses, root->list, "[%02d] %*s\033[1;32m%s {\033[0m%s\033[1;32m} {\033[0m%s\033[1;32m}\033[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str, token->regex->str);
+				show_debug(ses, root->list, "[%02d] %*s\e[1;32m%s {\e[0m%s\e[1;32m} {\e[0m%s\e[1;32m}\e[0m", token->type, token->lvl * 4, "", command_table[token->cmd].name, token->str, token->regex->str);
 				break;
 
 			default:
@@ -132,7 +132,7 @@ void debugtoken(struct session *ses, struct scriptroot *root, struct scriptnode 
 				}
 				else
 				{
-					show_debug(ses, root->list, "[%02d] %*s\033[1;33m%d {\033[0m%s\033[1;32m}\033[0m", token->type, token->lvl * 4, "", token->cmd, token->str);
+					show_debug(ses, root->list, "[%02d] %*s\e[1;33m%d {\e[0m%s\e[1;32m}\e[0m", token->type, token->lvl * 4, "", token->cmd, token->str);
 				}
 				break;
 		}
@@ -659,6 +659,8 @@ void tokenize_script(struct scriptroot *root, int lvl, char *str)
 				}
 			}
 		}
+		str = space_out(str);
+
 		if (*str == COMMAND_SEPARATOR)
 		{
 			str++;

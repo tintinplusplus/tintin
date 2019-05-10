@@ -83,14 +83,41 @@ DO_COMMAND(do_run)
 DO_COMMAND(do_scan)
 {
 	FILE *fp;
-	char filename[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], filename[BUFFER_SIZE];
 
-	get_arg_in_braces(ses, arg, filename, TRUE);
-	substitute(ses, filename, filename, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if ((fp = fopen(filename, "r")) == NULL)
+	if (*left == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#ERROR: #SCAN {%s} - FILE NOT FOUND.", filename);
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #SCAN {ABORT|READ} {<FILENAME>}");
+		
+		return ses;
+	}
+
+	if (is_abbrev(left, "ABORT"))
+	{
+		if (!HAS_BIT(ses->flags, SES_FLAG_SCAN))
+		{
+			show_error(ses, LIST_COMMAND, "#SCAN ABORT: NOT CURRENTLY SCANNING.");
+		}
+		else
+		{
+			SET_BIT(ses->flags, SES_FLAG_SCANABORT);
+		}
+		return ses;
+	}
+
+	if (is_abbrev(left, "READ") && *right)
+	{
+		strcpy(left, right);
+	}
+
+	if ((fp = fopen(left, "r")) == NULL)
+	{
+		show_error(ses, LIST_COMMAND, "#ERROR: #SCAN READ {%s} - FILE NOT FOUND.", left);
+
+		return ses;
 	}
 
 	SET_BIT(ses->flags, SES_FLAG_SCAN);
@@ -106,12 +133,25 @@ DO_COMMAND(do_scan)
 		gtd->mud_output_len = 1;
 
 		readmud(ses);
+
+		if (HAS_BIT(ses->flags, SES_FLAG_SCANABORT))
+		{
+			break;
+		}
 	}
 
 	DEL_BIT(ses->flags, SES_FLAG_SCAN);
 
-	show_message(ses, LIST_COMMAND, "#OK. FILE SCANNED.", filename);
+	if (HAS_BIT(ses->flags, SES_FLAG_SCANABORT))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_SCANABORT);
 
+		show_message(ses, LIST_COMMAND, "#SCAN: FILE PARTIALLY SCANNED.", filename);
+	}
+	else
+	{
+		show_message(ses, LIST_COMMAND, "#SCAN: FILE SCANNED.", filename);
+	}
 	fclose(fp);
 
 	return ses;
@@ -134,19 +174,26 @@ DO_COMMAND(do_script)
 	{
 		script = popen(arg1, "r");
 
-		while (fgets(buf, BUFFER_SIZE - 1, script))
+		if (script)
 		{
-			cptr = strchr(buf, '\n');
-
-			if (cptr)
+			while (fgets(buf, BUFFER_SIZE - 1, script))
 			{
-				*cptr = 0;
+				cptr = strchr(buf, '\n');
+
+				if (cptr)
+				{
+					*cptr = 0;
+				}
+
+				ses = script_driver(ses, LIST_COMMAND, buf);
 			}
 
-			ses = script_driver(ses, LIST_COMMAND, buf);
+			pclose(script);
 		}
-
-		pclose(script);
+		else
+		{
+			perror("popen");
+		}
 	}
 	else
 	{
@@ -154,31 +201,47 @@ DO_COMMAND(do_script)
 
 		script = popen(arg2, "r");
 
-		var[0] = 0;
-
-		while (fgets(buf, BUFFER_SIZE - 1, script))
+		if (script)
 		{
-			cptr = strchr(buf, '\n');
+			var[0] = 0;
 
-			if (cptr)
+			while (fgets(buf, BUFFER_SIZE - 1, script))
 			{
-				*cptr = 0;
+				cptr = strchr(buf, '\n');
+
+				if (cptr)
+				{
+					*cptr = 0;
+				}
+
+				substitute(ses, buf, tmp, SUB_SEC);
+
+				cat_sprintf(var, "{%d}{%s}", index++, tmp);
 			}
 
-			substitute(ses, buf, tmp, SUB_SEC);
 
-			cat_sprintf(var, "{%d}{%s}", index++, tmp);
+			set_nest_node(ses->list[LIST_VARIABLE], arg1, "%s", var);
+
+			pclose(script);
 		}
-
-
-		set_nest_node(ses->list[LIST_VARIABLE], arg1, "%s", var);
-
-		pclose(script);
+		else
+		{
+			perror("popen");
+		}
 	}
 	refresh_terminal();
 
 	return ses;
 }
+
+
+DO_COMMAND(do_suspend)
+{
+	suspend_handler(0);
+
+	return ses;
+}
+
 
 DO_COMMAND(do_system)
 {

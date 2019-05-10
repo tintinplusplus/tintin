@@ -29,7 +29,7 @@
 
 void save_pos(struct session *ses)
 {
-	printf("\0337"); 
+	printf("\e7"); 
 
 	ses->sav_row = ses->cur_row;
 	ses->sav_col = ses->cur_col;
@@ -38,7 +38,7 @@ void save_pos(struct session *ses)
 
 void restore_pos(struct session *ses)
 {
-	printf("\0338\0338"); 
+	printf("\e8\e8"); 
 
 	ses->cur_row = ses->sav_row;
 	ses->cur_col = ses->sav_col;
@@ -46,7 +46,7 @@ void restore_pos(struct session *ses)
 
 void goto_rowcol(struct session *ses, int row, int col)
 {
-	printf("\033[%d;%dH", row, col);
+	printf("\e[%d;%dH", row, col);
 
 	ses->cur_row = row;
 }
@@ -54,7 +54,7 @@ void goto_rowcol(struct session *ses, int row, int col)
 
 void erase_toeol(void)
 {
-	printf("\033[K");
+	printf("\e[K");
 }
 
 /*
@@ -63,7 +63,7 @@ void erase_toeol(void)
 
 void erase_screen(struct session *ses)
 {
-	printf("\0337\033[%d;1H\033[%dM\0338", ses->top_row, ses->bot_row - ses->top_row);
+	printf("\e7\e[%d;1H\e[%dM\e8", ses->top_row, ses->bot_row - ses->top_row);
 
 	ses->sav_row = ses->cur_row;
 	ses->sav_col = ses->cur_col;
@@ -517,7 +517,7 @@ char *strip_vt102_strstr(char *str, char *buf, int *len)
 void get_color_codes(char *old, char *str, char *buf)
 {
 	char *pti, *pto, col[100], tmp[BUFFER_SIZE];
-	int len, vtc, fgc, bgc, cnt;
+	int len, vtc, fgc, bgc, cnt, rgb[6];
 
 	pto = tmp;
 
@@ -595,18 +595,57 @@ void get_color_codes(char *old, char *str, char *buf)
 						cnt = -1;
 						pti += 1 + strlen(col);
 
-						if (HAS_BIT(vtc, COL_256) && (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB)))
+						if (HAS_BIT(vtc, COL_XTF_R))
 						{
-							if (HAS_BIT(vtc, COL_XTF))
+							fgc = URANGE(0, atoi(col), 255);
+							DEL_BIT(vtc, COL_XTF_5|COL_XTF_R);
+							SET_BIT(vtc, COL_XTF);
+						}
+						else if (HAS_BIT(vtc, COL_XTB_R))
+						{
+							bgc = URANGE(0, atoi(col), 255);
+							DEL_BIT(vtc, COL_XTB_5|COL_XTB_R);
+							SET_BIT(vtc, COL_XTB);
+						}
+						else if (HAS_BIT(vtc, COL_TCF_R))
+						{
+							if (rgb[0] == 256)
 							{
-								fgc = URANGE(0, atoi(col), 255);
+								rgb[0] = URANGE(0, atoi(col), 255);
 							}
+							else if (rgb[1] == 256)
+							{
+								rgb[1] = URANGE(0, atoi(col), 255);
+							}
+							else
+							{
+								rgb[2] = URANGE(0, atoi(col), 255);
 
-							if (HAS_BIT(vtc, COL_XTB))
-							{
-								bgc = URANGE(0, atoi(col), 255);
+								fgc = rgb[0] * 256 * 256 + rgb[1] * 256 + rgb[2];
+								
+								DEL_BIT(vtc, COL_TCF_2|COL_TCF_R);
+								SET_BIT(vtc, COL_TCB);
 							}
-							DEL_BIT(vtc, COL_XTF|COL_XTB);
+						}
+						else if (HAS_BIT(vtc, COL_TCB_R))
+						{
+							if (rgb[3] == 256)
+							{
+								rgb[3] = URANGE(0, atoi(col), 255);
+							}
+							else if (rgb[4] == 256)
+							{
+								rgb[4] = URANGE(0, atoi(col), 255);
+							}
+							else
+							{
+								rgb[5] = URANGE(0, atoi(col), 255);
+
+								fgc = rgb[3] * 256 * 256 + rgb[4] * 256 + rgb[5];
+								
+								DEL_BIT(vtc, COL_TCB_2|COL_TCF_R);
+								SET_BIT(vtc, COL_TCB);
+							}
 						}
 						else
 						{
@@ -620,13 +659,33 @@ void get_color_codes(char *old, char *str, char *buf)
 								case 1:
 									SET_BIT(vtc, COL_BLD);
 									break;
+								case 2:
+									if (HAS_BIT(vtc, COL_TCF_2))
+									{
+										rgb[0] = rgb[1] = rgb[2] = 256;
+										SET_BIT(vtc, COL_TCF_R);
+									}
+									else if (HAS_BIT(vtc, COL_TCB_2))
+									{
+										rgb[3] = rgb[4] = rgb[5] = 256;
+										SET_BIT(vtc, COL_TCB_R);
+									}
+									else
+									{
+										DEL_BIT(vtc, COL_BLD);
+									}
+									break;
 								case 4:
 									SET_BIT(vtc, COL_UND);
 									break;
 								case 5:
-									if (HAS_BIT(vtc, COL_XTF) || HAS_BIT(vtc, COL_XTB))
+									if (HAS_BIT(vtc, COL_XTF_5))
 									{
-										SET_BIT(vtc, COL_256);
+										SET_BIT(vtc, COL_XTF_R);
+									}
+									else if (HAS_BIT(vtc, COL_XTB_5))
+									{
+										SET_BIT(vtc, COL_XTB_R);
 									}
 									else
 									{
@@ -636,7 +695,6 @@ void get_color_codes(char *old, char *str, char *buf)
 								case 7:
 									SET_BIT(vtc, COL_REV);
 									break;
-								case  2:
 								case 21:
 								case 22:
 									DEL_BIT(vtc, COL_BLD);
@@ -651,44 +709,27 @@ void get_color_codes(char *old, char *str, char *buf)
 									DEL_BIT(vtc, COL_REV);
 									break;
 								case 38:
-									DEL_BIT(vtc, COL_XTB);
-									DEL_BIT(vtc, COL_256);
-									SET_BIT(vtc, COL_XTF);
-									fgc = -1;
-									break;
-								case 39:
-									DEL_BIT(vtc, COL_UND);
+									SET_BIT(vtc, COL_XTF_5|COL_TCF_2);
 									fgc = -1;
 									break;
 								case 48:
-									DEL_BIT(vtc, COL_XTF);
-									DEL_BIT(vtc, COL_256);
-									SET_BIT(vtc, COL_XTB);
+									SET_BIT(vtc, COL_XTB_5|COL_TCB_2);
 									bgc = -1;
 									break;
 								default:
-									DEL_BIT(vtc, COL_256);
-
-									/*
-										Use 256 color's 16 color notation
-									*/
-
-									if (atoi(col) / 10 == 4)
+									switch (atoi(col) / 10)
 									{
-										bgc = atoi(col) % 10;
-									}
-									if (atoi(col) / 10 == 9)
-									{
-										bgc = atoi(col) % 10 + 8;
-									}
-
-									if (atoi(col) / 10 == 3)
-									{
-										fgc = atoi(col) % 10;
-									}
-									if (atoi(col) / 10 == 10)
-									{
-										fgc = atoi(col) % 10 + 8;
+										case 3:
+										case 10:
+											fgc = atoi(col);
+											DEL_BIT(vtc, COL_XTF|COL_TCF);
+											break;
+										
+										case 4:
+										case 9:
+											bgc = atoi(col);
+											DEL_BIT(vtc, COL_XTB|COL_TCB);
+											break;
 									}
 									break;
 							}
@@ -708,7 +749,7 @@ void get_color_codes(char *old, char *str, char *buf)
 		}
 	}
 
-	strcpy(buf, "\033[0");
+	strcpy(buf, "\e[0");
 
 	if (HAS_BIT(vtc, COL_BLD))
 	{
@@ -727,30 +768,30 @@ void get_color_codes(char *old, char *str, char *buf)
 		strcat(buf, ";7");
 	}
 
-	if (fgc >= 16)
+	if (HAS_BIT(vtc, COL_XTF))
 	{
 		cat_sprintf(buf, ";38;5;%d", fgc);
 	}
-	else if (fgc >= 8)
+	else if (HAS_BIT(vtc, COL_TCF))
 	{
-		cat_sprintf(buf, ";%d", fgc + 100);
+		cat_sprintf(buf, ";38;2;%d;%d;%d", fgc / 256 / 256, fgc / 256 % 256, fgc % 256);
 	}
-	else if (fgc >= 0)
+	else if (fgc != -1)
 	{
-		cat_sprintf(buf, ";%d", fgc + 30);
+		cat_sprintf(buf, ";%d", fgc);
 	}
 
-	if (bgc >= 16)
+	if (HAS_BIT(vtc, COL_XTB))
 	{
 		cat_sprintf(buf, ";48;5;%d", bgc);
 	}
-	else if (bgc >= 8)
+	else if (HAS_BIT(vtc, COL_TCB))
 	{
-		cat_sprintf(buf, ";%d", fgc + 90);
+		cat_sprintf(buf, ";48;2;%d;%d;%d", bgc / 256 / 256, bgc / 256 % 256, bgc % 256);
 	}
-	else if (bgc >= 0)
+	else if (bgc != -1)
 	{
-		cat_sprintf(buf, ";%d", bgc + 40);
+		cat_sprintf(buf, ";%d", bgc);
 	}
 
 	strcat(buf, "m");

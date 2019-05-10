@@ -194,7 +194,7 @@ void read_line()
 					}
 					else
 					{
-						input_printf("\033[1@%c", gtd->macro_buf[cnt]);
+						input_printf("\e[1@%c", gtd->macro_buf[cnt]);
 					}
 				}
 				else
@@ -304,7 +304,7 @@ void read_key(void)
 				{
 					if (gtd->input_len != gtd->input_cur)
 					{
-						printf("\033[1@%c", gtd->macro_buf[cnt]);
+						printf("\e[1@%c", gtd->macro_buf[cnt]);
 					}
 					else
 					{
@@ -350,7 +350,9 @@ void convert_meta(char *input, char *output)
 
 			case 127:
 				*pto++ = '\\';
-				*pto++ = 'b';
+				*pto++ = 'x';
+				*pto++ = '7';
+				*pto++ = 'F';
 				pti++;
 				break;
 
@@ -494,7 +496,14 @@ void echo_command(struct session *ses, char *line)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		sprintf(buffer, "%s%s\033[0m", ses->cmd_color, line);
+		if (HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
+		{
+			sprintf(buffer, "%s%s\e[0m", ses->cmd_color, line);
+		}
+		else
+		{
+			sprintf(buffer, "\e[0m");
+		}
 	}
 	else
 	{
@@ -520,14 +529,19 @@ void echo_command(struct session *ses, char *line)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		if (!HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
-		{
-			sprintf(result, "\033[0;37m");
-		}
-		else
+		if (HAS_BIT(ses->flags, SES_FLAG_ECHOCOMMAND))
 		{
 			sprintf(result, "%s%s", ses->more_output, buffer);
 		}
+		else
+		{
+			if (strip_vt102_strlen(ses, ses->more_output) == 0)
+			{
+				return;
+			}
+			sprintf(result, "%s", ses->more_output);
+		}
+
 		add_line_buffer(ses, buffer, -1);
 
 		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);

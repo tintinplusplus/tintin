@@ -1,17 +1,133 @@
 Jan 2018       2.01.5
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
-tinexp.c       Added exception for %*{text} to be parsed as a regex and not
-               as a *{text} variable.
+math.c         Fixed bug with floating point math.
+
+line.c         Added #line verbatim option.
+
+cursor.c       Added the #cursor brace open, and #cursor brace close
+               commands. This to easily insert the { and } characters from
+               within a macro, which currently is rather complicated.
+
+tinexp.c       Added support for <Fxxxxxx> and <Bxxxxxx> 24 bit color codes.
+               F stands for foreground, B for background, xxxxxx is a
+               hexadecimal RGB value. The terminal must support truecolor
+               for these to work.
+
+session.c      Added on|off option to #snoop.
+
+data.c         Added #info {list} {LIST|SAVE} option to list the content of a
+               list or save it to a variable.
+
+alias.c        Aliases no longer substitutes variables and functions passed
+               along as arguments. Use: #line sub {var;fun} {<argument>} to
+               force variable and function substitutions.
+
+tokenize.c     Improved trailing space parsing.
+
+mapper.c       Added exit weights.
+
+mapper.c       Added #map get all <var> option.
+
+main.c         Added the -a <argument> startup option, which is passed to the
+               %2 variable of the PROGRAM start event.
+
+buffer.c       Added #buffer lock {on|off} option.
+
+session.c      Fixed #port session close being shown as a time out.
+
+tinexp.c       Added \UXXXXXX escape code which takes 6 hexedecimal digits.
+
+tinexp.c       Added \uXXXX escape code, XXXX must be a 4 digit hexadecimal
+               unicode index, which is translated to a UTF-8 sequence.
+
+tinexp.c       @ $ * and & characters send from the server are only escaped if
+               the key matches an existing variable. Keep in mind that ${ *{
+               and &{ are always escaped.
+
+variable.c     Added #format <variable> %S option to store the session name to
+               the given variable.
+
+tinexp.c       Added support for <Fxxx> and <Bxxx> 12 bit color codes. F
+               stands for foreground, B for background, xxx is hexadecimal RGB
+               value. For example <F0F0> will print in bright green. The
+               terminal must support truecolor for these to work.
+
+               To use 24 bit truecolor codes use \e[38;2;R;G;Bm where R G B
+               are decimal values between 0 and 255. \e[48;2;R;G;Bm will print
+               background colors.
+
+path.c         Added support for multiple arguments to #unpathdir.
+
+line.c         #line log {filename} {text} was extremely slow, at least on
+               cygwin, because it was opening and closing a file descriptor
+               for each log call. Multiple logs to the same file are much
+               faster now, with each session having its own dedicated file
+               descriptor to speed up consecutive writes to the same log
+               file. 
+
+config.c       Added config RANDOM SEED option to set a custom seed for the
+               random number generator. Useful for machine learning scripts
+               and some other obscure stuff.
+
+system.c       Added popen failure check for #script.
+
+mapper.c       Fixed issue with #map undo not properly handling void rooms.
+
+nest.c         Fixed memory issue causing a crash on very large variables.
+
+config.c       Added #config INHERITANCE option. Default is on, set to off
+               to prevent triggers from getting inherited. Configurations
+               are still inherited from the startup session.
+
+config.c       Added #config CHARSET AUTO option. TinTin++ will try to
+               automatically detect UTF-8 and BIG5 encoding.
+
+session.c      SESSION CREATED now triggers after the filename provided with
+               #session, #ssl, #run, or #port has been read.
+
+parse.c        Removed dot notation support for variables. #var bla.bli blo
+               is no longer valid, nor is $bla.bli. The code didn't add any
+               functionality while it was causing all kinds of issues. Sorry
+               for the inconvenience, not one of my brightest ideas.
+
+
+telopt.c       Updated MTTS to report SCREEN READER setting.
+
+config.c       Added SCREEN READER config option.
+
+telopt.c       Updated MTTS to report the ANSI, 256, and TRUE color setting.
+
+config.c       Replaced 256 COLOR config with COLOR MODE config option,
+               options are AUTO, NONE, ANSI, 256, or TRUE.
+
+vt102.c        Added truecolor COLOR PATCH support. Not well tested so far.
+
+log.c          Added truecolor html logging.
+
+input.c        No longer spawning blank lines with #config {command echo}
+               off, if you want the old behavior you can set your command
+               color to <008> or <aaa>.
+
+tinexp.c       Added %! as a regular expression option to prevent the auto
+               capturing of a match. For example %!*, %!w, %!d etc.
+
+               %!{ } can be used to the same effect to embed a regular
+               expression without automatically adding paranthesis.
+
+tinexp.c       Added an exception so %*{text} is treated as a regular
+               expression instead of a variable. As of the last version
+               *{text} is a valid variable.
 
 variable.c     Added the %H #format option to generate a 32 bit hash for the
                given string.
 
-substitute.c   Fixed argument substitution problem, never a good idea to
-               substitute arguments and functions at the same time, because
-               functions will access and overwrite the argument stack.
+substitute.c   Fixed argument substitution problem.
 
 main.c         Can use #end {\} to terminate tintin silently.
+
+system.c       Added #scan abort option
+
 
 Oct 2017       2.01.4
 --------------------------------------------------------------------------------

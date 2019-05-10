@@ -40,29 +40,33 @@ struct advertisement_type advertisement_table[] =
 {
 	{
 		1400000000, /* 2014 */
-		1700000000, /* 2023 */
+		1800000000, /* 2027 */
 		100,
 
 		"\n"
 		"<138>                     Lost Souls  -  http://lostsouls.org\n"
 		"\n"
-		"<078>\"Our world is fallen, boy.  Aedaris is a ruin.  My grandfather, he told me\n"
-		"<078>of days, not so long gone, when everything you see was part of a great empire.\n"
-		"<078>Peaceful, he said.  Full of wonders.  They called it eternal.  Funny, eh, boy?\n"
-		"<078>They thought it'd last forever, and it went crazy and tore itself apart.  But\n"
-		"<078>they left behind a few things for us, didn't they?  Ha!  Yes, lots for us.  Now\n"
-		"<078>give that wizard-stick here before you blow your fool horns off, and get to\n"
-		"<078>work.  Daylight's soon, and these faeries aren't going to skin themselves.\"\n"
-		"<078>Lost Souls: chaos in the wreckage of empire.  Be clever if you want to live.\n"
+		"<078>\"Lost Souls is not for the faint of heart.\" -- Net Games\n"
+		"\n"
+		"<078>\"The depth of Lost Souls can be amazing.\" -- Playing MUDs On The Internet\n"
+		"\n"
+		"<078>\"Have you ever come upon a place on the Net that's so incredible that you\n"
+		"<078>can't believe such entertainment is free? This MUD will blow your mind with\n"
+		"<078>its marvelous attention to detail and incredible role-playing atmosphere!\"\n"
+		"<078>  -- Yahoo! Wild Web Rides\n"
 		"\n"
                 "<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
                 "\n",
 
 		"\n"
 		"<138>Lost Souls\n"
-		"<168>http://lostsoulds.org\n"
+		"<168>http://lostsouls.org\n"
 		"\n"
-		"<078>\"Our world is fallen, boy.  Aedaris is a ruin.  My grandfather, he told me of days, not so long gone, when everything you see was part of a great empire. Peaceful, he said.  Full of wonders.  They called it eternal.  Funny, eh, boy? They thought it'd last forever, and it went crazy and tore itself apart.  But they left behind a few things for us, didn't they?  Ha!  Yes, lots for us.  Now give that wizard-stick here before you blow your fool horns off, and get to work.  Daylight's soon, and these faeries aren't going to skin themselves.\"  Lost Souls: chaos in the wreckage of empire.  Be clever if you want to live.\n"
+		"<078>\"Lost Souls is not for the faint of heart.\" -- Net Games\n"
+		"\n"
+		"<078>\"The depth of Lost Souls can be amazing.\" -- Playing MUDs On The Internet\n"
+		"\n"
+		"<078>\"Have you ever come upon a place on the Net that's so incredible that you can't believe such entertainment is free? This MUD will blow your mind with its marvelous attention to detail and incredible role-playing atmosphere!\" -- Yahoo! Wild Web Rides\n"
 		"\n"
 		"<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
 		"\n"
@@ -70,7 +74,7 @@ struct advertisement_type advertisement_table[] =
 
 	{
 		1400000000, /* 2014 */
-		1700000000, /* 2023 */
+		1800000000, /* 2027 */
 		100,
 		"\n"
 		"<138>                Legends of Kallisti - http://www.KallistiMUD.com\n"
@@ -80,7 +84,7 @@ struct advertisement_type advertisement_table[] =
 		"<078>time players, excellent combat system including group formations, ranged combat,\n"
 		"<078>optional PK and arena PvP, extensive character customization options, player\n"
 		"<078>lineages, clans, customizable player houses, item crafting, extensively\n"
-		"<078>customizable UI, Mud Sound Protocol (MSP), and so much more.\n"
+		"<078>customizable UI, Mud Sound Protocol (MSP), MSDP, and so much more.\n"
 		"<078>This is an a amazing game that you could literally play for a decade and still\n"
 		"<078>discover more - you won't be disappointed!\n"
 		"\n"
@@ -91,16 +95,16 @@ struct advertisement_type advertisement_table[] =
 		"<138>Legends of Kallisti\n"
 		"<168>http://www.KallistiMUD.com\n"
 		"\n"
-		"<078>One of the longest running, most feature rich MUDs in the world with decades of development. Kallisti boasts a massive original world, great atmosphere of long time players, excellent combat system including group formations, ranged combat, optional PK and arena PvP, extensive character customization options, player lineages, clans, customizable player houses, item crafting, extensively customizable UI, Mud Sound Protocol (MSP), and so much more.\nThis is an a amazing game that you could literally play for a decade and still discover more - you won't be disappointed!\n"
+		"<078>One of the longest running, most feature rich MUDs in the world with decades of development. Kallisti boasts a massive original world, great atmosphere of long time players, excellent combat system including group formations, ranged combat, optional PK and arena PvP, extensive character customization options, player lineages, clans, customizable player houses, item crafting, extensively customizable UI, Mud Sound Protocol (MSP), and so much more.\n"
+		"<078>This is an a amazing game that you could literally play for a decade and still discover more - you won't be disappointed!\n"
 		"\n"
 		"<178>To connect to Kallisti MUD enter: #session LoK kallistimud.com 4000\n"
 		"\n",
 	},
 
-
 	{
 		1400000000, /* 2014 */
- 		1700000000, /* 2023 */
+ 		1800000000, /* 2027 */
 		100,
 
 		"\n"
@@ -128,8 +132,40 @@ struct advertisement_type advertisement_table[] =
 	},
 
 	{
-		1400000000, /* 2014 */
- 		1700000000, /* 2023 */
+		1400000000,  /* 2014 */ 
+		1800000000,  /* 2027 */ 
+		100,
+
+		"\n"
+		"<138>                New Worlds Ateraan  -  http://www.ateraan.com\n"
+		"\n"
+		"<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful\n"
+		"<078>guilds, races, politics, religion, justice, economy, and a storyline that is\n"
+		"<078>dominantly player controlled and based on a novel. The game is based on a\n"
+		"<078>Kingdom with fighters, merchants, mages, and thieves, and a fierce southern\n"
+		"<078>state that has warriors, shaman, slaves, and servants. Ships rule the seas and\n"
+		"<078>caravans travel the lands. With 100's of players and features like invasions,\n"
+		"<078>ship creation, house building, clans, theaters, leatherball fields, and massive\n"
+		"<078>events, the game is incredibly robust and diverse.\n"
+		"\n"
+                "<178>To connect to New Worlds Ateraan enter: #session nwa ateraan.com 4002\n"
+                "\n",
+
+                "\n"
+                "<138>New Worlds Ateraan\n"
+                "<168>http://www.ateraan.com\n"
+                "\n"
+                "<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful guilds, races, politics, religion, justice, economy, and a storyline that is dominantly player controlled and based on a novel. The game is based on a >Kingdom with fighters, merchants, mages, and thieves, and a fierce southern state that has warriors, shaman, slaves, and servants. Ships rule the seas and caravans travel the lands. With 100's of players and features like invasions, >ship creation, house building, clans, theaters, leatherball fields, and massive events, the game is incredibly robust and diverse.\n"
+                "\n"
+                "<178>To connect to New Worlds Ateraan enter: #session nwa ateraan.com 4002\n"
+                "\n"
+
+	},
+
+/*
+	{
+		1400000000,
+ 		1800000000,
 		100,
 
 		"\n"
@@ -156,7 +192,36 @@ struct advertisement_type advertisement_table[] =
 		"<178>To connect to Realm of Utopian Dreams enter: #session rud rudmud.com 1701\n"
 		"\n"
 	},
+*/
+/*
+	{
+		1400000000,
+		1800000000,
+		100,
 
+		"\n"
+		"<138>                Threshold RPG  -  http://www.thresholdrpg.com\n"
+		"\n"
+		"<078>Join us as Threshold RPG, one of the oldest RP enforced games on the\n"
+		"<078>internet. Add to thirteen years of player created history and make your own\n"
+		"<078>mark on the world today. Join a hundred other players who are vying for\n"
+		"<078>political and religious power in complex systems that reward skill, effort,\n"
+		"<078>and social interactions. Threshold RPG is a custom code-base written in\n"
+		"<078>LPC and features a completely unique and original world.\n"
+		"\n"
+		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
+		"\n",
+
+		"\n"
+		"<138>Threshold RPG\n"
+		"<168>http://www.thresholdrpg.com\n"
+		"\n"
+		"<078>Join us as Threshold RPG, one of the oldest RP enforced games on the internet. Add to thirteen years of player created history and make your own mark on the world today. Join a hundred other players who are vying for political and religious power in complex systems that reward skill, effort, and social interactions. Threshold RPG is a custom code-base written in LPC and features a completely unique and original world.\n"
+		"\n"
+		"<178>To connect to Threshold RPG enter: #session thresh thresholdrpg.com 23\n"
+		"\n"
+	},
+*/
 
 /*
 	{
@@ -219,6 +284,7 @@ struct advertisement_type advertisement_table[] =
 		0,
 		0,
 		0,
+		"",
 		""
 	}
 };
@@ -304,30 +370,9 @@ DO_COMMAND(do_advertise)
 	return ses;
 }
 
-/*
 
-	{
-		1354280000,  30 Nov 2012 
-		1420072000,  31 Dec 2014 
-		100,
-		"\n"
-		"<138>                New Worlds Ateraan  -  http://www.ateraan.com\n"
-		"\n"
-		"<078>Ateraan is an world of Intensive Roleplaying offering many unique and powerful\n"
-		"<078>guilds, races, politics, religion, justice, economy, and a storyline that is\n"
-		"<078>dominantly player controlled and based on a novel. The game is based on a\n"
-		"<078>Kingdom with fighters, merchants, mages, and thieves, and a fierce southern\n"
-		"<078>state that has warriors, shaman, slaves, and servants. Ships rule the seas and\n"
-		"<078>caravans travel the lands. With 100's of players and features like invasions,\n"
-		"<078>ship creation, house building, clans, theaters, leatherball fields, and massive\n"
-		"<078>events, the game is incredibly robust and diverse.\n"
-		"\n"
-                "<178>To connect to New Worlds Ateraan enter: #session nwa ateraan.com 4002\n"
-                "\n"
-		                
-	},
 
-*/
+
 
 /*
 	{
@@ -385,23 +430,6 @@ DO_COMMAND(do_advertise)
                 "<178>To connect to Lost Souls enter: #session ls lostsouls.org 23\n"
                 "\n"
 		                
-	},
-
-	{
-		1260469590, * 10 Dec 2009 *
-		1323541590, * 10 Dec 2011 *
-		"\n"
-		"<138>                   Alter Aeon  -  http://www.alteraeon.com\n"
-		"\n"
-		"<078>Alter Aeon is a custom MUD written entirely from scratch. The story setting\n"
-		"<078>is reminiscent of Dungeons and Dragons, but has elements of fantasy and a\n"
-		"<078>unique spell and skill system.  Our world has hundreds of areas to explore,\n"
-		"<078>quests to complete, and puzzles to solve.  There are always other players\n"
-		"<078>available, whether for help, competition, or just to talk with.  The game\n"
-		"<078>is also blind-friendly and has a blind player login on port 3010.\n"
-		"\n"
-		"<178>To connect to Alter Aeon enter: #session aa alteraeon.com 3002\n"
-		"\n"
 	},
 
 	{

@@ -53,11 +53,17 @@ char *refstring(char *point, char *fmt, ...)
 
 char *str_alloc(int len)
 {
+	char *str;
+
 	struct str_data *str_ptr = (struct str_data *) malloc(gtd->str_size + len + 1);
 
 	str_ptr->max = len + 1;
 
-	return (char *) str_ptr + gtd->str_size;
+	str = (char *) str_ptr + gtd->str_size;
+
+	*str = 0;
+
+	return str; //(char *) str_ptr + gtd->str_size;
 }
 
 // set size of out pointer to in pointer

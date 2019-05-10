@@ -569,10 +569,25 @@ DO_COMMAND(do_pathdir)
 	return ses;
 }
 
-
 DO_COMMAND(do_unpathdir)
 {
-	delete_node_with_wild(ses, LIST_PATHDIR, arg);
+	char arg1[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+
+	do
+	{
+		if (delete_nest_node(ses->list[LIST_PATHDIR], arg1))
+		{
+			show_message(ses, LIST_VARIABLE, "#OK. {%s} IS NO LONGER A PATHDIR.", arg1);
+		}
+		else
+		{
+			delete_node_with_wild(ses, LIST_VARIABLE, arg1);
+		}
+		arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	}
+	while (*arg1);
 
 	return ses;
 }

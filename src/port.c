@@ -202,7 +202,7 @@ DO_PORT(port_initialize)
 	ses->port->port     = port;
 
 	ses->port->name     = strdup(left);
-	ses->port->color    = strdup("\033[0;1;36m");
+	ses->port->color    = strdup("\e[0;1;36m");
 	ses->port->ip       = strdup("<Unknown>");
 	ses->port->prefix   = strdup("<PORT>");
 
@@ -747,7 +747,7 @@ void port_printf(struct session *ses, char *format, ...)
 
 //	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "PORT MESSAGE", tmp, buf);
 
-	sprintf(tmp, "%s%s%s", ses->port->color, buf, "\033[0m");
+	sprintf(tmp, "%s%s%s", ses->port->color, buf, "\e[0m");
 
 	tintin_puts(ses, tmp);
 }
@@ -863,7 +863,7 @@ DO_PORT(port_send)
 {
 	struct port_data *buddy;
 
-	substitute(gtd->ses, right, right, SUB_COL|SUB_ESC|SUB_EOL);
+	substitute(gtd->ses, right, right, SUB_COL|SUB_ESC|SUB_LNF);
 
 	if (!strcasecmp(left, "ALL"))
 	{

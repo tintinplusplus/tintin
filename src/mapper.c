@@ -51,7 +51,7 @@ int                 map_grid_y;
 
 	VT Graphics
 	
-	\033[12m ... \033[10m 
+	\e[12m ... \e[10m 
 */
 
 unsigned char	map_palet0[]	= { 42, 35, 35, 43, 35,124, 43, 43, 35, 43, 45, 43, 43, 43, 43, 43, 120};
@@ -304,7 +304,7 @@ DO_MAP(map_dig)
 	struct exit_data *exit;
 	struct listnode *node;
 
-	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0)
@@ -421,6 +421,7 @@ DO_MAP(map_exit)
 		
 		return;
 	}
+
 	if (*arg2 == 0)
 	{
 		tintin_printf2(ses, "  command: %s", exit->cmd);
@@ -429,6 +430,7 @@ DO_MAP(map_exit)
 		tintin_printf2(ses, "  get/set: %s", exit->data);
 		tintin_printf2(ses, "     name: %s", exit->name);
 		tintin_printf2(ses, "     vnum: %d", exit->vnum);
+                tintin_printf2(ses, "   weight: %.3f", exit->weight);
 	}
 	else if (is_abbrev(arg2, "COMMAND"))
 	{
@@ -482,7 +484,7 @@ DO_MAP(map_exit)
 	{
 		if (*arg3)
 		{
-			set_nest_node(ses->list[LIST_VARIABLE], arg3, "{command}{%s}{destination}{%d}{dir}{%d}{flags}{%d}{name}{%s}{vnum}{%d}", exit->cmd, tunnel_void(ses, ses->map->in_room, exit->vnum, exit->dir), exit->dir, exit->flags, exit->name, exit->vnum);
+			set_nest_node(ses->list[LIST_VARIABLE], arg3, "{command}{%s}{destination}{%d}{dir}{%d}{flags}{%d}{name}{%s}{vnum}{%d}{weight}{%.3f}", exit->cmd, tunnel_void(ses, ses->map->in_room, exit->vnum, exit->dir), exit->dir, exit->flags, exit->name, exit->vnum,exit->weight);
 		}
 		else
 		{
@@ -514,9 +516,22 @@ DO_MAP(map_exit)
 
 		show_message(ses, LIST_COMMAND, "#MAP EXIT {%s} : VNUM SET TO {%s}.", arg1, arg3);
 	}
+	else if (is_abbrev(arg2, "WEIGHT"))
+	{
+		if (get_number(ses, arg3) < 0.001)
+		{
+			show_message(ses, LIST_COMMAND, "#MAP EXIT {%s} : WEIGHT SHOULD BE AT LEAST 0.001", arg1);
+		}
+		else
+		{
+			exit->weight = (float) get_number(ses, arg3);
+
+			show_message(ses, LIST_COMMAND, "#MAP EXIT {%s} : WEIGHT SET TO {%.3f}", arg1, exit->weight);
+		}
+	}
 	else
 	{
-		show_error(ses, LIST_COMMAND, "Syntax: #MAP EXIT {<NAME>} {COMMAND|DIRECTION|GET|NAME|FLAGS|SAVE|SET|VNUM} {<argument>}");
+		show_error(ses, LIST_COMMAND, "Syntax: #MAP EXIT {<NAME>} {COMMAND|DIRECTION|GET|NAME|FLAGS|SAVE|SET|VNUM|WEIGHT} {<argument>}");
 	}
 }
 
@@ -713,7 +728,7 @@ DO_MAP(map_get)
 {
 	struct room_data *room = ses->map->room_list[ses->map->in_room];
 	struct exit_data *exit;
-	char buf[BUFFER_SIZE], arg3[BUFFER_SIZE];
+	char exits[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
@@ -755,7 +770,17 @@ DO_MAP(map_get)
 	}
 	else
 	{
-		if (is_abbrev(arg1, "roomarea"))
+		if (is_abbrev(arg1, "all"))
+		{
+			exits[0] = 0;
+
+			for (exit = room->f_exit ; exit ; exit = exit->next)
+			{
+				cat_sprintf(exits, "{%s}{%d}", exit->name, exit->vnum);
+			}
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "{area}{%s}{color}{%s}{data}{%s}{desc}{%s}{exits}{%s}{flags}{%d}{name}{%s}{note}{%s}{symbol}{%s}{terrain}{%s}{vnum}{%d}{weight}{%.3f}", room->area, room->color, room->data, room->desc, exits, room->flags, room->name, room->note, room->symbol, room->terrain, room->vnum, room->weight);
+		}
+		else if (is_abbrev(arg1, "roomarea"))
 		{
 			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", room->area);
 		}
@@ -801,13 +826,13 @@ DO_MAP(map_get)
 		}
 		else if (is_abbrev(arg1, "roomexits"))
 		{
-			buf[0] = 0;
+			exits[0] = 0;
 
 			for (exit = room->f_exit ; exit ; exit = exit->next)
 			{
-				cat_sprintf(buf, "{%s}{%d}", exit->name, exit->vnum);
+				cat_sprintf(exits, "{%s}{%d}", exit->name, exit->vnum);
 			}
-			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", buf);
+			set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", exits);
 		}
 		else if (is_abbrev(arg1, "worldflags"))
 		{
@@ -1059,17 +1084,27 @@ DO_MAP(map_legend)
 			ses->map->legend[24], ses->map->legend[25], ses->map->legend[26], ses->map->legend[27],
 			ses->map->legend[28], ses->map->legend[29], ses->map->legend[30], ses->map->legend[31]);
 
-		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MUDFONT N NW W SW S\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MUDFONT N NW W SW S\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
 			ses->map->legend[32], ses->map->legend[33], ses->map->legend[34], ses->map->legend[35],
 			ses->map->legend[36], ses->map->legend[37], ses->map->legend[38], ses->map->legend[39],
 			ses->map->legend[40], ses->map->legend[41], ses->map->legend[42], ses->map->legend[43],
-			ses->map->legend[44], ses->map->legend[45], ses->map->legend[46], ses->map->legend[47]);
-
-		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MUDFONT N NE E SE S\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			ses->map->legend[44], ses->map->legend[45], ses->map->legend[46], ses->map->legend[47],
 			ses->map->legend[48], ses->map->legend[49], ses->map->legend[50], ses->map->legend[51],
 			ses->map->legend[52], ses->map->legend[53], ses->map->legend[54], ses->map->legend[55],
 			ses->map->legend[56], ses->map->legend[57], ses->map->legend[58], ses->map->legend[59],
 			ses->map->legend[60], ses->map->legend[61], ses->map->legend[62], ses->map->legend[63]);
+
+		tintin_printf2(ses, "#MAP LEGEND: UTF-8 MUDFONT N NE E SE S\n\n%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+			ses->map->legend[64], ses->map->legend[65], ses->map->legend[66], ses->map->legend[67],
+			ses->map->legend[68], ses->map->legend[69], ses->map->legend[70], ses->map->legend[71],
+			ses->map->legend[72], ses->map->legend[73], ses->map->legend[74], ses->map->legend[75],
+			ses->map->legend[76], ses->map->legend[77], ses->map->legend[78], ses->map->legend[79],
+			ses->map->legend[80], ses->map->legend[81], ses->map->legend[82], ses->map->legend[83],
+			ses->map->legend[84], ses->map->legend[85], ses->map->legend[86], ses->map->legend[87],
+			ses->map->legend[88], ses->map->legend[89], ses->map->legend[90], ses->map->legend[91],
+			ses->map->legend[92], ses->map->legend[93], ses->map->legend[94], ses->map->legend[95]);
+
+
 	}
 	else
 	{
@@ -1726,9 +1761,16 @@ DO_MAP(map_set)
 		}
 		else if (is_abbrev(arg1, "roomweight"))
 		{
-			room->weight = (float) get_number(ses, arg2);
+			if (get_number(ses, arg2) < 0.001)
+			{
+				show_message(ses, LIST_COMMAND, "#MAP SET: roomweight should be at least 0.001");
+			}
+			else
+			{
+				room->weight = (float) get_number(ses, arg2);
 
-			show_message(ses, LIST_COMMAND, "#MAP SET: roomweight set to: %.3f", room->weight);
+				show_message(ses, LIST_COMMAND, "#MAP SET: roomweight set to: %.3f", room->weight);
+			}
 		}
 		else
 		{
@@ -2071,13 +2113,14 @@ DO_MAP(map_write)
 
 			for (exit = ses->map->room_list[vnum]->f_exit ; exit ; exit = exit->next)
 			{
-				fprintf(file, "E {%5d} {%s} {%s} {%d} {%d} {%s}\n",
+				fprintf(file, "E {%5d} {%s} {%s} {%d} {%d} {%s} {%.3f}\n",
 					exit->vnum,
 					exit->name,
 					exit->cmd,
 					exit->dir,
 					exit->flags,
-					exit->data);
+					exit->data,
+					exit->weight);
 			}
 		}
 	}
@@ -2116,7 +2159,7 @@ void create_map(struct session *ses, char *arg)
 
 	create_room(ses, "%s", "{1} {0} {} {} { } {} {} {} {} {} {1.0}");
 
-	if (NULL /* !HAS_BIT(ses->flags, SES_FLAG_UTF8) */)
+	if (!HAS_BIT(ses->flags, SES_FLAG_UTF8))
 	{
 		create_legend(ses, "{*}{#}{#}{+}{#}{|}{+}{+}{#}{+}{-}{+}{+}{+}{+}{+}{x}");
 	}
@@ -2280,34 +2323,34 @@ void create_exit(struct session *ses, int room, char *format, ...)
 {
 	struct exit_data *newexit;
 	va_list args;
+	char *arg, buf[BUFFER_SIZE];
 
-	char *arg, buf[BUFFER_SIZE], vnum[BUFFER_SIZE], name[BUFFER_SIZE], cmd[BUFFER_SIZE], dir[BUFFER_SIZE], flags[BUFFER_SIZE], data[BUFFER_SIZE];
+	push_call("create_exit(%p,%d,%p)",ses,room,format);
 
 	va_start(args, format);
 	vsprintf(buf, format, args);
 	va_end(args);
 
+	newexit = (struct exit_data *) calloc(1, sizeof(struct exit_data));
+
 	arg = buf;
 
-	arg = get_arg_in_braces(ses, arg, vnum,  FALSE);
-	arg = get_arg_in_braces(ses, arg, name,  FALSE);
-	arg = get_arg_in_braces(ses, arg, cmd,   TRUE);
-	arg = get_arg_in_braces(ses, arg, dir,   FALSE);
-	arg = get_arg_in_braces(ses, arg, flags, FALSE);
-	arg = get_arg_in_braces(ses, arg, data,  TRUE);
-
-	newexit        = (struct exit_data *) calloc(1, sizeof(struct exit_data));
-
-	newexit->vnum  = atoi(vnum);
-	newexit->name  = strdup(name);
-	newexit->cmd   = strdup(cmd);
-	newexit->dir   = atoi(dir);
-	newexit->flags = atoi(flags);
-	newexit->data  = strdup(data);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE);	newexit->vnum   = atoi(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE);	newexit->name   = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, TRUE);	newexit->cmd    = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE);	newexit->dir    = atoi(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE);	newexit->flags  = atoi(buf);
+	arg = get_arg_in_braces(ses, arg, buf,  TRUE);	newexit->data   = strdup(buf);
+	arg = get_arg_in_braces(ses, arg, buf, FALSE);  newexit->weight = atof(buf);
 
 	if (newexit->dir == 0)
 	{
-		newexit->dir = get_exit_dir(ses, name);
+		newexit->dir = get_exit_dir(ses, newexit->name);
+	}
+
+	if (newexit->weight <= 0)
+	{
+		newexit->weight = 1;
 	}
 
 	LINK(newexit, ses->map->room_list[room]->f_exit, ses->map->room_list[room]->l_exit);
@@ -2315,7 +2358,10 @@ void create_exit(struct session *ses, int room, char *format, ...)
 	ses->map->room_list[room]->exit_size++;
 	SET_BIT(ses->map->room_list[room]->exit_dirs, (1LL << newexit->dir));
 
-	show_message(ses, LIST_COMMAND, "#MAP CREATE EXIT %5s {%s} {%s}.", vnum, name, cmd);
+	show_message(ses, LIST_COMMAND, "#MAP CREATE EXIT %5d {%s} {%s}.", newexit->vnum, newexit->name, newexit->cmd);
+
+	pop_call();
+	return;
 }
 
 void delete_exit(struct session *ses, int room, struct exit_data *exit)
@@ -2370,7 +2416,7 @@ void set_room_exits(struct session *ses, int room)
 int follow_map(struct session *ses, char *argument)
 {
 	struct exit_data *exit;
-	int room, dir;
+	int room, vnum;
 
 	push_call("follow_map(%p,%p)",ses,argument);
 
@@ -2380,8 +2426,6 @@ int follow_map(struct session *ses, char *argument)
 	{
 		room = ses->map->in_room;
 
-		add_undo(ses, "%d %d %d", exit->vnum, room, MAP_UNDO_MOVE);
-
 		if (ses->map->nofollow == 0)
 		{
 			ses->map->nofollow++;
@@ -2390,7 +2434,12 @@ int follow_map(struct session *ses, char *argument)
 
 			ses->map->nofollow--;
 		}
-		goto_room(ses, exit->vnum);
+
+		vnum = tunnel_void(ses, room, exit->vnum, exit->dir);
+
+		add_undo(ses, "%d %d %d", vnum, room, MAP_UNDO_MOVE);
+
+		goto_room(ses, vnum);
 
 		if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_LEAVE))
 		{
@@ -2398,8 +2447,11 @@ int follow_map(struct session *ses, char *argument)
 
 			map_leave(ses, "", "", "");
 		}
+/*
 		else if (HAS_BIT(ses->map->room_list[ses->map->in_room]->flags, ROOM_FLAG_VOID))
 		{
+			int dir;
+
 			if (get_room_exits(ses, ses->map->in_room) == 2)
 			{
 				ses->map->nofollow++;
@@ -2438,7 +2490,7 @@ int follow_map(struct session *ses, char *argument)
 				}
 			}
 		}
-
+*/
 		if (HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
 		{
 			SET_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
@@ -2744,7 +2796,7 @@ void show_vtmap(struct session *ses)
 				}
 				substitute(ses, buf, out, SUB_COL|SUB_CMP);
 
-				printf("%s\033[0K\n", out);
+				printf("%s\e[0K\n", out);
 			}
 		}
 	}
@@ -3574,7 +3626,7 @@ int searchgrid_find(struct session *ses, int from, struct search_data *search)
 				continue;
 			}
 
-			length = room->length + ses->map->room_list[vnum]->weight;
+			length = room->length + exit->weight + ses->map->room_list[vnum]->weight;
 
 			if (search->stamp == ses->map->room_list[vnum]->search_stamp)
 			{
@@ -3679,7 +3731,7 @@ int searchgrid_walk(struct session *ses, int offset, int from, int dest)
 				continue;
 			}
 
-			length = room->length + ses->map->room_list[vnum]->weight;
+			length = room->length + exit->weight + ses->map->room_list[vnum]->weight;
 
 			if (ses->map->search->stamp != ses->map->room_list[vnum]->search_stamp)
 			{

@@ -1,22 +1,49 @@
 * Stuff that's going to be done.
 
-  - see if #break 2 is possible
+  - TELNET documentation.
 
-  - fix $$ behavior in actions with unknown variables.
+  - Add %U (upper) %L (lower) support.
+    check https://www.boost.org/doc/libs/1_50_0/libs/regex/doc/html/boost_regex/syntax/basic_extended.html
+
+  - See if #regex can be pre-compiled.
+
+  - add KILLED TYPE ARG event, for example KILLED CLASS bla
+
+  - #line ignore (alias) maybe #line verbatim ?
+
+  - random seed config, and maybe micro second seed init on startup
+
+  - add form feed \x0C
+
+  - see if joe display issues are due to joe using \r 
+
+  - look into \x7F not backspacing.
+
+  - fix \x00 showme
+
+  - support strikethrough html logging.
+
+  - fix micro delays not being properly sorted.
+
+  - CAPTURED INPUT event
+
+  - Look into color patch support for #snoop.
+
+  - Add proper class stacking. Maybe separate temp class for #class read 
+
+  - see if #break 2 is possible, maybe #continue 2 as well.
+
+  - fix $$ behavior in actions with unknown variables (maybe not).
 
   - make #path more awesome
 
-  - http://tintin.sourceforge.net/board/viewtopic.php?p=10018 (truecolor)
-
   - Add options to #cursor to implement custom behaviour.
-
-  - make #ignore more consistent.
-
-  - config setting to disable gts inheritance.
 
   - \xEE\x80\x80 custom character range.
 
   - multiline gag
+
+  - http://tintin.sourceforge.net/board/viewtopic.php?p=8735#8735 RECEIVED MESSAGE event?
 
   - toggle global flags with #message all on, #debug all on, etc.
 
@@ -40,8 +67,6 @@
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=8745#8745 (verbose logging?)
 
-  - http://tintin.sourceforge.net/board/viewtopic.php?p=8735#8735 RECEIVED MESSAGE event?
-
 ? - http://tintin.sourceforge.net/board/viewtopic.php?p=8655#8655 FILE OPENED / CLOSED event?
 
   - http://tintinplusplus.github.io/
@@ -51,9 +76,6 @@
   - See about adding ~/ handling for file names.
 
   - http://tintin.sourceforge.net/board/viewtopic.php?p=9934 Strange #map pathdir bug
-
-
-  http://tintin.sourceforge.net/board/viewtopic.php?p=9657 BIG5 word wrapping
 
 1.) Download 7-Zip
 2.) Go to C:/Windows
@@ -65,6 +87,8 @@
 
 
 * Stuff that might be implemented
+
+  - Option to run #script in background.
 
   - Make &0 to &99 local.
 

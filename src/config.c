@@ -513,6 +513,22 @@ DO_CONFIG(config_autotab)
 
 DO_CONFIG(config_charset)
 {
+	if (!strcasecmp(arg, "AUTO"))
+	{
+		if (strcasestr(gtd->lang, "UTF-8"))
+		{
+			strcpy(arg, "UTF-8");
+		}
+		else if (strcasestr(gtd->lang, "BIG-5"))
+		{
+			strcpy(arg, "BIG5");
+		}
+		else
+		{
+			strcpy(arg, "ASCII");
+		}
+	}
+
 	if (!strcasecmp(arg, "BIG5"))
 	{
 		SET_BIT(ses->flags, SES_FLAG_BIG5);
@@ -530,7 +546,7 @@ DO_CONFIG(config_charset)
 	}
 	else
 	{
-		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <ASCII|BIG5|UTF-8>", config_table[index].name);
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|ASCII|BIG5|UTF-8>", config_table[index].name);
 
 		return NULL;
 	}
@@ -539,34 +555,118 @@ DO_CONFIG(config_charset)
 	return ses;
 }
 
-DO_CONFIG(config_256color)
+DO_CONFIG(config_colormode)
 {
 	if (!strcasecmp(arg, "AUTO"))
 	{
-		if (!strcasecmp(gtd->term, "xterm") || strstr(gtd->term, "256color") || strstr(gtd->term, "256COLOR"))
+		if (strcasestr(gtd->term, "truecolor"))
 		{
-			SET_BIT(ses->flags, SES_FLAG_256COLOR);
+			strcpy(arg, "TRUE");
+		}
+		else if (!strcasecmp(gtd->term, "xterm") || strcasestr(gtd->term, "256color"))
+		{
+			strcpy(arg, "256");
 		}
 		else
 		{
-			DEL_BIT(ses->flags, SES_FLAG_256COLOR);
+			strcpy(arg, "ANSI");
 		}
 	}
-	else if (!strcasecmp(arg, "ON"))
+
+	if (!strcasecmp(arg, "NONE"))
 	{
-		SET_BIT(ses->flags, SES_FLAG_256COLOR);
+		strcpy(arg, "NONE");
+		DEL_BIT(ses->flags, SES_FLAG_ANSICOLOR|SES_FLAG_256COLOR|SES_FLAG_TRUECOLOR);
 	}
-	else if (!strcasecmp(arg, "OFF"))
+	else if (!strcasecmp(arg, "ANSI"))
 	{
-		DEL_BIT(ses->flags, SES_FLAG_256COLOR);
+		strcpy(arg, "ANSI");
+		SET_BIT(ses->flags, SES_FLAG_ANSICOLOR);
+		DEL_BIT(ses->flags, SES_FLAG_256COLOR|SES_FLAG_TRUECOLOR);
+	}
+	else if (!strcasecmp(arg, "256"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_ANSICOLOR|SES_FLAG_256COLOR);
+		DEL_BIT(ses->flags, SES_FLAG_TRUECOLOR);
+	}
+	else if (!strcasecmp(arg, "TRUE"))
+	{
+		strcpy(arg, "TRUE");
+		SET_BIT(ses->flags, SES_FLAG_ANSICOLOR|SES_FLAG_256COLOR|SES_FLAG_TRUECOLOR);
 	}
 	else
 	{
-		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|ON|OFF>", config_table[index].name);
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|NONE|ANSI|256|TRUE>", config_table[index].name);
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, HAS_BIT(ses->flags, SES_FLAG_256COLOR) ? "ON" : "OFF", "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+
+	return ses;
+}
+
+
+DO_CONFIG(config_screenreader)
+{
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->flags, SES_FLAG_SCREENREADER);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_SCREENREADER);
+	}
+	else
+	{
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+
+	return ses;
+}
+
+DO_CONFIG(config_inheritance)
+{
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(gtd->flags, TINTIN_FLAG_INHERITANCE);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_INHERITANCE);
+	}
+	else
+	{
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+
+	return ses;
+}
+
+DO_CONFIG(config_randomseed)
+{
+	if (!strcasecmp(arg, "AUTO"))
+	{
+		strcpy(arg, "AUTO");
+
+		srand(utime() % 1000000LL);
+	}
+	else if (is_number(arg))
+	{
+		srand(atoi(arg));
+	}
+	else
+	{
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|NUMBER>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
 
 	return ses;
 }

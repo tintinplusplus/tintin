@@ -74,6 +74,11 @@ void add_line_history(struct session *ses, char *line)
 
 	root = ses->list[LIST_HISTORY];
 
+	if (HAS_BIT(root->flags, LIST_FLAG_IGNORE))
+	{
+		return;
+	}
+
 	if (*line == 0)
 	{
 		if (root->used && HAS_BIT(ses->flags, SES_FLAG_REPEATENTER))

@@ -208,6 +208,187 @@ int oct_number(char *str)
 	return value;
 }
 
+int unicode_16_bit(char *str, char *out)
+{
+	int val = 0;
+
+	if (isdigit((int) *str))
+	{
+		val += 4096 * (*str - '0');
+	}
+	else
+	{
+		val += 4096 * (toupper((int) *str) - 'A' + 10);
+	}
+	str++;
+
+	if (isdigit((int) *str))
+	{
+		val += 256 * (*str - '0');
+	}
+	else
+	{
+		val += 256 * (toupper((int) *str) - 'A' + 10);
+	}
+	str++;
+
+	if (isdigit((int) *str))
+	{
+		val += 16 * (*str - '0');
+	}
+	else
+	{
+		val += 16 * (toupper((int) *str) - 'A' + 10);
+	}
+	str++;
+
+	if (isdigit((int) *str))
+	{
+		val += (*str - '0');
+	}
+	else
+	{
+		val += (toupper((int) *str) - 'A' + 10);
+	}
+	str++;
+
+	if (val < 128)
+	{
+		*out++ = val;
+		return 1;
+	}
+	else if (val < 4096)
+	{
+		*out++ = 192 + val / 64;
+		*out++ = 128 + val % 64;
+		return 2;
+	}
+	else
+	{
+		*out++ = 224 + val / 4096;
+		*out++ = 128 + val / 64 % 64;
+		*out++ = 128 + val % 64;
+		return 3;
+	}
+}
+
+int unicode_21_bit(char *str, char *out)
+{
+	int val = 0;
+
+	if (str)
+	{
+		if (isdigit((int) *str))
+		{
+			val += 1048576 * (*str - '0');
+		}
+		else
+		{
+			val += 1048576 * (toupper((int) *str) - 'A' + 10);
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit((int) *str))
+		{
+			val += 65536 * (*str - '0');
+		}
+		else
+		{
+			val += 65536 * (toupper((int) *str) - 'A' + 10);
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit((int) *str))
+		{
+			val += 4096 * (*str - '0');
+		}
+		else
+		{
+			val += 4096 * (toupper((int) *str) - 'A' + 10);
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit((int) *str))
+		{
+			val += 256 * (*str - '0');
+		}
+		else
+		{
+			val += 256 * (toupper((int) *str) - 'A' + 10);
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit((int) *str))
+		{
+			val += 16 * (*str - '0');
+		}
+		else
+		{
+			val += 16 * (toupper((int) *str) - 'A' + 10);
+		}
+		str++;
+	}
+
+	if (str)
+	{
+		if (isdigit((int) *str))
+		{
+			val += (*str - '0');
+		}
+		else
+		{
+			val += (toupper((int) *str) - 'A' + 10);
+		}
+		str++;
+	}
+
+	if (val < 128)
+	{
+		*out++ = val;
+		return 1;
+	}
+	else if (val < 4096)
+	{
+		*out++ = 192 + val / 64;
+		*out++ = 128 + val % 64;
+		return 2;
+	}
+	else if (val < 65536)
+	{
+		*out++ = 224 + val / 4096;
+		*out++ = 128 + val / 64 % 64;
+		*out++ = 128 + val % 64;
+		return 3;
+	}
+	else if (val < 1114112)
+	{
+		*out++ = 240 + val / 262144;
+		*out++ = 128 + val / 4096 % 64;
+		*out++ = 128 + val / 64 % 64;
+	        *out++ = 128 + val % 64;
+	        return 4;
+	}
+	else
+	{
+		*out++ = 239;
+		*out++ = 191;
+		*out++ = 189;
+		return 3;
+	}
+}
+
 long long utime()
 {
 	struct timeval now_time;
@@ -332,7 +513,7 @@ void show_message(struct session *ses, int index, char *format, ...)
 		}
 	}
 
-	if (gtd->noise_level)
+	if (gtd->verbose_level)
 	{
 		tintin_puts2(ses, buffer);
 
@@ -374,7 +555,7 @@ struct session *show_error(struct session *ses, int index, char *format, ...)
 	vasprintf(&buffer, format, args);
 	va_end(args);
 
-	if (gtd->noise_level)
+	if (gtd->verbose_level)
 	{
 		tintin_puts2(ses, buffer);
 
@@ -435,11 +616,11 @@ void show_debug(struct session *ses, int index, char *format, ...)
 
 	if (HAS_BIT(root->flags, LIST_FLAG_DEBUG))
 	{
-		gtd->noise_level++;
+		gtd->verbose_level++;
 
 		tintin_puts2(ses, buf);
 
-		gtd->noise_level--;
+		gtd->verbose_level--;
 
 		pop_call();
 		return;
@@ -470,7 +651,14 @@ void tintin_header(struct session *ses, char *format, ...)
 		arg[gtd->ses->cols - 2] = 0;
 	}
 
-	memset(buf, '#', gtd->ses->cols);
+	if (HAS_BIT(ses->flags, SES_FLAG_SCREENREADER))
+	{
+		memset(buf, ' ', gtd->ses->cols);
+	}
+	else
+	{
+		memset(buf, '#', gtd->ses->cols);
+	}
 
 	memcpy(&buf[(gtd->ses->cols - strlen(arg)) / 2], arg, strlen(arg));
 
@@ -541,7 +729,7 @@ void tintin_puts3(struct session *ses, char *string)
 		ses = gtd->ses;
 	}
 
-	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet && gtd->noise_level == 0)
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet && gtd->verbose_level == 0)
 	{
 		pop_call();
 		return;
@@ -596,7 +784,7 @@ void tintin_puts2(struct session *ses, char *string)
 		ses = gtd->ses;
 	}
 
-	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet && gtd->noise_level == 0)
+	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_VERBOSE) && gtd->quiet && gtd->verbose_level == 0)
 	{
 		pop_call();
 		return;
@@ -604,11 +792,11 @@ void tintin_puts2(struct session *ses, char *string)
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		output = str_dup_printf("\n\033[0m%s\033[0m", string);
+		output = str_dup_printf("\n\e[0m%s\e[0m", string);
 	}
 	else
 	{
-		output = str_dup_printf("\033[0m%s\033[0m", string);
+		output = str_dup_printf("\e[0m%s\e[0m", string);
 	}
 
 	add_line_buffer(ses, output, FALSE);

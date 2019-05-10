@@ -4,7 +4,7 @@ Last updated: 12/28/2010
 
 Q00) I'm new to tintin, how do I get started?
 
-A00) Quite easy, start tintin using ./tt++, to connect to a mud type:
+A00) Quite easy, start tintin using tt++ or ./tt++, to connect to a mud type:
 
      #session <name> <mud address> <mud port>
 
@@ -18,8 +18,8 @@ A00) Quite easy, start tintin using ./tt++, to connect to a mud type:
 
 Q01) What machines does tintin work on?
 
-A01) Pretty much any UNIX machine with a modern compiler as well as Windows
-     and Mac OS X.
+A01) Pretty much any UNIX machine with a modern compiler as well as Windows,
+     Mac OS X, and Android.
 
 
 Q02) What version should I use 1.50 or 1.86 or 2.00 ?
@@ -41,24 +41,29 @@ A06) You can get help from a couple of places.  The first place to start
 
 Q07) I can't get tintin compiled, can't you send me a binary of tintin?
 
-A07) There are precompiled versions for Slackware (works on various linux
-     distros), Mac OS X and Win32 available on the website.
+A07) See the install section on the website for help. A pre-compiled
+     binary is only available for Windows.
 
 Q08) I would like to help, how can I contribute to tintin?
 
 A08) You can assist people on the message board and give bug reports or
-     suggestions. If you can program you can write snippets, though
-     inclusion in the main branch isn't guaranteed.
+     suggestions. A link to the beta version is often available on the
+     forum as well in the Announcements section, beta testing is very
+     helpful to avoid buggy releases.
+
+     If you can program you can write snippets, though inclusion in the main
+     branch isn't guaranteed. Snippets should be released into the public
+     domain. 
 
 Q09) Tintin is so awesome, how can I thank you guys for spending all that time
-     to write tintin for free?? :)
+     to write tintin for free??
 
 A09) Fan mail is always welcome :)
 
 Q11) Can I use code from tintin?
 
 A11) Yes, provided that you follow the terms of the license.  The license
-     used for tintin 1.86 and higher is GPL. TINTIN III and TinTin++ 1.5
+     used for tintin 1.86 and higher is GPL 2. TINTIN III and TinTin++ 1.5
      are public domain, meaning there are no restrinctions whatsoever.
 
 Q12) I contributed code X, why isn't my name listed in the CREDITS file?
@@ -66,7 +71,7 @@ Q12) I contributed code X, why isn't my name listed in the CREDITS file?
 A12) Most likely your name slipped by before Davin Chan started
      maintaining tintin and adding people to the CREDITS file. If you
      believe you have contributed code to tintin, please email me and
-     let me know. Make sure to see if your code is still existant in this
+     let me know. Make sure to see if your code is still existent in this
      version as little of the original code has remained.
 
 
@@ -76,19 +81,21 @@ A14) If you read the COPYING file you will see you are allowed to modify and
      redistribute this version as long as you make it clear you made changes,
      and what those changes are. If you want to use tintin code in another
      program not licensed under GPL you need to get permission from the author.
-     Make sure to see if the exact code you want to use isn't existant in older
+     Make sure to see if the exact code you want to use isn't existent in older
      tintin++ versions before contacting me, because I obviously cannot give
      permission for code I didn't write :) Also notice that older tintin++
-     versions are not licensed under GPL.
+     versions are not licensed under the GPL.
 
 Q15) My old script files do not work, is this a bug?
 
 A15) Possibly, more likely your old script files do not work because a lot has
-     changed in this version. Try reading #help <command> about the subject.
-     Also the new script parser resembles the working of common scripting
+     changed. Try reading #help <command> about the subject. Also the new
+     script parser more closely resembles the working of common scripting
      languages. Also try to look through the examples, they are supposed to
      work, and you might find out what you are doing wrong. Feel free to
      ask for help on the forum.
+
+     The README file lists most compatibility issues.
 
 Q16) #prompt {string} does not work
 

@@ -134,14 +134,14 @@
 #define TINTIN_DIR               ".tintin"
 #define HISTORY_FILE         "history.txt"
 
-#define STRING_SIZE                  65536
-#define BUFFER_SIZE                  32768
+#define STRING_SIZE                  64000
+#define BUFFER_SIZE                  32000
 #define NUMBER_SIZE                    100
 #define LEGEND_SIZE                     50
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.01.4  "
+#define CLIENT_VERSION           "2.01.5  "
 
 #define ESCAPE                          27
 
@@ -172,7 +172,7 @@
 #define PULSE_UPDATE_CHAT                2
 #define PULSE_UPDATE_TERMINAL            1
 #define PULSE_UPDATE_MEMORY              2
-#define PULSE_UPDATE_TIME               20
+#define PULSE_UPDATE_TIME                2
 
 /*
 	Index for lists used by tintin
@@ -234,13 +234,62 @@ enum operators
 	Various flags
 */
 
-#define COL_BLD                       (1 << 1)
-#define COL_UND                       (1 << 2)
-#define COL_BLK                       (1 << 3)
-#define COL_REV                       (1 << 4)
-#define COL_XTF                       (1 << 5)
-#define COL_XTB                       (1 << 6)
-#define COL_256                       (1 << 7)
+#define BV01 (1   <<  0)
+#define BV02 (1   <<  1)
+#define BV03 (1   <<  2)
+#define BV04 (1   <<  3)
+#define BV05 (1   <<  4)
+#define BV06 (1   <<  5)
+#define BV07 (1   <<  6)
+#define BV08 (1   <<  7)
+#define BV09 (1   <<  8)
+#define BV10 (1   <<  9)
+#define BV11 (1   << 10)
+#define BV12 (1   << 11)
+#define BV13 (1   << 12)
+#define BV14 (1   << 13)
+#define BV15 (1   << 14)
+#define BV16 (1   << 15)
+#define BV17 (1   << 16)
+#define BV18 (1   << 17)
+#define BV19 (1   << 18)
+#define BV20 (1   << 19)
+#define BV21 (1   << 20)
+#define BV22 (1   << 21)
+#define BV23 (1   << 22)
+#define BV24 (1   << 23)
+#define BV25 (1   << 24)
+#define BV26 (1   << 25)
+#define BV27 (1   << 26)
+#define BV28 (1   << 27)
+#define BV29 (1   << 28)
+#define BV30 (1   << 29)
+#define BV31 (1   << 30)
+#define BV32 (1LL << 31)
+#define BV33 (1LL << 32)
+#define BV34 (1LL << 33)
+#define BV35 (1LL << 34)
+#define BV36 (1LL << 35)
+#define BV37 (1LL << 36)
+#define BV38 (1LL << 37)
+#define BV39 (1LL << 38)
+
+#define COL_BLD                       BV01
+#define COL_UND                       BV02
+#define COL_BLK                       BV03
+#define COL_REV                       BV04
+#define COL_XTF                       BV05
+#define COL_XTF_5                     BV06
+#define COL_XTF_R                     BV07
+#define COL_XTB                       BV08
+#define COL_XTB_5                     BV09
+#define COL_XTB_R                     BV10
+#define COL_TCF                       BV11
+#define COL_TCF_2                     BV12
+#define COL_TCF_R                     BV13
+#define COL_TCB                       BV14
+#define COL_TCB_2                     BV15
+#define COL_TCB_R                     BV16
 
 #define CHAT_NAME_CHANGE                 1
 #define CHAT_REQUEST_CONNECTIONS         2
@@ -307,41 +356,46 @@ enum operators
 #define TINTIN_FLAG_HISTORYBROWSE     (1 <<  2)
 #define TINTIN_FLAG_HISTORYSEARCH     (1 <<  3)
 #define TINTIN_FLAG_PROCESSINPUT      (1 <<  4)
-#define TINTIN_FLAG_USERCOMMAND       (1 <<  5) /* Unused */
+#define TINTIN_FLAG_INHERITANCE       (1 <<  5)
 #define TINTIN_FLAG_INSERTINPUT       (1 <<  6)
 #define TINTIN_FLAG_VERBATIM          (1 <<  7) /* Unused */
 #define TINTIN_FLAG_TERMINATE         (1 <<  8)
 
-#define SES_FLAG_ECHOCOMMAND          (1 <<  1)
-#define SES_FLAG_SNOOP                (1 <<  2)
-#define SES_FLAG_MCCP                 (1 <<  3)
-#define SES_FLAG_MAPPING              (1 <<  4)
-#define SES_FLAG_SPLIT                (1 <<  5)
-#define SES_FLAG_SPEEDWALK            (1 <<  6)
-#define SES_FLAG_READMUD              (1 <<  8)
-#define SES_FLAG_WORDWRAP             (1 <<  9)
-#define SES_FLAG_VERBATIM             (1 << 10)
-#define SES_FLAG_CONNECTED            (1 << 11)
-#define SES_FLAG_REPEATENTER          (1 << 12)
-#define SES_FLAG_VERBOSE              (1 << 13)
-//#define SES_FLAG_VERBOSELINE          (1 << 14)
-#define SES_FLAG_LOGLEVEL             (1 << 15)
-#define SES_FLAG_LOGPLAIN             (1 << 16)
-#define SES_FLAG_LOGHTML              (1 << 17)
-#define SES_FLAG_GAG                  (1 << 18)
-#define SES_FLAG_UPDATEVTMAP          (1 << 19)
-#define SES_FLAG_COLORPATCH           (1 << 20)
-#define SES_FLAG_SCROLLLOCK           (1 << 21)
-#define SES_FLAG_SCAN                 (1 << 22)
-#define SES_FLAG_SCROLLSTOP           (1 << 23)
-#define SES_FLAG_CONVERTMETA          (1 << 24)
-#define SES_FLAG_RUN                  (1 << 25)
-#define SES_FLAG_UTF8                 (1 << 26)
-#define SES_FLAG_BIG5                 (1 << 27)
-#define SES_FLAG_256COLOR             (1 << 28)
-#define SES_FLAG_IGNORELINE           (1 << 29)
-#define SES_FLAG_CLOSED               (1 << 30)
-#define SES_FLAG_PORT                 (1 << 31)
+#define SES_FLAG_ECHOCOMMAND          BV01
+#define SES_FLAG_SNOOP                BV02
+#define SES_FLAG_MCCP                 BV03
+#define SES_FLAG_MAPPING              BV04 // #path related
+#define SES_FLAG_SPLIT                BV05
+#define SES_FLAG_SPEEDWALK            BV06
+#define SES_FLAG_READMUD              BV08
+#define SES_FLAG_WORDWRAP             BV09
+#define SES_FLAG_VERBATIM             BV10
+#define SES_FLAG_CONNECTED            BV11
+#define SES_FLAG_REPEATENTER          BV12
+#define SES_FLAG_VERBOSE              BV13
+#define SES_FLAG_LOGNEXT              BV14
+#define SES_FLAG_LOGLEVEL             BV15
+#define SES_FLAG_LOGPLAIN             BV16
+#define SES_FLAG_LOGHTML              BV17
+#define SES_FLAG_GAG                  BV18
+#define SES_FLAG_UPDATEVTMAP          BV19
+#define SES_FLAG_COLORPATCH           BV20
+#define SES_FLAG_SCROLLLOCK           BV21
+#define SES_FLAG_SCROLLSTOP           BV22
+#define SES_FLAG_SCAN                 BV23
+#define SES_FLAG_SCANABORT            BV24
+#define SES_FLAG_CONVERTMETA          BV25
+#define SES_FLAG_RUN                  BV26
+#define SES_FLAG_BIG5                 BV27
+#define SES_FLAG_UTF8                 BV28
+#define SES_FLAG_IGNORELINE           BV39
+#define SES_FLAG_CLOSED               BV30
+#define SES_FLAG_PORT                 BV31
+#define SES_FLAG_SCREENREADER         BV32
+#define SES_FLAG_ANSICOLOR            BV33
+#define SES_FLAG_256COLOR             BV34
+#define SES_FLAG_TRUECOLOR            BV35
+
 
 #define TELOPT_FLAG_SGA               (1 <<  0)
 #define TELOPT_FLAG_ECHO              (1 <<  1)
@@ -550,7 +604,7 @@ enum operators
 
 #define SCROLL(ses)               ((ses)->cur_row == 0 || ((ses)->cur_row >= (ses)->top_row && (ses)->cur_row <= (ses)->bot_row) || (ses)->cur_row == (ses)->rows)
 
-#define VERBATIM(ses)             (gtd->input_level == 0 && HAS_BIT((ses)->flags, SES_FLAG_VERBATIM))
+#define VERBATIM(ses)             (gtd->verbatim_level || (gtd->input_level == 0 && HAS_BIT((ses)->flags, SES_FLAG_VERBATIM)))
 
 #define DO_ARRAY(array) struct session *array (struct session *ses, struct listnode *list, char *arg, char *var)
 #define DO_CHAT(chat) void chat (char *left, char *right)
@@ -615,9 +669,11 @@ struct session
 	char                  * name;
 	char                  * group;
 	FILE                  * logfile;
-	FILE                  * logline;
+	FILE                  * lognext_file;
+	char                  * lognext_name;
+	FILE                  * logline_file;
+	char                  * logline_name;
 	struct listroot       * list[LIST_MAX];
-	struct listroot       * history;
 	int                     rows;
 	int                     cols;
 	int                     top_row;
@@ -679,6 +735,7 @@ struct tintin_data
 	int                     input_hid;
 	int                     input_tab;
 	char                  * home;
+	char                  * lang;
 	char                  * term;
 	long long               time;
 	long long               timer[TIMER_CPU][5];
@@ -691,9 +748,10 @@ struct tintin_data
 	int                     command_ref[26];
 	int                     flags;
 	int                     quiet;
-	int                     noise_level;
 	int                     debug_level;
 	int                     input_level;
+	int                     verbose_level;
+	int                     verbatim_level;
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
@@ -983,6 +1041,7 @@ struct exit_data
 	int                       vnum;
 	int                       dir;
 	int                       flags;
+	float                     weight;
 	char                    * name;
 	char                    * cmd;
 	char                    * data;
@@ -1033,6 +1092,8 @@ extern DO_COMMAND(do_advertise);
 extern DO_COMMAND(do_cursor);
 
 extern DO_CURSOR(cursor_backspace);
+extern DO_CURSOR(cursor_brace_open);
+extern DO_CURSOR(cursor_brace_close);
 extern DO_CURSOR(cursor_buffer_down);
 extern DO_CURSOR(cursor_buffer_end);
 extern DO_CURSOR(cursor_buffer_home);
@@ -1379,7 +1440,10 @@ extern DO_CONFIG(config_colorpatch);
 extern DO_CONFIG(config_mccp);
 extern DO_CONFIG(config_autotab);
 extern DO_CONFIG(config_charset);
-extern DO_CONFIG(config_256color);
+extern DO_CONFIG(config_colormode);
+extern DO_CONFIG(config_screenreader);
+extern DO_CONFIG(config_inheritance);
+extern DO_CONFIG(config_randomseed);
 
 #endif
 
@@ -1574,6 +1638,7 @@ extern DO_LINE(line_logverbatim);
 extern DO_LINE(line_quiet);
 extern DO_LINE(line_strip);
 extern DO_LINE(line_substitute);
+extern DO_LINE(line_verbatim);
 extern DO_LINE(line_verbose);
 
 #endif
@@ -1952,6 +2017,8 @@ extern int is_color_code(char *str);
 extern int is_number(char *str);
 extern int hex_number(char *str);
 extern int oct_number(char *str);
+extern int unicode_16_bit(char *str, char *out);
+extern int unicode_21_bit(char *str, char *out);
 extern long long utime(void);
 extern char *capitalize(char *str);
 extern char *ntos(long long number);

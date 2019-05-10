@@ -30,9 +30,32 @@
 #include <errno.h>
 #include <signal.h>
 
-/************************/
-/* the #session command */
-/************************/
+
+DO_COMMAND(do_all)
+{
+	char left[BUFFER_SIZE];
+	struct session *sesptr, *next_ses;
+
+	if (gts->next)
+	{
+		get_arg_in_braces(ses, arg, left, TRUE);
+
+		substitute(ses, left, left, SUB_VAR|SUB_FUN);
+
+		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
+		{
+			next_ses = sesptr->next;
+
+			script_driver(sesptr, LIST_COMMAND, left);
+		}
+	}
+	else
+	{
+		show_error(ses, LIST_COMMAND, "#ALL: THERE AREN'T ANY SESSIONS.");
+	}
+	return ses;
+}
+
 
 DO_COMMAND(do_session)
 {
@@ -87,6 +110,102 @@ DO_COMMAND(do_session)
 	return gtd->ses;
 }
 
+
+DO_COMMAND(do_snoop)
+{
+	struct session *sesptr = ses;
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+
+	sub_arg_in_braces(ses, arg, left, SUB_VAR|SUB_FUN, FALSE);
+
+	if (*left)
+	{
+		sesptr = find_session(left);
+
+		if (sesptr == NULL)
+		{
+			return show_error(ses, LIST_COMMAND, "#SNOOP: THERE'S NO SESSION NAMED {%s}", left);
+		}
+	}
+	else
+	{
+		sesptr = ses;
+	}
+
+	if (*right == 0)
+	{
+		if (HAS_BIT(sesptr->flags, SES_FLAG_SNOOP))
+		{
+			show_message(ses, LIST_COMMAND, "#SNOOP: NO LONGER SNOOPING SESSION '%s'", sesptr->name);
+		}
+		else
+		{
+			show_message(ses, LIST_COMMAND, "#SNOOP: SNOOPING SESSION '%s'", sesptr->name);
+		}
+		TOG_BIT(sesptr->flags, SES_FLAG_SNOOP);
+	}
+	else if (is_abbrev(right, "ON"))
+	{
+		show_message(ses, LIST_COMMAND, "#SNOOP: SNOOPING SESSION '%s'", sesptr->name);
+
+		SET_BIT(sesptr->flags, SES_FLAG_SNOOP);
+	}
+	else if (is_abbrev(right, "OFF"))
+	{
+		show_message(ses, LIST_COMMAND, "#SNOOP: NO LONGER SNOOPING SESSION '%s'", sesptr->name);
+
+		DEL_BIT(sesptr->flags, SES_FLAG_SNOOP);
+	}
+	else
+	{
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #SNOOP {session} {ON|OFF}");
+	}
+	return ses;
+}
+
+
+DO_COMMAND(do_zap)
+{
+	struct session *sesptr;
+	char left[BUFFER_SIZE];
+
+	push_call("do_zap(%p,%p)",ses,arg);
+
+	sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
+
+	if (*left)
+	{
+		sesptr = find_session(left);
+
+		if (sesptr == NULL)
+		{
+			show_error(ses, LIST_COMMAND, "#ZAP: THERE'S NO SESSION WITH THAT NAME!");
+
+			pop_call();
+			return ses;
+		}
+	}
+	else
+	{
+		sesptr = ses;
+	}
+
+	tintin_puts(sesptr, "");
+
+	tintin_puts(sesptr, "#ZZZZZZZAAAAAAAAPPPP!!!!!!!!! LET'S GET OUTTA HERE!!!!!!!!");
+
+	if (sesptr == gts)
+	{
+		pop_call();
+		return do_end(NULL, "");
+	}
+	cleanup_session(sesptr);
+
+	pop_call();
+	return gtd->ses;
+}
+
+
 void show_session(struct session *ses, struct session *ptr)
 {
 	char temp[BUFFER_SIZE];
@@ -140,7 +259,7 @@ struct session *newactive_session(void)
 
 struct session *activate_session(struct session *ses)
 {
-	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "SESSION DEACTIVATED", gtd->ses->name);
+	check_all_events(gtd->ses, SUB_ARG, 0, 1, "SESSION DEACTIVATED", gtd->ses->name);
 
 	gtd->ses = ses;
 
@@ -148,7 +267,7 @@ struct session *activate_session(struct session *ses)
 
 	tintin_printf(ses, "#SESSION '%s' ACTIVATED.", ses->name);
 
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "SESSION ACTIVATED", ses->name);
+	check_all_events(ses, SUB_ARG, 0, 1, "SESSION ACTIVATED", ses->name);
 
 	return ses;
 }
@@ -219,11 +338,31 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 	newses->read_max      = gts->read_max;
 	newses->read_buf      = (unsigned char *) calloc(1, gts->read_max);
 
+	newses->lognext_name  = strdup("");
+	newses->logline_name  = strdup("");
+
 	LINK(newses, gts->next, gts->prev);
 
-	for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_INHERITANCE))
 	{
-		newses->list[cnt] = copy_list(newses, gts->list[cnt], cnt);
+		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			newses->list[cnt] = copy_list(newses, gts->list[cnt], cnt);
+		}
+	}
+	else
+	{
+		for (cnt = 0 ; cnt < LIST_MAX ; cnt++)
+		{
+			if (cnt == LIST_CONFIG)
+			{
+				newses->list[cnt] = copy_list(newses, gts->list[cnt], cnt);
+			}
+			else
+			{
+				newses->list[cnt] = init_list(newses, cnt, 32);
+			}
+		}
 	}
 
 	newses->rows          = gts->rows;
@@ -250,8 +389,6 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 
 	dirty_screen(newses);
 
-	check_all_events(newses, SUB_ARG|SUB_SEC, 0, 3, "SESSION CREATED", newses->name, newses->session_host, newses->session_port);
-
 	if (desc == 0)
 	{
 		newses = connect_session(newses);
@@ -259,8 +396,6 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 	else if (desc == -1)
 	{
 		SET_BIT(newses->flags, SES_FLAG_PORT);
-
-		gtd->ses = newses;
 	}
 	else
 	{
@@ -269,9 +404,7 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 		SET_BIT(newses->telopts, TELOPT_FLAG_SGA);
 		DEL_BIT(newses->telopts, TELOPT_FLAG_ECHO);
 
-		gtd->ses = newses;
-
-		gtd->ses->socket = desc;
+		newses->socket = desc;
 	}
 
 	if (newses)
@@ -290,13 +423,14 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 				return gtd->ses;
 			}
 		}
-
 #endif
+		gtd->ses = newses;
 
 		if (*file)
 		{
 			do_read(newses, file);
 		}
+		check_all_events(newses, SUB_ARG, 0, 4, "SESSION CREATED", newses->name, newses->session_host, newses->session_ip, newses->session_port);
 	}
 
 	pop_call();
@@ -326,7 +460,6 @@ struct session *connect_session(struct session *ses)
 
 	if (sock)
 	{
-		gtd->ses    = ses;
 		ses->socket = sock;
 
 		ses->connect_retry = 0;
@@ -337,7 +470,7 @@ struct session *connect_session(struct session *ses)
 
 		tintin_printf(ses, "#SESSION '%s' CONNECTED TO '%s' PORT '%s'", ses->name, ses->session_host, ses->session_port);
 
-		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION CONNECTED", ses->name, ses->session_host, ses->session_ip, ses->session_port);
+		check_all_events(ses, SUB_ARG, 0, 4, "SESSION CONNECTED", ses->name, ses->session_host, ses->session_ip, ses->session_port);
 
 		pop_call();
 		return ses;
@@ -423,17 +556,17 @@ void cleanup_session(struct session *ses)
 
 	SET_BIT(ses->flags, SES_FLAG_CLOSED);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+	if (HAS_BIT(ses->flags, SES_FLAG_PORT) || HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 	{
 		DEL_BIT(ses->flags, SES_FLAG_CONNECTED);
 
-		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION DISCONNECTED", ses->name, ses->session_host, ses->session_ip, ses->session_port);
+		check_all_events(ses, SUB_ARG, 0, 4, "SESSION DISCONNECTED", ses->name, ses->session_host, ses->session_ip, ses->session_port);
 
 		tintin_printf(gtd->ses, "#SESSION '%s' DIED.", ses->name);
 	}
 	else
 	{
-		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "SESSION TIMED OUT", ses->name, ses->session_host, ses->session_ip, ses->session_port);
+		check_all_events(ses, SUB_ARG, 0, 4, "SESSION TIMED OUT", ses->name, ses->session_host, ses->session_ip, ses->session_port);
 
 		tintin_printf(gtd->ses, "#SESSION '%s' TIMED OUT.", ses->name);
 	}
@@ -448,9 +581,14 @@ void cleanup_session(struct session *ses)
 		fclose(ses->logfile);
 	}
 
-	if (ses->logline)
+	if (ses->lognext_file)
 	{
-		fclose(ses->logline);
+		fclose(ses->lognext_file);
+	}
+
+	if (ses->logline_file)
+	{
+		fclose(ses->logline_file);
 	}
 
 #ifdef HAVE_GNUTLS_H
@@ -501,7 +639,7 @@ void dispose_session(struct session *ses)
 	free(ses->group);
 	free(ses->read_buf);
 	free(ses->cmd_color);
-
+	free(ses->logline_name);
 	free(ses);
 
 	pop_call();

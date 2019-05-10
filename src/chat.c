@@ -75,7 +75,7 @@ DO_COMMAND(do_chat)
 
 		if (chat_table[cnt].fun != chat_initialize && gtd->chat == NULL)
 		{
-			tintin_printf(NULL, "\033[1;31m<CHAT> You must initialize a chat port first.");
+			tintin_printf(NULL, "\e[1;31m<CHAT> You must initialize a chat port first.");
 
 			return ses;
 		}
@@ -179,7 +179,7 @@ DO_CHAT(chat_initialize)
 	gtd->chat->fd       = sock;
 	gtd->chat->port     = port;
 
-	gtd->chat->color    = strdup("\033[0;1;31m");
+	gtd->chat->color    = strdup("\e[0;1;31m");
 	gtd->chat->download = strdup("");
 	gtd->chat->ip       = strdup("<Unknown>");
 	gtd->chat->name     = strdup("TinTin");
@@ -736,7 +736,7 @@ void chat_printf(char *format, ...)
 			chat_socket_printf(buddy, "%s", tmp);
 		}
 	}
-	sprintf(tmp, "%s%s%s", gtd->chat->color, buf, "\033[0m");
+	sprintf(tmp, "%s%s%s", gtd->chat->color, buf, "\e[0m");
 
 	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 2, "CHAT MESSAGE", tmp, buf);
 
@@ -1534,7 +1534,7 @@ DO_CHAT(chat_name)
 DO_CHAT(chat_paste)
 {
 	struct chat_data *buddy;
-	char temp[BUFFER_SIZE], name[BUFFER_SIZE], *arg;
+	char temp[BUFFER_SIZE + 2], name[BUFFER_SIZE], *arg;
 
 	if (left == NULL)
 	{

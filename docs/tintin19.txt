@@ -33,18 +33,14 @@
     11)  Command Files .................................
     12)  Command History ...............................
     13)  Path Tracking .................................
-    14)  Help ..........................................
-
-
+    14)  Advanced Features .............................
+    15)  Help ..........................................
 
 
 
                                T I N T I N ++
 
                  (T)he K(I)cki(N) (T)ick D(I)kumud Clie(N)t
-
-
-
 
 
 
@@ -55,15 +51,11 @@
 
 
 
-
-
             =========  Giving Credit Where Credit is Due ========
 
      None of this work would be possible, without the work done by Peter Unold.
      He was the author of TINTIN III, the base of TinTin++.  Hats off to ya
      Peter, You started the ball rolling.
-
-
 
 
 
@@ -76,11 +68,8 @@
      starting up TinTin++ are inherited by all sessions.
 
      If you want to get out of tintin after starting it type: #end or press
-     ctrl-c. If you want to paste text use shift-insert, text is automatically
+     ctrl-d. If you want to paste text use shift-insert, text is automatically
      copied upon selection.
-
-
-
 
 
 
@@ -102,18 +91,16 @@
 
      There are several ways ';'s can be overruled.
 
-     Example: \say Hello ;) -- Lines starting with a '\' aren't parsed by tintin.
+     Example: \say Hello ;) -- Lines starting with a '\' aren't parsed by
+     tintin.
 
      Example: say Hello \;) -- The escape character can esape 1 letter.
 
 
 
-
-
-
                       ========  Connecting to a Mud  =========
 
-     Command: #session {session name} {mud address} {port}
+     Command: #session {session name} {mud address} {port} {filename}
 
      Example: #session bob tintin.sf.net 4321
 
@@ -122,8 +109,7 @@
 
      You can get a list of all sessions by typing: #session.
 
-
-
+     Providing a filename is optional.
 
 
 
@@ -138,9 +124,6 @@
      Using the #prompt command you can capture the prompt and place it on the
      split line. To get rid of the split interface you can use #unsplit which
      will restore the terminal settings to default.
-
-
-
 
 
 
@@ -180,8 +163,6 @@
 
 
 
-
-
                         =========  Actions  =========
 
      Command: #action
@@ -213,9 +194,6 @@
 
 
 
-
-
-
                         =========  Highlights  =========
 
      Command: #highlight (remember you can abbreviate commands)
@@ -236,9 +214,6 @@
 
 
 
-
-
-
                        =========  Speedwalk  =========
 
      If you type a command consisting ONLY of numbers and the letters n, e, s,
@@ -255,18 +230,16 @@
 
 
 
-
-
                         =========  Tickers  =========
 
      Command: #ticker {name} {commands} {seconds}
 
      Every 60 seconds on a standard dikumud a so called tick occures. You
      regenerate faster hp/mana/mp if you're sleeping/resting during a tick. So
-     it's pretty nice to know when the next tick occures. TinTin++ helps you
+     it's pretty nice to know when the next tick occurs. TinTin++ helps you
      with that.
 
-     #ticker {tick} {#delay 50 #show 10 SECONDS TO TICK!;#show TICK!!!} {60}
+     #ticker {tick} {#show TICK!!!;#delay 50 #show 10 SECONDS TO TICK!} {60}
 
      This creates a ticker with the name {tick} which will print TICK!!!, as
      well as print a warning when the next tick will occure.
@@ -275,10 +248,9 @@
 
 
 
-
                      =========  Command Files  =========
 
-     When you order TinTin++ to read a commando file, tintin parses all the
+     When you order TinTin++ to read a command file, tintin parses all the
      text in the file. You can use command files to keep aliases/actions in,
      login to a mud(name, password etc..) and basically all kinds of commands.
 
@@ -292,7 +264,10 @@
      #write filename -- write all actions/aliases/substitutes known for the
      current session to a file.
 
+     When you use #session you can tell it to read a command file with the 4th
+     argument.
 
+     Example: #session bob tintin.sf.net 4321 bobthemage.tin
 
 
 
@@ -309,13 +284,6 @@
      display the reverse search prompt. Simply type in a substring of a
      command previously entered and it will keep showing matches till you
      find the command you are looking for.
-
-     You can save and load your history with the #history write <filename>
-     and #history read <filename> command.
-
-
-
-
 
 
 
@@ -343,12 +311,22 @@
 
      You want a fast run to the master mindflayer and back. You go to the dump
      and type: #path new. Then you run down and kill the master. To go back you
-     just type: #path save backward tmp;tmp
+     just type: #path save backward tmp;$tmp
 
      You could of course just as well have recalled out of there, but... Hell
      it's just an example.
 
 
+
+                   =========  Advanced Features  =========
+
+     Command: #run {name} {shell command}
+
+     #run lets you run any console application interactively inside tintin.
+
+     Learning how to use tintin will not only allow you to customize and
+     automate a telnet connection, but any console application can be
+     enhanced with triggers.
 
 
 

@@ -77,76 +77,138 @@ DO_LINE(line_gag)
 
 DO_LINE(line_log)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	FILE *logfile;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN|SUB_ESC);
-	arg = sub_arg_in_braces(ses, arg, temp, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if ((logfile = fopen(left, "a")))
+	if (*left && *right)
 	{
-		if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_LNF);
+
+		if (!strcmp(ses->logline_name, left))
 		{
-			fseek(logfile, 0, SEEK_END);
-
-			if (ftell(logfile) == 0)
-			{
-				write_html_header(ses, logfile);
-			}
-		}
-
-		if (*temp)
-		{
-			substitute(ses, temp, right, SUB_ESC|SUB_COL|SUB_LNF);
-
-			logit(ses, right, logfile, FALSE);
-
-			fclose(logfile);
+			logit(ses, right, ses->logline_file, FALSE);
 		}
 		else
 		{
-			if (ses->logline)
+			if ((logfile = fopen(left, "a")))
 			{
-				fclose(ses->logline);
+				if (ses->logline_file)
+				{
+					fclose(ses->logline_file);
+				}
+				ses->logline_name = restring(ses->logline_name, left);
+				ses->logline_file = logfile;
+
+				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+				{
+					fseek(logfile, 0, SEEK_END);
+
+					if (ftell(logfile) == 0)
+					{
+						write_html_header(ses, logfile);
+					}
+				}
+
+				logit(ses, right, ses->logline_file, FALSE);
 			}
-			ses->logline = logfile;
+			else
+			{
+				show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
+			}
 		}
 	}
 	else
 	{
-		show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
+		if (!strcmp(ses->lognext_name, left))
+		{
+			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
+		}
+		else if ((logfile = fopen(left, "a")))
+		{
+			if (ses->lognext_file)
+			{
+				fclose(ses->lognext_file);
+			}
+			ses->lognext_name = restring(ses->lognext_name, left);
+			ses->lognext_file = logfile;
+
+			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
+		}
+		else
+		{
+			show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
+		}
 	}
 	return ses;
 }
-
 
 DO_LINE(line_logverbatim)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	FILE *logfile;
 
-	arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, right, 1);
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, right, GET_ALL);
 
-	if ((logfile = fopen(left, "a")))
+	if (*left && *right)
 	{
-		if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+		if (!strcmp(ses->logline_name, left))
 		{
-			fseek(logfile, 0, SEEK_END);
-
-			if (ftell(logfile) == 0)
+			logit(ses, right, ses->logline_file, TRUE);
+		}
+		else
+		{
+			if ((logfile = fopen(left, "a")))
 			{
-				write_html_header(ses, logfile);
+				if (ses->logline_file)
+				{
+					fclose(ses->logline_file);
+				}
+				ses->logline_name = restring(ses->logline_name, left);
+				ses->logline_file = logfile;
+
+				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
+				{
+					fseek(logfile, 0, SEEK_END);
+
+					if (ftell(logfile) == 0)
+					{
+						write_html_header(ses, logfile);
+					}
+				}
+
+				logit(ses, right, ses->logline_file, TRUE);
+			}
+			else
+			{
+				show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
 			}
 		}
-
-		logit(ses, right, logfile, TRUE);
-
-		fclose(logfile);
 	}
 	else
 	{
-		show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
+		if (!strcmp(ses->lognext_name, left))
+		{
+			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
+		}
+		else if ((logfile = fopen(left, "a")))
+		{
+			if (ses->lognext_file)
+			{
+				fclose(ses->lognext_file);
+			}
+			ses->lognext_name = restring(ses->lognext_name, left);
+			ses->lognext_file = logfile;
+
+			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
+		}
+		else
+		{
+			show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
+		}
 	}
 	return ses;
 }
@@ -211,6 +273,26 @@ DO_LINE(line_substitute)
 	return ses;
 }
 
+DO_LINE(line_verbatim)
+{
+	char left[BUFFER_SIZE];
+
+	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+
+	if (*left == 0)
+	{
+		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {VERBATIM} {command}.");
+	}
+
+	gtd->verbatim_level++;
+
+	ses = parse_input(ses, left);
+
+	gtd->verbatim_level--;
+
+	return ses;
+}
+
 DO_LINE(line_verbose)
 {
 	char left[BUFFER_SIZE];
@@ -222,11 +304,11 @@ DO_LINE(line_verbose)
 		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {VERBOSE} {command}.");
 	}
 
-	gtd->noise_level++;
+	gtd->verbose_level++;
 
 	ses = script_driver(ses, LIST_COMMAND, left);
 
-	gtd->noise_level--;
+	gtd->verbose_level--;
 
 	return ses;
 }

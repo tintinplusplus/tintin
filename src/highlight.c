@@ -130,7 +130,7 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 				get_color_codes(reset, pto, reset);
 
-				cat_sprintf(output, "%s%s%s\033[0m%s", pto, color, plain, reset);
+				cat_sprintf(output, "%s%s%s\e[0m%s", pto, color, plain, reset);
 
 				pto = ptm + len;
 

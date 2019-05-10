@@ -539,15 +539,6 @@ char *get_arg_to_brackets(struct session *ses, char *string, char *result)
 				ptoo = pto;
 			}
 		}
-		if (*pti == '.')
-		{
-			if (nest1 == 0 && nest2 == 0)
-			{
-				*pto = 0;
-
-				return pti;
-			}
-		}
 		else if (*pti == ']')
 		{
 			if (nest2)
@@ -588,21 +579,6 @@ char *get_arg_at_brackets(struct session *ses, char *string, char *result)
 
 	pti = string;
 	pto = result;
-
-	if (*pti == '.')
-	{
-		while (*pti && *pti != '[')
-		{
-			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
-			{
-				*pto++ = *pti++;
-				*pto++ = *pti++;
-				continue;
-			}
-
-			*pto++ = *pti++;
-		}
-	}
 
 	if (*pti != '[')
 	{
@@ -658,25 +634,6 @@ char *get_arg_in_brackets(struct session *ses, char *string, char *result)
 
 	pti = string;
 	pto = result;
-
-	if (*pti == '.')
-	{
-		pti++;
-
-		while (*pti && *pti != '.' && *pti != '[')
-		{
-			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
-			{
-				*pto++ = *pti++;
-				*pto++ = *pti++;
-				continue;
-			}
-			*pto++ = *pti++;
-		}
-		*pto = 0;
-
-		return pti;
-	}
 
 	if (*pti != '[')
 	{
@@ -803,12 +760,11 @@ void do_one_line(char *line, struct session *ses)
 		check_all_highlights(ses, line, strip);
 	}
 
-	if (ses->logline)
+	if (HAS_BIT(ses->flags, SES_FLAG_LOGNEXT))
 	{
-		logit(ses, line, ses->logline, TRUE);
+		logit(ses, line, ses->lognext_file, TRUE);
 
-		fclose(ses->logline);
-		ses->logline = NULL;
+		DEL_BIT(ses->flags, SES_FLAG_LOGNEXT);
 	}
 	pop_call();
 	return;

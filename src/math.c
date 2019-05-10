@@ -629,7 +629,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 		case 'd':
 			if (tintoi(node->next->str3) <= 0)
 			{
-//				show_message(ses, LIST_VARIABLE, "#MATHEXP: INVALID DICE: %s", node->next->str3);
+				show_debug(ses, LIST_VARIABLE, "#MATHEXP: INVALID DICE: %s", node->next->str3);
 				value = 0;
 			}
 			else
@@ -664,7 +664,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 				default:
 					if (tintoi(node->next->str3) == 0)
 					{
-//						show_message(ses, LIST_VARIABLE, "#MATH ERROR: DIVISION ZERO.");
+						show_debug(ses, LIST_VARIABLE, "#MATH ERROR: DIVISION ZERO.");
 						value = tintoi(node->prev->str3);
 					}
 					else
@@ -684,7 +684,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 		case '%':
 			if (tintoi(node->next->str3) == 0)
 			{
-//				show_message(ses, LIST_VARIABLE, "#MATH ERROR: MODULO ZERO.");
+				show_debug(ses, LIST_VARIABLE, "#MATH ERROR: MODULO ZERO.");
 				value = tintoi(node->prev->str3);
 			}
 			else
@@ -771,7 +771,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 			value = (tineval(ses, node->prev->str3, node->next->str3) == 0);
 			break;
 		default:
-//			show_message(ses, LIST_VARIABLE, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->str3[0], node->str3[1]);
+			show_debug(ses, LIST_VARIABLE, "#COMPUTE EXP: UNKNOWN OPERATOR: %c%c", node->str3[0], node->str3[1]);
 			value = 0;
 			break;
 	}
@@ -793,7 +793,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 	free(node->str2);
 	node->str2 = strdup(temp);
 
-	sprintf(temp, "%f", value);
+	sprintf(temp, "%lf", value);
 	free(node->str3);
 	node->str3 = strdup(temp);
 }
@@ -983,25 +983,35 @@ double tintoi(char *str)
 
 double tincmp(char *left, char *right)
 {
+	double left_val, right_val;
+
 	switch (left[0])
 	{
 		case '"':
 			return strcmp(left, right);
 
 		default:
-			return tintoi(left) - tintoi(right);
+			left_val = tintoi(left);
+			right_val = tintoi(right);
+
+			return left_val - right_val;
 	}
 }
 
 double tineval(struct session *ses, char *left, char *right)
 {
+	double left_val, right_val;
+
 	switch (left[0])
 	{
 		case '"':
 			return match(ses, left, right, SUB_NONE);
 
 		default:
-			return tintoi(left) == tintoi(right);
+			left_val = tintoi(left);
+			right_val = tintoi(right);
+
+			return left_val == right_val;
 	}
 }
 

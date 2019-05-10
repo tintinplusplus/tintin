@@ -118,7 +118,12 @@ struct listroot *update_nest_root(struct listroot *root, char *arg)
 
 void update_nest_node(struct listroot *root, char *arg)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+//	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+
+	char *arg1, *arg2;
+
+	arg1 = str_mim(arg);
+	arg2 = str_mim(arg);
 
 	while (*arg)
 	{
@@ -139,6 +144,10 @@ void update_nest_node(struct listroot *root, char *arg)
 			arg++;
 		}
 	}
+	str_free(arg1);
+	str_free(arg2);
+
+	return;
 }
 
 int delete_nest_node(struct listroot *root, char *variable)
@@ -545,6 +554,8 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	char *arg, *arg2, name[BUFFER_SIZE];
 	va_list args;
 
+	push_call("set_nest_node(%p,%s,%p,...)",root,arg1,format);
+
 	va_start(args, format);
 	vasprintf(&arg2, format, args);
 	va_end(args);
@@ -552,6 +563,11 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	arg = get_arg_to_brackets(root->ses, arg1, name);
 
 	check_all_events(root->ses, SUB_ARG, 1, 2, "VARIABLE UPDATE %s", name, name, arg2);
+
+	if (search_node_list(local_list(NULL), name))
+	{
+		root = local_list(NULL);
+	}
 
 	while (*arg)
 	{
@@ -561,11 +577,6 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 		{
 			arg = get_arg_in_brackets(root->ses, arg, name);
 		}
-	}
-
-	if (search_node_list(local_list(NULL), name))
-	{
-		root = local_list(NULL);
 	}
 
 	node = search_node_list(root, name);
@@ -589,6 +600,7 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	}
 	free(arg2);
 
+	pop_call();
 	return node;
 }
 
