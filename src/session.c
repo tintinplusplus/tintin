@@ -116,7 +116,8 @@ DO_COMMAND(do_snoop)
 	struct session *sesptr = ses;
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
-	sub_arg_in_braces(ses, arg, left, SUB_VAR|SUB_FUN, FALSE);
+	arg = sub_arg_in_braces(ses, arg, left, SUB_VAR|SUB_FUN, FALSE);
+	arg = sub_arg_in_braces(ses, arg, right, SUB_VAR|SUB_FUN, TRUE);
 
 	if (*left)
 	{
@@ -640,7 +641,9 @@ void dispose_session(struct session *ses)
 	free(ses->group);
 	free(ses->read_buf);
 	free(ses->cmd_color);
+	free(ses->lognext_name);
 	free(ses->logline_name);
+
 	free(ses);
 
 	pop_call();

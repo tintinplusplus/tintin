@@ -206,7 +206,11 @@ DO_COMMAND(do_showme)
 	{
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
 
+		gtd->ignore_level++;
+
 		show_info(ses, LIST_GAG, "#INFO GAG {%s}", left);
+
+		gtd->ignore_level--;
 
 		return ses;
 	}
@@ -254,7 +258,14 @@ DO_COMMAND(do_showme)
 DO_COMMAND(do_test)
 {
 	long long x, time1, time2;
+	time_t time3;
 	char *str, buf[100001];
+
+	time3 = time(NULL);
+
+	tintin_printf2(ses, "size: %d time: %d", sizeof(time_t), time3);
+
+	return ses;
 
 	tintin_printf2(ses, "  input_level %d", gtd->input_level);
 	tintin_printf2(ses, "verbose_level %d", gtd->verbose_level);

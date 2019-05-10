@@ -120,7 +120,7 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 
 				if (HAS_BIT(ses_ptr->list[LIST_EVENT]->flags, LIST_FLAG_DEBUG))
 				{
-					show_debug(ses_ptr, LIST_ACTION, "#DEBUG EVENT {%s}", node->left);
+					show_debug(ses_ptr, LIST_ACTION, "#DEBUG EVENT {%s} (%s}", node->left, node->right);
 				}
 
 				script_driver(ses_ptr, LIST_EVENT, buf);
@@ -251,11 +251,11 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 		}
 	}
 
-	check_all_events(ses, SUB_ARG, 2, 2, "%s %s", left, right, ntos(x), ntos(ses->rows - y));
+	check_all_events(ses, SUB_ARG, 2, 4, "%s %s", left, right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-	check_all_events(ses, SUB_ARG, 3, 2, "%s %s %d", left, right, 0 - y, ntos(x), ntos(ses->rows - y));
+	check_all_events(ses, SUB_ARG, 3, 4, "%s %s %d", left, right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-	check_all_events(ses, SUB_ARG, 3, 2, "%s %s %d", left, right, ses->rows - y, ntos(x), ntos(ses->rows - y));
+	check_all_events(ses, SUB_ARG, 3, 4, "%s %s %d", left, right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
 	if (!strcmp(left, "PRESSED"))
 	{
@@ -271,24 +271,24 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 			{
 				if (click[0] - click[2] < 500000)
 				{
-					check_all_events(ses, SUB_ARG, 1, 2, "TRIPLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y));
+					check_all_events(ses, SUB_ARG, 1, 4, "TRIPLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-					check_all_events(ses, SUB_ARG, 2, 2, "TRIPLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y));
+					check_all_events(ses, SUB_ARG, 2, 4, "TRIPLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-					check_all_events(ses, SUB_ARG, 2, 2, "TRIPLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y));
+					check_all_events(ses, SUB_ARG, 2, 4, "TRIPLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-					click[0] = 0;
+					strcpy(last, "");
 				}
 				else
 				{
-					check_all_events(ses, SUB_ARG, 1, 2, "DOUBLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y));
+					check_all_events(ses, SUB_ARG, 1, 4, "DOUBLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-					check_all_events(ses, SUB_ARG, 2, 2, "DOUBLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y));
+					check_all_events(ses, SUB_ARG, 2, 4, "DOUBLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 
-					check_all_events(ses, SUB_ARG, 2, 2, "DOUBLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y));
+					check_all_events(ses, SUB_ARG, 2, 4, "DOUBLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 				}
 			}
-		}
+		}		
 		else
 		{
 			click[2] = 0;
@@ -296,6 +296,25 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 			click[0] = utime();
 
 			sprintf(last, "PRESSED %s %d %d", right, x, y);
+		}
+	}
+	else if (!strcmp(left, "RELEASED"))
+	{
+		if (utime() - click[0] >= 500000)
+		{
+			check_all_events(ses, SUB_ARG, 1, 4, "LONG-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+
+			check_all_events(ses, SUB_ARG, 2, 4, "LONG-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+
+			check_all_events(ses, SUB_ARG, 2, 4, "LONG-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+		}
+		else if (click[0] - click[1] >= 500000)
+		{
+			check_all_events(ses, SUB_ARG, 1, 4, "SHORT-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+
+			check_all_events(ses, SUB_ARG, 2, 4, "SHORT-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+
+			check_all_events(ses, SUB_ARG, 2, 4, "SHORT-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
 		}
 	}
 	return;

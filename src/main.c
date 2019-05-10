@@ -311,7 +311,12 @@ void init_tintin(int greeting)
 {
 	int ref, index;
 
-	gts = (struct session *) calloc(1, sizeof(struct session));
+	gtd            = (struct tintin_data *) calloc(1, sizeof(struct tintin_data));
+
+	gtd->ses = gts = (struct session *) calloc(1, sizeof(struct session));
+
+	gtd->str_size       = sizeof(struct str_data);
+	gtd->str_hash_size  = sizeof(struct str_hash_data);
 
 	for (index = 0 ; index < LIST_MAX ; index++)
 	{
@@ -330,14 +335,8 @@ void init_tintin(int greeting)
 	gts->lognext_name   = strdup("");
 	gts->logline_name   = strdup("");
 
-	gtd                 = (struct tintin_data *) calloc(1, sizeof(struct tintin_data));
-
-	gtd->ses            = gts;
 
 	gtd->flags          = TINTIN_FLAG_INHERITANCE;
-
-	gtd->str_size       = sizeof(struct str_data);
-	gtd->str_hash_size  = sizeof(struct str_hash_data);
 
 	gtd->mccp_len       = 4096;
 	gtd->mccp_buf       = (unsigned char *) calloc(1, gtd->mccp_len);
@@ -374,7 +373,6 @@ void init_tintin(int greeting)
 	init_local(gts);
 
 	printf("\e="); // set application keypad mode
-	printf("\e[?1004h"); // set window focus tracking mode
 
 	gtd->input_level++;
 

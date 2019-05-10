@@ -133,16 +133,19 @@ void read_line()
 
 		for (cnt = 0 ; *cursor_table[cnt].fun != NULL ; cnt++)
 		{
-			if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
+			if (!HAS_BIT(cursor_table[cnt].flags, CURSOR_FLAG_NEVER))
 			{
-				cursor_table[cnt].fun(gtd->ses, "");
-				gtd->macro_buf[0] = 0;
+				if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
+				{
+					cursor_table[cnt].fun(gtd->ses, "");
+					gtd->macro_buf[0] = 0;
 
-				return;
-			}
-			else if (!strncmp(gtd->macro_buf, cursor_table[cnt].code, strlen(gtd->macro_buf)))
-			{
-				match = 1;
+					return;
+				}
+				else if (!strncmp(gtd->macro_buf, cursor_table[cnt].code, strlen(gtd->macro_buf)))
+				{
+					match = 1;
+				}
 			}
 		}
 

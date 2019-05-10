@@ -30,12 +30,13 @@
 
 DO_COMMAND(do_cursor)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char all[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(ses, arg, left,  TRUE);
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
+	get_arg_in_braces(ses, arg, all,  TRUE);
+
+	arg = get_arg_in_braces(ses, arg, left, FALSE);
+	arg = sub_arg_in_braces(ses, arg, right, TRUE, SUB_VAR|SUB_FUN);
 
 	if (*left == 0)
 	{
@@ -47,27 +48,39 @@ DO_COMMAND(do_cursor)
 			{
 				convert_meta(cursor_table[cnt].code, temp);
 
-				tintin_printf2(ses, "  [%-18s] [%-6s] %s", 
-					cursor_table[cnt].name,
-					temp,
-					cursor_table[cnt].desc);
+				tintin_printf2(ses, "  [%-18s] [%-6s] %s", cursor_table[cnt].name, temp, cursor_table[cnt].desc);
 			}
 		}
-
 		tintin_header(ses, "");
 	}
 	else
 	{
-		for (cnt = 0 ; *cursor_table[cnt].fun ; cnt++)
+		for (cnt = 0 ; ; cnt++)
 		{
-			if (is_abbrev(left, cursor_table[cnt].name))
+			if (HAS_BIT(cursor_table[cnt].flags, CURSOR_FLAG_GET_ALL))
 			{
-				cursor_table[cnt].fun(ses, right);
+				if (is_abbrev(all, cursor_table[cnt].name))
+				{
+					cursor_table[cnt].fun(ses, right);
 
-				return ses;
+					return ses;
+				}
+			}
+			else if (HAS_BIT(cursor_table[cnt].flags, CURSOR_FLAG_GET_ONE))
+			{
+				if (is_abbrev(left, cursor_table[cnt].name))
+				{
+					cursor_table[cnt].fun(ses, right);
+
+					return ses;
+				}
+			}
+			else
+			{
+				break;
 			}
 		}
-		tintin_printf(ses, "#ERROR: #CURSOR {%s} IS NOT A VALID OPTION.", capitalize(left));
+		tintin_printf(ses, "#ERROR: #CURSOR {%s} IS NOT A VALID OPTION.", capitalize(all));
 	}
 	return ses;
 }
@@ -576,14 +589,24 @@ DO_CURSOR(cursor_delete_word_right)
 	modified_input();
 }
 
-DO_CURSOR(cursor_echo_on)
+DO_CURSOR(cursor_echo)
 {
-	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
-}
-
-DO_CURSOR(cursor_echo_off)
-{
-	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+	if (*arg == 0)
+	{
+		TOG_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+	}
+	else if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
+	}
+	else
+	{
+		show_error(gtd->ses, LIST_COMMAND, "#SYNTAX: #CURSOR {ECHO} {ON|OFF}.");
+	}
 }
 
 DO_CURSOR(cursor_end)

@@ -325,6 +325,18 @@ void reversestring(char *str)
 		str[z--] = str[a];
 		str[a++] = t;
 	}
+
+	z = strlen(str) - 1;
+
+	for (a = 1 ; a < z ; a++)
+	{
+		if (str[a] == '\\' && str[a + 1] != '\\')
+		{
+			str[a] = str[a - 1];
+			str[a - 1] = '\\';
+		}
+	}
+
 }
 
 void mathstring(struct session *ses, char *str)
@@ -386,18 +398,20 @@ void stripspaces(char *str)
 			break;
 		}
 	}
-	memcpy(str, &str[cnt], strlen(&str[cnt]) + 1);
+	memmove(str, &str[cnt], strlen(&str[cnt]) + 1);
 //	strcpy(str, &str[cnt]);
 }
 
 void wrapstring(struct session *ses, char *str)
 {
-	char *pti, *lis, *sos, *soc, buf[BUFFER_SIZE], color[BUFFER_SIZE], tmp[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
+	char *pti, *lis, *sos, *soc, buf[BUFFER_SIZE], color[BUFFER_SIZE], tmp[BUFFER_SIZE], sec[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
 	int col = 1, cnt = 1, len;
 
 	push_call("wrapstring(%p,%p)",ses,str);
-	
-	arg = get_arg_in_braces(ses, str, left, TRUE);
+
+	arg = get_arg_in_braces(ses, str, buf, TRUE);
+
+	substitute(ses, buf, left, SUB_COL|SUB_ESC);
 
 	if (*arg == COMMAND_SEPARATOR)
 	{
@@ -408,6 +422,12 @@ void wrapstring(struct session *ses, char *str)
 	if (*right)
 	{
 		len = get_number(ses, right);
+
+		if (len <= 0)
+		{
+			show_error(ses, LIST_VARIABLE, "#FORMAT %w: INVALID LENTGH {%s}", right);
+			len = ses->cols;
+		}
 	}
 	else
 	{
@@ -442,7 +462,11 @@ void wrapstring(struct session *ses, char *str)
 
 				get_color_codes(color, tmp, color);
 
-				cat_sprintf(buf, "{%d}{%s%.*s}", cnt++, color, pti - sos, sos);
+				sprintf(tmp, "%.*s", pti - sos, sos);
+
+				substitute(ses, tmp, sec, SUB_SEC);
+
+				cat_sprintf(buf, "{%d}{%s%s}", cnt++, color, sec);
 
 				soc = sos;
 				lis = sos = pti;
@@ -453,7 +477,11 @@ void wrapstring(struct session *ses, char *str)
 
 				get_color_codes(color, tmp, color);
 
-				cat_sprintf(buf, "{%d}{%s%.*s}", cnt++, color, lis - sos, sos);
+				sprintf(tmp, "%.*s", lis - sos, sos);
+
+				substitute(ses, tmp, sec, SUB_SEC);
+
+				cat_sprintf(buf, "{%d}{%s%s}", cnt++, color, sec);
 
 				lis++;
 
@@ -488,7 +516,11 @@ void wrapstring(struct session *ses, char *str)
 
 	get_color_codes(color, tmp, color);
 
-	cat_sprintf(buf, "{%d}{%s%s}", cnt, color, sos);
+	sprintf(tmp, "%s", sos);
+
+	substitute(ses, tmp, sec, SUB_SEC);
+
+	cat_sprintf(buf, "{%d}{%s%s}", cnt, color, sec);
 
 	strcpy(str, buf);
 
@@ -846,7 +878,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						break;
 
 					case 'w':
-						substitute(ses, arglist[i], arglist[i], SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
+						substitute(ses, arglist[i], arglist[i], SUB_VAR|SUB_FUN);
 						wrapstring(ses, arglist[i]);
 						break;
 

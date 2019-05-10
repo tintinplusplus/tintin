@@ -342,7 +342,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case WILL:
 						if (cplen > 2)
 						{
-							if (!check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC WILL %s", telopt_table[cpsrc[2]].name))
+							if (!check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC WILL %s", telopt_table[cpsrc[2]].name) && !check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "CATCH IAC WILL %s", telopt_table[cpsrc[2]].name))
 							{
 								if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
 								{
@@ -364,7 +364,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 					case DO:
 						if (cplen > 2)
 						{
-							if (!check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC DO %s", telopt_table[cpsrc[2]].name))
+							if (!check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC DO %s", telopt_table[cpsrc[2]].name) && !check_all_events(ses, SUB_ARG|SUB_SEC, 1, 0, "IAC DO %s", telopt_table[cpsrc[2]].name))
 							{
 								if (!HAS_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32))
 								{
@@ -417,7 +417,7 @@ int translate_telopts(struct session *ses, unsigned char *src, int cplen)
 			}
 			else
 			{
-				memcpy(ses->read_buf, cpsrc, cplen);
+				memmove(ses->read_buf, cpsrc, cplen);
 
 				gtd->mud_output_buf[gtd->mud_output_len] = 0;
 
@@ -568,6 +568,8 @@ int recv_will_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 		return 3;
 	}
 
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL SGA");
+
 	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
 
 	if (!HAS_BIT(ses->telopt_flag[TELOPT_SGA / 32], 1 << TELOPT_SGA % 32))
@@ -587,6 +589,8 @@ int recv_do_sga(struct session *ses, int cplen, unsigned char *cpsrc)
 	{
 		return 3;
 	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DO SGA");
 
 	SET_BIT(ses->telopts, TELOPT_FLAG_SGA);
 
@@ -627,6 +631,8 @@ int recv_dont_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 		return 3;
 	}
 
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DONT TTYPE");
+
 	DEL_BIT(ses->telopts, TELOPT_FLAG_TTYPE);
 
 	DEL_BIT(ses->telopt_flag[cpsrc[2] / 32], 1 << cpsrc[2] % 32);
@@ -640,6 +646,8 @@ int recv_sb_ttype(struct session *ses, int cplen, unsigned char *cpsrc)
 	{
 		return 6;
 	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "IAC SB TTYPE", ntos(cpsrc[3]));
 
 	if (HAS_BIT(ses->telopts, TELOPT_FLAG_MTTS))
 	{
@@ -688,6 +696,8 @@ int recv_sb_tspeed(struct session *ses, int cplen, unsigned char *cpsrc)
 		return 6;
 	}
 
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "IAC SB TSPEED", ntos(cpsrc[3]));
+
 	SET_BIT(ses->telopts, TELOPT_FLAG_TSPEED);
 
 	socket_printf(ses, 17, "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TSPEED, 0, "38400,38400", IAC, SE);
@@ -708,6 +718,8 @@ int recv_do_naws(struct session *ses, int cplen, unsigned char *cpsrc)
 	{
 		return 3;
 	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DO NAWS");
 
 	SET_BIT(ses->telopts, TELOPT_FLAG_NAWS);
 
@@ -762,6 +774,8 @@ int recv_wont_echo(struct session *ses, int cplen, unsigned char *cpsrc)
 		return 3;
 	}
 
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WONT ECHO");
+
 	SET_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
 	if (HAS_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32))
@@ -789,6 +803,8 @@ int recv_will_echo(struct session *ses, int cplen, unsigned char *cpsrc)
 		return 3;
 	}
 
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL ECHO");
+
 	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
 	if (!HAS_BIT(ses->telopt_flag[TELOPT_ECHO / 32], 1 << TELOPT_ECHO % 32))
@@ -814,6 +830,8 @@ int recv_do_echo(struct session *ses, int cplen, unsigned char *cpsrc)
 	{
 		return 3;
 	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC DO ECHO");
 
 	DEL_BIT(ses->telopts, TELOPT_FLAG_ECHO);
 
@@ -893,7 +911,7 @@ int send_do_telopt(struct session *ses, int cplen, unsigned char *cpsrc)
 
 int send_do_mssp(struct session *ses, int cplen, unsigned char *cpsrc)
 {
-	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL MSSP"))
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL MSSP") && !check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "CATCH IAC WILL MSSP"))
 	{
 		if (HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
 		{
@@ -1702,6 +1720,8 @@ int send_do_mccp2(struct session *ses, int cplen, unsigned char *cpsrc)
 	{
 		return 3;
 	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "IAC WILL MCCP2");
 
 	if (HAS_BIT(ses->flags, SES_FLAG_MCCP))
 	{

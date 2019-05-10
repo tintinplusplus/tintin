@@ -103,7 +103,7 @@ void add_line_buffer(struct session *ses, char *line, int more_output)
 
 	if (more_output == TRUE)
 	{
-		if (strlen(ses->more_output) < BUFFER_SIZE / 2)
+		if (strlen(ses->more_output) < BUFFER_SIZE / 3)
 		{
 			strcat(ses->more_output, line);
 

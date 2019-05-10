@@ -1,5 +1,9 @@
 * STUFF THAT IS PROBABLY GONNA GET DONE
 
+  - better class event and class size handling.
+
+  - #regex might increase the nesting level, causing issues with #local.
+
   - TELNET documentation.
 
   - Add JSON support to #scan
@@ -25,8 +29,6 @@
   - see if #break 2 is possible, maybe #continue 2 as well.
 
   - fix $$ behavior in actions with unknown variables (maybe not).
-
-  - make #path more awesome
 
   - Add options to #cursor to implement custom behaviour.
 
@@ -77,7 +79,7 @@
 
   - Make &0 to &99 local.
 
-  - Color compression
+  - Color compression (already partial support)
 
   - SGA disabling
 
@@ -218,6 +220,5 @@
 - path improvements
 - remote session
 - map sharing
-- cursor extension
+- cursor extension for vim
 - interactive script tutorial
-- MCP script

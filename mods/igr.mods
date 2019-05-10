@@ -1,3 +1,37 @@
+Feb 2019       2.01.7
+------------------------------------------------------------------------------
+
+class.c        Added proper class nesting. When closing the active class,
+               the last active class is activated. This change will cause
+               trouble for scripts that don't properly close classes.
+
+class.c        Added #class {class} SIZE {variable} option to store the size
+               of a class in a given variable.
+
+event.c        Added the SHORT-CLICKED mouse events. It triggers when the
+               time between pressing and releasing the mouse button is
+               less than 0.5 seconds. The event is not triggered when
+               double or triple clicks occure, but will trigger on the
+               first click of a double click, just like a triple click
+               event will be preceded by a double click event.
+
+event.c        All mouse events now report the inverse x and y position
+               using the %2 and %3 arguments.
+
+event.c        Added the LONG-CLICKED mouse event. It triggers when the time
+               between pressing and releasing the mouse button is greater
+               than 0.5 seconds.
+
+variable.c     Added better support for wrapping escaped characters with
+               #format %w.
+
+path.c         Added #path create, destroy, goto, move start, stop, swap, undo
+               which are somewhat document in #help path.
+
+               You can now have a position on a path, which is displayed
+               with #path map. This allows using #path move backward when a
+               #path walk forward is interrupted.
+
 Jan 2019       2.01.6
 ------------------------------------------------------------------------------
 
@@ -7,7 +41,9 @@ tinexp.c       Using $$variable in #action triggers is no longer valid. Use
 
                #line sub var {#action {$var} {#loop 1 3 cnt #showme $$cnt}}
 
-event.c        Added {DOUBLE-CLICKED} and {TRIPLE-CLICKED} mouse events.
+event.c        Added {DOUBLE-CLICKED} and {TRIPLE-CLICKED} mouse events
+               these events trigger on 2 and 3 clicks within 0.5 seconds.
+               A triple click will reset the mouse state.
 
 event.c        Added {MOVED }, {PRESSED }, {RELEASED } and {SCROLLED } mouse
                events. Use #INFO EVENT ON to see the full events. The row

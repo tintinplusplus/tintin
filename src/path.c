@@ -38,7 +38,18 @@ DO_COMMAND(do_path)
 
 	if (*left == 0)
 	{
-		show_message(ses, LIST_PATH, "#SYNTAX: #PATH {DEL|END|INS|LOAD|NEW|RUN|SAVE|SHOW|UNZIP|WALK|ZIP} {argument}.");
+		tintin_header(ses, " PATH COMMANDS ");
+
+		for (cnt = 0 ; *path_table[cnt].fun != NULL ; cnt++)
+		{
+			if (*path_table[cnt].desc)
+			{
+				tintin_printf2(ses, "  [%-13s] %s", path_table[cnt].name, path_table[cnt].desc);
+			}
+		}
+		tintin_header(ses, "");
+
+		return ses;
 	}
 	else
 	{
@@ -62,75 +73,123 @@ DO_COMMAND(do_path)
 	return ses;
 }
 
-DO_PATH(path_new)
+
+DO_PATH(path_create)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+
+	root->update = 0;
+
+	kill_list(root);
+
+	show_message(ses, LIST_PATH, "#PATH CREATE: YOU START MAPPING A NEW PATH.");
+
+	SET_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+}
+
+
+DO_PATH(path_destroy)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+
+	root->update = 0;
+
+	kill_list(root);
+
+	DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+
+	show_message(ses, LIST_PATH, "#PATH DESTROY: PATH DESTROYED.");
+}
+
+
+DO_PATH(path_start)
 {
 	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
-		show_message(ses, LIST_PATH, "#PATH: YOU ARE ALREADY MAPPING A PATH.");
+		show_message(ses, LIST_PATH, "#PATH START: ERROR: YOU ARE ALREADY MAPPING A PATH.");
 	}
 	else
 	{
-		kill_list(ses->list[LIST_PATH]);
-
-		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOW MAPPING A PATH.");
-
 		SET_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+
+		show_message(ses, LIST_PATH, "#PATH START: YOU START MAPPING A PATH.");
 	}
 }
 
-DO_PATH(path_end)
+DO_PATH(path_stop)
 {
 	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 	{
-		show_message(ses, LIST_PATH, "#PATH: YOU ARE NO LONGER MAPPING A PATH.");
+		show_message(ses, LIST_PATH, "#PATH STOP: YOU STOP MAPPING A PATH.");
 
 		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 	}
 	else
 	{
-		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOT MAPPING A PATH.");
+		show_message(ses, LIST_PATH, "#PATH STOP: ERROR: YOU ARE NOT MAPPING A PATH.");
 	}
 }
 
-DO_PATH(path_show)
+
+DO_PATH(path_map)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 	char buf[BUFFER_SIZE];
-	int i;
+	int i = 0;
 
 	if (root->used == 0)
 	{
-		show_message(ses, LIST_PATH, "#PATH SHOW: EMPTY PATH.");
+		show_message(ses, LIST_PATH, "#PATH MAP: EMPTY PATH.");
 	}
 	else
 	{
-		sprintf(buf, "%-8s", "#PATH:");
+		sprintf(buf, "%-7s", "#PATH:");
 
-		for (i = 0 ; i < root->used ; i++)
+		for (i = 0 ; i < root->update ; i++)
 		{
-			if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > ses->cols)
+			if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > ses->cols - 4)
 			{
 				tintin_puts2(ses, buf);
 
-				sprintf(buf, "%-8s", "");
+				sprintf(buf, "%-7s", "");
 			}
-			cat_sprintf(buf, "%s ", root->list[i]->left);
+			cat_sprintf(buf, " %s", root->list[i]->left);
 		}
 
-		if (strlen(buf) > 8)
+		if (i != root->used)
+		{
+			cat_sprintf(buf, " [%s]", root->list[i++]->left);
+
+			for (i = root->update + 1 ; i < root->used ; i++)
+			{
+				if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > ses->cols - 4)
+				{
+					tintin_puts2(ses, buf);
+
+					sprintf(buf, "%-7s", "");
+				}
+				cat_sprintf(buf, " %s", root->list[i]->left);
+			}
+		}
+
+		if (root->update == root->used)
+		{
+			cat_sprintf(buf, " [ ]");
+		}
+
+		if (strlen(buf) > 7)
 		{
 			tintin_puts2(ses, buf);
 		}
 	}
 }
 
+
 DO_PATH(path_save)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	char result[STRING_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
-	struct listroot *root;
 	int i;
-
-	root = ses->list[LIST_PATH];
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
@@ -176,12 +235,15 @@ DO_PATH(path_save)
 			}
 		}
 		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+
+		show_message(ses, LIST_PATH, "#PATH SAVE: PATH SAVED TO {%s}", right);
 	}
 }
 
 
 DO_PATH(path_load)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
 	struct listnode *node;
 
@@ -196,7 +258,9 @@ DO_PATH(path_load)
 		arg = node->right;
 	}
 
-	kill_list(ses->list[LIST_PATH]);
+	root->update = 0;
+
+	kill_list(root);
 
 	while (*arg)
 	{
@@ -207,36 +271,43 @@ DO_PATH(path_load)
 
 		arg = get_arg_in_braces(ses, arg, temp, TRUE);
 
-		if ((node = search_node_list(ses->list[LIST_PATHDIR], temp)))
+		if ((node = search_node_list(root, temp)))
 		{
-			insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+			insert_node_list(root, node->left, node->right, "0");
 		}
 		else
 		{
-			insert_node_list(ses->list[LIST_PATH], temp, temp, "0");
+			insert_node_list(root, temp, temp, "0");
 		}
 	}
-	show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES LOADED.", ses->list[LIST_PATH]->used);
+	show_message(ses, LIST_PATH, "#PATH LOAD: PATH WITH %d NODES LOADED.", root->used);
 }
 
-DO_PATH(path_del)
+DO_PATH(path_delete)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 
 	if (root->used)
 	{
-		show_message(ses, LIST_PATH, "#PATH DEL: DELETED MOVE {%s}.", root->list[root->used - 1]->left);
+		show_message(ses, LIST_PATH, "#PATH DELETE: DELETED MOVE {%s}.", root->list[root->used - 1]->left);
 
-		delete_index_list(ses->list[LIST_PATH], root->used - 1);
+		delete_index_list(root, root->used - 1);
+
+		if (root->update >= root->used)
+		{
+			root->update--;
+		}
 	}
 	else
 	{
-		tintin_puts(ses, "#PATH DEL: NO MOVES LEFT.");
+		tintin_puts(ses, "#PATH DELETE: NO MOVES LEFT.");
 	}
+
 }
 
-DO_PATH(path_ins)
+DO_PATH(path_insert)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
@@ -244,29 +315,32 @@ DO_PATH(path_ins)
 
 	if (*left == 0 && *right == 0)
 	{
-		show_message(ses, LIST_PATH, "#PATH INS: YOU MUST GIVE A COMMAND TO INSERT");
+		show_message(ses, LIST_PATH, "#PATH INSERT: ERROR: YOU MUST GIVE A COMMAND TO INSERT");
 	}
 	else
 	{
-		insert_node_list(ses->list[LIST_PATH], left, right, "0");
+		insert_node_list(root, left, right, "0");
 
-		show_message(ses, LIST_PATH, "#PATH INS: FORWARD {%s} BACKWARD {%s}.", left, right);
+		show_message(ses, LIST_PATH, "#PATH INSERT: FORWARD {%s} BACKWARD {%s}.", left, right);
+
+		if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
+		{
+			root->update = root->used;
+		}
 	}
 }
 
+
 DO_PATH(path_run)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	char left[BUFFER_SIZE], time[BUFFER_SIZE], name[BUFFER_SIZE];
-	struct listroot *root;
-	int i;
-
-	root = ses->list[LIST_PATH];
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (root->used == 0)
+	if (root->update == root->used)
 	{
-		tintin_puts(ses, "#END OF PATH.");
+		tintin_puts(ses, "#PATH RUN: #END OF PATH.");
 	}
 	else
 	{
@@ -276,87 +350,131 @@ DO_PATH(path_run)
 		{
 			double delay = 0;
 
-			for (i = 0 ; i < root->used ; i++)
+			while (root->update < root->used)
 			{
 				sprintf(name, "PATH %lld", utime());
 				sprintf(time, "%f", delay);
 
 				delay += get_number(ses, left);
 
-				update_node_list(ses->list[LIST_DELAY], name, root->list[i]->left, time);
+				update_node_list(root, name, root->list[root->update++]->left, time);
 			}
 		}
 		else
 		{
-			for (i = 0 ; i < root->used ; i++)
+			while (root->update < root->used)
 			{
-				script_driver(ses, LIST_PATH, root->list[i]->left);
+				script_driver(ses, LIST_PATH, root->list[root->update++]->left);
 			}
 		}
-		kill_list(ses->list[LIST_PATH]);
 	}
 }
 
 
 DO_PATH(path_walk)
 {
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
-	struct listroot *root;
-
-	root = ses->list[LIST_PATH];
+	struct listroot *root = ses->list[LIST_PATH];
+	char left[BUFFER_SIZE];
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (root->used == 0)
+	DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+
+	if (is_abbrev(left, "BACKWARDS"))
 	{
-		tintin_puts(ses, "#END OF PATH.");
+		if (root->update == 0)
+		{
+			tintin_puts(ses, "#PATH WALK: #START OF PATH.");
+		}
+		else
+		{
+			script_driver(ses, LIST_PATH, root->list[--root->update]->right);
+
+			if (root->used == 0)
+			{
+				check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "START OF PATH");
+			}
+		}
+	}
+	else if (*left == 0 || is_abbrev(left, "FORWARDS"))
+	{
+		if (root->update == root->used)
+		{
+			tintin_puts(ses, "#PATH WALK: #END OF PATH.");
+		}
+		else
+		{
+			script_driver(ses, LIST_PATH, root->list[root->update++]->left);
+
+			if (root->update == root->used)
+			{
+				check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "END OF PATH");
+			}
+		}
 	}
 	else
 	{
-		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
-
-		switch (tolower((int) *left))
-		{
-			case 'b':
-				strcpy(temp, root->list[root->used - 1]->right);
-				delete_index_list(ses->list[LIST_PATH], root->used - 1);
-				script_driver(ses, LIST_PATH, temp);
-				break;
-
-			case '\0':
-			case 'f':
-				strcpy(temp, root->list[0]->left);
-				delete_index_list(ses->list[LIST_PATH], 0);
-				script_driver(ses, LIST_PATH, temp);
-				break;
-
-			default:
-				tintin_printf(ses, "#SYNTAX: #WALK {FORWARD|BACKWARD}.");
-				break;
-		}
-		if (root->used == 0)
-		{
-			check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "END OF PATH");
-		}
+		tintin_printf(ses, "#SYNTAX: #PATH WALK {FORWARD|BACKWARD}.");
 	}
 }
 
+
+DO_PATH(path_swap)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+	struct listnode *node;
+	int a, z;
+
+	a = 0;
+	z = root->used - 1;
+
+	if (root->update)
+	{
+		root->update = root->used - root->update;
+	}
+
+	while (z > a)
+	{
+		arg = root->list[z]->left;
+		root->list[z]->left = root->list[z]->right;
+		root->list[z]->right = arg;
+
+		arg = root->list[a]->left;
+		root->list[a]->left = root->list[a]->right;
+		root->list[a]->right = arg;
+
+		node = root->list[z];
+		root->list[z--] = root->list[a];
+		root->list[a++] = node;
+	}
+
+	if (z == a)
+	{
+		arg = root->list[z]->left;
+		root->list[z]->left = root->list[z]->right;
+		root->list[z]->right = arg;
+	}
+
+	show_message(ses, LIST_PATH, "#PATH SWAP: PATH HAS BEEN SWAPPED.");
+}
+
+
 DO_PATH(path_zip)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
-	struct listroot *root;
 	int i, cnt;
 
 	cnt   =  1;
-	root  =  ses->list[LIST_PATH];
+
 	*left =  0;
 	*right = 0;
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->left) == NULL || strlen(root->list[i]->left) != 1)
+		if (search_node_list(root, root->list[i]->left) == NULL || strlen(root->list[i]->left) != 1)
 		{
-			if (i && search_node_list(ses->list[LIST_PATHDIR], root->list[i - 1]->left) != NULL && strlen(root->list[i - 1]->left) == 1)
+			if (i && search_node_list(root, root->list[i - 1]->left) != NULL && strlen(root->list[i - 1]->left) == 1)
 			{
 				cat_sprintf(left, "%c", COMMAND_SEPARATOR);
 			}
@@ -389,9 +507,9 @@ DO_PATH(path_zip)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (search_node_list(ses->list[LIST_PATHDIR], root->list[i]->right) == NULL || strlen(root->list[i]->right) != 1)
+		if (search_node_list(root, root->list[i]->right) == NULL || strlen(root->list[i]->right) != 1)
 		{
-			if (i != root->used - 1 && search_node_list(ses->list[LIST_PATHDIR], root->list[i + 1]->right) != NULL && strlen(root->list[i + 1]->right) == 1)
+			if (i != root->used - 1 && search_node_list(root, root->list[i + 1]->right) != NULL && strlen(root->list[i + 1]->right) == 1)
 			{
 				cat_sprintf(right, "%c", COMMAND_SEPARATOR);
 			}
@@ -422,15 +540,18 @@ DO_PATH(path_zip)
 		}
 	}
 
-	kill_list(ses->list[LIST_PATH]);
+	root->update = root->used;
 
-	insert_node_list(ses->list[LIST_PATH], left, right, "0");
+	kill_list(root);
 
-	show_message(ses, LIST_PATH, "#OK. THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", left, right);
+	insert_node_list(root, left, right, "0");
+
+	show_message(ses, LIST_PATH, "#PATH ZIP: THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", left, right);
 }
 
 DO_PATH(path_unzip)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	char left[BUFFER_SIZE], temp[BUFFER_SIZE], *str;
 	struct listnode *node;
 
@@ -445,7 +566,9 @@ DO_PATH(path_unzip)
 		arg = node->right;
 	}
 
-	kill_list(ses->list[LIST_PATH]);
+	root->update = 0;
+
+	kill_list(root);
 
 	while (*arg)
 	{
@@ -484,11 +607,11 @@ DO_PATH(path_unzip)
 				{
 					if ((node = search_node_list(ses->list[LIST_PATHDIR], dir)))
 					{
-						insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+						insert_node_list(root, node->left, node->right, "0");
 					}
 					else
 					{
-						insert_node_list(ses->list[LIST_PATH], dir, dir, "0");
+						insert_node_list(root, dir, dir, "0");
 					}
 				}
 			}
@@ -497,25 +620,143 @@ DO_PATH(path_unzip)
 		{
 			if ((node = search_node_list(ses->list[LIST_PATHDIR], temp)))
 			{
-				insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+				insert_node_list(root, node->left, node->right, "0");
 			}
 			else
 			{
-				insert_node_list(ses->list[LIST_PATH], temp, temp, "0");
+				insert_node_list(root, temp, temp, "0");
 			}
 		}
 	}
-	show_message(ses, LIST_PATH, "#OK. PATH WITH %d NODES UNZIPPED.", ses->list[LIST_PATH]->used);
+	show_message(ses, LIST_PATH, "#PATH UNZIP: PATH WITH %d NODES UNZIPPED.", root->used);
 }
 
 
+DO_PATH(path_goto)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+	char left[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+
+	if (is_abbrev(left, "END"))
+	{
+		root->update = root->used;
+
+		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO {%d}.", root->update);
+	}
+	else if (is_abbrev(left, "START"))
+	{
+		root->update = 0;
+
+		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update);
+	}
+	else if (is_number(left))
+	{
+		if (get_number(ses, left) < 0 || get_number(ses, left) > root->used)
+		{
+			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION MUST BE BETWEEN 0 AND %d.", root->used);
+		}
+		else
+		{
+			root->update = get_number(ses, left);
+
+			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update);
+		}
+	}
+}
+
+
+DO_PATH(path_move)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+	char left[BUFFER_SIZE];
+
+	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+
+	if (is_abbrev(left, "BACKWARD"))
+	{
+		if (root->update == 0)
+		{
+			show_message(ses, LIST_PATH, "#PATH GOTO: ALREADY AT START OF PATH.", root->update);
+		}
+		else
+		{
+			root->update--;
+
+			show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
+		}
+	}
+	else if (is_abbrev(left, "FORWARD"))
+	{
+		if (root->update == root->used)
+		{
+			show_message(ses, LIST_PATH, "#PATH MOVE: ALREADY AT END OF PATH.", root->update);
+		}
+		else
+		{
+			root->update++;
+
+			show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
+		}
+	}
+	else if (is_number(left))
+	{
+		root->update = URANGE(0, root->update + get_number(ses, left), root->used);
+		
+		show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
+	}
+}
+
+DO_PATH(path_undo)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+
+	if (root->used == 0)
+	{
+		show_message(ses, LIST_PATH, "#PATH UNDO: ERROR: PATH IS EMPTY.");
+
+		return;
+	}
+
+	if (root->update != root->used)
+	{
+		show_message(ses, LIST_PATH, "#PATH UNDO: ERROR: YOUR POSITION IS NOT AT END OF PATH.");
+	
+		return;
+	}
+
+	if (!HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
+	{
+		show_message(ses, LIST_PATH, "#PATH UNDO: ERROR: YOU ARE NOT CURRENTLY MAPPING A PATH.");
+
+		return;
+	}
+
+	DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+
+	script_driver(ses, LIST_PATH, root->list[root->used - 1]->right);
+
+	SET_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+
+	delete_index_list(root, root->used - 1);
+
+	root->update = root->used;
+
+
+	show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
+}
+
 void check_insert_path(char *command, struct session *ses)
 {
+	struct listroot *root = ses->list[LIST_PATH];
 	struct listnode *node;
 
 	if ((node = search_node_list(ses->list[LIST_PATHDIR], command)))
 	{
-		insert_node_list(ses->list[LIST_PATH], node->left, node->right, "0");
+		insert_node_list(root, node->left, node->right, "0");
+
+		root->update = root->used;
 	}
 }
 
@@ -590,4 +831,40 @@ DO_COMMAND(do_unpathdir)
 	while (*arg1);
 
 	return ses;
+}
+
+// Old commands, left for backward compatibility
+
+DO_PATH(path_new)
+{
+	struct listroot *root = ses->list[LIST_PATH];
+
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
+	{
+		show_message(ses, LIST_PATH, "#PATH NEW: YOU ARE ALREADY MAPPING A PATH.");
+	}
+	else
+	{
+		root->update = 0;
+
+		kill_list(root);
+
+		show_message(ses, LIST_PATH, "#PATH NEW: YOU ARE NOW MAPPING A PATH.");
+
+		SET_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+	}
+}
+
+DO_PATH(path_end)
+{
+	if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
+	{
+		show_message(ses, LIST_PATH, "#PATH END: YOU ARE NO LONGER MAPPING A PATH.");
+
+		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
+	}
+	else
+	{
+		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOT MAPPING A PATH.");
+	}
 }

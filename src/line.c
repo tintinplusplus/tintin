@@ -88,7 +88,7 @@ DO_LINE(line_log)
 	{
 		substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_LNF);
 
-		if (!strcmp(ses->logline_name, left))
+		if (ses->logline_time == time(NULL) && !strcmp(ses->logline_name, left))
 		{
 			logit(ses, right, ses->logline_file, FALSE);
 		}
@@ -100,8 +100,11 @@ DO_LINE(line_log)
 				{
 					fclose(ses->logline_file);
 				}
-				ses->logline_name = restring(ses->logline_name, left);
+				free(ses->logline_name);
+
+				ses->logline_name = strdup(left);
 				ses->logline_file = logfile;
+				ses->logline_time = time(NULL);
 
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
@@ -123,7 +126,7 @@ DO_LINE(line_log)
 	}
 	else
 	{
-		if (!strcmp(ses->lognext_name, left))
+		if (ses->lognext_time == time(NULL) && !strcmp(ses->lognext_name, left))
 		{
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
 		}
@@ -133,8 +136,11 @@ DO_LINE(line_log)
 			{
 				fclose(ses->lognext_file);
 			}
-			ses->lognext_name = restring(ses->lognext_name, left);
+			free(ses->lognext_name);
+
+			ses->lognext_name = strdup(left);
 			ses->lognext_file = logfile;
+			ses->lognext_time = time(NULL);
 
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
 		}
@@ -168,7 +174,8 @@ DO_LINE(line_logverbatim)
 				{
 					fclose(ses->logline_file);
 				}
-				ses->logline_name = restring(ses->logline_name, left);
+				free(ses->logline_name);
+				ses->logline_name = strdup(left);
 				ses->logline_file = logfile;
 
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
@@ -201,7 +208,8 @@ DO_LINE(line_logverbatim)
 			{
 				fclose(ses->lognext_file);
 			}
-			ses->lognext_name = restring(ses->lognext_name, left);
+			free(ses->lognext_name);
+			ses->lognext_name = strdup(left);
 			ses->lognext_file = logfile;
 
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
@@ -316,7 +324,6 @@ DO_LINE(line_verbose)
 
 DO_LINE(line_ignore)
 {
-	struct session *sesptr;
 	char left[BUFFER_SIZE];
 
 	arg = get_arg_in_braces(ses, arg, left,  TRUE);
@@ -326,13 +333,11 @@ DO_LINE(line_ignore)
 		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {IGNORE} {command}.");
 	}
 
-	sesptr = ses;
-
-	SET_BIT(sesptr->flags, SES_FLAG_IGNORELINE);
+	gtd->ignore_level++;
 
 	ses = script_driver(ses, LIST_COMMAND, left);
 
-	DEL_BIT(sesptr->flags, SES_FLAG_IGNORELINE);
+	gtd->ignore_level--;
 
 	return ses;
 }

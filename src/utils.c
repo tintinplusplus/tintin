@@ -885,7 +885,11 @@ void tintin_puts(struct session *ses, char *string)
 	{
 		DEL_BIT(ses->flags, SES_FLAG_GAG);
 
+		gtd->ignore_level++;
+
 		show_info(ses, LIST_GAG, "#INFO GAG {%s}", string);
+
+		gtd->ignore_level--;
 	}
 	else
 	{

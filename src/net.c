@@ -278,7 +278,7 @@ int read_buffer_mud(struct session *ses)
 void readmud(struct session *ses)
 {
 	char *line, *next_line;
-	char linebuf[STRING_SIZE];
+	char linebuf[BUFFER_SIZE];
 
 	push_call("readmud(%p)", ses);
 
@@ -305,23 +305,39 @@ void readmud(struct session *ses)
 
 		if (next_line)
 		{
-			*next_line = 0;
-			next_line++;
-		}
-		else if (*line == 0)
-		{
-			break;
-		}
-
-		if (next_line == NULL && strlen(ses->more_output) < BUFFER_SIZE / 2)
-		{
-			if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+			if (next_line - line >= BUFFER_SIZE / 3)
 			{
-				if (gts->check_output)
+				// This is not ideal, but being a rare case it'll suffice for now
+
+				next_line = &line[BUFFER_SIZE / 3];
+			}
+			*next_line++ = 0;
+		}
+		else
+		{
+			if (*line == 0)
+			{
+				break;
+			}
+
+			if (strlen(line) > BUFFER_SIZE / 3)
+			{
+				next_line = &line[BUFFER_SIZE / 3];
+
+				*next_line++ = 0;
+			}
+
+			if (strlen(ses->more_output) < BUFFER_SIZE / 3)
+			{
+				if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
 				{
-					strcat(ses->more_output, line);
-					ses->check_output = utime() + gts->check_output;
-					break;
+					if (gts->check_output)
+					{
+						strcat(ses->more_output, line);
+						ses->check_output = utime() + gts->check_output;
+
+						break;
+					}
 				}
 			}
 		}
@@ -330,7 +346,8 @@ void readmud(struct session *ses)
 		{
 			if (ses->check_output)
 			{
-				sprintf(linebuf, "%s%s", ses->more_output, line);
+				strcat(ses->more_output, line);
+				strcpy(linebuf, ses->more_output);
 
 				ses->more_output[0] = 0;
 			}
@@ -398,7 +415,7 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 		printf("%s", line);
 
-		strip_vt102_codes(linebuf,line);
+		strip_vt102_codes(linebuf, line);
 
 		show_info(ses, LIST_GAG, "#INFO GAG {%s}", line);
 

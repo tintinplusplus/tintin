@@ -55,7 +55,7 @@ char *str_alloc(int len)
 {
 	char *str;
 
-	struct str_data *str_ptr = (struct str_data *) malloc(gtd->str_size + len + 1);
+	struct str_data *str_ptr = (struct str_data *) calloc(1, gtd->str_size + len + 1);
 
 	str_ptr->max = len + 1;
 

@@ -862,7 +862,7 @@ int process_chat_input(struct chat_data *buddy)
 		}
 		else
 		{
-			chat_printf("Error in processing connection negotation with %s@%s", buddy->name, buddy->ip);
+			chat_printf("Error in processing connection negotiation with %s@%s", buddy->name, buddy->ip);
 
 			pop_call();
 			return -1;

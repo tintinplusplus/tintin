@@ -1022,6 +1022,11 @@ double tindice(struct session *ses, char *left, char *right)
 	numdice  = (unsigned long long) tintoi(left);
 	sizedice = (unsigned long long) tintoi(right);
 
+	if (sizedice == 0)
+	{
+		return 0;
+	}
+
 	for (cnt = sum = 0 ; cnt < numdice ; cnt++)
 	{
 		sum += generate_rand(ses) % sizedice + 1;

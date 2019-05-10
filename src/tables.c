@@ -129,7 +129,7 @@ struct list_type list_table[LIST_MAX] =
 {
 	{    "ACTION",            "ACTIONS",            SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
 	{    "ALIAS",             "ALIASES",            SORT_PRIORITY,    3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_CLASS|LIST_FLAG_INHERIT },
-	{    "CLASS",             "CLASSES",            SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
+	{    "CLASS",             "CLASSES",            SORT_PRIORITY,    2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_INHERIT                                 },
 	{    "COMMAND",           "COMMANDS",           SORT_APPEND,      1,  LIST_FLAG_MESSAGE                                                                  },
 	{    "CONFIG",            "CONFIGURATIONS",     SORT_ALPHA,       2,  LIST_FLAG_MESSAGE|LIST_FLAG_READ|LIST_FLAG_WRITE|LIST_FLAG_INHERIT                 },
 	{    "DELAY",             "DELAYS",             SORT_DELAY,       3,  LIST_FLAG_MESSAGE|LIST_FLAG_READ                                                   },
@@ -447,6 +447,7 @@ struct class_type class_table[] =
 	{    "CLOSE",             class_close            },
 	{    "LIST",              class_list             },
 	{    "READ",              class_read             },
+	{    "SIZE",              class_size             },
 	{    "WRITE",             class_write            },
 	{    "KILL",              class_kill             },
 	{    "",                  NULL                   },
@@ -575,18 +576,21 @@ struct cursor_type cursor_table[] =
 		"AUTO TAB BACKWARD",
 		"Tab completion from scrollback buffer, backward",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_auto_tab_backward
 	},
 	{
 		"AUTO TAB FORWARD",
 		"Tab completion from scrollback buffer, forward",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_auto_tab_forward
 	},
 	{
 		"BACKSPACE",
 		"Delete backward character",
 		"",
+		CURSOR_FLAG_GET_ONE,
 		cursor_backspace
 	},
 
@@ -594,6 +598,7 @@ struct cursor_type cursor_table[] =
 		"BRACE OPEN",
 		"Insert the { character",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_brace_open
 	},
 
@@ -601,6 +606,7 @@ struct cursor_type cursor_table[] =
 		"BRACE CLOSE",
 		"Insert the } character",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_brace_close
 	},
 
@@ -608,281 +614,311 @@ struct cursor_type cursor_table[] =
 		"BACKWARD",
 		"Move cursor backward",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_left
+	},
+	{
+		"CLEAR",
+		"Delete the input line",
+		"",
+		CURSOR_FLAG_GET_ALL,
+		cursor_clear_line
 	},
 	{
 		"CLEAR LEFT",
 		"Delete from cursor to start of input",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_clear_left
 	},
 	{
-		"CLEAR LINE",
+		"CLEAR LINE", /* obsolete */
 		"Delete the input line",
-		"",
+		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_clear_line
 	},
 	{
 		"CLEAR RIGHT",
 		"Delete from cursor to end of input",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_clear_right
 	},
 	{
 		"CONVERT META",
 		"Meta convert the next character",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_convert_meta
 	},
 	{
 		"CTRL DELETE",
 		"Delete one character, exit on an empty line",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_delete_or_exit
 	},
 	{
 		"DELETE",
 		"Delete character at cursor",
 		"[3~",
+		CURSOR_FLAG_GET_ALL,
 		cursor_delete
 	},
 	{
 		"DELETE WORD LEFT",
 		"Delete backwards till next space",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_delete_word_left
 	},
 	{
 		"DELETE WORD RIGHT",
 		"Delete forwards till next space",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_delete_word_right
 	},
 	{
-		"ECHO ON",
-		"Turn local echoing on",
+		"ECHO",
+		"Turn local echoing on or off",
 		"",
-		cursor_echo_on
-	},
-	{
-		"ECHO OFF",
-		"Turn local echoing off",
-		"",
-		cursor_echo_off
+		CURSOR_FLAG_GET_ONE|CURSOR_FLAG_NEVER,
+		cursor_echo
 	},
 	{
 		"END",
 		"Move cursor to end of input",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_end
 	},
 	{
 		"ENTER",
 		"Process the input line",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_enter
 	},
 	{
 		"EXIT",
 		"Exit current session",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_exit
 	},
 	{
 		"FORWARD",
 		"Move cursor forward",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_right
 	},
 	{
 		"GET",
 		"Copy input line to given variable",
 		"",
+		CURSOR_FLAG_GET_ONE|CURSOR_FLAG_NEVER,
 		cursor_get
 	},
 	{
 		"HISTORY NEXT",
 		"Select next command history entry",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_history_next
 	},
 	{
 		"HISTORY PREV",
 		"Select previous command history entry",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_history_prev
 	},
 	{
 		"HISTORY SEARCH",
 		"Search command history",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_history_search
 	},
 	{
 		"HOME",
 		"Move the cursor to start of input",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_home
 	},
 	{
 		"INFO",
 		"Print debugging information",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_info
 	},
 	{
 		"INSERT",
 		"Turn insert mode on or off",
 		"",
+		CURSOR_FLAG_GET_ONE|CURSOR_FLAG_NEVER,
 		cursor_insert
 	},
 	{
 		"MIXED TAB BACKWARD",
 		"Tab completion on last word, search backward",
 		"[Z", // shift-tab
+		CURSOR_FLAG_GET_ALL,
 		cursor_mixed_tab_backward
 	},
 	{
 		"MIXED TAB FORWARD",
 		"Tab completion on last word, search forward",
 		"\t",
+		CURSOR_FLAG_GET_ALL,
 		cursor_mixed_tab_forward
 	},
 	{
 		"NEXT WORD",
 		"Move cursor to the next word",
 		"f",
+		CURSOR_FLAG_GET_ALL,
 		cursor_right_word
 	},
 	{
 		"PASTE BUFFER",
 		"Paste the previously deleted input text",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_paste_buffer
 	},
 	{
 		"PREV WORD",
 		"Move cursor to the previous word",
 		"b",
+		CURSOR_FLAG_GET_ALL,
 		cursor_left_word
 	},
 	{
 		"REDRAW INPUT",
 		"Redraw the input line",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_redraw_input
 	},
 	{
 		"SET",
 		"Copy given string to input line",
 		"",
+		CURSOR_FLAG_GET_ONE|CURSOR_FLAG_NEVER,
 		cursor_set
 	},
 	{
 		"SUSPEND",
 		"Suspend program, return with fg",
 		"",
+		CURSOR_FLAG_GET_ALL,
 		cursor_suspend
 	},
 	{
 		"TAB BACKWARD",
 		"Tab completion from tab list, backward",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_tab_backward
 	},
 	{
 		"TAB FORWARD",
 		"Tab completion from tab list, forward",
 		"",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_NEVER,
 		cursor_tab_forward
 	},
 	{
 		"WINDOW FOCUS IN",
 		"Window is focussed in event",
 		"[I",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_ALWAYS,
 		cursor_win_focus_in
 	},
 	{
 		"WINDOW FOCUS OUT",
 		"Window is focussed out event",
 		"[O",
+		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_ALWAYS,
 		cursor_win_focus_out
 	},
 	{
-		"", "", "[5~",   cursor_buffer_up
+		"", "", "[5~",   0, cursor_buffer_up
 	},
 	{
-		"", "", "[6~",   cursor_buffer_down
-	},
-
-	{
-		"", "", "",      cursor_buffer_lock
+		"", "", "[6~",   0, cursor_buffer_down
 	},
 	{
-		"", "", "OM",    cursor_enter
+		"", "", "",      0, cursor_buffer_lock
 	},
 	{
-		"", "", "[7~",   cursor_home
+		"", "", "OM",    0, cursor_enter
 	},
 	{
-		"", "", "[1~",   cursor_home
+		"", "", "[7~",   0, cursor_home
 	},
 	{
-		"", "", "OH",    cursor_home
+		"", "", "[1~",   0, cursor_home
 	},
 	{
-		"", "", "[H",    cursor_home
+		"", "", "OH",    0, cursor_home
 	},
 	{
-		"", "", "OD",    cursor_left
+		"", "", "[H",    0, cursor_home
 	},
 	{
-		"", "", "[D",    cursor_left
+		"", "", "OD",    0, cursor_left
 	},
 	{
-		"", "", "[8~",   cursor_end
+		"", "", "[D",    0, cursor_left
 	},
 	{
-		"", "", "[4~",   cursor_end
+		"", "", "[8~",   0, cursor_end
 	},
 	{
-		"", "", "OF",    cursor_end
+		"", "", "[4~",   0, cursor_end
 	},
 	{
-		"", "", "[F",    cursor_end
+		"", "", "OF",    0, cursor_end
 	},
 	{
-		"", "", "OC",    cursor_right
+		"", "", "[F",    0, cursor_end
 	},
 	{
-		"", "", "[C",    cursor_right
+		"", "", "OC",    0, cursor_right
 	},
 	{
-		"", "", "",      cursor_backspace
+		"", "", "[C",    0, cursor_right
 	},
 	{
-		"", "", "OB",    cursor_history_next
+		"", "", "",      0, cursor_backspace
 	},
 	{
-		"", "", "[B",    cursor_history_next
+		"", "", "OB",    0, cursor_history_next
 	},
 	{
-		"", "", "OA",    cursor_history_prev
+		"", "", "[B",    0, cursor_history_next
 	},
 	{
-		"", "", "[A",    cursor_history_prev
+		"", "", "OA",    0, cursor_history_prev
 	},
 	{
-		"", "", "",     cursor_delete_word_left
+		"", "", "[A",    0, cursor_history_prev
 	},
 	{
-		"", "", "d",     cursor_delete_word_right
+		"", "", "",     0, cursor_delete_word_left
 	},
 	{
-		"",
-		"",
-		"",
-		NULL
+		"", "", "d",     0, cursor_delete_word_right
+	},
+	{
+		"", "", "",       0, NULL
 	}
 };
 
@@ -912,6 +948,7 @@ struct event_type event_table[] =
 	{    "HOUR",                                   "Triggers each hour or given hour."       },
 	{    "END OF PATH",                            "Triggers when walking the last room."    },
 	{    "IAC ",                                   "Triggers on telopt negotiation."         },
+	{    "LONG-CLICKED ",                          "Triggers when mouse is long-clicked."    },
 	{    "MAP ENTER MAP",                          "Triggers when entering the map."         },
 	{    "MAP ENTER ROOM",                         "Triggers when entering a map room."      },
 	{    "MAP EXIT MAP",                           "Triggers when exiting the map."          },
@@ -944,6 +981,7 @@ struct event_type event_table[] =
 	{    "SESSION DEACTIVATED",                    "Triggers when a session is deactivated." },
 	{    "SESSION DISCONNECTED",                   "Triggers when a session disconnects."    },
 	{    "SESSION TIMED OUT",                      "Triggers when a session doesn't connect."},
+	{    "SHORT-CLICKED",                          "Triggers when mouse is short-clicked."   },
 	{    "TIME",                                   "Triggers on the given time."             },
 	{    "TRIPLE-CLICKED",                         "Triggers when mouse is triple-clicked."  },
 	{    "VARIABLE UPDATE ",                       "Triggers on a variable update."          },
@@ -961,19 +999,27 @@ struct event_type event_table[] =
 
 struct path_type path_table[] =
 {
-	{    "DELETE",            path_del               },
-	{    "END",               path_end               },
-	{    "INSERT",            path_ins               },
-	{    "LOAD",              path_load              },
-	{    "MAP",               path_show              },
-	{    "NEW",               path_new               },
-	{    "RUN",               path_run               },
-	{    "SAVE",              path_save              },
-	{    "SHOW",              path_show              },
-	{    "UNZIP",             path_unzip             },
-	{    "WALK",              path_walk              },
-	{    "ZIP",               path_zip               },
-	{    "",                  NULL                   }
+	{    "CREATE",            path_create,         "Clear the path and start path mapping."         },
+	{    "DELETE",            path_delete,         "Delete the last command from the path."         },
+	{    "DESTROY",           path_destroy,        "Clear the path and stop path mapping."          },
+	{    "END",               path_end,            ""                                               },
+	{    "GOTO",              path_goto,           "Move position to given index."                  },
+	{    "INSERT",            path_insert,         "Insert a command to the end of the path."       },
+	{    "LOAD",              path_load,           "Load a path from a variable."                   },
+	{    "MAP",               path_map,            "Display the path and current position."         },
+	{    "MOVE",              path_move,           "Move one position forward or backward."         },
+	{    "NEW",               path_new,            ""                                               },
+	{    "RUN",               path_run,            "Execute the current path with optional delay."  },
+	{    "SAVE",              path_save,           "Save the current path to the given variable."   },
+	{    "SHOW",              path_map,            ""                                               },
+	{    "START",             path_start,          "Start path mapping."                            },
+	{    "STOP",              path_stop,           "Stop path mapping."                             },
+	{    "SWAP",              path_swap,           "Reverse the path, forward becoming backward."   },
+	{    "UNDO",              path_undo,           "Undo last step."                                },
+	{    "UNZIP",             path_unzip,          "Turn speedwalk into a path."                    },
+	{    "WALK",              path_walk,           "Walk one step forward or backward."             },
+	{    "ZIP",               path_zip,            "Turn path into a speedwalk."                    },
+	{    "",                  NULL,                ""                                               }
 };
 
 struct line_type line_table[] =

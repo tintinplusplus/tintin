@@ -676,12 +676,12 @@ DO_CONFIG(config_mousetracking)
 	if (!strcasecmp(arg, "ON"))
 	{
 		SET_BIT(gtd->flags, TINTIN_FLAG_MOUSETRACKING);
-		printf("\e[?1000h\e[?1002h\e[?1006h");
+		printf("\e[?1000h\e[?1002h\e[?1004h\e[?1006h");
 	}
 	else if (!strcasecmp(arg, "OFF"))
 	{
 		DEL_BIT(gtd->flags, TINTIN_FLAG_MOUSETRACKING);
-		printf("\e[?1000l\e[?1002l\e[?1006l");
+		printf("\e[?1000l\e[?1002l\e[?1004l\e[?1006l");
 	}
 	else
 	{

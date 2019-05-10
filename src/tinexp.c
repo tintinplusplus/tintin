@@ -868,7 +868,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 
 			case '<':
-				if (HAS_BIT(flags, SUB_COL) && isxdigit((int) pti[1]))
+				if (HAS_BIT(flags, SUB_COL) && isalnum((int) pti[1]))
 				{
 					if (HAS_BIT(flags, SUB_CMP) && old[0] && !strncmp(old, pti, strlen(old)))
 					{
@@ -1195,10 +1195,12 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 								pti++;
 							}
 							break;
+
 						case '\0':
 							DEL_BIT(flags, SUB_EOL);
 							DEL_BIT(flags, SUB_LNF);
 							continue;
+
 						default:
 							*pto++ = *pti;
 							break;
@@ -1213,7 +1215,11 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				else
 				{
 					*pto++ = *pti++;
-					*pto++ = *pti++;
+
+					if (*pti)
+					{
+						*pto++ = *pti++;
+					}
 				}
 				break;
 

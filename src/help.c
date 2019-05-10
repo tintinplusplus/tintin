@@ -42,7 +42,7 @@ struct help_type help_table[] =
 {
 	{
 		"ACTION",
-		"<178>Command<078>: #action <178>{<078>search string<178>}<078> <178>{<078>commands<178>}<078> <178>{<078>priority<178>}<078>\n"
+		"<178>Command<278>: #action <178>{<278>search string<178>}<278> <178>{<278>commands<178>}<278> <178>{<278>priority<178>}<278>\n"
 		"\n"
 		"         Have tintin search for a certain string of text from the mud, if the\n"
 		"         string is found it will execute the commands.  Variables %1 to %99\n"
@@ -89,21 +89,21 @@ struct help_type help_table[] =
 		"      Actions can be triggered by the showme command and certain system\n"
 		"      messages.\n"
 		"\n"
-		"<178>Example<078>: #act {^You are hungry$} {get bread backpack;eat bread}\n"
+		"<178>Example<278>: #act {^You are hungry$} {get bread backpack;eat bread}\n"
 		"         Performs 2 commands as you get the hunger message, tintin will not\n"
 		"         be fooled by someone saying 'You are hungry'.\n"
 		"\n"
-		"<178>Example<078>: #act {%1 tells you 'hello'} {tell %1 Hello %1. How are you today?}\n"
+		"<178>Example<278>: #act {%1 tells you 'hello'} {tell %1 Hello %1. How are you today?}\n"
 		"         This allows you to seem like a nice, attentive, fast typing gentleman.\n"
 		"\n"
-		"<178>Example<078>: #act {A puppy barks at you, wagging {his|her|its} tail.} {pat puppy}\n"
+		"<178>Example<278>: #act {A puppy barks at you, wagging {his|her|its} tail.} {pat puppy}\n"
 		"         This allows you to be nice to puppies regardless of their sex.\n"
 		"\n"
-		"<178>Comment<078>: You can remove an action with the #unaction command.\n"
+		"<178>Comment<278>: You can remove an action with the #unaction command.\n"
 	},
 	{
 		"ALIAS",
-		"<178>Command<078>: #alias <178>{<078>word<178>} {<078>command<178>}<078>\n"
+		"<178>Command<278>: #alias <178>{<278>word<178>} {<278>command<178>}<278>\n"
 		"\n"
 		"         Defines a word that when entered executes the given command. If\n"
 		"         any arguments are given they are appended to the end of the command."
@@ -117,50 +117,50 @@ struct help_type help_table[] =
 		"         The word can include the %1 to %99 variables making an alias behave\n"
 		"         like an action, allowing more complex input matching.\n"
 		"\n"
-		"<178>Example<078>: #alias gb get bread bag\n"
+		"<178>Example<278>: #alias gb get bread bag\n"
 		"         Typing gb at the prompt would be sent as 'get bread bag'.\n"
 		"\n"
-		"<178>Example<078>: #alias ws {wake;stand}\n"
+		"<178>Example<278>: #alias ws {wake;stand}\n"
 		"         Since ws aliases a multiple command, you must use the braces.\n"
 		"\n"
-		"<178>Example<078>: #alias heal cast 'heal' %1\n"
+		"<178>Example<278>: #alias heal cast 'heal' %1\n"
 		"         Typing 'heal valgar' would be sent as 'cast 'heal' valgar'.\n"
 		"\n"
-		"<178>Comment<078>: See '#help action', for more information about triggers.\n"
+		"<178>Comment<278>: See '#help action', for more information about triggers.\n"
 		"\n"
-		"<178>Comment<078>: You can remove an alias with the #unalias command.\n"
+		"<178>Comment<278>: You can remove an alias with the #unalias command.\n"
 	},
 	{
 		"ALL",
-		"<178>Command<078>: #all <178>{<078>string<178>}<078>\n"
+		"<178>Command<278>: #all <178>{<278>string<178>}<278>\n"
 		"\n"
 		"         Sends a command to all active sessions.\n"
 		"\n"
-		"<178>Example<078>: #all quit\n"
+		"<178>Example<278>: #all quit\n"
 		"         Sends 'quit' to all active sessions.\n"
 	},
 	{
 		"BELL",
-		"<178>Command<078>: #bell\n"
+		"<178>Command<278>: #bell\n"
 		"\n"
 		"         Sends a beep to your terminal.\n"
 		"\n"
-		"<178>Example<078>: #action {tells you} {#bell}\n"
+		"<178>Example<278>: #action {tells you} {#bell}\n"
 		"         Will chime every time someone gives you a tell.\n"
 	},
 	{
 		"BREAK",
-		"<178>Command<078>: #break\n"
+		"<178>Command<278>: #break\n"
 		"\n"
 		"         The break command can be used inside the #FOREACH, #LOOP, #PARSE,\n"
 		"         #WHILE and #SWITCH statements. When #BREAK is found, tintin will stop\n"
 		"         executing the statement it is currently in and move on to the next.\n"
 		"\n"
-		"<178>Example<078>: #while {1} {#math cnt $cnt + 1;#if {$cnt == 20} {#break}}\n"
+		"<178>Example<278>: #while {1} {#math cnt $cnt + 1;#if {$cnt == 20} {#break}}\n"
 	},
 	{
 		"BUFFER",
-		"<178>Command<078>: #buffer <178>{<078>home<178>|<078>up<178>|<078>down<178>|<078>end<178>|<078>lock<178>|<078>clear<178>|<078>info<178>}<078>\n"
+		"<178>Command<278>: #buffer <178>{<278>home<178>|<278>up<178>|<278>down<178>|<278>end<178>|<278>lock<178>|<278>clear<178>|<278>info<178>}<278>\n"
 		"         The buffer command allows you to add macros to scroll in case the\n"
 		"         default bindings do not work. The lock options toggles the\n"
 		"         scrolling state of the screen.\n"
@@ -177,12 +177,12 @@ struct help_type help_table[] =
 		"\n"
 		"         #buffer {write} {filename} Write the buffer to the given file.\n"
 		"\n"
-		"<178>Example<078>: #macro {(press ctrl-v)(press F1)} {#buffer end}\n"
+		"<178>Example<278>: #macro {(press ctrl-v)(press F1)} {#buffer end}\n"
 		"         Associates F1 key to 'scroll buffer to its end' command.\n"
 	},
 	{
 		"CASE",
-		"<178>Command<078>: #case <178>{<078>conditional<178>}<078> <178>{<078>arguments<178>}<078>\n"
+		"<178>Command<278>: #case <178>{<278>conditional<178>}<278> <178>{<278>arguments<178>}<278>\n"
 		"\n"
 		"         The case command must be used within the switch command. When the\n"
 		"         conditional argument of the case command matches the conditional\n"
@@ -190,7 +190,7 @@ struct help_type help_table[] =
 	},
 	{
 		"CHAT",
-		"<178>Command<078>: #chat <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #chat <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
 		"         #chat {init}       {port}             Initilizes a chat port.\n"
 		"         #chat {name}       {name}             Sets your chat name.\n"
@@ -227,26 +227,27 @@ struct help_type help_table[] =
 	},
 	{
 		"CLASS",
-		"<178>Command<078>: #class <178>{<078>name<178>}<078> <178>{<078>open<178>|<078>close<178>|<078>list<178>|<078>read filename<178>|<078>write filename<178>|<078>kill<178>}<078>\n"
+		"<178>Command<278>: #class <178>{<278>name<178>}<278> <178>{<278>open<178>|<278>close<178>|<278>list<178>|<278>read<178>|<278>size<178>|<278>write<178>|<278>kill<178>} {<278>arg<178>}<278>\n"
 		"\n"
 		"         The {open} option will open a class, closing a previously opened\n"
 		"         class. All triggers added afterwards are assigned to this class.\n"
 		"         The {close} option will close the given class.\n"
 		"         The {list} option will show the given list of the class.\n"
 		"         The {read} option will open the class, read, and close afterwards.\n"
+		"         The {size} option will store the size of the class in a variable.\n"
 		"         The {write} option will write all triggers of the given class to file.\n"
 		"         The {kill} option will delete all triggers of the given class.\n"
 		"\n"
 		"         Keep in mind that the kill and read option are very fast allowing\n"
 		"         them to be used to enable and disable classes.\n"
 		"\n"
-		"<178>Example<078>: #class extra kill;#class extra read extra.tin\n"
+		"<178>Example<278>: #class extra kill;#class extra read extra.tin\n"
 		"         Deletes all triggers of 'extra' class if any. Read 'extra.tin' file,\n"
 		"         all triggers loaded will be assigned to the fresh new 'extra' class.\n"
 	},
 	{
 		"COLORS",
-		"<178>Syntax<078>:  <<888>xyz>  with x, y, z being parameters\n"
+		"<178>Syntax<278>:  <<888>xyz>  with x, y, z being parameters\n"
 		"\n"
 		"         Parameter 'x': VT100 code\n"
 		"\n"
@@ -278,8 +279,8 @@ struct help_type help_table[] =
 		"         <<888>caf> - Violet           <<888>cfa> - Lime\n"
 		"         <<888>fac> - Pink             <<888>fca> - Orange\n"
 		"\n"
-		"<178>Example<078>: #showme <<888>acf>Azure    <<888>afc>Jade     <<888>caf>Violet\n"
-		"<178>Example<078>: #showme <<888>cfa>Lime     <<888>fac>Pink     <<888>fca>Orange\n"
+		"<178>Example<278>: #showme <<888>acf>Azure    <<888>afc>Jade     <<888>caf>Violet\n"
+		"<178>Example<278>: #showme <<888>cfa>Lime     <<888>fac>Pink     <<888>fca>Orange\n"
 		"\n"
 		"         For 12 bit truecolor use <<888>F000> to <<888>FFFF> for foreground colors and\n"
 		"         <<888>B000> to <<888>BFFF> for background colors.\n"
@@ -290,7 +291,7 @@ struct help_type help_table[] =
 	},
 	{
 		"CONFIG",
-		"<178>Command<078>: #config <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #config <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
 		"         This allows you to configure various settings, the settings can be\n"
 		"         written to file with the #write or #writesession command.\n"
@@ -311,25 +312,25 @@ struct help_type help_table[] =
 	},
 	{
 		"CONTINUE",
-		"<178>Command<078>: #continue\n"
+		"<178>Command<278>: #continue\n"
 		"\n"
 		"         The continue command can be used inside the #FOREACH, #LOOP, #PARSE,\n"
 		"         #WHILE and #SWITCH commands. When #CONTINUE is found, tintin will go\n"
 		"         to the end of the command and proceed as normal, which may be to\n"
 		"         reiterate the command.\n"
 		"\n"
-		"<178>Example<078>: #loop 1 10 cnt {#if {$cnt % 2 == 0} {#continue} {say $cnt}}\n"
+		"<178>Example<278>: #loop 1 10 cnt {#if {$cnt % 2 == 0} {#continue} {say $cnt}}\n"
 	},
 	{
 		"CR",
-		"<178>Command<078>: #cr\n"
+		"<178>Command<278>: #cr\n"
 		"\n"
 		"         Sends a carriage return to the session.  Useful for aliases that need\n"
 		"         extra carriage returns.\n"
 	},
 	{
 		"CURSOR",
-		"<178>Command<078>: #cursor <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #cursor <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
 		"         Typing #cursor without an option will show all available cursor\n"
 		"         options. The cursor command's primarly goal is adding customizable\n"
@@ -337,7 +338,7 @@ struct help_type help_table[] =
 	},
 	{
 		"DEBUG",
-		"<178>Command<078>: #debug <178>{<078>listname<178>}<078> <178>{<078>on<178>|<078>off<178>|<078>log<178>}<078>\n"
+		"<178>Command<278>: #debug <178>{<278>listname<178>}<278> <178>{<278>on<178>|<278>off<178>|<278>log<178>}<278>\n"
 		"\n"
 		"         Toggles a list on or off. With no argument it shows your current\n"
 		"         settings, as well as the list names that you can debug.\n"
@@ -352,7 +353,7 @@ struct help_type help_table[] =
 	},
 	{
 		"DEFAULT",
-		"<178>Command<078>: #default <178>{<078>commands<178>}<078>\n"
+		"<178>Command<278>: #default <178>{<278>commands<178>}<278>\n"
 		"\n"
 		"         The default command can only be used within the switch command. When\n"
 		"         the conditional argument of non of the case commands matches the switch\n"
@@ -360,8 +361,8 @@ struct help_type help_table[] =
 	},
 	{
 		"DELAY",
-		"<178>Command<078>: #delay <178>{<078>seconds<178>}<078> <178>{<078>command<178>}<078>\n"
-		"<178>Command<078>: #delay <178>{<078>name<178>}<078> <178>{<078>command<178>}<078> <178>{<078>seconds<178>}<078> \n"
+		"<178>Command<278>: #delay <178>{<278>seconds<178>}<278> <178>{<278>command<178>}<278>\n"
+		"<178>Command<278>: #delay <178>{<278>name<178>}<278> <178>{<278>command<178>}<278> <178>{<278>seconds<178>}<278> \n"
 		"\n"
 		"         Delay allows you to have tintin wait the given amount of seconds\n"
 		"         before executing the given command. tintin won't wait before\n"
@@ -369,17 +370,17 @@ struct help_type help_table[] =
 		"\n"
 		"         Floating point precision for miliseconds is possible.\n"
 		"\n"
-		"<178>Example<078>: #showme first;#delay {1} {#showme last}\n"
+		"<178>Example<278>: #showme first;#delay {1} {#showme last}\n"
 		"         This will print 'first', and 'last' around one second later.\n"
 		"\n"
-		"<178>Comment<078>: If you want to remove a delay with the #undelay command you can add\n"
+		"<178>Comment<278>: If you want to remove a delay with the #undelay command you can add\n"
 		"         a name as the first argument, be aware this changes the syntax. If\n"
 		"         the name is a number keep in mind that delays with the same numeric\n"
 		"         name will not be overwritten\n"
 	},
 	{
 		"ECHO",
-		"<178>Command<078>: #echo <178>{<078>format<178>}<078> <178>{<078>argument1<178>} {<078>argument2<178>} {<078>etc<178>}<078>\n"
+		"<178>Command<278>: #echo <178>{<278>format<178>}<278> <178>{<278>argument1<178>} {<278>argument2<178>} {<278>etc<178>}<278>\n"
 		"\n"
 		"         Echo command displays text on the screen with formatting options. See\n"
 		"         the help file for the format command for more informations.\n"
@@ -389,32 +390,32 @@ struct help_type help_table[] =
 		"         As with the #showme command you can split the {format} argument up into\n"
 		"         two braced arguments, in which case the 2nd argument is the row number.\n"
 		"\n"
-		"<178>Example<078>: #echo {The current date is %t.} {%Y-%m-%d %H:%M:%S}\n"
+		"<178>Example<278>: #echo {The current date is %t.} {%Y-%m-%d %H:%M:%S}\n"
 		"         #echo {[%38s][%-38s]} {Hello World} {Hello World}\n"
 		"         #echo {{this is %s on the top row} {-1}} {printed}\n"
 	},
 	{
 		"ELSE",
-		"<178>Command<078>: #else <178>{<078>commands<178>}<078>\n"
+		"<178>Command<278>: #else <178>{<278>commands<178>}<278>\n"
 		"\n"
 		"         The else statement should follow an #IF or #ELSEIF statement and is\n"
 		"         only called if the proceeding #IF or #ELSEIF is false.\n"
 		"\n"
-		"<178>Example<078>: #if {1d2 == 1} {smile};#else {grin}\n"
+		"<178>Example<278>: #if {1d2 == 1} {smile};#else {grin}\n"
 	},
 	{
 		"ELSEIF",
-		"<178>Command<078>: #elseif <178>{<078>conditional<178>}<078> <178>{<078>commands<178>}<078>\n"
+		"<178>Command<278>: #elseif <178>{<278>conditional<178>}<278> <178>{<278>commands<178>}<278>\n"
 		"\n"
 		"         The elseif statement should follow an #IF or #ELSEIF statement and is\n"
 		"         only called when the statement is true and the proceeding #IF and\n"
 		"         #ELSEIF statements are false.\n"
 		"\n"
-		"<178>Example<078>: #if {1d3 == 1} {smirk};#elseif {1d2 == 1} {snicker}\n"
+		"<178>Example<278>: #if {1d3 == 1} {smirk};#elseif {1d2 == 1} {snicker}\n"
 	},
 	{
 		"END",
-		"<178>Command<078>: #end {<message>}\n"
+		"<178>Command<278>: #end {<message>}\n"
 		"\n"
 		"         Terminates tintin and return to unix.  On most systems, ctrl-c has\n"
 		"         the same result.\n"
@@ -443,7 +444,7 @@ struct help_type help_table[] =
 	},
 	{
 		"EVENT",
-		"<178>Command<078>: #event <178>{<078>event type<178>}<078>\n"
+		"<178>Command<278>: #event <178>{<278>event type<178>}<278>\n"
 		"\n"
 		"         Events allow you to create triggers for predetermined client events.\n"
 		"         Use #event without an argument to see a list of possible events with\n"
@@ -464,6 +465,7 @@ struct help_type help_table[] =
 		"         IAC SB NEW-ENVIRON    %0 variable %1 value\n"
 		"         IAC SB ZMP <VAR>      %0 value\n"
 		"         IAC SB <VAR>          %0 raw text %1 raw data\n"
+		"         LONG-CLICKED <VAR>    %0 col %1 row %2 -col %3 -row\n"
 		"         MAP ENTER MAP         %0 new vnum\n"
 		"         MAP ENTER ROOM        %0 new vnum %1 old vnum\n"
 		"         MAP ENTER ROOM <VAR>  %0 new vnum %1 old vnum\n"
@@ -472,20 +474,24 @@ struct help_type help_table[] =
 		"         MAP EXIT ROOM <VAR>   %0 old vnum %1 new vnum\n"
 		"         MINUTE                %5 minute\n"
 		"         MONTH                 %1 month\n"
-		"         MOVED <VAR>           %0 col %1 row\n"
+		"         MOVED <VAR>           %0 col %1 row %2 -col %3 -row\n"
 		"         PORT CONNECTION       %0 name %1 ip %2 port\n"
 		"         PORT DISCONNECTION    %0 name %1 ip %2 port\n"
 		"         PORT MESSAGE          %0 name %1 ip %2 port %3 data %4 raw data\n"
-		"         PRESSED <VAR>         %0 col %1 row\n"
+		"         PRESSED <VAR>         %0 col %1 row %2 -col %3 -row\n"
 		"         PROGRAM START         %0 client name %1 client version %2 startup arg\n"
 		"         PROGRAM TERMINATION   %0 goodbye message\n"
 		"         RECEIVED INPUT        %0 raw text\n"
 		"         RECEIVED LINE         %0 raw text %1 plain text\n"
 		"         RECEIVED OUTPUT       %0 raw text\n"
 		"         RECEIVED PROMPT       %0 raw text %1 plain text\n"
-		"         RELEASED <VAR>        %0 col %1 row\n"
+		"         RELEASED <VAR>        %0 col %1 row %2 -col %3 -row\n"
+		"         SCAN CSV HEADER       %0 all args %1 arg1 %2 arg2 .. %99 arg99\n"
+		"         SCAN CSV LINE         %0 all args %1 arg1 %2 arg3 .. %99 arg99\n"
+		"         SCAN TSV HEADER       %0 all args %1 arg1 %2 arg3 .. %99 arg99\n"
+		"         SCAN TSV LINE         %0 all args %1 arg1 %2 arg3 .. %99 arg99\n"
 		"         SCREEN RESIZE         %0 cols %1 rows\n"
-		"         SCROLLED <VAR>        %0 col %1 row\n"
+		"         SCROLLED <VAR>        %0 col %1 row %2 -col %3 -row\n"
 		"         SECOND                %6 second\n"
 		"         SEND OUTPUT           %0 raw text\n"
 		"         SESSION ACTIVATED     %0 name\n"
@@ -494,42 +500,43 @@ struct help_type help_table[] =
 		"         SESSION DEACTIVATED   %0 name\n"
 		"         SESSION DISCONNECTED  %0 name %1 host %2 ip %3 port\n"
 		"         SESSION TIMED OUT     %0 name %1 host %2 ip %3 port\n"
+		"         SHORT-CLICKED <VAR>   %0 col %1 row %2 -col %3 -row\n"
 		"         TIME                  %4 hour : %5 minute : %6 second\n"
-		"         TRIPLE-CLICKED <VAR>  %0 col %1 row\n"
+		"         TRIPLE-CLICKED <VAR>  %0 col %1 row %2 -col %3 -row\n"
 		"         VARIABLE UPDATE <VAR> %0 name %1 value\n"
 		"         WEEK                  %2 week\n"
 		"         WINDOW FOCUS IN       %0 name\n"
 		"         WINDOW FOCUS OUT      %0 name\n"
 		"         YEAR                  %0 year\n"
 		"\n"
-		"<178>Example<078>: #event {SESSION CONNECTED} {#read mychar.tin}\n"
+		"<178>Example<278>: #event {SESSION CONNECTED} {#read mychar.tin}\n"
 		"\n"
-		"<178>Comment<078>: You can remove an event with the #unevent command.\n"
+		"<178>Comment<278>: You can remove an event with the #unevent command.\n"
 	},
 	{
 		"FORALL",
-		"<178>Command<078>: #forall <178>{<078>list<178>}<078> <178>{<078>commands<178>}<078>\n"
+		"<178>Command<278>: #forall <178>{<278>list<178>}<278> <178>{<278>commands<178>}<278>\n"
 		"\n"
 		"         List elements must either be separated by braces or semicolons.\n"
 		"\n"
-		"<178>Example<078>: #forall {a;b;c;d} {say &0}\n"
-		"<178>Example<078>: #forall {{a}{b}{c}{d}} {say &0}\n"
+		"<178>Example<278>: #forall {a;b;c;d} {say &0}\n"
+		"<178>Example<278>: #forall {{a}{b}{c}{d}} {say &0}\n"
 		"         Both equal: say a;say b;say c;say d\n"
 	},
 	{
 		"FOREACH",
-		"<178>Command<078>: #foreach <178>{<078>list<178>} {<078>variable<178>} {<078>commands<178>}<078>\n"
+		"<178>Command<278>: #foreach <178>{<278>list<178>} {<278>variable<178>} {<278>commands<178>}<278>\n"
 		"\n"
 		"         For each item in the provided list the foreach statement will update\n"
 		"         the given variable and execute the command part of the statement. List\n"
 		"         elements must be separated by braces or semicolons.\n"
 		"\n"
-		"<178>Example<078>: #foreach {bob;tim;kim} {name} {tell $name Hello}\n"
-		"<178>Example<078>: #foreach {{bob}{tim}{kim}} {name} {tell $name Hello}\n"
+		"<178>Example<278>: #foreach {bob;tim;kim} {name} {tell $name Hello}\n"
+		"<178>Example<278>: #foreach {{bob}{tim}{kim}} {name} {tell $name Hello}\n"
 	},
 	{
 		"FORMAT",
-		"<178>Command<078>: #format <178>{<078>variable<178>}<078> <178>{<078>format<178>}<078> <178>{<078>argument1<178>} {<078>argument2<178>} {<078>etc<178>}<078>\n"
+		"<178>Command<278>: #format <178>{<278>variable<178>}<278> <178>{<278>format<178>}<278> <178>{<278>argument1<178>} {<278>argument2<178>} {<278>etc<178>}<278>\n"
 		"\n"
 		"         Allows you to store a string into a variable in the exact same way\n"
 		"         C's sprintf works with a few enhancements and limitations such as\n"
@@ -567,7 +574,7 @@ struct help_type help_table[] =
 	},
 	{
 		"FUNCTION",
-		"<178>Command<078>: #function <178>{<078>name<178>}<078> <178>{<078>operation<178>}<078>\n"
+		"<178>Command<278>: #function <178>{<278>name<178>}<278> <178>{<278>operation<178>}<278>\n"
 		"\n"
 		"         Functions allow you to execute a script within a line of text, and\n"
 		"         replace the function call with the line of text generated by the\n"
@@ -583,36 +590,36 @@ struct help_type help_table[] =
 		"         The function itself can use the provided arguments which are stored\n"
 		"         in %1 to %9, with %0 holding all arguments.\n"
 		"\n"
-		"<178>Example<078>: #function {rnd} {#math {result} {1 d (%2 - %1 + 1) + %1 - 1}}\n"
+		"<178>Example<278>: #function {rnd} {#math {result} {1 d (%2 - %1 + 1) + %1 - 1}}\n"
 		"         #showme A random number between 100 and 200: @rnd{100;200}\n"
 		"\n"
-		"<178>Example<078>: #function gettime {#format result %t %H:%M}\n"
+		"<178>Example<278>: #function gettime {#format result %t %H:%M}\n"
 		"         #showme The current time is @gettime{}\n"
 		"\n"
-		"<178>Comment<078>: You can remove a function with the #unfunction command.\n"
+		"<178>Comment<278>: You can remove a function with the #unfunction command.\n"
 	},
 	{
 		"GAG",
-		"<178>Command<078>: #gag <178>{<078>string<178>}<078>\n"
+		"<178>Command<278>: #gag <178>{<278>string<178>}<278>\n"
 		"\n"
 		"         Removes any line that contains the string.\n"
 		"\n"
-		"<178>Comment<078>: See '#help action', for more information about triggers.\n"
+		"<178>Comment<278>: See '#help action', for more information about triggers.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a gag with the #ungag command.\n"
+		"<178>Comment<278>: You can remove a gag with the #ungag command.\n"
 	},
 /*
 	{
 		"GREETING",
 		"<068>      #<068>##################################################################<068>#\n"
-		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
-		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
-		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>     Code by Peter Unold, Bill Reis, and Igor van den Hoven.      <068>#\n"
-		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>                             1992, 2012                           <068>#\n"
+		"<068>      #<278>                                                                  <068>#\n"
+		"<068>      #<278>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
+		"<068>      #<278>                                                                  <068>#\n"
+		"<068>      #<278>           (<068>T<278>)he k(<068>I<278>)cki(<068>N<278>) (<068>T<278>)ickin d(<068>I<278>)kumud clie(<068>N<278>)t <068>          #\n"
+		"<068>      #<278>                                                                  <068>#\n"
+		"<068>      #<278>     Code by Peter Unold, Bill Reis, and Igor van den Hoven.      <068>#\n"
+		"<068>      #<278>                                                                  <068>#\n"
+		"<068>      #<278>                             1992, 2012                           <068>#\n"
 		"<068>      #<068>##################################################################<068>#<088>\n"
 	},
 */
@@ -620,17 +627,17 @@ struct help_type help_table[] =
 	{
 		"GREETING",
 		"<068>      #<068>##################################################################<068>#\n"
-		"<068>      #<078>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
-		"<068>      #<078>                                                                  <068>#\n"
-//		"<068>      #<078>           (<068>T<078>)he k(<068>I<078>)cki(<068>N<078>) (<068>T<078>)ickin d(<068>I<078>)kumud clie(<068>N<078>)t <068>          #\n"
-		"<068>      #<078>                 <068>T<078>he K<068>i<078>cki<068>n<078> <068>T<078>ickin D<068>i<078>kuMUD Clie<068>n<078>t <068>                #\n"
-		"<068>      #<078>                                                                  <068>#\n"
-		"<068>      #<078>      Code by Peter Unold, Bill Reis, and Igor van den Hoven      <068>#\n"
+		"<068>      #<278>                     T I N T I N + +   "CLIENT_VERSION"                   <068>#\n"
+		"<068>      #<278>                                                                  <068>#\n"
+//		"<068>      #<278>           (<068>T<278>)he k(<068>I<278>)cki(<068>N<278>) (<068>T<278>)ickin d(<068>I<278>)kumud clie(<068>N<278>)t <068>          #\n"
+		"<068>      #<278>                 <068>T<278>he K<068>i<278>cki<068>n<278> <068>T<278>ickin D<068>i<278>kuMUD Clie<068>n<278>t <068>                #\n"
+		"<068>      #<278>                                                                  <068>#\n"
+		"<068>      #<278>      Code by Peter Unold, Bill Reis, and Igor van den Hoven      <068>#\n"
 		"<068>      #<068>##################################################################<068>#<088>\n"
 	},
 	{
 		"GREP",
-		"<178>Command<078>: #grep <178>[<078>page<178>]<078> <178>{<078>search string<178>}<078>\n"
+		"<178>Command<278>: #grep <178>[<278>page<178>]<278> <178>{<278>search string<178>}<278>\n"
 		"\n"
 		"         This command allows you to search for matching lines in your scroll\n"
 		"         back buffer. The amount of matches shown equals your screen size. If\n"
@@ -641,12 +648,12 @@ struct help_type help_table[] =
 		"         By default grep searches from the end of the scrollback buffer to the\n"
 		"         beginning, this can be reversed by using a negative page number.\n"
 		"\n"
-		"<178>Example<078>: #grep Bubba tells you\n"
+		"<178>Example<278>: #grep Bubba tells you\n"
 		"         This will show all occasions where bubba tells you something.\n"
 	},
 	{
 		"HELP",
-		"<178>Command<078>: #help <178>{<078>subject<178>}<078>\n"
+		"<178>Command<278>: #help <178>{<278>subject<178>}<278>\n"
 		"\n"
 		"         Without an argument #help will list all available help subjects.\n"
 		"\n"
@@ -654,7 +661,7 @@ struct help_type help_table[] =
 	},
 	{
 		"HIGHLIGHT",
-		"<178>Command<078>: #highlight <178>{<078>string<178>}<078> <178>{<078>color names<178>}<078>\n"
+		"<178>Command<278>: #highlight <178>{<278>string<178>}<278> <178>{<278>color names<178>}<278>\n"
 		"\n"
 		"         The highlight command is used to allow you to highlight strings of text\n"
 		"         from the mud.  Available ANSI color names are:\n"
@@ -679,36 +686,36 @@ struct help_type help_table[] =
 		"\n"
 		"         Besides color names also <<888>abc> color codes can be used.\n"
 		"\n"
-		"<178>Example<078>: #high {Valgar} {reverse}\n"
+		"<178>Example<278>: #high {Valgar} {reverse}\n"
 		"         Prints every occurrence of 'Valgar' in reverse video.\n"
 		"\n"
-		"<178>Example<078>: #high {^You %1} {bold cyan}\n"
+		"<178>Example<278>: #high {^You %1} {bold cyan}\n"
 		"         Boldfaces any line that starts with 'You' in cyan.\n"
 		"\n"
-		"<178>Example<078>: #high {Bubba} {red underscore blink}\n"
+		"<178>Example<278>: #high {Bubba} {red underscore blink}\n"
 		"         Highlights the name Bubba as blinking, red, underscored text\n"
 		"\n"
-		"<178>Comment<078>: See '#help action', for more information about triggers.\n"
+		"<178>Comment<278>: See '#help action', for more information about triggers.\n"
 		"\n"
-		"<178>Comment<078>: See '#help substitute', for more advanced color substitution.\n"
+		"<178>Comment<278>: See '#help substitute', for more advanced color substitution.\n"
 		"\n"
-		"<178>Comment<078>: This command only works with ANSI/VT100 terminals or emulators.\n"
+		"<178>Comment<278>: This command only works with ANSI/VT100 terminals or emulators.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a highlight with the #unhighlight command.\n"
+		"<178>Comment<278>: You can remove a highlight with the #unhighlight command.\n"
 	},
 	{
 		"HISTORY",
-		"<178>Command<078>: #history <178>{<078>delete<178>}<078>                 Delete the last command.\n"
-		"         #history <178>{<078>insert<178>}    {<078>command<178>}<078>    Insert a command.\n"
-		"         #history <178>{<078>list<178>}<078>                   Display the entire command history.\n"
-		"         #history <178>{<078>read<178>}      {<078>filename<178>}<078>   Read a command history from file.\n"
-		"         #history <178>{<078>write<178>}     {<078>filename<178>}<078>   Write a command history to file.\n"
+		"<178>Command<278>: #history <178>{<278>delete<178>}<278>                 Delete the last command.\n"
+		"         #history <178>{<278>insert<178>}    {<278>command<178>}<278>    Insert a command.\n"
+		"         #history <178>{<278>list<178>}<278>                   Display the entire command history.\n"
+		"         #history <178>{<278>read<178>}      {<278>filename<178>}<278>   Read a command history from file.\n"
+		"         #history <178>{<278>write<178>}     {<278>filename<178>}<278>   Write a command history to file.\n"
 		"\n"
 		"         Without an argument all available options are shown.\n"
 	},
 	{
 		"IF",
-		"<178>Command<078>: #if <178>{<078>conditional<178>}<078> <178>{<078>commands if true<178>}<078> <178>{<078>commands if false<178>}<078>\n"
+		"<178>Command<278>: #if <178>{<278>conditional<178>}<278> <178>{<278>commands if true<178>}<278> <178>{<278>commands if false<178>}<278>\n"
 		"\n"
 		"         The 'if' command is one of the most powerful commands added since\n"
 		"         TINTIN III. It works similar to an 'if' statement in other languages,\n"
@@ -722,14 +729,14 @@ struct help_type help_table[] =
 		"         'math' command only instead of storing the result, the result is used\n"
 		"         to determine whether to execute the commands.\n"
 		"\n"
-		"<178>Example<078>: #action {%0 gives you %1 gold coins.} {#if {%1>5000} {thank %0}}\n"
+		"<178>Example<278>: #action {%0 gives you %1 gold coins.} {#if {%1>5000} {thank %0}}\n"
 		"         If someone gives you more than 5000 coins, thank them.\n"
 		"\n"
-		"<178>Comment<078>: See '#help math', for more information.\n"
+		"<178>Comment<278>: See '#help math', for more information.\n"
 	},
 	{
 		"IGNORE",
-		"<178>Command<078>: #ignore <178>{<078>listname<178>}<078> <178>{<078>on<178>|<078>off<178>}<078>\n"
+		"<178>Command<278>: #ignore <178>{<278>listname<178>}<278> <178>{<278>on<178>|<278>off<178>}<278>\n"
 		"\n"
 		"         Toggles a list on or off. With no arguments it shows your current\n"
 		"         settings, as well as the list names that you can ignore.\n"
@@ -739,7 +746,7 @@ struct help_type help_table[] =
 	},
 	{
 		"INFO",
-		"<178>Command<078>: #info <178>{<078>listname<178>}<078> <178>{<078>LIST<178>|<078>ON<178>|<078>OFF<178>|<078>SAVE<178>}<078>\n"
+		"<178>Command<278>: #info <178>{<278>listname<178>}<278> <178>{<278>LIST<178>|<278>ON<178>|<278>OFF<178>|<278>SAVE<178>}<278>\n"
 		"\n"
 		"         Without an argument info displays the settings of every tintin list.\n"
 		"\n"
@@ -751,7 +758,7 @@ struct help_type help_table[] =
 	},
 	{
 		"KILL",
-		"<178>Command<078>: #kill <178>{<078>list<178><178>} {<078>pattern<178>}<078>\n"
+		"<178>Command<278>: #kill <178>{<278>list<178><178>} {<278>pattern<178>}<278>\n"
 		"\n"
 		"         Without an argument, the kill command clears all lists.  Useful if\n"
 		"         you don't want to exit tintin to reload your command files.\n"
@@ -761,11 +768,11 @@ struct help_type help_table[] =
 		"         With two arguments the triggers in the chosen list that match the\n"
 		"         given pattern will be removed.\n"
 		"\n"
-		"<178>Example<078>: #kill alias %*test*\n"
+		"<178>Example<278>: #kill alias %*test*\n"
 	},
 	{
 		"LINE",
-		"<178>Command<078>: #line <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #line <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
 		"         #line log {filename} {[text]}          Log the current or given line to\n"
 		"                                                file.\n"
@@ -800,7 +807,7 @@ struct help_type help_table[] =
 	},
 	{
 		"LIST",
-		"<178>Command<078>: #list <178>{<078>variable<178>}<078> <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #list <178>{<278>variable<178>}<278> <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
 		"         #list {var} {add} {item}               Add {item} to the list\n"
 		"         #list {var} {clear}                    Empty the given list\n"
@@ -834,7 +841,7 @@ struct help_type help_table[] =
 
 	{
 		"LOCAL",
-		"<178>Command<078>: #local <178>{<078>variable name<178>}<078> <178>{<078>text to fill variable<178>}<078>\n"
+		"<178>Command<278>: #local <178>{<278>variable name<178>}<278> <178>{<278>text to fill variable<178>}<278>\n"
 		"\n"
 		"         The local command sets a local variable. Unlike a regular variable\n"
 		"         a local variable will only stay in memory for the duration of the\n"
@@ -846,12 +853,12 @@ struct help_type help_table[] =
 		"\n"
 		"         Avoid setting the result variable as local in a function.\n"
 		"\n"
-		"<178>Example<078>: #alias {swap} {#local x %0;#replace x {e} {u};#showme $x}\n"
+		"<178>Example<278>: #alias {swap} {#local x %0;#replace x {e} {u};#showme $x}\n"
 	},
 
 	{
 		"LOG",
-		"<178>Command<078>: #log <178>{<078>append<178>|<078>overwrite<178>}<078> <178>{<078>filename<178>}<078>\n"
+		"<178>Command<278>: #log <178>{<278>append<178>|<278>overwrite<178>}<278> <178>{<278>filename<178>}<278>\n"
 		"\n"
 		"         Logs session to a file, you can set the data type to either plain,\n"
 		"         raw, or html with the config command.\n"
@@ -860,23 +867,23 @@ struct help_type help_table[] =
 
 	{
 		"LOOP",
-		"<178>Command<078>: #loop <178>{<078><start><178>} {<078><finish><178>} {<078><variable><178>} {<078>commands<178>}<078>\n"
+		"<178>Command<278>: #loop <178>{<278><start><178>} {<278><finish><178>} {<278><variable><178>} {<278>commands<178>}<278>\n"
 		"\n"
 		"         Like a for statement, loop will loop from start to finish incrementing\n"
 		"         or decrementing by 1 each time through.  The value of the loop counter\n"
 		"         is stored in the provided variable, which you can use in the commands.\n"
 		"\n"
-		"<178>Example<078>: #loop 1 3 loop {get all $loop\\.corpse}\n"
+		"<178>Example<278>: #loop 1 3 loop {get all $loop\\.corpse}\n"
 		"         This equals 'get all 1.corpse;get all 2.corpse;get all 3.corpse'.\n"
 		"\n"
 		"         The . needs to be escaped so it's not treated as part of the variable.\n"
 		"\n"
-		"<178>Example<078>: #loop 3 1 cnt {drop $cnt\\.key}\n"
+		"<178>Example<278>: #loop 3 1 cnt {drop $cnt\\.key}\n"
 		"         This equals 'drop 3.key;drop 2.key;drop 1.key'.\n"
 	},
 	{
 		"MACRO",
-		"<178>Command<078>: #macro <178>{<078>key sequence<178>}<078> <178>{<078>commands<178>}<078>\n"
+		"<178>Command<278>: #macro <178>{<278>key sequence<178>}<278> <178>{<278>commands<178>}<278>\n"
 		"\n"
 		"         Macros allow you to make tintin respond to function keys.\n"
 		"\n"
@@ -887,22 +894,22 @@ struct help_type help_table[] =
 		"         Another option is pressing ctrl-v, which will enable CONVERT META for\n"
 		"         the next key pressed.\n"
 		"\n"
-		"<178>Example<078>: #macro {(press ctrl-v)(press F1)} {#showme \\e[2J;#buffer lock}\n"
+		"<178>Example<278>: #macro {(press ctrl-v)(press F1)} {#showme \\e[2J;#buffer lock}\n"
 		"         Clear the screen and lock the window when you press F1, useful when the\n"
 		"         boss is near.\n"
 		"\n"
-		"<178>Example<078>: #macro {\\eOM} {#cursor enter}\n"
+		"<178>Example<278>: #macro {\\eOM} {#cursor enter}\n"
 		"         Makes the keypad's enter key work as an enter in keypad mode.\n"
 		"\n"
-		"<178>Comment<078>: Not all terminals properly initialize the keypad key sequences.\n"
+		"<178>Comment<278>: Not all terminals properly initialize the keypad key sequences.\n"
 		"         If this is the case you can still use the keypad, but instead of the\n"
 		"         arrow keys use ctrl b, f, p, and n.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a macro with the #unmacro command.\n"
+		"<178>Comment<278>: You can remove a macro with the #unmacro command.\n"
 	},
 	{
 		"MAP",
-		"<178>Command<078>: #map\n"
+		"<178>Command<278>: #map\n"
 		"\n"
 		"         The map command is the backbone of the auto mapping feature.\n"
 		"\n"
@@ -1080,7 +1087,7 @@ struct help_type help_table[] =
 	},
 	{
 		"MATH",
-		"<178>Command<078>: #math <178>{<078>variable<178>}<078> <178>{<078>expression<178>}<078>\n"
+		"<178>Command<278>: #math <178>{<278>variable<178>}<278> <178>{<278>expression<178>}<278>\n"
 		"\n"
 		"         Performs math operations and stores the result in a variable.  The math\n"
 		"         follows a C-like precedence, as follows, with the top of the list\n"
@@ -1124,23 +1131,23 @@ struct help_type help_table[] =
 		"         Floating point precision is added by using the decimal . operator.\n"
 		"         Time in seconds is calculated using [day]:[hour]:<minute>:<second>.\n"
 		"\n"
-		"<178>Example<078>: #math {heals} {$mana / 40}\n"
+		"<178>Example<278>: #math {heals} {$mana / 40}\n"
 		"         Assuming there is a variable $mana, divides its value by 40 and stores\n"
 		"         the result in $heals.\n"
 		"\n"
-		"<178>Example<078>: #action {^You receive %0 experience} {updatexp %0}\n"
+		"<178>Example<278>: #action {^You receive %0 experience} {updatexp %0}\n"
 		"         #alias updatexp {#math {xpneed} {$xpneed - %0}\n"
 		"         Let's say you have a variable which stores xp needed for your next\n"
 		"         level.  The above will modify that variable after every kill, showing\n"
 		"         the amount still needed.\n"
 		"\n"
-		"<178>Example<078>: #action {%0 tells %1}\n"
+		"<178>Example<278>: #action {%0 tells %1}\n"
 		"           {#if {\"\%0\" == \"Bubba\" && $afk} {reply I'm away, my friend.}}\n"
 		"         When you are away from keyboard, it will only reply to your friend.\n"
 	},
 	{
 		"MESSAGE",
-		"<178>Command<078>: #message <178>{<078>listname<178>}<078> <178>{<078>on<178>|<078>off<178>}<078>\n"
+		"<178>Command<278>: #message <178>{<278>listname<178>}<278> <178>{<278>on<178>|<278>off<178>}<278>\n"
 		"\n"
 		"         This will show the message status of all your lists if typed without an\n"
 		"         argument. If you set for example VARIABLES to OFF you will no longer be\n"
@@ -1148,55 +1155,57 @@ struct help_type help_table[] =
 	},
 	{
 		"NOP",
-		"<178>Command<078>: #nop <178>{<078>whatever<178>}<078>\n"
+		"<178>Command<278>: #nop <178>{<278>whatever<178>}<278>\n"
 		"\n"
 		"         Short for 'no operation', and is ignored by the client.  It is useful\n"
 		"         for commenting in your coms file, any text after the nop and before a\n"
 		"         semicolon or end of line is ignored. You shouldn't put braces { } in it\n"
 		"         though, unless you close them properly.\n"
 		"\n"
-		"<178>Comment<078>: By using braces you can comment out multiple lines of code in a script\n"
+		"<178>Comment<278>: By using braces you can comment out multiple lines of code in a script\n"
 		"         file.\n"
 		"\n"
 		"         For commenting out an entire trigger and especially large sections of\n"
 		"         triggers you would want to use /* text */\n"
 		"\n"
-		"<178>Example<078>: #nop This is the start of my script file.\n"
+		"<178>Example<278>: #nop This is the start of my script file.\n"
 	},
 	{
 		"PARSE",
-		"<178>Command<078>: #parse <178>{<078>string<178>} {<078>variable<178>} {<078>commands<178>}<078>\n"
+		"<178>Command<278>: #parse <178>{<278>string<178>} {<278>variable<178>} {<278>commands<178>}<278>\n"
 		"\n"
 		"         Like the loop statement, parse will loop from start to finish through\n"
 		"         the given string.  The value of the current character is stored in the\n"
 		"         provided variable.\n"
 		"\n"
-		"<178>Example<078>: #parse {hello world} {char} {#showme $char}\n"
+		"<178>Example<278>: #parse {hello world} {char} {#showme $char}\n"
 	},
 	{
 		"PATH",
-		"<178>Command<078>: #path <178>{<078>del<178>|<078>end<178>|<078>ins<178>|<078>load<178>|<078>map<178>|<078>new<178>|<078>run<178>|<078>save<178>|<078>walk<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #path <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
-		"         #path del:   Will delete the last move of the path.\n"
-		"         #path end:   Movement commands are no longer added to the path.\n"
-		"         #path ins:   Add the given argument to the path.\n"
-		"         #path load:  Load the given variable as the new path.\n"
-		"         #path new:   Movement commands will be added to the path.\n"
-		"         #path run:   Enter all the steps of the current path, with\n"
-		"                      an optional given delay.\n"
-		"         #path save:  Save the created path to a variable. You must specify\n"
-		"                      whether you want to save the path forward or backward.\n"
-		"         #path show:  Display the so far created path.\n"
-		"         #path unzip: Load the given speedwalk as the new path.\n"
-		"         #path walk:  Take one step forward of the current path. You can\n"
-		"                      walk backwards using #path walk backwards.\n"
-		"         #path zip:   Turn loaded path into a speedwalk.\n"
+		"         create   Will clear the path and start path mapping.\n"
+		"         delete   Will delete the last move of the path.\n"
+		"         destroy  Will clear the path and stop path mapping.\n"
+		"         goto     Go the the start, end, or given position index.\n"
+		"         insert   Add the given argument to the path.\n"
+		"         load     Load the given variable as the new path.\n"
+		"         map      Display the map and the current position.\n"
+		"         move     Move the position forward or backward. If a number is given\n"
+		"                  the position is changed by the given number of steps.\n"
+		"         run      Execute the current path, with an optional floating point\n"
+		"                  delay in seconds as the second argument.\n"
+		"         save     Save the path to a variable. You must specify whether you\n"
+		"                  want to save the path forward or backward.\n"
+		"         unzip    Load the given speedwalk as the new path.\n"
+		"         walk     Take one step forward or backward.\n"
+		"         zip      Turn the path into a speedwalk.\n"
 		"\n"
-		"<178>Example<078>: #path ins {unlock n;open n} {unlock s;open s}\n"
+		"<178>Example<278>: #path ins {unlock n;open n} {unlock s;open s}\n"
 	},
 	{
 		"PATHDIR",
-		"<178>Command<078>: #pathdir <178>{<078>dir<178>}<078> <178>{<078>reversed dir<178>}<078> <178>{<078>coord<178>}<078>\n"
+		"<178>Command<278>: #pathdir <178>{<278>dir<178>}<278> <178>{<278>reversed dir<178>}<278> <178>{<278>coord<178>}<278>\n"
 		"\n"
 		"         By default tintin sets the most commonly used movement commands\n"
 		"         meaning you generally don't really have to bother with pathdirs.\n"
@@ -1213,15 +1222,15 @@ struct help_type help_table[] =
 		"         want 'ne' to have a value of 3 (1 + 2). This value is required for the\n"
 		"         #map functionality to work.\n"
 		"\n"
-		"<178>Example<078>: #pathdir {ue} {dw} {18}\n"
+		"<178>Example<278>: #pathdir {ue} {dw} {18}\n"
 		"         #pathdir {dw} {ue} {40}\n"
 		"\n"
-		"<178>Comment<078>: You can remove a pathdir with the #unpathdir command.\n"		
+		"<178>Comment<278>: You can remove a pathdir with the #unpathdir command.\n"		
 	},
 	{
 		"PCRE",
 
-		"<078>\n"
+		"<278>\n"
 		"A regular expression, regex or regexp is a sequence of characters that defines\n"
 		"a search pattern. Since the 1980s, different syntaxes for writing regular\n"
 		"expressions exist, the two most widely used ones being the POSIX syntax and the\n"
@@ -1238,7 +1247,7 @@ struct help_type help_table[] =
 		"variable and while. Several other commands use regular expressions in minor\n"
 		"ways. Fortunately the basics are very easy to learn.\n"
 		"\n"
-		"<178>TinTin++ Regular Expression<078>\n"
+		"<178>TinTin++ Regular Expression<278>\n"
 		"\n"
 		"The following support is available for regular expressions.\n"
 		"\n"
@@ -1254,7 +1263,7 @@ struct help_type help_table[] =
 		"[ ] . + | ( ) ? * are treated as normal text unless used within braces. Keep in\n"
 		"mind that { } is replaced with ( ) automatically unless %!{ } is used.\n"
 		"\n"
-		"<178>TinTin++  Description                                      POSIX<078>\n"
+		"<178>TinTin++  Description                                      POSIX<278>\n"
 		"%d        Match zero to any number of digits               ([0-9]*?)\n"
 		"%D        Match zero to any number of non-digits           ([^0-9]*?)\n"
 		"%i        Matches become case insensitive                  (?i)\n"
@@ -1267,7 +1276,7 @@ struct help_type help_table[] =
 		"%+        Match one to any number of characters            (.+?)\n"
 		"%*        Match zero to any number of characters           (.*?)\n"
 		"\n"
-		"<178>Variables<078>\n"
+		"<178>Variables<278>\n"
 		"\n"
 		"If you use %1 in an action to perform a match the matched string is stored in\n"
 		"the %1 variable which can be used in the action body.\n"
@@ -1286,18 +1295,18 @@ struct help_type help_table[] =
 		"\n"
 		"To prevent a match from being stored use %!*, %!w, etc.\n"
 		"\n"
-		"<178>Perl Compatible Regular Expressions<078>\n"
+		"<178>Perl Compatible Regular Expressions<278>\n"
 		"\n"
 		"You can embed a PCRE (Perl Compatible Regular Expression) using curley braces\n"
 		"{ }, these braces are replaced with paranthesis ( ) unless you use %!{ }.\n"
 		"\n"
-		"<178>Or<078>\n"
+		"<178>Or<278>\n"
 		"\n"
 		"You can separate alternatives within a PCRE using the | character.\n"
 		"\n"
 		"Example: #act {%* scratches {his|her|its} butt.} {mutter Someone should wash %2 hands..}\n"
 		"\n"
-		"<178>Brackets<078>\n"
+		"<178>Brackets<278>\n"
 		"\n"
 		"You can group alternatives and ranges within a PCRE using brackets.\n"
 		"\n"
@@ -1311,7 +1320,7 @@ struct help_type help_table[] =
 		"When the ^ character is used within brackets it creates an inverse search,\n"
 		"[^0-9] matches every character except for a number between 0 and 9.\n"
 		"\n"
-		"<178>Quantification<078>\n"
+		"<178>Quantification<278>\n"
 		"\n"
 		"A quantifier placed after a match specifies how often the match is allowed to occur.\n"
 		"\n"
@@ -1326,7 +1335,7 @@ struct help_type help_table[] =
 		"\n"
 		"The example only triggers if someone provides a number between 1 and 999.\n"
 		"\n"
-		"<178>Paranthesis<078>\n"
+		"<178>Paranthesis<278>\n"
 		"\n"
 		"TinTin Regular Expressions automatically add parenthesis, for example %*\n"
 		"translates to (.*?) in PCRE. Paranthesis in PCRE causes a change in execution\n"
@@ -1341,7 +1350,7 @@ struct help_type help_table[] =
 		"If someone chats Muha you will chat Muhaha! If someone chats Muhaha you will\n"
 		"chat Muhahaha!\n"
 		"\n"
-		"<178>Lazy vs Greedy<078>\n"
+		"<178>Lazy vs Greedy<278>\n"
 		"\n"
 		"By default regex matches are greedy, meaning {.*} will capture as much text as\n"
 		"possible.\n"
@@ -1357,11 +1366,11 @@ struct help_type help_table[] =
 		"\n"
 		"This will display: Arg1=(bli) Arg2=(bla blo).\n"
 		"\n"
-		"<178>Escape Codes<078>\n"
+		"<178>Escape Codes<278>\n"
 		"\n"
 		"PCRE support the following escape codes.\n"
 		"\n"
-		"<178>PCRE   Description                                     POSIX<078>\n"
+		"<178>PCRE   Description                                     POSIX<278>\n"
 		"\\A     Match start of string                          ^\n"
 		"\\b     Match word boundaries                          (^|\\r|\\n|\\t| |$)\n"
 		"\\B     Match non-word boundaries                      [^\\r\\n\\t ]\n"
@@ -1382,7 +1391,7 @@ struct help_type help_table[] =
 		"\n"
 		"\\s matches one space, \\s+ matches one or multiple spaces.\n"
 		"\n"
-		"<178>Color triggers<078>\n"
+		"<178>Color triggers<278>\n"
 		"\n"
 		"To make matching easier text triggers (Actions, Gags, Highlights, Prompts, and\n"
 		"Substitutes) have their color codes stripped. If you want to create a color\n"
@@ -1401,7 +1410,7 @@ struct help_type help_table[] =
 
 	{
 		"PORT",
-		"<178>Command<078>: #port <178>{<078>option<178>}<078> <178>{<078>argument<178>}<078>\n"
+		"<178>Command<278>: #port <178>{<278>option<178>}<278> <178>{<278>argument<178>}<278>\n"
 		"\n"
 		"         #port {init} {name} {port} {file}     Initilize a port session.\n"
 		"\n"
@@ -1424,7 +1433,7 @@ struct help_type help_table[] =
 	},
 	{
 		"PROMPT",
-		"<178>Command<078>: #prompt <178>{<078>text<178>}<078> <178>{<078>new text<178>}<078> <178>{<078>row #<178>}<078>\n"
+		"<178>Command<278>: #prompt <178>{<278>text<178>}<278> <178>{<278>new text<178>}<278> <178>{<278>row #<178>}<278>\n"
 		"\n"
 		"         Prompt is a feature for split window mode (see #help split), which\n"
 		"         will take the status prompt from the mud, and display it on the status\n"
@@ -1433,15 +1442,16 @@ struct help_type help_table[] =
 		"\n"
 		"         The row number is optional and useful if you use a non standard split\n"
 		"         mode. A positive row number draws #row lines above the bottom row. A\n"
-		"         negative number draws #row lines below the title bar.\n"
+		"         negative number draws #row lines below the title bar. The input row\n"
+		"         can be set using 0.\n"
 		"\n"
-		"<178>Comment<078>: See '#help action', for more information about triggers.\n"
+		"<178>Comment<278>: See '#help action', for more information about triggers.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a prompt with the #unprompt command.\n"
+		"<178>Comment<278>: You can remove a prompt with the #unprompt command.\n"
 	},
 	{
 		"READ",
-		"<178>Command<078>: #read <178>{<078>filename<178>}<078>\n"
+		"<178>Command<278>: #read <178>{<278>filename<178>}<278>\n"
 		"\n"
 		"         Reads a commands file into memory.  The coms file is merged in with\n"
 		"         the currently loaded commands.  Duplicate commands are overwritten.\n"
@@ -1454,7 +1464,7 @@ struct help_type help_table[] =
 	},
 	{
 		"REGEXP",
-		"<178>Command<078>: #regexp <178>{<078>string<178>}<078> <178>{<078>expression<178>}<078> <178>{<078>true<178>}<078> <178>{<078>false<178>}<078>\n"
+		"<178>Command<278>: #regexp <178>{<278>string<178>}<278> <178>{<278>expression<178>}<278> <178>{<278>true<178>}<278> <178>{<278>false<178>}<278>\n"
 		"\n"
 		"         Compares the string to the given regular expression.\n"
 		"\n"
@@ -1493,20 +1503,20 @@ struct help_type help_table[] =
 		"      %15 as a regular expression, the next unnumbered regular expression\n"
 		"      would be %16. To prevent a match from being stored use %!*, %!w, etc.\n"
 		"\n"
-		"<178>Example<078>: #regexp {bli bla blo} {bli {.*} blo} {#showme &1}\n"
+		"<178>Example<278>: #regexp {bli bla blo} {bli {.*} blo} {#showme &1}\n"
 	},
 
 
 	{
 		"REPLACE",
-		"<178>Command<078>: #replace <178>{<078>variable<178>}<078> <178>{<078>oldtext<178>}<078> <178>{<078>newtext<178>}<078>\n"
+		"<178>Command<278>: #replace <178>{<278>variable<178>}<278> <178>{<278>oldtext<178>}<278> <178>{<278>newtext<178>}<278>\n"
 		"\n"
 		"         Searches the variable text replacing each occurance of 'oldtext' with\n"
 		"         'newtext'.\n"
 	},
 	{
 		"RETURN",
-		"<178>Command<078>: #return <178>{<078>text<178>}<078>\n"
+		"<178>Command<278>: #return <178>{<278>text<178>}<278>\n"
 		"\n"
 		"         This command can be used to break out of a command string being\n"
 		"         executed.\n"
@@ -1516,7 +1526,7 @@ struct help_type help_table[] =
 	},
 	{
 		"RUN",
-		"<178>Command<078>: #run <178>{<078>name<178>}<078> <178>{<078>shell command<178>} {<078>file<178>}<078>\n"
+		"<178>Command<278>: #run <178>{<278>name<178>}<278> <178>{<278>shell command<178>} {<278>file<178>}<278>\n"
 		"\n"
 		"         The run command works much like the system command except that it\n"
 		"         runs the command in a pseudo terminal. The run command also creates\n"
@@ -1525,12 +1535,12 @@ struct help_type help_table[] =
 		"         full tintin scripting capabilities. If a file name is given the file\n"
 		"         is loaded prior to execution.\n"
 		"\n"
-		"<178>Example<078>: #run {somewhere} {ssh someone@somewhere.com}\n"
-		"<178>Example<078>: #run {something} {tail -f chats.log}\n"
+		"<178>Example<278>: #run {somewhere} {ssh someone@somewhere.com}\n"
+		"<178>Example<278>: #run {something} {tail -f chats.log}\n"
 	},
 	{
 		"SCAN",
-		"<178>Command<078>: #scan <178>{<078>abort<178>|<078>csv<178><178>|<078>tsv<178><178>|<078>txt<178>} {<078>filename<178>}<078>\n"
+		"<178>Command<278>: #scan <178>{<278>abort<178>|<278>csv<178><178>|<278>tsv<178><178>|<278>txt<178>} {<278>filename<178>}<278>\n"
 		"\n"
 		"         The scan txt <filename> command reads in a file and sends its content\n"
 		"         to the screen as if it was send by a mud. After using scan you can use\n"
@@ -1562,12 +1572,12 @@ struct help_type help_table[] =
 		"         SCAN TSV HEADER event for the first line and SCAN TSV LINE for all\n"
 		"         subsequent lines.\n"
 		"\n"
-		"<178>Related<078>: textin and read.\n"
+		"<178>Related<278>: textin and read.\n"
 		
 	},
 	{
 		"SCRIPT",
-		"<178>Command<078>: #script <178>{<078>variable<178>}<178> {<078>shell command<178>}<078>\n"
+		"<178>Command<278>: #script <178>{<278>variable<178>}<178> {<278>shell command<178>}<278>\n"
 		"\n"
 		"         The script command works much like the system command except that it\n"
 		"         treats the generated echos as commands if no variable is provided.\n"
@@ -1578,24 +1588,24 @@ struct help_type help_table[] =
 		"\n"
 		"         If you provide a variable the output of the script is stored as a list.\n"
 		"\n"
-		"<178>Example<078>: #script {ruby -e 'print \"#showme hello world\"'}\n"
-		"<178>Example<078>: #script {python -c 'print \"#showme hello world\"'}\n"
-		"<178>Example<078>: #script {php -r 'echo \"#showme hello world\"'}\n"
-		"<178>Example<078>: #script {path} {pwd};#showme The path is $path[1].\n"
+		"<178>Example<278>: #script {ruby -e 'print \"#showme hello world\"'}\n"
+		"<178>Example<278>: #script {python -c 'print \"#showme hello world\"'}\n"
+		"<178>Example<278>: #script {php -r 'echo \"#showme hello world\"'}\n"
+		"<178>Example<278>: #script {path} {pwd};#showme The path is $path[1].\n"
 	},
 
 	{
 		"SEND",
-		"<178>Command<078>: #send <178>{<078>text<178>}<078>\n"
+		"<178>Command<278>: #send <178>{<278>text<178>}<278>\n"
 		"\n"
 		"         Sends the text directly to the MUD, useful if you want to start with an\n"
 		"         escape code.\n"
 		"\n"
-		"<178>Related<078>: textin\n"
+		"<178>Related<278>: textin\n"
 	},
 	{
 		"SESSION",
-		"<178>Command<078>: #session <178>{<078>name<178>} {<078>host<178>} {<078>port<178>} {<078>file<178>}<078>\n"
+		"<178>Command<278>: #session <178>{<278>name<178>} {<278>host<178>} {<278>port<178>} {<278>file<178>}<278>\n"
 		"\n"
 		"         Starts a telnet session with the given name, host, port, and optional\n"
 		"         file name. The name can be anything you want, except the name of an\n"
@@ -1615,14 +1625,14 @@ struct help_type help_table[] =
 		"\n"
 		"         The startup session is named 'gts' and can be used for relog scripts.\n"
 		"\n"
-		"<178>Example<078>: #event {SESSION DISCONNECTED} {#gts #delay 10 #ses %0 mymud.com 4321}\n"
+		"<178>Example<278>: #event {SESSION DISCONNECTED} {#gts #delay 10 #ses %0 mymud.com 4321}\n"
 		"\n"
-		"<178>Related<078>: all, snoop, and zap.\n"
-		"<178>Related<078>: port, run, ssl, \n"
+		"<178>Related<278>: all, snoop, and zap.\n"
+		"<178>Related<278>: port, run, ssl, \n"
 	},
 	{
 		"SHOWME",
-		"<178>Command<078>: #showme <178>{<078>string<178>}<078> <178>{<078>row<178>}<078>\n"
+		"<178>Command<278>: #showme <178>{<278>string<178>}<278> <178>{<278>row<178>}<278>\n"
 		"\n"
 		"         Display the string to the terminal, do not send to the mud.  Useful for\n"
 		"         status, warnings, etc.  The {row} number is optional and works the same\n"
@@ -1630,13 +1640,13 @@ struct help_type help_table[] =
 		"\n"
 		"         Actions can be triggered by the showme command.\n"
 		"\n"
-		"<178>Example<078>: #action {%0 ultraslays you.}\n"
+		"<178>Example<278>: #action {%0 ultraslays you.}\n"
 		"           {#showme {###### ARGH! We were ultraslayed by %0 ######};#gagline}\n"
 		"         Emphasis ultraslaying.\n"
 	},
 	{
 		"SNOOP",
-		"<178>Command<078>: #snoop <178>{<078>session name<178>} <178>{<078>on<178>|<078>off<178>}<078>\n"
+		"<178>Command<278>: #snoop <178>{<278>session name<178>} <178>{<278>on<178>|<278>off<178>}<278>\n"
 		"\n"
 		"         If there are multiple sessions active, this command allows you to monitor\n"
 		"         what is going on in the sessions that are not currently active.  The\n"
@@ -1646,19 +1656,19 @@ struct help_type help_table[] =
 	},
 	{
 		"SPEEDWALK",
-		"         <078>Speedwalking allows you to type multiple directions not separated by\n"
+		"         <278>Speedwalking allows you to type multiple directions not separated by\n"
 		"         semicolons, and now it lets you prefix a direction with a number, to\n"
 		"         signify how many times to go that direction. You can turn it on/off\n"
 		"         with #config.\n"
 		"\n"
-		"<178>Example<078>: Without speedwalk, you have to type:\n"
+		"<178>Example<278>: Without speedwalk, you have to type:\n"
 		"         s;s;w;w;w;w;w;s;s;s;w;w;w;n;n;w\n"
 		"         With speedwalk, you only have to type:\n"
 		"         2s5w3s3w2nw\n"
 	},
 	{
 		"SPLIT",
-		"<178>Command<078>: #split <178>{<078>top border height<178>}<078> <178>{<078>bottom border height<178>}<078>\n"
+		"<178>Command<278>: #split <178>{<278>top border height<178>}<278> <178>{<278>bottom border height<178>}<278>\n"
 		"\n"
 		"         This option only works with a VT100 emulator, this allows you to set up\n"
 		"         a screen.  The keyboard input will be displayed in the bottom line,\n"
@@ -1678,18 +1688,18 @@ struct help_type help_table[] =
 		"         to display something you can set the top and bottom line with the\n"
 		"         additional arguments.\n"
 		"\n"
-		"<178>Example<078>: #split\n"
+		"<178>Example<278>: #split\n"
 		"         If tintin has determined that you have a screen of 30 rows, it will\n"
 		"         set the main window from line #1 to line #28.\n"
 		"\n"
-		"<178>Comment<078>: You can display text on the split line(s) with the #prompt and\n"
+		"<178>Comment<278>: You can display text on the split line(s) with the #prompt and\n"
 		"         #showme {line} {row} command.\n"
 		"\n"
-		"<178>Comment<078>: You can remove split mode with the #unsplit command.\n"
+		"<178>Comment<278>: You can remove split mode with the #unsplit command.\n"
 	},
 	{
 		"SSL",
-		"<178>Command<078>: #ssl <178>{<078>name<178>} {<078>host<178>} {<078>port<178>} {<078>file<178>}\n"
+		"<178>Command<278>: #ssl <178>{<278>name<178>} {<278>host<178>} {<278>port<178>} {<278>file<178>}\n"
 		"\n"
 		"         Starts a secure socket telnet session with the given name, host, port,\n"
 		"         and optional file name.\n"
@@ -1697,7 +1707,7 @@ struct help_type help_table[] =
 	{
 		"STATEMENTS",
 		"         TinTin++ knows the following statements.\n"
-		"<078>\n"
+		"<278>\n"
 		"         #break\n"
 		"         #case {value} {true}\n"
 		"         #continue\n"
@@ -1714,7 +1724,7 @@ struct help_type help_table[] =
 	},
 	{
 		"SUBSTITUTE",
-		"<178>Command<078>: #substitute <178>{<078>text<178>}<078> <178>{<078>new text<178>}<078>\n"
+		"<178>Command<278>: #substitute <178>{<278>text<178>}<278> <178>{<278>new text<178>}<278>\n"
 		"\n"
 		"         Allows you to replace original text from the mud with different text.\n"
 		"         This is helpful for complex coloring and making things more readable.\n"
@@ -1728,24 +1738,24 @@ struct help_type help_table[] =
 		"\n"
 		"         If no argument is given, all subs are displayed.\n"
 		"\n"
-		"<178>Example<078>: #sub {Zoe} {ZOE}\n"
+		"<178>Example<278>: #sub {Zoe} {ZOE}\n"
 		"         Any instance of Zoe will be replaced with ZOE.\n"
 		"\n"
-		"<178>Example<078>: #sub {~\\e[0;34m} {\\e[1;34m}\n"
+		"<178>Example<278>: #sub {~\\e[0;34m} {\\e[1;34m}\n"
 		"         Replace generic dark blue color codes with bright blue ones.\n"
 		"\n"
-		"<178>Example<078>: #sub {%1massacres%2} {<<888>018>%1<<888>118>MASSACRES<<888>018>%2}\n"
+		"<178>Example<278>: #sub {%1massacres%2} {<<888>018>%1<<888>118>MASSACRES<<888>018>%2}\n"
 		"         Replaces all occurrences of 'massacres' with 'MASSACRES' in red.\n"
 		"\n"
-		"<178>Comment<078>: See '#help action', for more information about triggers.\n"
+		"<178>Comment<278>: See '#help action', for more information about triggers.\n"
 		"\n"
-		"<178>Comment<078>: See '#help colors', for more information.\n"
+		"<178>Comment<278>: See '#help colors', for more information.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a substitution with the #unsubstitute command.\n"
+		"<178>Comment<278>: You can remove a substitution with the #unsubstitute command.\n"
 	},
 	{
 		"SUSPEND",
-		"<178>Command<078>: #suspend\n"
+		"<178>Command<278>: #suspend\n"
 		"\n"
 		"         Temporarily suspends tintin and returns you to your shell.  The\n"
 		"         effect of this command is exactly as if you had typed control-z.\n"
@@ -1757,7 +1767,7 @@ struct help_type help_table[] =
 	},
 	{
 		"SWITCH",
-		"<178>Command<078>: #switch <178>{<078>conditional<178>}<078> <178>{<078>arguments<178>}<078>\n"
+		"<178>Command<278>: #switch <178>{<278>conditional<178>}<278> <178>{<278>arguments<178>}<278>\n"
 		"\n"
 		"         The switch command works similar to the switch statement in other\n"
 		"         languages. When the 'switch' command is encountered its body is parsed\n"
@@ -1770,28 +1780,28 @@ struct help_type help_table[] =
 		"         If the 'default' command is found and no 'case' statement has been\n"
 		"         matched the default command's argument is executed.\n"
 		"\n"
-		"<178>Example<078>: #switch {1d4} {#case 1 cackle;#case 2 smile;#default giggle}\n"
+		"<178>Example<278>: #switch {1d4} {#case 1 cackle;#case 2 smile;#default giggle}\n"
 	},
 	{
 		"SYSTEM",
-		"<178>Command<078>: #system <178>{<078>command<178>}<078>\n"
+		"<178>Command<278>: #system <178>{<278>command<178>}<278>\n"
 		"\n"
 		"         Executes the command specified as a shell command.\n"
 	},
 	{
 		"TAB",
-		"<178>Command<078>: #tab <178>{<078>word<178>}<078>\n"
+		"<178>Command<278>: #tab <178>{<278>word<178>}<278>\n"
 		"\n"
 		"         Adds a word to the tab completion list, alphabetically sorted.\n"
 		"\n"
 		"         If no tabs are defined tintin will use the scrollback buffer\n"
 		"         for auto tab completion.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a tab with the #untab command.\n"
+		"<178>Comment<278>: You can remove a tab with the #untab command.\n"
 	},
 	{
 		"TEXTIN",
-		"<178>Command<078>: #textin <178>{<078>filename<178>}<078> <178>{<078>delay<178>}<078>\n"
+		"<178>Command<278>: #textin <178>{<278>filename<178>}<278> <178>{<278>delay<178>}<278>\n"
 		"\n"
 		"         Textin allows the user to read in a file, and send its contents\n"
 		"         directly to the mud.  Useful for doing online creation, or message\n"
@@ -1800,21 +1810,21 @@ struct help_type help_table[] =
 		"         The delay is in seconds and takes a floating point number which is\n"
 		"         cumulatively applied to each outgoing line.\n"
 		"\n"
-		"<178>Related<078>: scan and send\n"
+		"<178>Related<278>: scan and send\n"
 	},
 	{
 		"TICKER",
-		"<178>Command<078>: #ticker <178>{<078>name<178>}<078> <178>{<078>commands<178>}<078> <178>{<078>interval in seconds<178>}<078>\n"
+		"<178>Command<278>: #ticker <178>{<278>name<178>}<278> <178>{<278>commands<178>}<278> <178>{<278>interval in seconds<178>}<278>\n"
 		"\n"
 		"         Executes given command every # of seconds.\n"
 		"\n"
-		"<178>Comment<078>: Tickers don't work in the startup session.\n"
+		"<178>Comment<278>: Tickers don't work in the startup session.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a ticker with the #unticker command.\n"
+		"<178>Comment<278>: You can remove a ticker with the #unticker command.\n"
 	},
 	{
 		"VARIABLE",
-		"<178>Command<078>: #variable <178>{<078>variable name<178>}<078> <178>{<078>text to fill variable<178>}<078>\n"
+		"<178>Command<278>: #variable <178>{<278>variable name<178>}<278> <178>{<278>text to fill variable<178>}<278>\n"
 		"\n"
 		"         Variables differ from the %0-99 arguments in the fact that you can\n"
 		"         specify a full word as a variable, and they stay in memory for the\n"
@@ -1824,20 +1834,20 @@ struct help_type help_table[] =
 		"         each session and can be accessed by adding a $ before the variable\n"
 		"         name.\n"
 		"\n"
-		"<178>Example<078>: #alias {target} {#var target %0}\n"
+		"<178>Example<278>: #alias {target} {#var target %0}\n"
 		"         #alias {x}      {kick $target}\n"
 		"\n"
 		"         The name of a variable must exist of only letters, numbers and\n"
 		"         underscores in order to be substituted.  If you do not meet these\n"
 		"         requirements do not panic, simply encapsulate the variable in braces:\n"
 		"\n"
-		"<178>Example<078>: #variable {cool website} {http://tintin.sourceforge.net}\n"
+		"<178>Example<278>: #variable {cool website} {http://tintin.sourceforge.net}\n"
 		"         #chat I was on ${cool website} yesterday!.\n"
 		"\n"
 		"         Variables can be nested using brackets or dots:\n"
 		"\n"
-		"<178>Example<078>: #var hp[self] 34;#var hp[target] 46\n"
-		"<178>Example<078>: #var hp.self  34;#var hp.target  46\n"
+		"<178>Example<278>: #var hp[self] 34;#var hp[target] 46\n"
+		"<178>Example<278>: #var hp.self  34;#var hp.target  46\n"
 		"\n"
 		"         You can see the first nest of a variable using $variable[+1] and the\n"
 		"         last nest using $variable[-1]. Using $variable[-2] will report the\n"
@@ -1847,25 +1857,25 @@ struct help_type help_table[] =
 		"         Nested variables are also known as tables, table generally being used\n"
 		"         to refer to several variables nested within one specific variable.\n"
 		"\n"
-		"<178>Example<078>: #showme {Targets starting with the letter A: $targets[A%*]\n"
+		"<178>Example<278>: #showme {Targets starting with the letter A: $targets[A%*]\n"
 		"\n"
 		"         To see the internal index of a variable use &<variable name>. To see\n"
 		"         the size of a table you would use: &targets[] or &targets[%*]. A non\n"
 		"         existent nested variable will report itself as 0.\n"
 		"\n" 
-		"<178>Example<078>: #showme {Number of targets starting with A: &targets[A%*]\n"
+		"<178>Example<278>: #showme {Number of targets starting with A: &targets[A%*]\n"
 		"\n"
 		"         In some scripts you need to know the name of a nested variable. This\n"
 		"         is also known as the key, and you can get it using *variable. For\n"
 		"         example *target[+1]. To get the first variable's name use *{+1}.\n"
 		"\n"
-		"<178>Comment<078>: Related commands are local, math, format, and list.\n"
+		"<178>Comment<278>: Related commands are local, math, format, and list.\n"
 		"\n"
-		"<178>Comment<078>: You can remove a variable with the #unvariable command.\n"
+		"<178>Comment<278>: You can remove a variable with the #unvariable command.\n"
 	},
 	{
 		"WHILE",
-		"<178>Command<078>: #while <178>{<078>conditional<178>} {<078>commands<178>}<078>\n"
+		"<178>Command<278>: #while <178>{<278>conditional<178>} {<278>commands<178>}<278>\n"
 		"\n"
 		"         This command works similar to a 'while' statement in other languages.\n"
 		"\n"
@@ -1879,21 +1889,21 @@ struct help_type help_table[] =
 		"\n"
 		"         The conditional is evaluated exactly the same as in the 'math' command.\n"
                 "\n"
-                "<178>Example<078>: #math cnt 0;#while {$cnt < 20} {#math cnt $cnt + 1;say $cnt}\n"
+                "<178>Example<278>: #math cnt 0;#while {$cnt < 20} {#math cnt $cnt + 1;say $cnt}\n"
 		"\n"
-		"<178>Comment<078>: See '#help math', for more information.\n"
+		"<178>Comment<278>: See '#help math', for more information.\n"
 	},
                                                                                                    
 	{
 		"WRITE",
-		"<178>Command<078>: #write <178>{<078>filename<178>}<078>\n"
+		"<178>Command<278>: #write <178>{<278>filename<178>}<278>\n"
 		"\n"
 		"         Writes all current actions, aliases, subs, highlights, and variables\n"
 		"         to a command file, specified by filename.\n"
 	},
 	{
 		"ZAP",
-		"<178>Command<078>: #zap {[session]}\n"
+		"<178>Command<278>: #zap {[session]}\n"
 		"\n"
 		"         Kill your current session.  If there is no current session, it will\n"
 		"         cause the program to terminate. If you provide an argument it'll zap\n"

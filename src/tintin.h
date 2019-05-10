@@ -151,7 +151,7 @@
 #define LIST_SIZE                        2
 
 #define CLIENT_NAME              "TinTin++"
-#define CLIENT_VERSION           "2.01.6  "
+#define CLIENT_VERSION           "2.01.7  "
 
 #define ESCAPE                          27
 
@@ -399,7 +399,7 @@ enum operators
 #define SES_FLAG_RUN                  BV26
 #define SES_FLAG_BIG5                 BV27
 #define SES_FLAG_UTF8                 BV28
-#define SES_FLAG_IGNORELINE           BV39
+#define SES_FLAG_IGNORELINE           BV39 // Unused
 #define SES_FLAG_CLOSED               BV30
 #define SES_FLAG_PORT                 BV31
 #define SES_FLAG_SCREENREADER         BV32
@@ -503,6 +503,11 @@ enum operators
 #define MOUSE_FLAG_WHEEL               64
 #define MOUSE_FLAG_EXTRA              128
 #define MOUSE_FLAG_UNKNOWN            256
+
+#define CURSOR_FLAG_ALWAYS              1
+#define CURSOR_FLAG_NEVER               2
+#define CURSOR_FLAG_GET_ONE             4
+#define CURSOR_FLAG_GET_ALL             8
 
 /*
 	Some macros to deal with double linked lists
@@ -693,8 +698,10 @@ struct session
 	FILE                  * logfile;
 	FILE                  * lognext_file;
 	char                  * lognext_name;
+	time_t                  lognext_time;
 	FILE                  * logline_file;
 	char                  * logline_name;
+	time_t                  logline_time;
 	struct listroot       * list[LIST_MAX];
 	int                     rows;
 	int                     cols;
@@ -724,7 +731,7 @@ struct session
 	int                     read_max;
 	long long               connect_retry;
 	int                     connect_error;
-	char                    more_output[BUFFER_SIZE * 2];
+	char                    more_output[BUFFER_SIZE];
 	char                    color[100];
 	long long               check_output;
 	int                     auto_tab;
@@ -774,6 +781,7 @@ struct tintin_data
 	int                     input_level;
 	int                     verbose_level;
 	int                     verbatim_level;
+	int                     ignore_level;
 	char                    tintin_char;
 	char                    verbatim_char;
 	char                    repeat_char;
@@ -939,6 +947,7 @@ struct cursor_type
 	char                  * name;
 	char                  * desc;
 	char                  * code;
+	int                     flags;
 	CURSOR                * fun;
 };
 
@@ -950,7 +959,8 @@ struct timer_type
 struct path_type
 {
 	char                  * name;
-	PATH                  * fun; 	
+	PATH                  * fun;
+	char                  * desc;
 };
 
 struct line_type
@@ -1134,8 +1144,7 @@ extern DO_CURSOR(cursor_delete);
 extern DO_CURSOR(cursor_delete_or_exit);
 extern DO_CURSOR(cursor_delete_word_left);
 extern DO_CURSOR(cursor_delete_word_right);
-extern DO_CURSOR(cursor_echo_on);
-extern DO_CURSOR(cursor_echo_off);
+extern DO_CURSOR(cursor_echo);
 extern DO_CURSOR(cursor_end);
 extern DO_CURSOR(cursor_enter);
 extern DO_CURSOR(cursor_exit);
@@ -1309,6 +1318,7 @@ extern DO_CLASS(class_open);
 extern DO_CLASS(class_close);
 extern DO_CLASS(class_list);
 extern DO_CLASS(class_read);
+extern DO_CLASS(class_size);
 extern DO_CLASS(class_write);
 extern DO_CLASS(class_kill);
 extern void parse_class(struct session *ses, char *input, struct listnode *group);
@@ -1880,14 +1890,20 @@ extern void do_one_line(char *line, struct session *ses);
 #define __PATH_H__
 
 extern DO_COMMAND(do_path);
-extern DO_PATH(path_del);
-extern DO_PATH(path_end);
-extern DO_PATH(path_ins);
+extern DO_PATH(path_create);
+extern DO_PATH(path_delete);
+extern DO_PATH(path_destroy);
+extern DO_PATH(path_goto);
+extern DO_PATH(path_insert);
 extern DO_PATH(path_load);
-extern DO_PATH(path_new);
+extern DO_PATH(path_map);
+extern DO_PATH(path_move);
 extern DO_PATH(path_run);
 extern DO_PATH(path_save);
-extern DO_PATH(path_show);
+extern DO_PATH(path_start);
+extern DO_PATH(path_stop);
+extern DO_PATH(path_swap);
+extern DO_PATH(path_undo);
 extern DO_PATH(path_unzip);
 extern DO_PATH(path_walk);
 extern DO_PATH(path_zip);
@@ -1895,6 +1911,11 @@ extern DO_PATH(path_zip);
 extern DO_COMMAND(do_pathdir);
 extern DO_COMMAND(do_unpathdir);
 extern void check_insert_path(char *command, struct session *ses);
+
+// old
+
+extern DO_PATH(path_new);
+extern DO_PATH(path_end);
 
 #endif
 

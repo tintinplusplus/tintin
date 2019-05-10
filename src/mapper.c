@@ -3086,7 +3086,7 @@ void search_keywords(struct session *ses, char *arg, char *out, char *var)
 	char buf[MAP_SEARCH_MAX][BUFFER_SIZE], tmp[BUFFER_SIZE];
 	int type, max;
 
-	push_call("search_keywords(%p,%p,%p,%p,%p)");
+	push_call("search_keywords(%p,%p,%p,%p)",ses,arg,out,var);
 
 	for (type = 0 ; type < MAP_SEARCH_MAX ; type++)
 	{
@@ -3809,6 +3809,8 @@ void shortest_path(struct session *ses, int run, char *delay, char *arg)
 		return;
 	}
 
+	ses->list[LIST_PATH]->update = 0;
+
 	kill_list(ses->list[LIST_PATH]);
 
 	map_search_compile(ses, arg, var);
@@ -4030,6 +4032,8 @@ void explore_path(struct session *ses, int run, char *arg1, char *arg2)
 
 		return;
 	}
+
+	ses->list[LIST_PATH]->update = 0;
 
 	kill_list(ses->list[LIST_PATH]);
 

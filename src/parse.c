@@ -728,7 +728,7 @@ void do_one_line(char *line, struct session *ses)
 
 	push_call("[%s] do_one_line(%s)",ses->name,line);
 
-	if (HAS_BIT(ses->flags, SES_FLAG_IGNORELINE))
+	if (gtd->ignore_level)
 	{
 		pop_call();
 		return;
