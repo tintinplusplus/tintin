@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2005 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
@@ -118,6 +117,10 @@ DO_CLASS(class_open)
 	}
 	else
 	{
+		if (*ses->group)
+		{
+			check_all_events(ses, SUB_ARG, 0, 1, "CLASS DEACTIVATED", ses->group);
+		}
 		RESTRING(ses->group, left);
 
 		count = atoi(ses->list[LIST_CLASS]->list[0]->pr);
@@ -126,7 +129,7 @@ DO_CLASS(class_open)
 
 		show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN OPENED AND ACTIVATED.", left);
 
-		check_all_events(gts, SUB_ARG, 0, 1, "CLASS ACTIVATED", left);
+		check_all_events(ses, SUB_ARG, 0, 1, "CLASS ACTIVATED", left);
 	}
 
 	return ses;
@@ -156,6 +159,8 @@ DO_CLASS(class_close)
 
 			if (!strcmp(ses->group, left))
 			{
+				check_all_events(ses, SUB_ARG, 0, 1, "CLASS DEACTIVATED", ses->group);
+
 				node = ses->list[LIST_CLASS]->list[0];
 
 				if (atoi(node->pr))
@@ -164,7 +169,7 @@ DO_CLASS(class_close)
 
 					show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN ACTIVATED.", node->left);
 
-					check_all_events(gts, SUB_ARG, 0, 1, "CLASS ACTIVATED", left);
+					check_all_events(ses, SUB_ARG, 0, 1, "CLASS ACTIVATED", node->left);
 				}
 				else
 				{
@@ -298,6 +303,8 @@ DO_CLASS(class_kill)
 
 	if (!strcmp(ses->group, left))
 	{
+		check_all_events(ses, SUB_ARG, 0, 1, "CLASS DEACTIVATED", ses->group);
+
 		struct listnode *node = ses->list[LIST_CLASS]->list[0];
 
 		if (node && atoi(node->pr))
@@ -306,7 +313,7 @@ DO_CLASS(class_kill)
 
 			show_message(ses, LIST_CLASS, "#CLASS {%s} HAS BEEN ACTIVATED.", node->left);
 
-			check_all_events(gts, SUB_ARG, 0, 1, "CLASS ACTIVATED", left);
+			check_all_events(ses, SUB_ARG, 0, 1, "CLASS ACTIVATED", left);
 		}
 		else
 		{

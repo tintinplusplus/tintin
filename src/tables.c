@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -88,6 +87,7 @@ struct command_type command_table[] =
 	{    "return",            do_nop,               TOKEN_TYPE_RETURN  },
 	{    "run",               do_run,               TOKEN_TYPE_COMMAND },
 	{    "scan",              do_scan,              TOKEN_TYPE_COMMAND },
+	{    "screen",            do_screen,            TOKEN_TYPE_COMMAND },
 	{    "script",            do_script,            TOKEN_TYPE_COMMAND },
 	{    "send",              do_send,              TOKEN_TYPE_COMMAND },
 	{    "session",           do_session,           TOKEN_TYPE_COMMAND },
@@ -150,7 +150,7 @@ struct list_type list_table[LIST_MAX] =
 
 struct substitution_type substitution_table[] =
 {
-//	{    "ARGUMENTS",            1  },
+	{    "ARGUMENTS",            1  },
 	{    "VARIABLES",            2  },
 	{    "FUNCTIONS",            4  },
 	{    "COLORS",               8  },
@@ -188,6 +188,13 @@ struct config_type config_table[] =
 	},
 
 	{
+		"CHILD LOCK",
+		"TinTin++ is child locked.",
+		"TinTin++ is not child locked.",
+		config_childlock
+	},
+
+	{
 		"COLOR MODE",
 		"",
 		"The color code encoding used by TinTin++",
@@ -199,6 +206,20 @@ struct config_type config_table[] =
 		"TinTin++ will properly color the start of each line",
 		"TinTin++ will leave color handling to the server",
 		config_colorpatch
+	},
+
+	{
+		"COMMAND COLOR",
+		"",
+		"The color of echoed commands",
+		config_commandcolor
+	},
+
+	{
+		"COMMAND ECHO",
+		"Your commands are echoed in split mode",
+		"Your commands are not echoed in split mode",
+		config_commandecho
 	},
 
 	{
@@ -221,22 +242,6 @@ struct config_type config_table[] =
 		"You do not see telnet negotatiations",
 		config_debugtelnet
 	},
-
-	{
-		"COMMAND COLOR",
-		"",
-		"The color of echoed commands",
-		config_commandcolor
-	},
-
-	{
-		"COMMAND ECHO",
-		"Your commands are echoed in split mode",
-		"Your commands are not echoed in split mode",
-		config_commandecho
-	},
-
-
 
 	{
 		"HISTORY SIZE",
@@ -544,6 +549,7 @@ struct map_type map_table[] =
 	{     "FIND",             map_find,            2    },
 	{     "FLAG",             map_flag,            1    },
 	{     "GET",              map_get,             2    },
+	{     "GLOBAL",           map_global,          1    },
 	{     "GOTO",             map_goto,            1    },
 	{     "INFO",             map_info,            1    },
 	{     "INSERT",           map_insert,          2    },
@@ -662,7 +668,7 @@ struct cursor_type cursor_table[] =
 	{
 		"DELETE",
 		"Delete character at cursor",
-		"[3~",
+		"\e[3~",
 		CURSOR_FLAG_GET_ALL,
 		cursor_delete
 	},
@@ -767,7 +773,7 @@ struct cursor_type cursor_table[] =
 	{
 		"MIXED TAB BACKWARD",
 		"Tab completion on last word, search backward",
-		"[Z", // shift-tab
+		"\e[Z", // shift-tab
 		CURSOR_FLAG_GET_ALL,
 		cursor_mixed_tab_backward
 	},
@@ -781,7 +787,7 @@ struct cursor_type cursor_table[] =
 	{
 		"NEXT WORD",
 		"Move cursor to the next word",
-		"f",
+		"\ef",
 		CURSOR_FLAG_GET_ALL,
 		cursor_right_word
 	},
@@ -795,7 +801,7 @@ struct cursor_type cursor_table[] =
 	{
 		"PREV WORD",
 		"Move cursor to the previous word",
-		"b",
+		"\eb",
 		CURSOR_FLAG_GET_ALL,
 		cursor_left_word
 	},
@@ -837,85 +843,85 @@ struct cursor_type cursor_table[] =
 	{
 		"WINDOW FOCUS IN",
 		"Window is focussed in event",
-		"[I",
+		"\e[I",
 		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_ALWAYS,
 		cursor_win_focus_in
 	},
 	{
 		"WINDOW FOCUS OUT",
 		"Window is focussed out event",
-		"[O",
+		"\e[O",
 		CURSOR_FLAG_GET_ALL|CURSOR_FLAG_ALWAYS,
 		cursor_win_focus_out
 	},
 	{
-		"", "", "[5~",   0, cursor_buffer_up
+		"", "", "\e[5~",  0, cursor_buffer_up
 	},
 	{
-		"", "", "[6~",   0, cursor_buffer_down
+		"", "", "\e[6~",  0, cursor_buffer_down
 	},
 	{
 		"", "", "",      0, cursor_buffer_lock
 	},
 	{
-		"", "", "OM",    0, cursor_enter
+		"", "", "\eOM",   0, cursor_enter
 	},
 	{
-		"", "", "[7~",   0, cursor_home
+		"", "", "\e[7~",  0, cursor_home
 	},
 	{
-		"", "", "[1~",   0, cursor_home
+		"", "", "\e[1~",  0, cursor_home
 	},
 	{
-		"", "", "OH",    0, cursor_home
+		"", "", "\eOH",   0, cursor_home
 	},
 	{
-		"", "", "[H",    0, cursor_home
+		"", "", "\e[H",   0, cursor_home
 	},
 	{
-		"", "", "OD",    0, cursor_left
+		"", "", "\eOD",   0, cursor_left
 	},
 	{
-		"", "", "[D",    0, cursor_left
+		"", "", "\e[D",   0, cursor_left
 	},
 	{
-		"", "", "[8~",   0, cursor_end
+		"", "", "\e[8~",  0, cursor_end
 	},
 	{
-		"", "", "[4~",   0, cursor_end
+		"", "", "\e[4~",  0, cursor_end
 	},
 	{
-		"", "", "OF",    0, cursor_end
+		"", "", "\eOF",   0, cursor_end
 	},
 	{
-		"", "", "[F",    0, cursor_end
+		"", "", "\e[F",   0, cursor_end
 	},
 	{
-		"", "", "OC",    0, cursor_right
+		"", "", "\eOC",   0, cursor_right
 	},
 	{
-		"", "", "[C",    0, cursor_right
+		"", "", "\e[C",   0, cursor_right
 	},
 	{
-		"", "", "",      0, cursor_backspace
+		"", "", "\x7F",   0, cursor_backspace
 	},
 	{
-		"", "", "OB",    0, cursor_history_next
+		"", "", "\eOB",   0, cursor_history_next
 	},
 	{
-		"", "", "[B",    0, cursor_history_next
+		"", "", "\e[B",   0, cursor_history_next
 	},
 	{
-		"", "", "OA",    0, cursor_history_prev
+		"", "", "\eOA",   0, cursor_history_prev
 	},
 	{
-		"", "", "[A",    0, cursor_history_prev
+		"", "", "\e[A",   0, cursor_history_prev
 	},
 	{
-		"", "", "",     0, cursor_delete_word_left
+		"", "", "\e\x7F", 0, cursor_delete_word_left
 	},
 	{
-		"", "", "d",     0, cursor_delete_word_right
+		"", "", "\ed",    0, cursor_delete_word_right
 	},
 	{
 		"", "", "",       0, NULL
@@ -942,6 +948,8 @@ struct event_type event_table[] =
 {
 	{    "CATCH ",                                 "Triggers on catch events."               },
 	{    "CHAT MESSAGE",                           "Triggers on any chat related message."   },
+	{    "CLASS ACTIVATED",                        "Triggers on class activations."          },
+	{    "CLASS DEACTIVATED",                      "Triggers on class deactivations."        },
 	{    "DATE",                                   "Triggers on the given date."             },
 	{    "DAY",                                    "Triggers each day or given day."         },
 	{    "DOUBLE-CLICKED ",                        "Triggers when mouse is double-clicked"   },
@@ -949,10 +957,17 @@ struct event_type event_table[] =
 	{    "END OF PATH",                            "Triggers when walking the last room."    },
 	{    "IAC ",                                   "Triggers on telopt negotiation."         },
 	{    "LONG-CLICKED ",                          "Triggers when mouse is long-clicked."    },
+	{    "MAP DOUBLE-CLICKED ",                    "Triggers on vt map click."               },
 	{    "MAP ENTER MAP",                          "Triggers when entering the map."         },
 	{    "MAP ENTER ROOM",                         "Triggers when entering a map room."      },
 	{    "MAP EXIT MAP",                           "Triggers when exiting the map."          },
 	{    "MAP EXIT ROOM",                          "Triggers when exiting a map room."       },
+	{    "MAP LONG-CLICKED ",                      "Triggers on vt map click."               },
+	{    "MAP PRESSED ",                           "Triggers on vt map click."               },
+	{    "MAP RELEASED ",                          "Triggers on vt map click."               },
+	{    "MAP SHORT-CLICKED ",                     "Triggers on vt map click."               },
+	{    "MAP TRIPLE-CLICKED ",                    "Triggers on vt map click."               },
+	{    "MAP UPDATED VTMAP",                      "Triggers on vt map update."              },
 	{    "MINUTE",                                 "Triggers each minute or given minute."   },
 	{    "MONTH",                                  "Triggers each month or given month."     },
 	{    "MOVED ",                                 "Triggers when mouse is moved."           },
@@ -963,6 +978,7 @@ struct event_type event_table[] =
 	{    "PROGRAM START",                          "Triggers when main session starts."      },
 	{    "PROGRAM TERMINATION",                    "Triggers when main session exists."      },
 	{    "RECEIVED INPUT",                         "Triggers when new input is received."    },
+	{    "RECEIVED KEYPRESS",                      "Triggers when a keypress is received."   },
 	{    "RECEIVED LINE",                          "Triggers when a new line is received."   },
 	{    "RECEIVED OUTPUT",                        "Triggers when new output is received."   },
 	{    "RECEIVED PROMPT",                        "Triggers when a prompt is received."     },
@@ -984,6 +1000,7 @@ struct event_type event_table[] =
 	{    "SHORT-CLICKED",                          "Triggers when mouse is short-clicked."   },
 	{    "TIME",                                   "Triggers on the given time."             },
 	{    "TRIPLE-CLICKED",                         "Triggers when mouse is triple-clicked."  },
+	{    "UNKNOWN COMMAND",                        "Triggers on unknown tintin command."     },
 	{    "VARIABLE UPDATE ",                       "Triggers on a variable update."          },
 	{    "VT100 CPR",                              "Triggers on an ESC [ 6 n call."          },
 	{    "VT100 DA",                               "Triggers on an ESC [ c call."            },
@@ -1001,6 +1018,7 @@ struct path_type path_table[] =
 {
 	{    "CREATE",            path_create,         "Clear the path and start path mapping."         },
 	{    "DELETE",            path_delete,         "Delete the last command from the path."         },
+	{    "DESCRIBE",          path_describe,       "Describe the path and current position."        },
 	{    "DESTROY",           path_destroy,        "Clear the path and stop path mapping."          },
 	{    "END",               path_end,            ""                                               },
 	{    "GOTO",              path_goto,           "Move position to given index."                  },
@@ -1109,7 +1127,7 @@ struct telopt_type telopt_table[] =
 	{    "NEW-ENVIRON",       TEL_N,               NEG_U },
 	{    "TN3270E",           TEL_N,               NEG_U }, /* 40 */
 	{    "XAUTH",             TEL_N,               NEG_U },
-	{    "CHARSET",           TEL_N,               NEG_U },
+	{    "CHARSET",           TEL_Y,               NEG_U },
 	{    "RSP",               TEL_N,               NEG_U },
 	{    "COM PORT",          TEL_N,               NEG_U },
 	{    "SLE",               TEL_N,               NEG_U },
@@ -1154,7 +1172,7 @@ struct telopt_type telopt_table[] =
 	{    "84",                TEL_N,               NEG_U },
 	{    "MCCP1",             TEL_N,               NEG_U }, /* Obsolete */
 	{    "MCCP2",             TEL_Y,               NEG_U }, /* Mud Client Compression Protocol */
-	{    "87",                TEL_N,               NEG_U },
+	{    "MCCP3",             TEL_N,               NEG_U },
 	{    "88",                TEL_N,               NEG_U },
 	{    "89",                TEL_N,               NEG_U },
 	{    "MSP",               TEL_N,               NEG_U }, /* Mud Sound Protocl */
@@ -1267,7 +1285,7 @@ struct telopt_type telopt_table[] =
 	{    "197",               TEL_N,               NEG_U },
 	{    "198",               TEL_N,               NEG_U },
 	{    "199",               TEL_N,               NEG_U },
-	{    "200",               TEL_N,               NEG_U }, /* Used by Achaea */
+	{    "ATCP",              TEL_N,               NEG_U }, /* Achaea Telnet Communication Protocol */
 	{    "GMCP",              TEL_N,               NEG_U }, /* Generic Mud Communication Protocol */
 	{    "202",               TEL_N,               NEG_U },
 	{    "203",               TEL_N,               NEG_U },

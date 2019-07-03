@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2006 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -73,7 +72,19 @@ void process_input(void)
 
 	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 
-	gtd->ses = script_driver(gtd->ses, LIST_COMMAND, gtd->input_buf);
+	if (check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "CATCH RECEIVED INPUT", gtd->input_buf))
+	{
+		return;
+	}
+
+	if (HAS_BIT(gtd->flags, TINTIN_FLAG_CHILDLOCK))
+	{
+		write_mud(gtd->ses, gtd->input_buf, SUB_EOL);
+	}
+	else
+	{
+		gtd->ses = script_driver(gtd->ses, LIST_COMMAND, gtd->input_buf);
+	}
 
 	if (IS_SPLIT(gtd->ses))
 	{
@@ -88,7 +99,7 @@ void read_line()
 	char buffer[STRING_SIZE];
 	struct listnode *node;
 	struct listroot *root;
-	int len, cnt, match, val[3];
+	int len, cnt, size, match, val[3], width, index;
 
 	gtd->input_buf[gtd->input_len] = 0;
 
@@ -98,7 +109,7 @@ void read_line()
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA) || HAS_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR))
 	{
-		convert_meta(buffer, &gtd->macro_buf[strlen(gtd->macro_buf)]);
+		convert_meta(buffer, &gtd->macro_buf[strlen(gtd->macro_buf)], FALSE);
 	}
 	else
 	{
@@ -191,57 +202,96 @@ void read_line()
 		}
 	}
 
+	if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && is_utf8_head(gtd->macro_buf))
+	{
+		if (get_utf8_size(gtd->macro_buf) == 1)
+		{
+			return;
+		}
+	}
+
 	if (gtd->macro_buf[0] == ESCAPE)
 	{
 		strcpy(buffer, gtd->macro_buf);
 
-		convert_meta(buffer, gtd->macro_buf);
+		convert_meta(buffer, gtd->macro_buf, FALSE);
 	}
 
-	for (cnt = 0 ; gtd->macro_buf[cnt] ; cnt++)
+	get_utf8_index(gtd->macro_buf, &index);
+
+	check_all_events(gtd->ses, SUB_ARG, 0, 2, "RECEIVED KEYPRESS", gtd->macro_buf, ntos(index));
+
+	if (check_all_events(gtd->ses, SUB_ARG, 0, 2, "CATCH RECEIVED KEYPRESS", gtd->macro_buf, ntos(index)))
 	{
-		switch (gtd->macro_buf[cnt])
+		gtd->macro_buf[0] = 0;
+		return;
+	}
+
+	while (gtd->macro_buf[0])
+	{
+		switch (gtd->macro_buf[0])
 		{
-			case 10:
+			case '\r':
+			case '\n':
 				cursor_enter(gtd->ses, "");
+
+				memmove(gtd->macro_buf, &gtd->macro_buf[1], 1 + strlen(&gtd->macro_buf[1]));
 				break;
 
 			default:
-				if (HAS_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT) && gtd->input_len != gtd->input_cur)
+				if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && gtd->macro_buf[0] & 128 && gtd->macro_buf[1])
 				{
-					if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->macro_buf[cnt] & 192) != 128)
+					size = get_utf8_width(gtd->macro_buf, &width);
+
+					if (HAS_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT) && gtd->input_len != gtd->input_cur)
 					{
-						cursor_delete(gtd->ses, "");
+						if (width)
+						{
+							cursor_delete(gtd->ses, "");
+						}
 					}
-				}
 
-				ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[cnt]);
+					ins_sprintf(&gtd->input_buf[gtd->input_cur], "%.*s", size, gtd->macro_buf);
 
-				gtd->input_len++;
-				gtd->input_cur++;
+					gtd->input_pos += width;
+					gtd->input_cur += size;
+					gtd->input_len += size;
 
-				if (!HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) || (gtd->macro_buf[cnt] & 192) != 128)
-				{
-					gtd->input_pos++;
-				}
-
-				if (gtd->input_len != gtd->input_cur)
-				{
-					if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->macro_buf[cnt] & 192) == 128)
+					if (width && gtd->input_len != gtd->input_cur)
 					{
-						input_printf("%c", gtd->macro_buf[cnt]);
+						input_printf("\e[%d@%.*s", width, size, gtd->macro_buf);
 					}
 					else
 					{
-						input_printf("\e[1@%c", gtd->macro_buf[cnt]);
+						input_printf("%.*s", size, gtd->macro_buf);
 					}
+					memmove(gtd->macro_buf, &gtd->macro_buf[size], 1 + strlen(&gtd->macro_buf[size]));
 				}
 				else
 				{
-					input_printf("%c", gtd->macro_buf[cnt]);
+					if (HAS_BIT(gtd->flags, TINTIN_FLAG_INSERTINPUT) && gtd->input_len != gtd->input_cur)
+					{
+						cursor_delete(gtd->ses, "");
+					}
+
+					ins_sprintf(&gtd->input_buf[gtd->input_cur], "%c", gtd->macro_buf[0]);
+
+					gtd->input_len++;
+					gtd->input_cur++;
+					gtd->input_pos++;
+
+					if (gtd->input_len != gtd->input_cur)
+					{
+						input_printf("\e[1@%c", gtd->macro_buf[0]);
+					}
+					else
+					{
+						input_printf("%c", gtd->macro_buf[0]);
+					}
+					memmove(gtd->macro_buf, &gtd->macro_buf[1], 1 + strlen(&gtd->macro_buf[1]));
 				}
 
-				gtd->macro_buf[0] = 0;
+//				gtd->macro_buf[0] = 0;
 				gtd->input_tmp[0] = 0;
 				gtd->input_buf[gtd->input_len] = 0;
 
@@ -280,7 +330,7 @@ void read_key(void)
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_CONVERTMETA) || HAS_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR))
 	{
-		convert_meta(buffer, &gtd->macro_buf[strlen(gtd->macro_buf)]);
+		convert_meta(buffer, &gtd->macro_buf[strlen(gtd->macro_buf)], FALSE);
 	}
 	else
 	{
@@ -368,7 +418,7 @@ void read_key(void)
 	}
 }
 
-void convert_meta(char *input, char *output)
+void convert_meta(char *input, char *output, int eol)
 {
 	char *pti, *pto;
 
@@ -407,6 +457,12 @@ void convert_meta(char *input, char *output)
 				pti++;
 				break;
 
+			case '\f':
+				*pto++ = '\\';
+				*pto++ = 'f';
+				pti++;
+				break;
+
 			case '\t':
 				*pto++ = '\\';
 				*pto++ = 't';
@@ -414,12 +470,26 @@ void convert_meta(char *input, char *output)
 				break;
 
 			case '\r':
+				if (eol)
+				{
+					*pto++ = '\\';
+					*pto++ = 'r';
+				}
+				*pto++ = *pti++;
+				break;
+
+			case '\v':
 				*pto++ = '\\';
-				*pto++ = 'r';
+				*pto++ = 'v';
 				pti++;
 				break;
 
 			case '\n':
+				if (eol)
+				{
+					*pto++ = '\\';
+					*pto++ = 'n';
+				}
 				*pto++ = *pti++;
 				break;
 
@@ -503,7 +573,7 @@ void unconvert_meta(char *input, char *output)
 					case 'x':
 						if (pti[2] && pti[3])
 						{
-							*pto++ = hex_number(&pti[2]);
+							*pto++ = hex_number_8bit(&pti[2]);
 							pti += 4;
 						}
 						else
@@ -592,6 +662,7 @@ void echo_command(struct session *ses, char *line)
 	else
 	{
 		add_line_buffer(ses, buffer, -1);
+		add_line_screen(buffer);
 	}
 }
 

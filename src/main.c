@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -37,7 +36,7 @@ struct tintin_data *gtd;
 
 void pipe_handler(int signal)
 {
-//	restore_terminal();
+//	reset_terminal();
 
 //	clean_screen(gtd->ses);
 
@@ -54,11 +53,11 @@ void winch_handler(int signal)
 {
 	struct session *ses;
 
-	init_screen_size(gts);
+	init_terminal_size(gts);
 
 	for (ses = gts->next ; ses ; ses = ses->next)
 	{
-		init_screen_size(ses);
+		init_terminal_size(ses);
 
 		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
 		{
@@ -87,7 +86,7 @@ void abort_handler(int signal)
 	}
 	crashed = TRUE;
 
-	restore_terminal();
+	reset_terminal();
 
 	clean_screen(gtd->ses);
 
@@ -116,11 +115,11 @@ void interrupt_handler(int signal)
 
 void suspend_handler(int signal)
 {
-	printf("\e[r\e[%d;%dH", gtd->ses->rows, 1);
+	printf("\e[r\e[%d;%dH", gtd->screen->rows, 1);
 
 	fflush(NULL);
 
-	restore_terminal();
+	reset_terminal();
 
 	kill(0, SIGSTOP);
 
@@ -141,7 +140,7 @@ void trap_handler(int signal)
 	}
 	crashed = TRUE;
 
-	restore_terminal();
+	reset_terminal();
 
 	clean_screen(gtd->ses);
 
@@ -160,7 +159,7 @@ void trap_handler(int signal)
 
 int main(int argc, char **argv)
 {
-	int greeting = TRUE;
+	int c, i = 0, greeting = 0;
 	char filename[256];
 	char arg[BUFFER_SIZE];
 
@@ -208,16 +207,47 @@ int main(int argc, char **argv)
 		syserr("signal SIGWINCH");
 	}
 
+	for (c = 0 ; c < argc ; c++)
+	{
+		if (c)
+		{
+			cat_sprintf(arg, " %s", argv[c]);
+		}
+		{
+			strcpy(arg, argv[0]);
+		}
+	}
+
 	if (argc > 1)
 	{
-		int c;
-
-		while ((c = getopt(argc, argv, "a: e: G h r: s: t: v")) != EOF)
+		while ((c = getopt(argc, argv, "a: e: G h r: s t: v")) != EOF)
 		{
 			switch (c)
 			{
+				case 'h':
+					init_tintin(STARTUP_FLAG_NOGREETING|STARTUP_FLAG_NOCLEAN);
+
+					tintin_printf(NULL, "Usage: %s [OPTION]... [FILE]...", argv[0]);
+					tintin_printf(NULL, "");
+					tintin_printf(NULL, "  -a  Set argument for PROGRAM START event.");
+					tintin_printf(NULL, "  -e  Execute given command.");
+					tintin_printf(NULL, "  -G  Don't show the greeting screen.");
+					tintin_printf(NULL, "  -h  This help section.");
+					tintin_printf(NULL, "  -r  Read given file.");
+					tintin_printf(NULL, "  -s  Enable screen reader mode.");
+					tintin_printf(NULL, "  -t  Set given title.");
+					tintin_printf(NULL, "  -v  Enable verbose mode.");
+
+					reset_terminal();
+					exit(1);
+					break;
+
 				case 'G':
-					greeting = FALSE;
+					SET_BIT(greeting, STARTUP_FLAG_NOGREETING);
+					break;
+
+				case 's':
+					SET_BIT(greeting, STARTUP_FLAG_SCREENREADER);
 					break;
 			}
 		}
@@ -237,13 +267,15 @@ int main(int argc, char **argv)
 		}
 	}
 
+	RESTRING(gtd->vars[1], argv[0]);
+
 	if (argc > 1)
 	{
-		int c;
-
 		optind = 1;
 
-		while ((c = getopt(argc, argv, "a: e: G h r: s: t: v")) != EOF)
+		RESTRING(gtd->vars[2], argv[1]);
+
+		while ((c = getopt(argc, argv, "a: e: G h r: s t: v")) != EOF)
 		{
 			switch (c)
 			{
@@ -260,23 +292,11 @@ int main(int argc, char **argv)
 				case 'G':
 					break;
 
-				case 'h':
-					tintin_printf(NULL, "Usage: %s [OPTION]... [FILE]...", argv[0]);
-					tintin_printf(NULL, "");
-					tintin_printf(NULL, "  -a  Set argument for PROGRAM START event.");
-					tintin_printf(NULL, "  -e  Execute given command.");
-					tintin_printf(NULL, "  -G  Don't show the greeting screen.");
-					tintin_printf(NULL, "  -h  This help section.");
-					tintin_printf(NULL, "  -r  Read given file.");
-					tintin_printf(NULL, "  -t  Set given title.");
-					tintin_printf(NULL, "  -v  Enable verbose mode.");
-
-					restore_terminal();
-					exit(1);
-					break;
-
 				case 'r':
 					gtd->ses = do_read(gtd->ses, optarg);
+					break;
+
+				case 's':
 					break;
 
 				case 't':
@@ -293,14 +313,41 @@ int main(int argc, char **argv)
 			}
 		}
 
+		if (argc > 2)
+		{
+			RESTRING(gtd->vars[3], argv[2]);
+
+			for (i = 3 ; i <= optind ; i++)
+			{
+				RESTRING(gtd->vars[i+1], argv[i] ? argv[i] : "");
+			}
+
+			arg[0] = 0;
+
+			for (i = optind + 1 ; i < argc ; i++)
+			{
+				if (*arg)
+				{
+					strcat(arg, " ");
+				}
+				strcat(arg, argv[i]);
+
+				if (i < 100)
+				{
+					RESTRING(gtd->vars[i+1], argv[i]);
+				}
+			}
+			RESTRING(gtd->vars[0], arg);
+		}
+
 		if (argv[optind] != NULL)
 		{
 			gtd->ses = do_read(gtd->ses, argv[optind]);
 		}
 	}
 
-	check_all_events(gts, SUB_ARG, 0, 3, "PROGRAM START", CLIENT_NAME, CLIENT_VERSION, arg);
-	check_all_events(gts, SUB_ARG, 0, 2, "SCREEN RESIZE", ntos(gts->cols), ntos(gts->rows));
+	check_all_events(gts, SUB_ARG, 0, 0, "PROGRAM START");
+	check_all_events(gts, SUB_ARG, 0, 2, "SCREEN RESIZE", ntos(gtd->screen->cols), ntos(gtd->screen->rows));
 
 	mainloop();
 
@@ -335,10 +382,9 @@ void init_tintin(int greeting)
 	gts->lognext_name   = strdup("");
 	gts->logline_name   = strdup("");
 
-
 	gtd->flags          = TINTIN_FLAG_INHERITANCE;
 
-	gtd->mccp_len       = 4096;
+	gtd->mccp_len       = 10000;
 	gtd->mccp_buf       = (unsigned char *) calloc(1, gtd->mccp_len);
 
 	gtd->mud_output_max = 16384;
@@ -368,7 +414,7 @@ void init_tintin(int greeting)
 		}
 	}
 
-	init_screen_size(gts);
+	init_terminal_size(gts);
 
 	init_local(gts);
 
@@ -387,11 +433,19 @@ void init_tintin(int greeting)
 	do_configure(gts, "{HISTORY SIZE}     {1000}");
 	do_configure(gts, "{LOG}               {RAW}");
 	do_configure(gts, "{MOUSE TRACKING}    {OFF}");
-	do_configure(gts, "{PACKET PATCH}     {0.00}");
+	do_configure(gts, "{PACKET PATCH}     {0.10}");
 	do_configure(gts, "{RANDOM SEED}      {AUTO}");
 	do_configure(gts, "{REPEAT CHAR}         {!}");
 	do_configure(gts, "{REPEAT ENTER}      {OFF}");
-	do_configure(gts, "{SCREEN READER}     {OFF}");
+
+	if (HAS_BIT(greeting, STARTUP_FLAG_SCREENREADER))
+	{
+		do_configure(gts, "{SCREEN READER}     {ON}");
+	}
+	else
+	{
+		do_configure(gts, "{SCREEN READER}     {OFF}");
+	}
 	do_configure(gts, "{SCROLL LOCK}        {ON}");
 	do_configure(gts, "{SPEEDWALK}         {OFF}");
 	do_configure(gts, "{TINTIN CHAR}         {#}");
@@ -416,21 +470,39 @@ void init_tintin(int greeting)
 
 	init_terminal();
 
-	if (greeting)
+	if (!HAS_BIT(greeting, STARTUP_FLAG_NOCLEAN))
 	{
-		do_advertise(gts, "");
+		clean_screen(gts);
+	}
 
-		if (gts->cols >= 80)
+	if (!HAS_BIT(greeting, STARTUP_FLAG_NOGREETING))
+	{
+		if (HAS_BIT(greeting, STARTUP_FLAG_SCREENREADER))
 		{
-			do_help(gts, "GREETING");
+			tintin_printf2(gts, "Welcome to TinTin Plus Plus. Don't know which MUD to play? How about the following MUD.");
+
+			do_advertise(gts, "");
+
+			tintin_printf2(gts, "You're using TinTin Plus Plus written by Peter Unold, Bill Reis, and Igor van den Hoven.", CLIENT_VERSION);
+
+			tintin_printf2(gts, "For help and requests visit tintin.sourceforge.io/forum the captcha answer is 3671.");
 		}
 		else
 		{
-			tintin_printf2(gts,
-				"\e[0;37mT I N T I N + +   %s"
-				"\n\n\e[0;36mT\e[0;37mhe K\e[0;36mi\e[0;37mcki\e[0;36mn\e[0;37m \e[0;36mT\e[0;37mickin D\e[0;36mi\e[0;37mkuMUD Clie\e[0;36mn\e[0;37mt\n\n"
-				"Code by Peter Unold, Bill Reis, and Igor van den Hoven\n",
-				CLIENT_VERSION);
+			do_advertise(gts, "");
+
+			if (gtd->screen->cols >= 80)
+			{
+				do_help(gts, "GREETING");
+			}
+			else
+			{
+				tintin_printf2(gts,
+					"\e[0;37mT I N T I N + +   %s"
+					"\n\n\e[0;36mT\e[0;37mhe K\e[0;36mi\e[0;37mcki\e[0;36mn\e[0;37m \e[0;36mT\e[0;37mickin D\e[0;36mi\e[0;37mkuMUD Clie\e[0;36mn\e[0;37mt\n\n"
+					"Code by Peter Unold, Bill Reis, and Igor van den Hoven\n",
+					CLIENT_VERSION);
+			}
 		}
 	}
 }
@@ -463,7 +535,7 @@ void quitmsg(char *message)
 		history_write(gts, filename);
 	}
 
-	restore_terminal();
+	reset_terminal();
 
 	clean_screen(gts);
 

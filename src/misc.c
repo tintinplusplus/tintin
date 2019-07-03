@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -49,7 +48,7 @@ DO_COMMAND(do_commands)
 		{
 			continue;
 		}
-		if ((int) strlen(buf) + 20 > ses->cols)
+		if ((int) strlen(buf) + 20 > gtd->screen->cols)
 		{
 			tintin_puts2(ses, buf);
 			buf[0] = 0;
@@ -97,7 +96,7 @@ DO_COMMAND(do_echo)
 
 			substitute(ses, left, temp, SUB_COL|SUB_ESC);
 
-			do_one_prompt(ses, temp, row);
+			do_one_prompt(ses, temp, row, 0);
 
 			return ses;
 		}
@@ -188,19 +187,20 @@ DO_COMMAND(do_send)
 
 DO_COMMAND(do_showme)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[STRING_SIZE], *output;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], temp[STRING_SIZE], *output;
 	int lnf;
 
-	arg = get_arg_in_braces(ses, arg, left, TRUE);
+	arg = get_arg_in_braces(ses, arg, arg1, TRUE);
 
-	lnf = !str_suffix(left, "\\");
+	lnf = !str_suffix(arg1, "\\");
 
-	substitute(ses, left, temp, SUB_VAR|SUB_FUN);
-	substitute(ses, temp, left, SUB_COL|SUB_ESC);
+	substitute(ses, arg1, temp, SUB_VAR|SUB_FUN);
+	substitute(ses, temp, arg1, SUB_COL|SUB_ESC);
 
-	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
 
-	do_one_line(left, ses);
+	do_one_line(arg1, ses);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
 	{
@@ -208,27 +208,27 @@ DO_COMMAND(do_showme)
 
 		gtd->ignore_level++;
 
-		show_info(ses, LIST_GAG, "#INFO GAG {%s}", left);
+		show_info(ses, LIST_GAG, "#INFO GAG {%s}", arg1);
 
 		gtd->ignore_level--;
 
 		return ses;
 	}
 
-	if (*right)
+	if (*arg2)
 	{
-		do_one_prompt(ses, left, (int) get_number(ses, right));
+		do_one_prompt(ses, arg1, (int) get_number(ses, arg2), (int) get_number(ses, arg3));
 
 		return ses;
 	}
 
 	if (strip_vt102_strlen(ses, ses->more_output) != 0)
 	{
-		output = str_dup_printf("\n\e[0m%s\e[0m", left);
+		output = str_dup_printf("\n\e[0m%s\e[0m", arg1);
 	}
 	else
 	{
-		output = str_dup_printf("\e[0m%s\e[0m", left);
+		output = str_dup_printf("\e[0m%s\e[0m", arg1);
 	}
 
 	add_line_buffer(ses, output, lnf);
@@ -257,55 +257,16 @@ DO_COMMAND(do_showme)
 
 DO_COMMAND(do_test)
 {
-	long long x, time1, time2;
-	time_t time3;
-	char *str, buf[100001];
+	char pts;
+	unsigned char ptu;
 
-	time3 = time(NULL);
+	pts = 140;
+	ptu = 140;
 
-	tintin_printf2(ses, "size: %d time: %d", sizeof(time_t), time3);
-
-	return ses;
-
-	tintin_printf2(ses, "  input_level %d", gtd->input_level);
-	tintin_printf2(ses, "verbose_level %d", gtd->verbose_level);
-	tintin_printf2(ses, "  quiet_level %d", gtd->quiet);
-	tintin_printf2(ses, "  debug_level %d", gtd->debug_level);
-
-	return ses;
-
-	tintin_printf2(ses, "testing");
-
-	buf[0] = 0;
-
-	time1 = utime();
-
-	str = buf;
-
-	for (x = 0 ; x < 100000 ; x++)
-	{
-		*str++ = '*';
-	}
-	*str = 0;
-
-	time2 = utime();
-
-	tintin_printf(ses, "time for strcat: %lld %d", time2 - time1, strlen(buf));
-
-	str = str_dup("");
-
-	time1 = utime();
-
-	for (x = 0 ; x < 100000 ; x++)
-	{
-		str_cpy_printf(&str, "%c", '*');
-	}
-
-	time2 = utime();
-
-	tintin_printf(ses, "time for str_cat: %lld %d", time2 - time1, strlen(str));
-
-	str_free(str);
+	printf("pts: %d %d\n", pts, (unsigned char) pts);
+	printf("ptu: %d %d\n", (signed char) ptu, ptu);
+	printf("pts: %d %d\n", pts, (unsigned int) pts);
+	printf("ptu: %d %d\n", (signed int) ptu, ptu);
 
 	return ses;
 }

@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -233,30 +232,37 @@ DO_COMMAND(do_replace)
 	support routines for #format
 */
 
+void numbertocharacter(struct session *ses, char *str)
+{
+	if (get_number(ses, str) < 128)
+	{
+		sprintf(str, "%c", (int) get_number(ses, str));
+	}
+	else if (HAS_BIT(ses->flags, SES_FLAG_BIG5))
+	{
+		sprintf(str, "%c%c", (unsigned int) get_number(ses, str) % 256, (unsigned int) get_number(ses, str) / 256);
+	}
+	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
+	{
+		unicode_to_utf8((int) get_number(ses, str), str);
+	}
+	else
+	{
+		sprintf(str, "%c", (int) get_number(ses, str));
+	}
+}
+
 void charactertonumber(struct session *ses, char *str)
 {
-	unsigned int result;
+	int result;
 
-	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && str[0] & 128)
+	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && is_big5(str))
 	{
 		result = (unsigned char) str[0] + (unsigned char) str[1] * 256;
 	}
-	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (str[0] & 192) == 192)
+	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && is_utf8_head(str))
 	{
-		result = (unsigned char) str[0];
-
-		if ((str[1] & 192) == 128)
-		{
-			result += (unsigned char) str[1] * 256;
-		}
-		if ((str[2] & 192) == 128)
-		{
-			result += (unsigned char) str[2] * 256 * 256;
-		}
-		if ((str[3] & 192) == 128)
-		{
-			result += (unsigned char) str[3] * 256 * 256 * 256;
-		}
+		get_utf8_index(str, &result);
 	}
 	else
 	{
@@ -280,16 +286,16 @@ void headerstring(char *str)
 {
 	char buf[BUFFER_SIZE];
 
-	if ((int) strlen(str) > gtd->ses->cols - 2)
+	if ((int) strlen(str) > gtd->screen->cols - 2)
 	{
-		str[gtd->ses->cols - 2] = 0;
+		str[gtd->screen->cols - 2] = 0;
 	}
 
-	memset(buf, '#', gtd->ses->cols);
+	memset(buf, '#', gtd->screen->cols);
 
-	memcpy(&buf[(gtd->ses->cols - strlen(str)) / 2], str, strlen(str));
+	memcpy(&buf[(gtd->screen->cols - strlen(str)) / 2], str, strlen(str));
 
-	buf[gtd->ses->cols] = 0;
+	buf[gtd->screen->cols] = 0;
 
 	strcpy(str, buf);
 }
@@ -312,6 +318,13 @@ void upperstring(char *str)
 	{
 		*pts = toupper((int) *pts);
 	}
+}
+
+void hexstring(char *str)
+{
+	unsigned long long result = hex_number_64bit(str);
+
+	unicode_to_utf8(result, str);
 }
 
 void reversestring(char *str)
@@ -405,7 +418,7 @@ void stripspaces(char *str)
 void wrapstring(struct session *ses, char *str)
 {
 	char *pti, *lis, *sos, *soc, buf[BUFFER_SIZE], color[BUFFER_SIZE], tmp[BUFFER_SIZE], sec[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
-	int col = 1, cnt = 1, len;
+	int col = 1, cnt = 1, len, size, width;
 
 	push_call("wrapstring(%p,%p)",ses,str);
 
@@ -426,12 +439,12 @@ void wrapstring(struct session *ses, char *str)
 		if (len <= 0)
 		{
 			show_error(ses, LIST_VARIABLE, "#FORMAT %w: INVALID LENTGH {%s}", right);
-			len = ses->cols;
+			len = gtd->screen->cols;
 		}
 	}
 	else
 	{
-		len = ses->cols;
+		len = gtd->screen->cols;
 	}
 
 	pti = lis = sos = soc = left;
@@ -495,21 +508,20 @@ void wrapstring(struct session *ses, char *str)
 			{
 				pti++;
 				pti++;
+				col++;
 			}
-			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
+			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && is_utf8_head(pti))
 			{
-				pti++;
+				size = get_utf8_width(pti, &width);
 
-				while ((*pti & 192) == 128)
-				{
-					pti++;
-				}
+				pti += size;
+				col += width;
 			}
 			else
 			{
 				pti++;
+				col++;
 			}
-			col++;
 		}
 	}
 	sprintf(tmp, "%.*s", (int) (sos - soc), soc);
@@ -538,11 +550,11 @@ int stringlength(struct session *ses, char *str)
 }
 
 
-// Returns the raw length for the stripped range
+// stripped range raw return
 
 int string_str_raw_len(struct session *ses, char *str, int start, int end)
 {
-	int raw_cnt, str_cnt, ret_cnt, tot_len;
+	int raw_cnt, str_cnt, ret_cnt, tmp_cnt, tot_len, width;
 
 	raw_cnt = str_cnt = ret_cnt = 0;
 
@@ -585,32 +597,32 @@ int string_str_raw_len(struct session *ses, char *str, int start, int end)
 			continue;
 		}
 
-		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (str[raw_cnt] & 192) == 192)
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && is_utf8_head(&str[raw_cnt]))
 		{
-			ret_cnt += (str_cnt >= start) ? 1 : 0;
-			raw_cnt++;
+			tmp_cnt = get_utf8_width(&str[raw_cnt], &width);
 
-			while (raw_cnt < tot_len && (str[raw_cnt] & 192) == 128)
+			if (str_cnt >= start)
 			{
-				ret_cnt += (str_cnt >= start) ? 1 : 0;
-				raw_cnt++;
+				ret_cnt += tmp_cnt;
 			}
+			raw_cnt += tmp_cnt;
+			str_cnt += width;
 		}
 		else
 		{
 			ret_cnt += (str_cnt >= start) ? 1 : 0;
 			raw_cnt++;
+			str_cnt++;
 		}
-		str_cnt++;
 	}
 	return ret_cnt;
 }
 
-// Returns the stripped length for the range
+// raw range stripped return
 
 int string_raw_str_len(struct session *ses, char *str, int start, int end)
 {
-	int raw_cnt, ret_cnt, tot_len;
+	int raw_cnt, ret_cnt, tot_len, width;
 
 	raw_cnt = start;
 	ret_cnt = 0;
@@ -649,20 +661,17 @@ int string_raw_str_len(struct session *ses, char *str, int start, int end)
 			continue;
 		}
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (str[raw_cnt] & 192) == 192)
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && is_utf8_head(&str[raw_cnt]))
 		{
-			raw_cnt++;
+			raw_cnt += get_utf8_width(&str[raw_cnt], &width);
 
-			while (raw_cnt < tot_len && (str[raw_cnt] & 192) == 128)
-			{
-				raw_cnt++;
-			}
+			ret_cnt += width;
 		}
 		else
 		{
 			raw_cnt++;
+			ret_cnt++;
 		}
-		ret_cnt++;
 	}
 	return ret_cnt;
 }
@@ -749,7 +758,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 
 				*ptn = 0;
 
-				if (*ptf == 'd' || *ptf == 'f')
+				if (*ptf == 'd' || *ptf == 'f' || *ptf == 'X')
 				{
 					strcpy(temp, pts);
 
@@ -821,7 +830,8 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 				switch (*ptf)
 				{
 					case 'a':
-						sprintf(arglist[i], "%c", (char) get_number(ses, arglist[i]));
+						numbertocharacter(ses, arglist[i]);
+//						sprintf(arglist[i], "%c", (char) get_number(ses, arglist[i]));
 						break;
 
 					case 'c':
@@ -834,7 +844,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						break;
 
 					case 'f':
-						strcat(temp, "f");
+						strcat(temp, "Lf");
 						sprintf(arglist[i], temp, get_double(ses, arglist[i]));
 						break;
 
@@ -882,20 +892,29 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						wrapstring(ses, arglist[i]);
 						break;
 
+					case 'x':
+						hexstring(arglist[i]);
+						break;
+
 					case 'A':
 						charactertonumber(ses, arglist[i]);
 						break;
 
 					case 'C':
-						sprintf(arglist[i], "%d", ses->cols);
+						sprintf(arglist[i], "%d", gtd->screen->cols);
 						break;
 
 					case 'D':
+						sprintf(arglist[i], "%llu", hex_number_64bit(arglist[i]));
+
+						break;
+
+/*					case 'D':
 						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%d", &timeval_tm);
 						break;
-
+*/
 					case 'G':
 						thousandgroupingstring(ses, arglist[i]);
 						break;
@@ -915,7 +934,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						break;
 
 					case 'R':
-						sprintf(arglist[i], "%d", ses->rows);
+						sprintf(arglist[i], "%d", gtd->screen->rows);
 						break;
 
 					case 'S':
@@ -930,7 +949,12 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						sprintf(arglist[i], "%lld", utime());
 						break;
 
-					case 'Y':
+					case 'X':
+						strcat(temp, "llX");
+						sprintf(arglist[i], temp, (unsigned long long) get_number(ses, arglist[i]));
+						break;
+
+					case 'Y': // print the year, experimental
 						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : time(NULL);
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%Y", &timeval_tm);

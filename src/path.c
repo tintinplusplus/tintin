@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -78,9 +77,9 @@ DO_PATH(path_create)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 
-	root->update = 0;
-
 	kill_list(root);
+
+	root->update = 0;
 
 	show_message(ses, LIST_PATH, "#PATH CREATE: YOU START MAPPING A NEW PATH.");
 
@@ -92,9 +91,9 @@ DO_PATH(path_destroy)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 
-	root->update = 0;
-
 	kill_list(root);
+
+	root->update = 0;
 
 	DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
@@ -131,6 +130,76 @@ DO_PATH(path_stop)
 }
 
 
+DO_PATH(path_describe)
+{
+	char *dirs[] = {
+		"west", "west-southwest", "southwest", "south-southwest",
+		"south", "south-southeast", "southeast", "east-southeast",
+		"east", "east-northeast", "northeast", "north-northeast",
+		"north", "north-northwest", "northwest", "west-northwest",
+		"west" };
+
+	char *slopes[] = {
+		"a steep upward slope", "a steady upward slope", "a slight upward slope",
+		"the same level",
+		"a slight downward slope", "a steady downward slope", "a steep downward slope" };
+
+	struct listroot *root = ses->list[LIST_PATH];
+	struct listnode *node;
+	int a, d, i, s, x, y, z;
+
+	i = x = y = z = 0;
+
+	while (i < root->used)
+	{
+		node = search_node_list(ses->list[LIST_PATHDIR], root->list[i++]->left);
+
+		if (node)
+		{
+			x += (HAS_BIT(atoi(node->pr), MAP_EXIT_E) ? 1 : HAS_BIT(atoi(node->pr), MAP_EXIT_W) ? -1 : 0);
+			y += (HAS_BIT(atoi(node->pr), MAP_EXIT_N) ? 1 : HAS_BIT(atoi(node->pr), MAP_EXIT_S) ? -1 : 0);
+			z += (HAS_BIT(atoi(node->pr), MAP_EXIT_U) ? 1 : HAS_BIT(atoi(node->pr), MAP_EXIT_D) ? -1 : 0);
+		}
+	}
+
+	a = sqrt(x * x + y * y);
+
+	a = sqrt(a * a + z * z);
+
+	d = round(16 * (atan2(y, x) + M_PI) / (M_PI * 2));
+
+	s = round(12 * (atan2(a, z) - M_PI / 4) / M_PI);
+
+	if (x == 0 && y == 0)
+	{
+		if (z == 0)
+		{
+			tintin_printf2(ses, "The path is %d rooms long and the destination is right where you are.");
+		}
+		else
+		{
+			tintin_printf2(ses, "The path is %d rooms long and the destination lies %d rooms %s you.", root->used, abs(z), z < 0 ? "below" : "above", s);
+		}
+	}
+	else
+	{
+		tintin_printf2(ses, "The path is %d rooms long and the destination lies %d rooms to the %s of you at %s.", root->used, a, dirs[d], slopes[s]);
+	}
+
+	if (root->update == 0)
+	{
+		tintin_printf2(ses, "You are at the start of the path.");
+	}
+	else if (root->update == root->used)
+	{
+		tintin_printf2(ses, "You are at the end of the path.");
+	}
+	else
+	{
+		tintin_printf2(ses, "You've traversed %d out of %d steps of the path.", root->update, root->used);
+	}
+}
+
 DO_PATH(path_map)
 {
 	struct listroot *root = ses->list[LIST_PATH];
@@ -147,7 +216,7 @@ DO_PATH(path_map)
 
 		for (i = 0 ; i < root->update ; i++)
 		{
-			if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > ses->cols - 4)
+			if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > gtd->screen->cols - 4)
 			{
 				tintin_puts2(ses, buf);
 
@@ -162,7 +231,7 @@ DO_PATH(path_map)
 
 			for (i = root->update + 1 ; i < root->used ; i++)
 			{
-				if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > ses->cols - 4)
+				if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > gtd->screen->cols - 4)
 				{
 					tintin_puts2(ses, buf);
 
@@ -194,49 +263,67 @@ DO_PATH(path_save)
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (!is_abbrev(left, "FORWARDS") && !is_abbrev(left, "BACKWARDS"))
-	{
-		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <FORWARD|BACKWARD> <VARIABLE NAME>");
-	}
-	else if (root->used == 0)
+	if (root->used == 0)
 	{
 		tintin_puts2(ses, "#PATH SAVE: LOAD OR CREATE A PATH FIRST.");
 	}
 	else if (*right == 0)
 	{
-		tintin_puts2(ses, "#PATH SAVE: YOU MUST PROVIDE A VARIABLE TO SAVE THE PATH TO.");
+		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <BACKWARD|FORWARD|LENGTH|POSITION> <VARIABLE NAME>");
 	}
-	else
+	else if (is_abbrev(left, "BACKWARDS"))
 	{
 		result[0] = 0;
 
-		if (is_abbrev(left, "FORWARDS"))
+		for (i = root->used - 1 ; i >= 0 ; i--)
 		{
-			for (i = 0 ; i < root->used ; i++)
-			{
-				strcat(result, root->list[i]->left);
+			strcat(result, root->list[i]->right);
 
-				if (i != root->used - 1)
-				{
-					cat_sprintf(result, "%c", COMMAND_SEPARATOR);
-				}
-			}
-		}
-		else
-		{
-			for (i = root->used - 1 ; i >= 0 ; i--)
+			if (i != 0)
 			{
-				strcat(result, root->list[i]->right);
-
-				if (i != 0)
-				{
-					cat_sprintf(result, "%c", COMMAND_SEPARATOR);
-				}
+				cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 			}
 		}
 		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
 
-		show_message(ses, LIST_PATH, "#PATH SAVE: PATH SAVED TO {%s}", right);
+		show_message(ses, LIST_PATH, "#PATH SAVE: BACKWARD PATH SAVED TO {%s}", right);
+	}
+	else if (is_abbrev(left, "FORWARDS"))
+	{
+		result[0] = 0;
+
+		for (i = 0 ; i < root->used ; i++)
+		{
+			strcat(result, root->list[i]->left);
+
+			if (i != root->used - 1)
+			{
+				cat_sprintf(result, "%c", COMMAND_SEPARATOR);
+			}
+		}
+		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+
+		show_message(ses, LIST_PATH, "#PATH SAVE: FORWARD PATH SAVED TO {%s}", right);
+	}
+	else if (is_abbrev(left, "LENGTH"))
+	{
+		sprintf(result, "%d", root->used);
+
+		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+
+		show_message(ses, LIST_PATH, "#PATH SAVE: PATH LENGTH SAVED TO {%s}", right);
+	}
+	else if (is_abbrev(left, "POSITION"))
+	{
+		sprintf(result, "%d", root->update + 1);
+
+		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+
+		show_message(ses, LIST_PATH, "#PATH SAVE: PATH POSITION SAVED TO {%s}", right);
+	}
+	else
+	{
+		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <BACKWARD|FORWARD|LENGTH|POSITION> <VARIABLE NAME>");
 	}
 }
 
@@ -258,9 +345,9 @@ DO_PATH(path_load)
 		arg = node->right;
 	}
 
-	root->update = 0;
-
 	kill_list(root);
+
+	root->update = 0;
 
 	while (*arg)
 	{
@@ -336,6 +423,8 @@ DO_PATH(path_run)
 	struct listroot *root = ses->list[LIST_PATH];
 	char left[BUFFER_SIZE], time[BUFFER_SIZE], name[BUFFER_SIZE];
 
+	push_call("path_run(%p,%p)",ses,arg);
+
 	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (root->update == root->used)
@@ -357,7 +446,7 @@ DO_PATH(path_run)
 
 				delay += get_number(ses, left);
 
-				update_node_list(root, name, root->list[root->update++]->left, time);
+				update_node_list(ses->list[LIST_DELAY], name, root->list[root->update++]->left, time);
 			}
 		}
 		else
@@ -368,6 +457,8 @@ DO_PATH(path_run)
 			}
 		}
 	}
+	pop_call();
+	return;
 }
 
 
@@ -390,7 +481,7 @@ DO_PATH(path_walk)
 		{
 			script_driver(ses, LIST_PATH, root->list[--root->update]->right);
 
-			if (root->used == 0)
+			if (root->update == 0)
 			{
 				check_all_events(ses, SUB_ARG|SUB_SEC, 0, 0, "START OF PATH");
 			}
@@ -424,6 +515,13 @@ DO_PATH(path_swap)
 	struct listroot *root = ses->list[LIST_PATH];
 	struct listnode *node;
 	int a, z;
+
+	if (root->used == 0)
+	{
+		show_message(ses, LIST_PATH, "#PATH SWAP: ERROR: PATH IS EMPTY.");
+
+		return;
+	}
 
 	a = 0;
 	z = root->used - 1;
@@ -566,9 +664,9 @@ DO_PATH(path_unzip)
 		arg = node->right;
 	}
 
-	root->update = 0;
-
 	kill_list(root);
+
+	root->update = 0;
 
 	while (*arg)
 	{
@@ -643,25 +741,25 @@ DO_PATH(path_goto)
 	{
 		root->update = root->used;
 
-		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO {%d}.", root->update);
+		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO {%d}.", root->update + 1);
 	}
 	else if (is_abbrev(left, "START"))
 	{
 		root->update = 0;
 
-		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update);
+		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update + 1);
 	}
 	else if (is_number(left))
 	{
-		if (get_number(ses, left) < 0 || get_number(ses, left) > root->used)
+		if (get_number(ses, left) < 1 || get_number(ses, left) > root->used + 1)
 		{
-			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION MUST BE BETWEEN 0 AND %d.", root->used);
+			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION MUST BE BETWEEN 1 AND %d.", root->used + 1);
 		}
 		else
 		{
-			root->update = get_number(ses, left);
+			root->update = get_number(ses, left) - 1;
 
-			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update);
+			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update + 1);
 		}
 	}
 }
@@ -703,8 +801,8 @@ DO_PATH(path_move)
 	else if (is_number(left))
 	{
 		root->update = URANGE(0, root->update + get_number(ses, left), root->used);
-		
-		show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
+
+		show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update + 1);
 	}
 }
 
@@ -747,16 +845,30 @@ DO_PATH(path_undo)
 	show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
 }
 
-void check_insert_path(char *command, struct session *ses)
+void check_insert_path(struct session *ses, char *forward, char *backward, int follow)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 	struct listnode *node;
 
-	if ((node = search_node_list(ses->list[LIST_PATHDIR], command)))
+	if (follow)
 	{
-		insert_node_list(root, node->left, node->right, "0");
+		if ((node = search_node_list(ses->list[LIST_PATHDIR], forward)))
+		{
+			insert_node_list(root, node->left, node->right, "0");
 
-		root->update = root->used;
+			root->update = root->used;
+		}
+	}
+	else
+	{
+		if ((node = search_node_list(ses->list[LIST_PATHDIR], forward)))
+		{
+			insert_node_list(root, node->left, node->right, "0");
+		}
+		else
+		{
+			insert_node_list(root, forward, backward, "0");
+		}
 	}
 }
 
@@ -845,9 +957,9 @@ DO_PATH(path_new)
 	}
 	else
 	{
-		root->update = 0;
-
 		kill_list(root);
+
+		root->update = 0;
 
 		show_message(ses, LIST_PATH, "#PATH NEW: YOU ARE NOW MAPPING A PATH.");
 
@@ -868,3 +980,4 @@ DO_PATH(path_end)
 		show_message(ses, LIST_PATH, "#PATH: YOU ARE NOT MAPPING A PATH.");
 	}
 }
+	

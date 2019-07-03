@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -57,7 +56,7 @@ DO_COMMAND(do_math)
 {
 	char left[BUFFER_SIZE], right[BUFFER_SIZE];
 	struct listnode *node;
-	double result;
+	long double result;
 
 	arg = sub_arg_in_braces(ses, arg, left, GET_NST, SUB_VAR|SUB_FUN);
 
@@ -71,7 +70,7 @@ DO_COMMAND(do_math)
 	{
 		result = get_number(ses, right);
 
-		node = set_nest_node(ses->list[LIST_VARIABLE], left, "%.*f", precision, result);
+		node = set_nest_node(ses->list[LIST_VARIABLE], left, "%.*Lf", precision, result);
 
 		show_message(ses, LIST_VARIABLE, "#MATH: VARIABLE {%s} HAS BEEN SET TO {%s}.", left, node->right);
 	}
@@ -84,9 +83,9 @@ int is_math(struct session *ses, char *str)
 	return mathexp_tokenize(ses, str, 0, 0);
 }
 
-double get_number(struct session *ses, char *str)
+long double get_number(struct session *ses, char *str)
 {
-	double val;
+	long double val;
 	char result[BUFFER_SIZE];
 
 	mathexp(ses, str, result, 0);
@@ -96,9 +95,9 @@ double get_number(struct session *ses, char *str)
 	return val;
 }
 
-double get_double(struct session *ses, char *str)
+long double get_double(struct session *ses, char *str)
 {
-	double val;
+	long double val;
 	char result[BUFFER_SIZE];
 
 	mathexp(ses, str, result, 1);
@@ -110,10 +109,10 @@ double get_double(struct session *ses, char *str)
 	
 void get_number_string(struct session *ses, char *str, char *result)
 {
-	sprintf(result, "%.*f", precision, get_number(ses, str));
+	sprintf(result, "%.*Lf", precision, get_number(ses, str));
 }
 
-double mathswitch(struct session *ses, char *left, char *right)
+long double mathswitch(struct session *ses, char *left, char *right)
 {
 	char shift[BUFFER_SIZE];
 
@@ -622,7 +621,7 @@ void mathexp_level(struct session *ses, struct link_data *node)
 void mathexp_compute(struct session *ses, struct link_data *node)
 {
 	char temp[BUFFER_SIZE];
-	double value;
+	long double value;
 
 	switch (node->str3[0])
 	{
@@ -793,7 +792,7 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 	free(node->str2);
 	node->str2 = strdup(temp);
 
-	sprintf(temp, "%lf", value);
+	sprintf(temp, "%.*Lf", precision, value);
 	free(node->str3);
 	node->str3 = strdup(temp);
 }
@@ -802,10 +801,10 @@ void mathexp_compute(struct session *ses, struct link_data *node)
 	Keep synced with is_number()
 */
 
-double tintoi(char *str)
+long double tintoi(char *str)
 {
 	char *ptr = str;
-	double values[5] = {0, 0, 0, 0, 0}, m = 1;
+	long double values[5] = {0, 0, 0, 0, 0}, m = 1;
 	int i = 1, d = 0;
 
 	if (*ptr == 0)
@@ -925,7 +924,7 @@ double tintoi(char *str)
 			return !atof(&str[1]);
 
 		case '~':
-			return (double) ~atoll(&str[1]);
+			return (long double) ~atoll(&str[1]);
 
 		case '+':
 			return +atof(&str[1]);
@@ -968,7 +967,7 @@ double tintoi(char *str)
 			return !atof(&str[1]);
 
 		case '~':
-			return (double) ~atoll(&str[1]);
+			return (long double) ~atoll(&str[1]);
 
 		case '+':
 			return +atof(&str[1]);
@@ -981,9 +980,9 @@ double tintoi(char *str)
 	}
 }
 
-double tincmp(char *left, char *right)
+long double tincmp(char *left, char *right)
 {
-	double left_val, right_val;
+	long double left_val, right_val;
 
 	switch (left[0])
 	{
@@ -998,9 +997,9 @@ double tincmp(char *left, char *right)
 	}
 }
 
-double tineval(struct session *ses, char *left, char *right)
+long double tineval(struct session *ses, char *left, char *right)
 {
-	double left_val, right_val;
+	long double left_val, right_val;
 
 	switch (left[0])
 	{
@@ -1015,7 +1014,7 @@ double tineval(struct session *ses, char *left, char *right)
 	}
 }
 
-double tindice(struct session *ses, char *left, char *right)
+long double tindice(struct session *ses, char *left, char *right)
 {
 	unsigned long long cnt, numdice, sizedice, sum;
 
@@ -1032,5 +1031,5 @@ double tindice(struct session *ses, char *left, char *right)
 		sum += generate_rand(ses) % sizedice + 1;
 	}
 
-	return (double) sum;
+	return (long double) sum;
 }

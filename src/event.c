@@ -1,12 +1,11 @@
-/*****************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2007 (See CREDITS file)                                     *
+/******************************************************************************
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -147,7 +146,7 @@ int check_all_events(struct session *ses, int flags, int args, int vars, char *f
 
 void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char left[BUFFER_SIZE], right[BUFFER_SIZE], line[BUFFER_SIZE], word[BUFFER_SIZE];
 	static char last[100];
 	static long long click[3];
 
@@ -212,6 +211,24 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 		strcat(right, "MOUSE BUTTON ");
 	}
 
+	if (y-1 < 0)
+	{
+		tintin_printf2(ses, "weird error, %d-1 < 0", y);
+		return;
+	}
+	else if (y - 1 > gtd->screen->rows)
+	{
+		tintin_printf2(ses, "weird error, %d-1 > %d", y, gtd->screen->rows);
+		return;
+	}
+	else
+	{
+		strcpy(line, "under development");
+		strcpy(word, "under development");
+//		get_line_screen(line, y - 1);
+//		get_word_screen(word, y - 1, x - 1);
+	}
+
 	if (HAS_BIT(flags, MOUSE_FLAG_WHEEL))
 	{
 		if (HAS_BIT(flags, MOUSE_FLAG_BUTTON_A) && HAS_BIT(flags, MOUSE_FLAG_BUTTON_B))
@@ -251,11 +268,13 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 		}
 	}
 
-	check_all_events(ses, SUB_ARG, 2, 4, "%s %s", left, right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+	check_all_events(ses, SUB_ARG, 2, 6, "%s %s", left, right, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-	check_all_events(ses, SUB_ARG, 3, 4, "%s %s %d", left, right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+	check_all_events(ses, SUB_ARG, 3, 6, "%s %s %d", left, right, 0 - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-	check_all_events(ses, SUB_ARG, 3, 4, "%s %s %d", left, right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+	check_all_events(ses, SUB_ARG, 3, 6, "%s %s %d", left, right, gtd->screen->rows - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
+
+	map_mouse_handler(ses, left, right, x, y);
 
 	if (!strcmp(left, "PRESSED"))
 	{
@@ -271,21 +290,25 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 			{
 				if (click[0] - click[2] < 500000)
 				{
-					check_all_events(ses, SUB_ARG, 1, 4, "TRIPLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+					check_all_events(ses, SUB_ARG, 1, 6, "TRIPLE-CLICKED %s", right, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-					check_all_events(ses, SUB_ARG, 2, 4, "TRIPLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+					check_all_events(ses, SUB_ARG, 2, 6, "TRIPLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-					check_all_events(ses, SUB_ARG, 2, 4, "TRIPLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+					check_all_events(ses, SUB_ARG, 2, 6, "TRIPLE-CLICKED %s %d", right, gtd->screen->rows - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
+
+					map_mouse_handler(ses, "TRIPPLE-CLICKED", right, x, y);
 
 					strcpy(last, "");
 				}
 				else
 				{
-					check_all_events(ses, SUB_ARG, 1, 4, "DOUBLE-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+					check_all_events(ses, SUB_ARG, 1, 6, "DOUBLE-CLICKED %s", right, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-					check_all_events(ses, SUB_ARG, 2, 4, "DOUBLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+					check_all_events(ses, SUB_ARG, 2, 6, "DOUBLE-CLICKED %s %d", right, 0 - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-					check_all_events(ses, SUB_ARG, 2, 4, "DOUBLE-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+					check_all_events(ses, SUB_ARG, 2, 6, "DOUBLE-CLICKED %s %d", right, gtd->screen->rows - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
+
+					map_mouse_handler(ses, "DOUBLE-CLICKED", right, x, y);
 				}
 			}
 		}		
@@ -302,19 +325,23 @@ void mouse_handler(struct session *ses, int flags, int x, int y, char type)
 	{
 		if (utime() - click[0] >= 500000)
 		{
-			check_all_events(ses, SUB_ARG, 1, 4, "LONG-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+			check_all_events(ses, SUB_ARG, 1, 6, "LONG-CLICKED %s", right, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-			check_all_events(ses, SUB_ARG, 2, 4, "LONG-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+			check_all_events(ses, SUB_ARG, 2, 6, "LONG-CLICKED %s %d", right, 0 - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-			check_all_events(ses, SUB_ARG, 2, 4, "LONG-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+			check_all_events(ses, SUB_ARG, 2, 6, "LONG-CLICKED %s %d", right, gtd->screen->rows - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
+
+			map_mouse_handler(ses, "LONG-CLICKED", right, x, y);
 		}
 		else if (click[0] - click[1] >= 500000)
 		{
-			check_all_events(ses, SUB_ARG, 1, 4, "SHORT-CLICKED %s", right, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+			check_all_events(ses, SUB_ARG, 1, 6, "SHORT-CLICKED %s", right, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-			check_all_events(ses, SUB_ARG, 2, 4, "SHORT-CLICKED %s %d", right, 0 - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+			check_all_events(ses, SUB_ARG, 2, 6, "SHORT-CLICKED %s %d", right, 0 - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
 
-			check_all_events(ses, SUB_ARG, 2, 4, "SHORT-CLICKED %s %d", right, ses->rows - y, ntos(x), ntos(ses->rows - y), ntos(-1 - (ses->cols - x)), ntos(0 - y));
+			check_all_events(ses, SUB_ARG, 2, 6, "SHORT-CLICKED %s %d", right, gtd->screen->rows - y, ntos(x), ntos(gtd->screen->rows - y), ntos(-1 - (gtd->screen->cols - x)), ntos(0 - y), word, line);
+
+			map_mouse_handler(ses, "SHORT-CLICKED", right, x, y);
 		}
 	}
 	return;

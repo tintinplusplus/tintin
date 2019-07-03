@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -252,7 +251,9 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 		}
 	}
 
-	tintin_printf(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", line);
+	tintin_printf2(ses, "#ERROR: #UNKNOWN TINTIN-COMMAND '%s'.", line);
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "UNKNOWN COMMAND", line);
 
 	return ses;
 }
@@ -308,6 +309,15 @@ char *get_arg_all(struct session *ses, char *string, char *result, int verbatim)
 			nest--;
 		}
 		*pto++ = *pti++;
+
+		if (pto - result >= BUFFER_SIZE - 3)
+		{
+			tintin_printf2(ses, "#ERROR: INPUT BUFFER OVERFLOW.");
+
+			pto--;
+
+			break;
+		}
 	}
 	*pto = '\0'; 
 
@@ -508,6 +518,46 @@ char *space_out(char *string)
 	return string;
 }
 
+void cap_input(struct session *ses, char *string)
+{
+	int nest = 0;
+	char *pti = string;
+
+	while (*string)
+	{
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
+		{
+			pti += 2;
+			continue;
+		}
+
+		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
+		{
+			pti += 2;
+		}
+		else if (*pti == COMMAND_SEPARATOR && nest == 0)
+		{
+			return;
+		}
+		else if (*pti == DEFAULT_OPEN)
+		{
+			nest++;
+		}
+		else if (*pti == DEFAULT_CLOSE)
+		{
+			nest--;
+		}
+		pti++;
+
+		if (pti - string >= BUFFER_SIZE - 2)
+		{
+			tintin_printf2(ses, "#ERROR: INPUT BUFFER OVERFLOW.");
+
+			*pti = 0;
+		}
+	}
+}
+
 /*
 	For list handling
 */
@@ -698,7 +748,7 @@ void write_mud(struct session *ses, char *command, int flags)
 	{
 		if (ses->map == NULL || ses->map->nofollow == 0)
 		{
-			check_insert_path(command, ses);
+			check_insert_path(ses, command, NULL, 1);
 		}
 	}
 

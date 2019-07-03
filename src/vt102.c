@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -58,18 +57,6 @@ void erase_toeol(void)
 }
 
 /*
-	save cursor, goto top row, delete (bot - top) rows, restore cursor
-*/
-
-void erase_screen(struct session *ses)
-{
-	printf("\e7\e[%d;1H\e[%dM\e8", ses->top_row, ses->bot_row - ses->top_row);
-
-	ses->sav_row = ses->cur_row;
-	ses->sav_col = ses->cur_col;
-}
-
-/*
 	doesn't do much
 */
 
@@ -81,10 +68,15 @@ void reset(void)
 
 void scroll_region(struct session *ses, int top, int bot)
 {
+	push_call("scroll_region(%p,%d,%d)",ses,top,bot);
+
 	printf("%c[%d;%dr", ESCAPE, top, bot);
 
 	ses->top_row = top;
 	ses->bot_row = bot;
+
+	pop_call();
+	return;
 }
 
 
@@ -95,7 +87,7 @@ void reset_scroll_region(struct session *ses)
 		printf("%c[r", ESCAPE);
 	}
 	ses->top_row = 1;
-	ses->bot_row = ses->rows;
+	ses->bot_row = gtd->screen->rows;
 }
 
 
@@ -193,69 +185,6 @@ int skip_vt102_codes(char *str)
 		}
 	}
 	pop_call();
-	return skip;
-}
-
-int skip_escaped_vt102_codes(char *str)
-{
-	int skip;
-
-	if (str[0] != '\\' || str[1] != 'e')
-	{
-		return 0;
-	}
-
-	switch (str[2])
-	{
-		case '\0':
-			return 2;
-
-		case '%':
-		case '#':
-		case '(':
-		case ')':
-			return str[2] ? 4 : 3;
-
-		case ']':
-			switch (str[3])
-			{
-				case 'P':
-					for (skip = 4 ; skip < 11 ; skip++)
-					{
-						if (str[skip] == 0)
-						{
-							break;
-						}
-					}
-					return skip;
-
-				case 'R':
-					return 4;
-			}
-			return 3;
-
-		case '[':
-			break;
-
-		default:
-			return 3;
-	}
-
-	for (skip = 3 ; str[skip] != 0 ; skip++)
-	{
-		if (isalpha((int) str[skip]))
-		{
-			return skip + 1;
-		}
-
-		switch (str[skip])
-		{
-			case '@':
-			case '`':
-			case ']':
-				return skip + 1;
-		}
-	}
 	return skip;
 }
 
@@ -517,7 +446,8 @@ char *strip_vt102_strstr(char *str, char *buf, int *len)
 void get_color_codes(char *old, char *str, char *buf)
 {
 	char *pti, *pto, col[100], tmp[BUFFER_SIZE];
-	int len, vtc, fgc, bgc, cnt, rgb[6];
+	int len, vtc, fgc, bgc, cnt;
+	int rgb[6] = { 0, 0, 0, 0, 0, 0 };
 
 	pto = tmp;
 
@@ -800,7 +730,7 @@ void get_color_codes(char *old, char *str, char *buf)
 int strip_vt102_strlen(struct session *ses, char *str)
 {
 	char *pti;
-	int i = 0;
+	int w, i = 0;
 
 	pti = str;
 
@@ -813,67 +743,28 @@ int strip_vt102_strlen(struct session *ses, char *str)
 			continue;
 		}
 
-		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && is_utf8_head(pti))
 		{
-			pti++;
+			pti += get_utf8_width(pti, &w);
 
-			while ((*pti & 192) == 128)
-			{
-				pti++;
-			}
+			i += w;
 		}
 		else
 		{
 			pti++;
+			i++;
 		}
-		i++;
 	}
 	return i;
 }
 
 int strip_color_strlen(struct session *ses, char *str)
 {
-	char *pti;
-	int i = 0;
+	char buf[BUFFER_SIZE];
 
-	pti = str;
+	substitute(ses, str, buf, SUB_ESC|SUB_COL);
 
-	while (*pti)
-	{
-		if (pti[0] == '<' && isalnum((int) pti[1]) && isalnum((int) pti[2]) && isalnum((int) pti[3]) && pti[4] == '>')
-		{
-			pti += 5;
-			continue;
-		}
-
-		if (skip_vt102_codes(pti))
-		{
-			pti += skip_vt102_codes(pti);
-			continue;
-		}
-
-		if (skip_escaped_vt102_codes(pti))
-		{
-			pti += skip_escaped_vt102_codes(pti);
-			continue;
-		}
-
-		if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
-		{
-			pti++;
-
-			while ((*pti & 192) == 128)
-			{
-				pti++;
-			}
-		}
-		else
-		{
-			pti++;
-		}
-		i++;
-	}
-	return i;
+	return strip_vt102_strlen(ses, buf);
 }
 
 int interpret_vt102_codes(struct session *ses, char *str, int real)
@@ -890,8 +781,17 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 		case  27:   /* ESC */
 			break;
 
+		case 11:    /* VT  */
+			ses->cur_row = UMIN(gtd->screen->rows, ses->cur_row + 1);
+			return TRUE;
+
+		case 12:    /* FF  */
+			ses->cur_row = UMIN(gtd->screen->rows, ses->cur_row + 1);
+			return TRUE;
+
 		case  13:   /* CR  */
 			ses->cur_col = 1;
+			return TRUE;
 
 		default:
 			return TRUE;
@@ -917,16 +817,16 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 			return TRUE;
 
 		case 'D':
-			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
+			ses->cur_row = URANGE(1, ses->cur_row + 1, gtd->screen->rows);
 			return TRUE;
 
 		case 'E':
-			ses->cur_row = URANGE(1, ses->cur_row + 1, ses->rows);
+			ses->cur_row = URANGE(1, ses->cur_row + 1, gtd->screen->rows);
 			ses->cur_col = 1;
 			return TRUE;
 
 		case 'M':
-			ses->cur_row = URANGE(1, ses->cur_row - 1, ses->rows);
+			ses->cur_row = URANGE(1, ses->cur_row - 1, gtd->screen->rows);
 			return TRUE;
 
 		case '[':
@@ -1006,11 +906,11 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 					if (sscanf(data, "%d", &ses->top_row) != 1)
 					{
 						ses->top_row = 1;
-						ses->bot_row = ses->rows;
+						ses->bot_row = gtd->screen->rows;
 					}
 					else
 					{
-						ses->bot_row = ses->rows;
+						ses->bot_row = gtd->screen->rows;
 					}
 				}
 				ses->cur_row = 1;
@@ -1038,14 +938,14 @@ int interpret_vt102_codes(struct session *ses, char *str, int real)
 
 		if (isalpha((int) str[skip]))
 		{
-			ses->cur_row = URANGE(1, ses->cur_row, ses->rows);
+			ses->cur_row = URANGE(1, ses->cur_row, gtd->screen->rows);
 
-			ses->cur_col = URANGE(1, ses->cur_col, ses->cols + 1);
+			ses->cur_col = URANGE(1, ses->cur_col, gtd->screen->cols + 1);
 
 
-			ses->top_row = URANGE(1, ses->top_row, ses->rows);
+			ses->top_row = URANGE(1, ses->top_row, gtd->screen->rows);
 
-			ses->bot_row = ses->bot_row ? URANGE(1, ses->bot_row, ses->rows) : ses->rows;
+			ses->bot_row = ses->bot_row ? URANGE(1, ses->bot_row, gtd->screen->rows) : gtd->screen->rows;
 			
 			return TRUE;
 		}

@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2005 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -100,12 +99,10 @@ DO_COMMAND(do_port)
 
 DO_PORT(port_initialize)
 {
-	char hostname[BUFFER_SIZE], temp[BUFFER_SIZE], file[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], file[BUFFER_SIZE];
 	struct sockaddr_in sa;
-	struct hostent *hp = NULL;
 	struct linger ld;
-	char *reuse = "1";
-	int sock, port;
+	int sock, port, reuse = 1;
 
 	arg = sub_arg_in_braces(ses, arg, file,  GET_ONE, SUB_VAR|SUB_FUN);
 
@@ -134,31 +131,23 @@ DO_PORT(port_initialize)
 
 	port = atoi(right);
 
-	gethostname(hostname, BUFFER_SIZE);
-
-	hp = gethostbyname(hostname);
-
-	if (hp == NULL)
-	{
-		perror("port_initialize: gethostbyname");
-
-		return ses;
-	}
-
-	sa.sin_family      = hp->h_addrtype;
+	sa.sin_family      = AF_INET;
+	sa.sin_addr.s_addr = INADDR_ANY;
 	sa.sin_port        = htons(port);
-	sa.sin_addr.s_addr = 0;
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (sock < 0)
 	{
-		perror("port_initialize: socket");
+		perror("port_initialize: socket()");
 
 		return ses;
 	}
 
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reuse, sizeof(reuse));
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1)
+	{
+		perror("port_initialize: setsockopt()");
+	}
 
 	ld.l_onoff  = 0; 
 	ld.l_linger = 100;
@@ -202,9 +191,10 @@ DO_PORT(port_initialize)
 	ses->port->port     = port;
 
 	ses->port->name     = strdup(left);
+	ses->port->group    = strdup("");
 	ses->port->color    = strdup("\e[0;1;36m");
 	ses->port->ip       = strdup("<Unknown>");
-	ses->port->prefix   = strdup("<PORT>");
+	ses->port->prefix   = strdup("<PORT> ");
 
 	tintin_printf(ses, "#PORT INITIALIZE: SESSION {%s} IS LISTENING ON PORT %d.", ses->name, ses->port->port);
 
@@ -271,6 +261,8 @@ int port_new(struct session *ses, int s)
 	new_buddy->name     = strdup(ntos(fd));
 	new_buddy->group    = strdup("");
 	new_buddy->ip       = strdup(inet_ntoa(sock.sin_addr));
+	new_buddy->prefix   = strdup("");
+	new_buddy->color    = strdup("");
 
 	new_buddy->port     = 0;
 
@@ -295,6 +287,7 @@ void *threaded_port_call(void *arg)
 	struct session *ses;
 	int sock, error;
 	char host[BUFFER_SIZE], port[BUFFER_SIZE], name[BUFFER_SIZE];
+	char *str;
 	struct addrinfo *address;
 	static struct addrinfo hints;
 	struct port_data *new_buddy;
@@ -304,9 +297,13 @@ void *threaded_port_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
+	str = arg;
+
 	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, name, FALSE);
 	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, host, FALSE);
 	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, port, FALSE);
+
+	free(str);
 
 	ses = find_session(name);
 
@@ -317,7 +314,7 @@ void *threaded_port_call(void *arg)
 		return NULL;
 	}
 
-	port_printf(ses, "Attempting to call %s ...", arg);
+	port_printf(ses, "Attempting to call {%s} {%s} {%s} ...", name, host, port);
 
 	hints.ai_family   = AF_UNSPEC;
 	hints.ai_protocol = IPPROTO_TCP;
@@ -396,7 +393,9 @@ void *threaded_port_call(void *arg)
 
 	new_buddy->group    = strdup("");
 	new_buddy->ip       = strdup(host);
-	new_buddy->name     = str_dup_printf("%d", sock);
+	new_buddy->name     = strdup(ntos(sock));
+	new_buddy->color    = strdup("");
+	new_buddy->prefix   = strdup("");
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT CONNECTION", new_buddy->name, new_buddy->ip, ntos(new_buddy->port));
 
@@ -470,7 +469,7 @@ void *threaded_port_call(void *arg)
 		return NULL;
 	}
 
-	port_printf(ses, "Attempting to call %s ...", arg);
+	port_printf(ses, "Attempting to call {%s} {%s} {%s} ...", name, host, port);
 
 	if (sscanf(host, "%d.%d.%d.%d", &dig, &dig, &dig, &dig) == 4)
 	{
@@ -555,7 +554,9 @@ void *threaded_port_call(void *arg)
 
 	new_buddy->group    = strdup("");
 	new_buddy->ip       = strdup(host);
-	new_buddy->name     = str_dup_printf("%d", sock);
+	new_buddy->name     = strdup(ntos(sock));
+	new_buddy->color    = strdup("");
+	new_buddy->prefix   = strdup("");
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT CONNECTION", new_buddy->name, new_buddy->ip, ntos(new_buddy->port));
 
@@ -605,12 +606,15 @@ void *threaded_port_call(void *arg)
 DO_PORT(port_call)
 {
 	char buf[BUFFER_SIZE];
+	char *str;
 
 	pthread_t thread;
 
 	sprintf(buf, "{%s} {%s} {%s}", ses->name, left, right);
 
-	pthread_create(&thread, NULL, threaded_port_call, (void *) buf);
+	str = strdup(buf);
+
+	pthread_create(&thread, NULL, threaded_port_call, (void *) str);
 
 	return ses;
 }
@@ -636,6 +640,8 @@ void close_port(struct session *ses, struct port_data *buddy, int unlink)
 {
 	buddy->flags = 0;
 
+	push_call("close_port(%p,%p,%d)",ses,buddy,unlink);
+
 	if (unlink)
 	{
 		UNLINK(buddy, ses->port->next, ses->port->prev);
@@ -649,19 +655,27 @@ void close_port(struct session *ses, struct port_data *buddy, int unlink)
 		}
 		else
 		{
-			port_printf(ses, "Closing connection to %s@%s.", buddy->name, buddy->ip);
+			port_printf(ses, "Closing connection to %s@%s D%d.", buddy->name, buddy->ip, buddy->fd);
 		}
 	}
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT DISCONNECTION", buddy->name, buddy->ip, ntos(buddy->port));
 
-	close(buddy->fd);
+	if (close(buddy->fd) == -1)
+	{
+		perror("close_port: close()");
+	}
 
 	free(buddy->group);
 	free(buddy->ip);
 	free(buddy->name);
+	free(buddy->prefix);
+	free(buddy->color);
 
 	free(buddy);
+
+	pop_call();
+	return;
 }
 
 
@@ -759,7 +773,7 @@ void port_printf(struct session *ses, char *format, ...)
 
 int process_port_input(struct session *ses, struct port_data *buddy)
 {
-	char buf[BUFFER_SIZE];
+	char buf[BUFFER_SIZE], *pt1, *pt2;
 	int size;
 
 	push_call("process_port_input(%p)",buddy);
@@ -774,7 +788,33 @@ int process_port_input(struct session *ses, struct port_data *buddy)
 
 	buf[size] = 0;
 
-	get_port_commands(ses, buddy, buf, size);
+	pt1 = buf;
+
+	for (pt2 = buf ; *pt2 ; pt2++)
+	{
+		switch (*pt2)
+		{
+			case '\r':
+			case '\n':
+				*pt2 = 0;
+
+				get_port_commands(ses, buddy, pt1, size);
+
+				do
+				{
+					pt2++;
+				}
+				while (*pt2 == '\r' || *pt2 == '\n');
+
+				pt1 = pt2;
+				break;
+		}
+	}
+
+	if (pt1[0])
+	{
+		get_port_commands(ses, buddy, pt1, size);
+	}
 
 	pop_call();
 	return 0;
@@ -795,7 +835,7 @@ void get_port_commands(struct session *ses, struct port_data *buddy, char *buf, 
 
 	strip_vt102_codes(buf, txt);
 
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 4, "PORT MESSAGE", buddy->name, buddy->ip, txt, buf);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 5, "PORT MESSAGE", buddy->name, buddy->ip, ntos(buddy->port), txt, buf);
 
 	pop_call();
 	return;

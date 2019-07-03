@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -40,6 +39,7 @@ DO_COMMAND(do_run)
 	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], file[BUFFER_SIZE];
 	int desc, pid;
 	struct winsize size;
+	struct termios run_terminal;
 
 	char *argv[4] = {"sh", "-c", "", NULL};
 
@@ -53,10 +53,9 @@ DO_COMMAND(do_run)
 	}
 
 	size.ws_row = get_scroll_size(ses);
-	size.ws_col = ses->cols;
+	size.ws_col = gtd->screen->cols;
 
 	pid = forkpty(&desc, temp, &gtd->old_terminal, &size);
-//	pid = forkpty(&desc, temp, &gtd->new_terminal, &size);
 
 	switch (pid)
 	{
@@ -68,6 +67,7 @@ DO_COMMAND(do_run)
 			sprintf(temp, "exec %s", right);
 			argv[2] = temp;
 			execv("/bin/sh", argv);
+			tcgetattr(0, &run_terminal);
 			break;
 
 		default:
@@ -75,6 +75,9 @@ DO_COMMAND(do_run)
 
 			ses = new_session(ses, left, temp, desc, 0);
 
+//			memcpy(&ses->cur_terminal, &run_terminal, sizeof(run_terminal));
+
+//			refresh_session_terminal(ses);
 			break;
 	}
 	return gtd->ses;
@@ -142,7 +145,6 @@ DO_COMMAND(do_script)
 				cat_sprintf(var, "{%d}{%s}", index++, tmp);
 			}
 
-
 			set_nest_node(ses->list[LIST_VARIABLE], arg1, "%s", var);
 
 			pclose(script);
@@ -152,7 +154,7 @@ DO_COMMAND(do_script)
 			perror("popen");
 		}
 	}
-	refresh_terminal();
+	refresh_session_terminal(ses);
 
 	return ses;
 }
@@ -195,7 +197,7 @@ DO_COMMAND(do_system)
 	}
 	fflush(stdout);
 
-	refresh_terminal();
+	refresh_session_terminal(gtd->ses);
 
 	return ses;
 }

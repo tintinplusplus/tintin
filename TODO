@@ -1,6 +1,43 @@
 * STUFF THAT IS PROBABLY GONNA GET DONE
 
-  - better class event and class size handling.
+  - Add vtmap positioning options.
+
+  - Add FILE READ <name> event
+
+  - fix readmud in net.c to not move the cursor on inactive sessions.
+
+  - add #con packet patch auto
+
+  - add packets patched counter
+
+  - https://tintin.sourceforge.io/forum/viewtopic.php?f=2&t=2624
+    Check if telnet ECHO has proper loop protection.
+
+  - Check socket code for odd behavior on mass connect
+
+  - Fix arrow key up history recall overwriting the prompt (partial redesign)
+
+  - https://tintin.sourceforge.io/forum/viewtopic.php?f=3&t=2614&p=10665 inherit local vars
+
+  - add step count for #map list and rename distance to weight
+
+  - reportable_sounds
+
+  - more accurate map mouse reporting
+
+  - swap %D and %X
+
+  - https://tintin.sourceforge.io/forum/viewtopic.php?f=5&t=2600 map viewing mode.
+
+  - #buffer events
+
+  - #default smaller equal greater options
+
+  - #buffer end after #split ?
+
+  - https://tintin.sourceforge.io/forum/viewtopic.php?f=4&t=2597 #add #screen support
+
+  - better class event and class size handling ?
 
   - #regex might increase the nesting level, causing issues with #local.
 
@@ -12,8 +49,6 @@
 
   - add form feed \x0C
 
-  - see if joe display issues are due to joe using \r 
-
   - look into \x7F not backspacing.
 
   - fix \x00 showme
@@ -24,15 +59,9 @@
 
   - Look into color patch support for #snoop.
 
-  - Add proper class stacking. Maybe separate temp class for #class read 
-
   - see if #break 2 is possible, maybe #continue 2 as well.
 
-  - fix $$ behavior in actions with unknown variables (maybe not).
-
   - Add options to #cursor to implement custom behaviour.
-
-  - \xEE\x80\x80 custom character range.
 
   - multiline gag
 

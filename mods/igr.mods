@@ -1,3 +1,153 @@
+Mar 2019       2.01.8
+------------------------------------------------------------------------------
+
+update.c       Added MAP UPDATED VTMAP event, triggers right after each
+               vtmap redraw.
+
+config.c       Added CHILD LOCK config option to disable tintin command input.
+
+line.c         Enabled the #line substitute arguments option which has a few
+               limited usecases.
+
+main.c         Added better #! hashbang support, with %0 in the PROGRAM START
+               event holding all unrecognized launch arguments. %1 holds the
+               1st argument (program name), %2 the 2nd argument, etc.
+
+data.c         Added #INFO SYSTEM option, with #INFO SYSTEM SAVE saving the
+               data to the info[SYSTEM] variable. Current variables
+               supported are CLIENT_NAME and CLIENT_VERSION. 
+
+event.c        Added %4 and %5 arguments to mouse click events which hold the
+               word and line that was clicked. This is still under
+               construction and non-functional.
+
+net.c          Slightly improved traditional prompt handling, but the code
+               will need a proper update to work properly.
+
+parse.c        Added UNKNOWN COMMAND event, triggers on #jklfdjl and other
+               non-existent commands.
+
+screen.c       Added the #screen command, still under development.
+
+telopt.c       Added VT100 OSC en CATCH VT100 OSC events.
+
+port.c         Fixed an issue with #port and #chat on Mac OS X.
+
+mapper.c       Added #map global which allow setting the vnum of a room that
+               contains exits for global transportation commands, like for
+               example the recall location.
+
+mapper.c       #added #map roomflag noglobal to indicate rooms that block
+               global transportation commands, like norecall rooms.
+
+input.c        Added CATCH RECEIVED INPUT event.
+               Added RECEIVED KEYPRESS event.
+               Added CATCH RECEIVED KEYPRESS event.
+
+mapper.c       Added support for up/down displaying in blockgraphics mode.
+
+mapper.c       Added #map flag direction to enable/disable the showing of the
+               direction arrow in the mapper. Also includes a minor
+               modification in the legend.
+
+utf8.c         Added KOI-8 to UTF-8 conversion support, which is enabled with
+               #config charset koi2utf
+
+mapper.c       Added #map flag blockgraphics mode, still needs some more work.
+
+variable.c     Updated %a to take a UTF-8 sequence and print the corresponding
+               21 bit decimal unicode value. This requires for #config CHARSET
+               to be set to an UTF-8 mode to work.
+
+               Updated %A to take a 32 bit decimal value and print the
+               corresponding unicode UTF-8 sequence. This requires for
+               #config CHARSET to be set to an UTF-8 mode to work.
+
+               Added %x which takes a hexadecimal value and prints the
+               corresponding unicode UTF-8 sequence.
+
+               Added %X which convers a 64 bit unsigned decimal value to
+               a 64 bit hexadecimal value.
+
+               Added %D which converts a 64 bit hexadecimal value to
+               a 64 bit unsigned decimal value.
+
+math.c         Fixed an issue with 63-64 bit math.
+
+mapper.c       Added #map flag unicodegraphics mode.
+
+utf8.c         Added #config charset FANSI option that maps code page 437 to
+               UTF-8. Requires an UTF-8 terminal to work and you can try out
+               fansi art at 8bit.fansi.org 4201.
+
+main.c         The -s startup option will start tt++ in screen reader mode.
+
+mapper.c       Added support for direction displaying in mudfont mode.
+
+utf8.c         UTF-8 character detection should be synched with xterm.
+
+mapper.c       #map legend is now completely different and supports various
+               default legends to choose from, namely:
+
+               [ASCII NESW          ]     [  1]  [ 32]
+               [UNICODE NESW        ]     [  1]  [ 32]
+               [UNICODE NESW LINE   ]     [  1]  [ 16]
+               [UNICODE NESW MISC   ]     [ 17]  [ 24]
+               [UNICODE NESW DIRS   ]     [ 25]  [ 32]
+               [UNICODE NESW TUBE   ]     [  1]  [ 32]
+               [MUDFONT BRAILLE TUBE]     [ 33]  [164]
+               [MUDFONT BRAILLE LINE]     [ 33]  [164]
+               [MUDFONT PRIVATE     ]     [ 33]  [164]
+               [MUDFONT CURVED      ]     [161]  [164]
+               [RESET               ]     [  1]  [164]
+
+               The legend exits of 164 characters and when setting for example
+               UNICODE NESW DIRS you're only redefining 8 characters from
+               position 17 to position 24.
+
+prompt.c       #prompt and #showme now take a 3rd argument that sets the
+               column number at which the text is printed. The column number
+               must be between 1 and the maximum width of the screen. If a
+               negative number is provided the distance is measured from the
+               right. The line isn't automatically cleared when using
+               #showme with a column argument.
+
+input.c        Added support for fullwidth UTF-8 characters. This won't be
+               working perfectly until unicode is better standardized.
+
+config.c       Added #config CHARSET BIG2UTF. When enabled text you receive
+               will be translated from BIG-5 to UTF-8, and data you send will
+               be translated from UTF-8 to BIG-5. This should allow someone
+               to play a BIG-5 mud using an UTF-8 capable terminal.
+
+path.c         Added #path describe to give a basic description of the
+               mapped path. Might be of interesting for anyone using a
+               screen reader.
+
+utf8.c         Added UTF-8 character width detection.
+
+mapper.c       When #map list is used with a variable the variable is now
+               properly cleared. In addition #map list will report the
+               relative x y and z coordinates of the found rooms which can
+               be used with #map jump. This update changes the table
+               structure of the variable returned by #map list.
+
+mapper.c       Added #map legend reset option and fixed legend saving.
+
+mapper.c       Added new mudfont mode based on the braille unicode block.
+
+mapper.c       Changed the RIVER map room flag to CURVED and added support
+               for it in simple and mudfont mode.
+
+mapper.c       Added click events that trigger when clicking a room on the
+               vt map reporting the room vnum.
+
+session.c      Trying to properly terminate zombie processes after using #run.
+
+telopt.c       Added support for the CHARSET telnet option.
+
+path.c         Added #path save <length|position> <variable> options.
+
 Feb 2019       2.01.7
 ------------------------------------------------------------------------------
 
@@ -287,7 +437,7 @@ Jun 2015       2.01.2
 mapper.c       Added map <radius> <variable name> {v} option to save the map
                output to a variable.
 
-log.c          html log files now correctly set the charset to utf-8 or big5
+log.c          html log files now correctly set the charset to UTF-8 or big5
                if applicable.
 
 tokenize.c     Added support for local variables with the #LOCAL command. Most

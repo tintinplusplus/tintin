@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
@@ -172,14 +171,18 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 void write_line_mud(struct session *ses, char *line, int size)
 {
-	static int retry;
-
 	push_call("write_line_mud(%p,%p)",line,ses);
 
 	if (ses == gts)
 	{
-		tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
-
+		if (HAS_BIT(gtd->flags, TINTIN_FLAG_CHILDLOCK))
+		{
+			tintin_printf2(ses, "#THIS SESSION IS CHILD LOCKED, PRESS CTRL-D TO EXIT.");
+		}
+		else
+		{
+			tintin_printf2(ses, "#NO SESSION ACTIVE. USE: %csession {name} {host} {port} TO START ONE.", gtd->tintin_char);
+		}
 		pop_call();
 		return;
 	}
@@ -192,9 +195,33 @@ void write_line_mud(struct session *ses, char *line, int size)
 		return;
 	}
 
+	if (!HAS_BIT(ses->telopts, TELOPT_FLAG_TELNET))
+	{
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5TOUTF8))
+		{
+			char buf[BUFFER_SIZE];
+
+			size = utf8_to_big5(line, buf);
+
+			strcpy(line, buf);
+		}
+		else if (HAS_BIT(ses->flags, SES_FLAG_KOI8TOUTF8))
+		{
+			char buf[BUFFER_SIZE];
+
+			size = utf8_to_koi8(line, buf);
+
+			strcpy(line, buf);
+		}
+	}
+
+	if (ses->mccp3)
+	{
+		write_compressed(ses, line, size);
+	}
 #ifdef HAVE_GNUTLS_H
 
-	if (ses->ssl)
+	else if (ses->ssl)
 	{
 		int result;
 
@@ -205,21 +232,9 @@ void write_line_mud(struct session *ses, char *line, int size)
 			result = gnutls_record_send(ses->ssl, 0, 0);
 		}
 	}
-	else
-
 #endif
-
-	if (write(ses->socket, line, size) == -1)
+	else if (write(ses->socket, line, size) == -1)
 	{
-		if (retry++ < 10)
-		{
-			usleep(100000);
-
-			write_line_mud(ses, line, size);
-
-			pop_call();
-			return;
-		}
 		perror("write in write_line_mud");
 
 		cleanup_session(ses);
@@ -227,8 +242,6 @@ void write_line_mud(struct session *ses, char *line, int size)
 		pop_call();
 		return;
 	}
-
-	retry = 0;
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "SEND OUTPUT", line);
 
@@ -279,6 +292,7 @@ void readmud(struct session *ses)
 {
 	char *line, *next_line;
 	char linebuf[BUFFER_SIZE];
+	struct session *cts;
 
 	push_call("readmud(%p)", ses);
 
@@ -291,13 +305,17 @@ void readmud(struct session *ses)
 
 	/* separate into lines and print away */
 
+	// cts = current tintin session, may have to make this global to avoid glitches
+
+	cts = gtd->ses;
+
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
 		save_pos(gtd->ses);
 		goto_rowcol(gtd->ses, gtd->ses->bot_row, 1);
 	}
 
-	SET_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+	SET_BIT(cts->flags, SES_FLAG_READMUD);
 
 	for (line = gtd->mud_output_buf ; line && *line ; line = next_line)
 	{
@@ -329,7 +347,7 @@ void readmud(struct session *ses)
 
 			if (strlen(ses->more_output) < BUFFER_SIZE / 3)
 			{
-				if (!HAS_BIT(gtd->ses->telopts, TELOPT_FLAG_PROMPT))
+				if (!HAS_BIT(ses->telopts, TELOPT_FLAG_PROMPT))
 				{
 					if (gts->check_output)
 					{
@@ -361,9 +379,30 @@ void readmud(struct session *ses)
 			strcpy(linebuf, line);
 		}
 
-		process_mud_output(ses, linebuf, next_line == NULL);
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5TOUTF8) || HAS_BIT(ses->flags, SES_FLAG_FANSITOUTF8) || HAS_BIT(ses->flags, SES_FLAG_KOI8TOUTF8))
+		{
+			char tempbuf[BUFFER_SIZE];
+
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5TOUTF8))
+			{
+				big5_to_utf8(linebuf, tempbuf);
+			}
+			else if (HAS_BIT(ses->flags, SES_FLAG_FANSITOUTF8))
+			{
+				fansi_to_utf8(linebuf, tempbuf);
+			}
+			else
+			{
+				koi8_to_utf8(linebuf, tempbuf);
+			}
+			process_mud_output(ses, tempbuf, next_line == NULL);
+		}
+		else
+		{
+			process_mud_output(ses, linebuf, next_line == NULL);
+		}
 	}
-	DEL_BIT(gtd->ses->flags, SES_FLAG_READMUD);
+	DEL_BIT(cts->flags, SES_FLAG_READMUD);
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_SPLIT))
 	{
@@ -432,6 +471,11 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 		printline(ses, &output, prompt);
 
 		str_free(output);
+
+		if (!IS_SPLIT(ses))
+		{
+			gtd->input_off = 1 + strip_vt102_strlen(ses, linebuf);
+		}
 	}
 	else if (HAS_BIT(ses->flags, SES_FLAG_SNOOP))
 	{
@@ -442,4 +486,3 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 	pop_call();
 	return;
 }
-

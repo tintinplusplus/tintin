@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -72,7 +71,7 @@ char *str_hash(char *str, int lines)
 
 	for (hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
 	{
-		if (!strcmp(str, (char *) hash_ptr + gtd->str_hash_size))
+		if (str_hash_len == hash_ptr->length && !strcmp(str, (char *) hash_ptr + gtd->str_hash_size))
 		{
 			hash_ptr->count++;
 
@@ -81,9 +80,10 @@ char *str_hash(char *str, int lines)
 	}
 	hash_ptr = (struct str_hash_data *) calloc(1, str_hash_len + 1 + gtd->str_hash_size);
 
-	hash_ptr->count = 1;
-	hash_ptr->lines = lines;
-	hash_ptr->hash  = hash;
+	hash_ptr->count  = 1;
+	hash_ptr->lines  = lines;
+	hash_ptr->length = str_hash_len;
+	hash_ptr->hash   = hash;
 	strcpy((char *) hash_ptr + gtd->str_hash_size, str);
 
 	LINK(hash_ptr, str_hash_index[hash].f_node, str_hash_index[hash].l_node);
@@ -112,6 +112,11 @@ unsigned short str_hash_lines(char *str)
 	return ((struct str_hash_data *) (str - gtd->str_hash_size))->lines;
 }
 
+unsigned short str_hash_length(char *str)
+{
+	return ((struct str_hash_data *) (str - gtd->str_hash_size))->length;
+}
+
 unsigned short str_hash_grep(char *str, int write)
 {
 	struct str_hash_data *hash_ptr;
@@ -138,7 +143,14 @@ void reset_hash_table(void)
 	{
 		for (hash_ptr = str_hash_index[hash].f_node ; hash_ptr ; hash_ptr = hash_ptr->next)
 		{
-			hash_ptr->lines = word_wrap(gtd->ses, (char *) hash_ptr + gtd->str_hash_size, temp, FALSE);
+			if (hash_ptr->length < gtd->screen->cols)
+			{
+				hash_ptr->lines = 1;
+			}
+			else
+			{
+				hash_ptr->lines = word_wrap(gtd->ses, (char *) hash_ptr + gtd->str_hash_size, temp, FALSE);
+			}
 		}
 	}
 	pop_call();

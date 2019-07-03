@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -327,7 +326,7 @@ DO_CONFIG(config_packetpatch)
 		return NULL;
 	}
 
-	gts->check_output = (long long) (tintoi(arg) * 1000000LL);
+	gts->check_output = (unsigned long long) (tintoi(arg) * 1000000ULL);
 
 	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
 
@@ -521,7 +520,7 @@ DO_CONFIG(config_charset)
 		}
 		else if (strcasestr(gtd->lang, "BIG-5"))
 		{
-			strcpy(arg, "BIG5");
+			strcpy(arg, "BIG-5");
 		}
 		else
 		{
@@ -531,22 +530,41 @@ DO_CONFIG(config_charset)
 
 	if (!strcasecmp(arg, "BIG5"))
 	{
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
 		SET_BIT(ses->flags, SES_FLAG_BIG5);
-		DEL_BIT(ses->flags, SES_FLAG_UTF8);
+	}
+	else if (!strcasecmp(arg, "BIG-5"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
+		SET_BIT(ses->flags, SES_FLAG_BIG5);
 	}
 	else if (!strcasecmp(arg, "UTF-8"))
 	{
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
 		SET_BIT(ses->flags, SES_FLAG_UTF8);
-		DEL_BIT(ses->flags, SES_FLAG_BIG5);
 	}
 	else if (!strcasecmp(arg, "ASCII"))
 	{
-		DEL_BIT(ses->flags, SES_FLAG_BIG5);
-		DEL_BIT(ses->flags, SES_FLAG_UTF8);
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
+	}
+	else if (!strcasecmp(arg, "BIG2UTF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
+		SET_BIT(ses->flags, SES_FLAG_UTF8|SES_FLAG_BIG5TOUTF8);
+	}
+	else if (!strcasecmp(arg, "FANSI"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
+		SET_BIT(ses->flags, SES_FLAG_UTF8|SES_FLAG_FANSITOUTF8);
+	}
+	else if (!strcasecmp(arg, "KOI2UTF"))
+	{
+		DEL_BIT(ses->flags, SES_FLAG_CHARSETS);
+		SET_BIT(ses->flags, SES_FLAG_UTF8|SES_FLAG_KOI8TOUTF8);
 	}
 	else
 	{
-		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|ASCII|BIG5|UTF-8>", config_table[index].name);
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|ASCII|BIG5|FANSI|UTF-8|BIG2UTF|KOI2UTF>", config_table[index].name);
 
 		return NULL;
 	}
@@ -682,6 +700,27 @@ DO_CONFIG(config_mousetracking)
 	{
 		DEL_BIT(gtd->flags, TINTIN_FLAG_MOUSETRACKING);
 		printf("\e[?1000l\e[?1002l\e[?1004l\e[?1006l");
+	}
+	else
+	{
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <ON|OFF>", config_table[index].name);
+
+		return NULL;
+	}
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+
+	return ses;
+}
+
+DO_CONFIG(config_childlock)
+{
+	if (!strcasecmp(arg, "ON"))
+	{
+		SET_BIT(gtd->flags, TINTIN_FLAG_CHILDLOCK);
+	}
+	else if (!strcasecmp(arg, "OFF"))
+	{
+		DEL_BIT(gtd->flags, TINTIN_FLAG_CHILDLOCK);
 	}
 	else
 	{

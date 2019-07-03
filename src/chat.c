@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2005 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -101,12 +100,9 @@ DO_COMMAND(do_chat)
 
 DO_CHAT(chat_initialize)
 {
-	char hostname[BUFFER_SIZE];
 	struct sockaddr_in sa;
-	struct hostent *hp = NULL;
 	struct linger ld;
-	char *reuse = "1";
-	int sock, port;
+	int sock, port, reuse;
 
 	if (gtd->chat)
 	{
@@ -117,31 +113,23 @@ DO_CHAT(chat_initialize)
 
 	port = atoi(left) ? atoi(left) : DEFAULT_PORT;
 
-	gethostname(hostname, BUFFER_SIZE);
-
-	hp = gethostbyname(hostname);
-
-	if (hp == NULL)
-	{
-		perror("chat_initialize: gethostbyname");
-
-		return;
-	}
-
-	sa.sin_family      = hp->h_addrtype;
+	sa.sin_family      = AF_INET;
 	sa.sin_port        = htons(port);
-	sa.sin_addr.s_addr = 0;
+	sa.sin_addr.s_addr = INADDR_ANY;
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (sock < 0)
 	{
-		perror("chat_initialize: socket");
+		perror("chat_initialize: socket()");
 
 		return;
 	}
 
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reuse, sizeof(reuse));
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1)
+	{
+		perror("chat_initialize: setsockopt()");
+	}
 
 	ld.l_onoff  = 0; 
 	ld.l_linger = 100;
@@ -270,6 +258,7 @@ void *threaded_chat_call(void *arg)
 {
 	int sock, error;
 	char host[BUFFER_SIZE], port[BUFFER_SIZE], name[BUFFER_SIZE];
+	char *str;
 	struct addrinfo *address;
 	static struct addrinfo hints;
 	struct chat_data *new_buddy;
@@ -281,8 +270,12 @@ void *threaded_chat_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
+	str = arg;
+
 	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, host, FALSE);
 	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, port, FALSE);
+
+	free(str);
 
 	if (*port == 0)
 	{
@@ -581,12 +574,15 @@ void *threaded_chat_call(void *arg)
 DO_CHAT(chat_call)
 {
 	char buf[BUFFER_SIZE];
+	char *str;
 
 	pthread_t thread;
 
 	sprintf(buf, "{%s} {%s}", left, right);
 
-	pthread_create(&thread, NULL, threaded_chat_call, (void *) buf);
+	str = strdup(buf);
+
+	pthread_create(&thread, NULL, threaded_chat_call, (void *) str);
 }
 	
 #else

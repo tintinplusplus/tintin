@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -30,16 +29,20 @@
 
 DO_COMMAND(do_prompt)
 {
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
+	struct listnode *node;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], arg4[BUFFER_SIZE];
+	int col;
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, arg2, 1);
-	arg = get_arg_in_braces(ses, arg, arg3, 1);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
+	arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg4, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (*arg3 == 0)
 	{
-		strcpy(arg3, "1");
+		strcpy(arg, "1");
 	}
+	col = *arg4 ? get_number(ses, arg4) : 0;
 
 	if (*arg1 == 0)
 	{
@@ -54,9 +57,11 @@ DO_COMMAND(do_prompt)
 	}
 	else
 	{
-		update_node_list(ses->list[LIST_PROMPT], arg1, arg2, arg3);
+		node = update_node_list(ses->list[LIST_PROMPT], arg1, arg2, arg3);
 
-		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s}.", arg1, arg2, arg3);
+		node->data = col;
+
+		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s} {%d}.", arg1, arg2, arg3, (int) node->data);
 	}
 	return ses;
 }
@@ -95,17 +100,17 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 			show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", node->left);
 			show_debug(ses, LIST_GAG, "#DEBUG GAG {%s}", node->left);
 
-			do_one_prompt(ses, original, atoi(node->pr));
+			do_one_prompt(ses, original, (int) get_number(ses, node->pr), (int) node->data);
 
 			SET_BIT(ses->flags, SES_FLAG_GAG);
 		}
 	}
 }
 
-void do_one_prompt(struct session *ses, char *prompt, int row)
+void do_one_prompt(struct session *ses, char *prompt, int row, int col)
 {
 	char temp[BUFFER_SIZE];
-	int original_row, len;
+	int original_row, original_col, len;
 
 	if (ses != gtd->ses)
 	{
@@ -113,6 +118,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 	}
 
 	original_row = row;
+	original_col = col;
 
 	if (row < 0)
 	{
@@ -120,14 +126,28 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 	}
 	else
 	{
-		row = ses->rows - row;
+		row = gtd->screen->rows - row;
 	}
 
-	if (row < 1 || row > ses->rows)
+	if (col < 0)
 	{
-		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS OUTSIDE THE SCREEN: {%s} {%d}.", prompt, original_row);
+		col = 1 + gtd->screen->cols - col;
+	}
+	else if (col == 0)
+	{
+		col = 1;
+	}
+
+	if (row < 1 || row > gtd->screen->rows)
+	{
+		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS OUTSIDE THE SCREEN: {%s} {%d} {%d}.", prompt, original_row, original_col);
 
 		return;
+	}
+
+	if (col < 0 || col > gtd->screen->cols)
+	{
+		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT COLUMN IS OUTSIDE THE SCREEN: {%s} {%d} {%d}.", prompt, original_row, original_col);
 	}
 
 	if (row > ses->top_row && row < ses->bot_row)
@@ -141,9 +161,9 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 
 	if (len == 0)
 	{
-		sprintf(temp, "%.*s", ses->cols + 4, "\e[0m--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+		sprintf(temp, "%.*s", gtd->screen->cols + 4, "\e[0m--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	}
-	else if (len <= ses->cols)
+	else if (col - 1 + len <= gtd->screen->cols)
 	{
 		sprintf(temp, "%s", prompt);
 	}
@@ -151,7 +171,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 	{
 		show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", prompt);
 
-		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", len, ses->cols);
+		sprintf(temp, "#PROMPT SIZE (%d) LONGER THAN ROW SIZE (%d)", len, gtd->screen->cols);
 	}
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
@@ -159,7 +179,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 		save_pos(ses);
 	}
 
-	if (row == ses->rows)
+	if (row == gtd->screen->rows)
 	{
 		gtd->input_off = len + 1;
 
@@ -167,10 +187,10 @@ void do_one_prompt(struct session *ses, char *prompt, int row)
 	}
 	else
 	{
-		// goto row, erase to eol, print prompt, goto bot_row
-
-		printf("\e[%d;1H\e[%d;1H\e[K%s\e[%d;1H", row, row, temp, ses->bot_row);
+		printf("\e[%d;%dH\e[%d;%dH%s\e[%d;1H", row, col, row, col, temp, ses->bot_row);
 	}
+
+	set_line_screen(temp, row - 1, col - 1);
 
 	if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 	{

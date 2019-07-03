@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,15 +13,16 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
 *                          coded by Bill Reiss 1993                           *
+*                     recoded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -40,15 +40,15 @@ DO_COMMAND(do_split)
 
 	if (*left == 0 && *right == 0)
 	{
-		init_split(ses, 1, ses->rows - 2);
+		init_split(ses, 1, gtd->screen->rows - 2);
 	}
 	else if (*right == 0)
 	{
-		init_split(ses, 1 + atoi(left), ses->rows - 2);
+		init_split(ses, 1 + atoi(left), gtd->screen->rows - 2);
 	}
 	else
 	{
-		init_split(ses, 1 + atoi(left), ses->rows - 1 - atoi(right));
+		init_split(ses, 1 + atoi(left), gtd->screen->rows - 1 - atoi(right));
 	}
 	return ses;
 }
@@ -69,37 +69,47 @@ DO_COMMAND(do_unsplit)
 	return ses;
 }
 
-/*
-	turn on split mode
-*/
-
 void init_split(struct session *ses, int top, int bot)
 {
+	push_call("init_split(%p,%d,%d)",ses,top,bot);
+
+	if (bot > gtd->screen->rows)
+	{
+		bot = gtd->screen->rows;
+	}
+
+	if (bot < 2)
+	{
+		bot = 2;
+	}
+
+	if (top >= bot)
+	{
+		top = bot - 1;
+	}
+
 	if (top < 1)
 	{
 		top = 1;
-	}
-
-	if (bot > ses->rows)
-	{
-		bot = ses->rows;
 	}
 
 	scroll_region(ses, top, bot);
 
 	SET_BIT(ses->flags, SES_FLAG_SPLIT);
 
-	for (bot = 1 ; ses->rows - bot > ses->bot_row ; bot++)
+	for (bot = 1 ; gtd->screen->rows - bot > ses->bot_row ; bot++)
 	{
-		do_one_prompt(ses, "", +bot);
+		do_one_prompt(ses, "", +bot, 0);
 	}
+
+	set_line_screen("", ses->bot_row - 1, 0);
 
 	for (top = 1 ; top < ses->top_row ; top++)
 	{
-		do_one_prompt(ses, "", -top);
+		do_one_prompt(ses, "", -top, 0);
 	}
 
-	goto_rowcol(ses, ses->rows, 1);
+	goto_rowcol(ses, gtd->screen->rows, 1);
 
 	if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
 	{
@@ -110,11 +120,16 @@ void init_split(struct session *ses, int top, int bot)
 	{
 		SET_BIT(ses->flags, SES_FLAG_UPDATEVTMAP);
 	}
+
+	buffer_end(ses, "");
+
+	pop_call();
+	return;
 }
 
 
 /*
-	get a clean screen, useful for ^Z, quitting, etc
+	unsplit
 */
 
 void clean_screen(struct session *ses)
@@ -123,17 +138,21 @@ void clean_screen(struct session *ses)
 
 	if (ses == gtd->ses)
 	{
-		goto_rowcol(ses, ses->rows, 1);
+		goto_rowcol(ses, gtd->screen->rows, 1);
 	}
 }
 
 
 /*
-	undo clean_screen(); useful after ^Z
+	refresh
 */
 
 void dirty_screen(struct session *ses)
 {
+	push_call("dirty_screen(%p)",ses);
+
+	refresh_session_terminal(ses);
+
 	printf("\e=");
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
@@ -151,6 +170,11 @@ void dirty_screen(struct session *ses)
 
 	if (IS_SPLIT(ses) && ses == gtd->ses)
 	{
-		goto_rowcol(ses, ses->rows, 1);
+		goto_rowcol(ses, gtd->screen->rows, 1);
 	}
+
+//	buffer_end(ses, "");
+
+	pop_call();
+	return;
 }

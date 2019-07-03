@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -304,6 +303,7 @@ struct help_type help_table[] =
 		"\n"
 		"         Config options which aren't listed by default:\n"
 		"\n"
+		"         #CONFIG {CHILD LOCK}   {ON|OFF} Enable or disable command input.\n"
 		"         #CONFIG {CONVERT META} {ON|OFF} Shows color codes and key bindings.\n"
 		"         #CONFIG {DEBUG TELNET} {ON|OFF} Shows telnet negotiations y/n.\n"
 		"         #CONFIG {LOG LEVEL}  {LOW|HIGH} LOW logs mud output before triggers.\n"
@@ -432,12 +432,13 @@ struct help_type help_table[] =
 		"         \\e    start an escape sequence.\n"
 		"         \\n    send a line feed.\n"
 		"         \\r    send a carriage return.\n"
-		"         \\t    send a tab.\n"
+		"         \\t    send a horizontal tab.\n"
 		"         \\x    print an 8 bit character using hexadecimal, \\xFF for example.\n"
 		"         \\x7B  send the '{' character.\n"
 		"         \\x7D  send the '}' character.\n"
 		"         \\u    print a 16 bit unicode character, \\uFFFD for example.\n"
 		"         \\U    print a 21 bit unicode character, \\U02AF21 for example.\n"
+		"         \\v    send a vertical tab\n"
 		"\n"
 		"         Ending a line with \\ will stop tintin from appending a line feed.\n"
 		"         To escape arguments in an alias or action use %%0 %%1 %%2 etc.\n"
@@ -452,6 +453,8 @@ struct help_type help_table[] =
 		"         events. Use #info {events} {on} to see events get thrown.\n"
 		"\n"
 		"         CHAT MESSAGE          %0 default %1 plain\n"
+		"         CLASS ACTIVATED       %0 class name\n"
+		"         CLASS DEACTIVATED     %0 class name\n"
 		"         DATE                  %1 month - %3 day   %4 hour : %5 minute\n"
 		"         DAY                   %3 day\n"
 		"         DOUBLE-CLICKED <VAR>  %0 col %1 row\n"
@@ -465,7 +468,7 @@ struct help_type help_table[] =
 		"         IAC SB NEW-ENVIRON    %0 variable %1 value\n"
 		"         IAC SB ZMP <VAR>      %0 value\n"
 		"         IAC SB <VAR>          %0 raw text %1 raw data\n"
-		"         LONG-CLICKED <VAR>    %0 col %1 row %2 -col %3 -row\n"
+		"         LONG-CLICKED <VAR>    %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
 		"         MAP ENTER MAP         %0 new vnum\n"
 		"         MAP ENTER ROOM        %0 new vnum %1 old vnum\n"
 		"         MAP ENTER ROOM <VAR>  %0 new vnum %1 old vnum\n"
@@ -474,24 +477,25 @@ struct help_type help_table[] =
 		"         MAP EXIT ROOM <VAR>   %0 old vnum %1 new vnum\n"
 		"         MINUTE                %5 minute\n"
 		"         MONTH                 %1 month\n"
-		"         MOVED <VAR>           %0 col %1 row %2 -col %3 -row\n"
+		"         MOVED <VAR>           %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
 		"         PORT CONNECTION       %0 name %1 ip %2 port\n"
 		"         PORT DISCONNECTION    %0 name %1 ip %2 port\n"
 		"         PORT MESSAGE          %0 name %1 ip %2 port %3 data %4 raw data\n"
-		"         PRESSED <VAR>         %0 col %1 row %2 -col %3 -row\n"
+		"         PRESSED <VAR>         %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
 		"         PROGRAM START         %0 client name %1 client version %2 startup arg\n"
 		"         PROGRAM TERMINATION   %0 goodbye message\n"
 		"         RECEIVED INPUT        %0 raw text\n"
+		"         RECEIVED KEYPRESS     %0 raw text %1 unicode index\n"
 		"         RECEIVED LINE         %0 raw text %1 plain text\n"
 		"         RECEIVED OUTPUT       %0 raw text\n"
 		"         RECEIVED PROMPT       %0 raw text %1 plain text\n"
-		"         RELEASED <VAR>        %0 col %1 row %2 -col %3 -row\n"
+		"         RELEASED <VAR>        %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
 		"         SCAN CSV HEADER       %0 all args %1 arg1 %2 arg2 .. %99 arg99\n"
 		"         SCAN CSV LINE         %0 all args %1 arg1 %2 arg3 .. %99 arg99\n"
 		"         SCAN TSV HEADER       %0 all args %1 arg1 %2 arg3 .. %99 arg99\n"
 		"         SCAN TSV LINE         %0 all args %1 arg1 %2 arg3 .. %99 arg99\n"
 		"         SCREEN RESIZE         %0 cols %1 rows\n"
-		"         SCROLLED <VAR>        %0 col %1 row %2 -col %3 -row\n"
+		"         SCROLLED <VAR>        %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
 		"         SECOND                %6 second\n"
 		"         SEND OUTPUT           %0 raw text\n"
 		"         SESSION ACTIVATED     %0 name\n"
@@ -500,9 +504,10 @@ struct help_type help_table[] =
 		"         SESSION DEACTIVATED   %0 name\n"
 		"         SESSION DISCONNECTED  %0 name %1 host %2 ip %3 port\n"
 		"         SESSION TIMED OUT     %0 name %1 host %2 ip %3 port\n"
-		"         SHORT-CLICKED <VAR>   %0 col %1 row %2 -col %3 -row\n"
+		"         SHORT-CLICKED <VAR>   %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
 		"         TIME                  %4 hour : %5 minute : %6 second\n"
-		"         TRIPLE-CLICKED <VAR>  %0 col %1 row %2 -col %3 -row\n"
+		"         TRIPLE-CLICKED <VAR>  %0 col %1 row %2 -col %3 -row %4 word %5 line\n"
+		"         UNKNOWN COMMAND       %0 raw text\n"
 		"         VARIABLE UPDATE <VAR> %0 name %1 value\n"
 		"         WEEK                  %2 week\n"
 		"         WINDOW FOCUS IN       %0 name\n"
@@ -540,13 +545,15 @@ struct help_type help_table[] =
 		"\n"
 		"         Allows you to store a string into a variable in the exact same way\n"
 		"         C's sprintf works with a few enhancements and limitations such as\n"
-		"         no integer operations and a maximum of 20 arguments. If you use format\n"
-		"         inside an alias or action you must escape the %0-9 like: %+4s.\n"
+		"         no integer operations and a maximum of 20 arguments.\n"
+		"\n"
+		"         If you use #format inside an alias or action you must escape %1s as\n"
+		"         %+1s or %%1s so the %1 isn't substituted by the trigger.\n"
 		"\n"
 		"         #format {test} {%+9s} {string}  pad string with up to 9 spaces\n"
 		"         #format {test} {%-9s} {string}  post pad string with up to 9 spaces\n"
 		"         #format {test} {%.8s} {string}  copy at most 8 characters\n"
-		"         #format {test} {%a}   {number}  print corresponding ascii character\n"
+		"         #format {test} {%a}   {number}  print corresponding charset character\n"
 		"         #format {test} {%c}   {string}  use a highlight color name\n"
 		"         #format {test} {%d}   {number}  print a number with integer formatting\n"
 		"         #format {test} {%f}   {string}  perform floating point math\n"
@@ -563,14 +570,17 @@ struct help_type help_table[] =
 		"         #format {test} {%u}   {string}  uppercase text\n"
 		"         #format {list} {%w}   {string}  store wordwrapped text in {list}\n"
 		"                                         optional {{string}{width}} syntax\n"
-		"         #format {test} {%A}     {char}  print corresponding ascii value\n"
+		"         #format {test} {%x}      {hex}  print corresponding charset character\n"
+		"         #format {test} {%A}     {char}  store corresponding character value\n"
 		"         #format {cols} {%C}         {}  store the screen width in {cols}\n"
-		"         #format {hash} {%H}   {string}  store a 32 bit string hash in {hash}\n"
+		"         #format {test} {%D}      {hex}  convert hex to decimal in {test}\n"
+		"         #format {hash} {%H}   {string}  store a 64 bit string hash in {hash}\n"
 		"         #format {test} {%L}   {string}  store the string length in {test}\n"
 		"         #format {rows} {%R}         {}  store the screen height in {rows}\n"
 		"         #format {name} {%S}         {}  store the session name in {name}\n"
 		"         #format {time} {%T}         {}  store the epoch time in {time}\n"
 		"         #format {time} {%U}         {}  store the micro epoch time in {time}\n"
+		"         #format {test} {%X}      {dec}  convert dec to hexadecimal in {test}\n\n"
 	},
 	{
 		"FUNCTION",
@@ -988,6 +998,11 @@ struct help_type help_table[] =
 		"\n"
 		"         #map get roomexits <variable>: Store all room exits into variable.\n"
 		"\n"
+		"         #map global <room vnum>: Set the vnum of a room that contains global\n"
+		"                   exits, for example an exit named 'recall' that leads to the\n"
+		"                   recall location. The room can contain multiple exits, in case\n"
+		"                   there are multiple commands that are similar to recall.\n"
+		"\n"
 		"         #map info: Gives information about the map and room you are in.\n"
 		"\n"
 		"         #map insert <direction> [roomflag]: Insert a room in the given\n"
@@ -999,13 +1014,13 @@ struct help_type help_table[] =
 		"         #map leave: Makes you leave the map. Useful when entering a maze. You\n"
 		"                  can return to your last known room using #map return.\n"
 		"\n"
-		"         #map legend <symbols>: The legend exists of 17 decimal numbers which\n"
-		"                  represent character symbols used for drawing a map. Binary\n"
-		"                  order is used with the n e s w representing bit 1 to 4. The\n"
-		"                  first number stands for a no exit room. Number 2 to 16 stand\n"
-		"                  for n e ne s ns es nes w nw ew new sw nsw esw nesw. The 17th\n"
-		"                  number stands for the room the player is currently in. The\n"
-		"                  legend is set to UTF-8 line drawing characters by default.\n"
+		"         #map legend <legend> <symbols>: There are several legends for drawing\n"
+		"                  maps to suit personal preference and system capabilities.\n"
+		"                  Use #map legend without an argument to see the currently\n"
+		"                  used legends. Use #map legend <legend> to set one particular\n"
+		"                  legend. Use #map legend <legend> <character list> to create\n"
+		"                  a custom legend. Custom legends are automatically saved by\n"
+		"                  using #map read and #map write.\n"
 		"\n"
 		"         #map link <direction> <room name> [both]: Links two rooms. If the both\n"
 		"                  argument and a valid direction is given the link is two ways.\n"
@@ -1047,6 +1062,8 @@ struct help_type help_table[] =
 		"         #map roomflag leave: When entering a room with this flag, you will\n"
 		"                  automatically leave the map. Useful when set at the entrance\n"
 		"                  of an unmappable maze.\n"
+		"         #map roomflag noglobal: This marks a room as not allowing global\n"
+		"                  transportation, like norecall rooms that block recall.\n"
 		"         #map roomflag void: When set the room becomes a spacing room that can\n"
 		"                  be used to connect otherwise overlapping areas. A void room\n"
 		"                  should only have two exits. When entering a void room you are\n"
@@ -1186,6 +1203,7 @@ struct help_type help_table[] =
 		"\n"
 		"         create   Will clear the path and start path mapping.\n"
 		"         delete   Will delete the last move of the path.\n"
+		"         describe Describe the path and current position.\n"
 		"         destroy  Will clear the path and stop path mapping.\n"
 		"         goto     Go the the start, end, or given position index.\n"
 		"         insert   Add the given argument to the path.\n"
@@ -1196,7 +1214,10 @@ struct help_type help_table[] =
 		"         run      Execute the current path, with an optional floating point\n"
 		"                  delay in seconds as the second argument.\n"
 		"         save     Save the path to a variable. You must specify whether you\n"
-		"                  want to save the path forward or backward.\n"
+		"                  want to save the path 'forward' or 'backward'. If you use\n"
+		"                  the 'length' or 'position' keywords the current length or\n"
+		"                  position is saved.\n"
+		"         swap     Switch the forward and backward path.\n"
 		"         unzip    Load the given speedwalk as the new path.\n"
 		"         walk     Take one step forward or backward.\n"
 		"         zip      Turn the path into a speedwalk.\n"
@@ -1214,13 +1235,13 @@ struct help_type help_table[] =
 		"         The first argument is a direction, the second argument is the reversed\n"
 		"         direction.  The reverse direction of north is south, etc.\n"
 		"\n"
-		"         The third argument is a spatial coordinate. In general, each cardinal\n"
-		"         direction should have a unique value which is a power of two (1, 2,\n"
-		"         4, 8, 16, 32, 64, etc). The exception is for compound directions, whose\n"
-		"         value should be the sum of the values for each component direction. For\n"
-		"         example, if the third value for 'n' is 1, and 'e' is 2, then you would\n"
-		"         want 'ne' to have a value of 3 (1 + 2). This value is required for the\n"
-		"         #map functionality to work.\n"
+		"         The third argument is a spatial coordinate which is a power of two.\n"
+		"         'n' is 1, 'e' is 2, 's' is 4, 'w' is '8', 'u' is 16, 'd' is 32. The\n"
+		"         exception is for compound directions, whose value should be the sum\n"
+		"         of the values of each cardinal direction it is composed of. For\n"
+		"         example, 'nw' is the sum of 'n' and 'w' which is 1 + 8, so 'nw'\n"
+		"         needs to be given the value of 9. This value is required for the\n"
+		"         #map functionality to work properly.\n"
 		"\n"
 		"<178>Example<278>: #pathdir {ue} {dw} {18}\n"
 		"         #pathdir {dw} {ue} {40}\n"
@@ -1433,7 +1454,7 @@ struct help_type help_table[] =
 	},
 	{
 		"PROMPT",
-		"<178>Command<278>: #prompt <178>{<278>text<178>}<278> <178>{<278>new text<178>}<278> <178>{<278>row #<178>}<278>\n"
+		"<178>Command<278>: #prompt <178>{<278>text<178>}<278> <178>{<278>new text<178>}<278> <178>{<278>row #<178>} <178>{<278>row #<178>}<278>\n"
 		"\n"
 		"         Prompt is a feature for split window mode (see #help split), which\n"
 		"         will take the status prompt from the mud, and display it on the status\n"
@@ -1444,6 +1465,15 @@ struct help_type help_table[] =
 		"         mode. A positive row number draws #row lines above the bottom row. A\n"
 		"         negative number draws #row lines below the title bar. The input row\n"
 		"         can be set using 0.\n"
+		"\n"
+		"         The col number is optional and can be used to set the column index.\n"
+		"         A positive col number draws the given number of columns from the left,\n"
+		"         while a negative col number draws from the right. When a col number is\n"
+		"         given the line is not automatically cleared allowing multiple prompt\n"
+		"         calls to draw different sections of the interface.\n"
+		"\n"
+		"         The #showme command takes a row and col argument as well so it's also\n"
+		"         possible to embed prompt drawing behavior within actions.\n"
 		"\n"
 		"<178>Comment<278>: See '#help action', for more information about triggers.\n"
 		"\n"
@@ -1575,6 +1605,19 @@ struct help_type help_table[] =
 		"<178>Related<278>: textin and read.\n"
 		
 	},
+
+	{
+		"SCREEN READER",
+		"Screen reader mode is enabled by using #config screen on. The main purpose of\n"
+		"the screen reader mode is to tell MUDs that a screen reader is being used by\n"
+		"using the MTTS standard. The MTTS specification is available at:\n"
+		"\n"
+		"http://tintin.sourceforge.net/protocols/mtts\n"
+		"\n"
+		"With the screen reader mode enabled TinTin++ will try to remove visual\n"
+		"elements where possible.\n"
+	},
+
 	{
 		"SCRIPT",
 		"<178>Command<278>: #script <178>{<278>variable<178>}<178> {<278>shell command<178>}<278>\n"
@@ -1632,11 +1675,11 @@ struct help_type help_table[] =
 	},
 	{
 		"SHOWME",
-		"<178>Command<278>: #showme <178>{<278>string<178>}<278> <178>{<278>row<178>}<278>\n"
+		"<178>Command<278>: #showme <178>{<278>string<178>}<278> <178>{<278>row<178>} <178>{<278>col<178>}<278>\n"
 		"\n"
 		"         Display the string to the terminal, do not send to the mud.  Useful for\n"
-		"         status, warnings, etc.  The {row} number is optional and works the same\n"
-		"         way as the row number of the #prompt trigger.\n"
+		"         status, warnings, etc.  The {row} and col number are optional and work\n"
+		"         the same way as the row number of the #prompt trigger.\n"
 		"\n"
 		"         Actions can be triggered by the showme command.\n"
 		"\n"
@@ -1927,7 +1970,7 @@ DO_COMMAND(do_help)
 	{
 		for (cnt = add[0] = 0 ; *help_table[cnt].name != 0 ; cnt++)
 		{
-			if ((int) strlen(add) + 19 > ses->cols)
+			if ((int) strlen(add) + 19 > gtd->screen->cols)
 			{
 				tintin_puts2(ses, add);
 				add[0] = 0;

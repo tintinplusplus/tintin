@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -459,13 +458,13 @@ int show_buffer(struct session *ses)
 	{
 		if (scroll_add >= 0)
 		{
-			word_wrap_split(ses, ses->buffer[scroll_cnt], temp, scroll_tmp - scroll_cut, scroll_cut);
+			word_wrap_split(ses, ses->buffer[scroll_cnt], temp, TRUE, scroll_tmp - scroll_cut, scroll_cut);
 
 			printf("%s\n", temp);
 		}
 		else
 		{
-			word_wrap_split(ses, ses->buffer[scroll_cnt], temp, ses->scroll_base, scroll_size);
+			word_wrap_split(ses, ses->buffer[scroll_cnt], temp, TRUE, ses->scroll_base, scroll_size);
 
 			goto eof;
 		}
@@ -491,7 +490,7 @@ int show_buffer(struct session *ses)
 			break;
 		}
 
-		scroll_tmp = word_wrap(ses, ses->buffer[scroll_cnt], temp, FALSE);
+		scroll_tmp = word_wrap(ses, ses->buffer[scroll_cnt], temp, TRUE);
 
 		if (scroll_add - scroll_tmp < 0)
 		{
@@ -510,7 +509,7 @@ int show_buffer(struct session *ses)
 
 	if (scroll_tmp && ses->buffer[scroll_cnt])
 	{
-		word_wrap_split(ses, ses->buffer[scroll_cnt], temp, 0, scroll_cut);
+		word_wrap_split(ses, ses->buffer[scroll_cnt], temp, TRUE, 0, scroll_cut);
 	}
 
 	eof:

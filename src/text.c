@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -40,17 +39,17 @@ void printline(struct session *ses, char **str, int prompt)
 		return;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && !HAS_BIT(ses->flags, SES_FLAG_VERBOSE))
+	if (HAS_BIT(ses->flags, SES_FLAG_SCAN) && gtd->verbose_level == 0)
 	{
 		pop_call();
 		return;
 	}
 
-	out = str_alloc(strlen(*str) * 2);
+	out = str_alloc(strlen(*str) * 2 + 2);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA))
 	{
-		convert_meta(*str, out);
+		convert_meta(*str, out, TRUE);
 		str_cpy(str, out);
 	}
 
@@ -71,6 +70,7 @@ void printline(struct session *ses, char **str, int prompt)
 	{
 		printf("%s\n", out);
 	}
+	add_line_screen(out);
 
 	str_free(out);
 
@@ -79,13 +79,13 @@ void printline(struct session *ses, char **str, int prompt)
 }
 
 /*
-	Word wrapper, only wraps scrolling region, returns nr of lines - Igor
+	Word wrapper, only wraps scrolling region
 */
 
 int word_wrap(struct session *ses, char *textin, char *textout, int display)
 {
 	char *pti, *pto, *lis, *los, *chi, *cho;
-	int skip = 0, cnt = 0;
+	int width, size, skip = 0, cnt = 0;
 
 	push_call("word_wrap(%s,%p,%p)",ses->name, textin,textout);
 
@@ -128,7 +128,7 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 			lis = pti;
 		}
 
-		if (ses->cur_col > ses->cols)
+		if (ses->cur_col > gtd->screen->cols)
 		{
 			cnt++;
 			ses->cur_col = 1;
@@ -163,21 +163,24 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 			{
 				*pto++ = *pti++;
 				*pto++ = *pti++;
-			}
-			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
-			{
-				*pto++ = *pti++;
 
-				while ((*pti & 192) == 128)
+				ses->cur_col++;
+			}
+			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && is_utf8_head(pti))
+			{
+				size = get_utf8_width(pti, &width);
+
+				while (size--)
 				{
 					*pto++ = *pti++;
 				}
+				ses->cur_col += width;
 			}
 			else
 			{
 				*pto++ = *pti++;
+				ses->cur_col++;
 			}
-			ses->cur_col++;
 		}
 	}
 	*pto = 0;
@@ -188,10 +191,10 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 
 // store whatever falls inbetween skip and keep. Used by #buffer
 
-int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, int keep)
+int word_wrap_split(struct session *ses, char *textin, char *textout, int display, int skip, int keep)
 {
 	char *pti, *pto, *lis, *los, *chi, *cho, *ptb;
-	int i = 0, cnt = 0;
+	int width, size, i = 0, cnt = 0;
 
 	push_call("word_wrap_split(%s,%p,%p,%d,%d)",ses->name, textin,textout, skip, keep);
 
@@ -243,7 +246,7 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, 
 			lis = pti;
 		}
 
-		if (ses->cur_col > ses->cols)
+		if (ses->cur_col > gtd->screen->cols)
 		{
 			cnt++;
 			ses->cur_col = 1;
@@ -289,31 +292,32 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, 
 		{
 			ptb = pto;
 
-			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
+			if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && is_big5(pti))
 			{
 				*pto++ = *pti++;
 				*pto++ = *pti++;
+				ses->cur_col++;
 			}
-			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (*pti & 192) == 192)
+			else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && is_utf8_head(pti))
 			{
-				*pto++ = *pti++;
+				size = get_utf8_width(pti, &width);
 
-				while ((*pti & 192) == 128)
+				while (size--)
 				{
 					*pto++ = *pti++;
 				}
+				ses->cur_col += width;
 			}
 			else
 			{
 				*pto++ = *pti++;
+				ses->cur_col++;
 			}
 
 			if (cnt < skip || cnt >= keep)
 			{
 				pto = ptb;
 			}
-
-			ses->cur_col++;
 		}
 	}
 	*pto = 0;
@@ -321,5 +325,4 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int skip, 
 	pop_call();
 	return (cnt + 1);
 }
-
 

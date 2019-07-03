@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -150,7 +149,39 @@ int is_number(char *str)
 	return TRUE;
 }
 
-int hex_number(char *str)
+int hex_digit(char *str)
+{
+	if (isdigit((int) *str))
+	{
+		return *str - '0';
+	}
+	else
+	{
+		return toupper((int) *str) - 'A' + 10;
+	}
+}
+
+unsigned long long hex_number_64bit(char *str)
+{
+	unsigned long long len, mul, val = 0;
+
+	for (len = 0 ; len < 16 ; len++)
+	{
+		if (!isxdigit((int) str[len]))
+		{
+			break;
+		}
+	}
+
+	for (mul = 1 ; len > 0 ; mul *= 16)
+	{
+		val += mul * hex_digit(str + --len);
+	}
+
+	return val;
+}
+
+int hex_number_8bit(char *str)
 {
 	int value = 0;
 
@@ -690,23 +721,23 @@ void tintin_header(struct session *ses, char *format, ...)
 	vsprintf(arg, format, args);
 	va_end(args);
 
-	if ((int) strlen(arg) > gtd->ses->cols - 2)
+	if ((int) strlen(arg) > gtd->screen->cols - 2)
 	{
-		arg[gtd->ses->cols - 2] = 0;
+		arg[gtd->screen->cols - 2] = 0;
 	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SCREENREADER))
 	{
-		memset(buf, ' ', gtd->ses->cols);
+		memset(buf, ' ', gtd->screen->cols);
 	}
 	else
 	{
-		memset(buf, '#', gtd->ses->cols);
+		memset(buf, '#', gtd->screen->cols);
 	}
 
-	memcpy(&buf[(gtd->ses->cols - strlen(arg)) / 2], arg, strlen(arg));
+	memcpy(&buf[(gtd->screen->cols - strlen(arg)) / 2], arg, strlen(arg));
 
-	buf[gtd->ses->cols] = 0;
+	buf[gtd->screen->cols] = 0;
 
 	tintin_puts2(ses, buf);
 }
@@ -714,16 +745,49 @@ void tintin_header(struct session *ses, char *format, ...)
 
 void socket_printf(struct session *ses, size_t length, char *format, ...)
 {
+	size_t size;
+
 	char buf[STRING_SIZE];
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buf, format, args);
+	size = vsprintf(buf, format, args);
 	va_end(args);
+
+	if (size != length && HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+	{
+		tintin_printf(ses, "DEBUG TELNET: socket_printf size difference: %d vs %d", size, length);
+	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
 	{
 		write_line_mud(ses, buf, length);
+	}
+}
+
+void telnet_printf(struct session *ses, size_t length, char *format, ...)
+{
+	size_t size;
+
+	char buf[STRING_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	size = vsprintf(buf, format, args);
+	va_end(args);
+
+	if (size != length && HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+	{
+		tintin_printf(ses, "DEBUG TELNET: telnet_printf size difference: %d vs %d", size, length);
+	}
+
+	if (HAS_BIT(ses->flags, SES_FLAG_CONNECTED))
+	{
+		SET_BIT(ses->telopts, TELOPT_FLAG_TELNET);
+
+		write_line_mud(ses, buf, length);
+
+		DEL_BIT(ses->telopts, TELOPT_FLAG_TELNET);
 	}
 }
 

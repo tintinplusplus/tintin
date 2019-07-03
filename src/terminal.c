@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2005 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -69,8 +68,8 @@ void init_terminal()
 	DEL_BIT(io.c_cflag, CSIZE|PARENB);
 */
 
-//	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
 	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
+//	DEL_BIT(io.c_lflag, ECHO|ECHONL|IEXTEN|ISIG);
 
 	SET_BIT(io.c_cflag, CS8);
 
@@ -81,7 +80,7 @@ void init_terminal()
 		exit(errno);
 	}
 
-	if (tcgetattr(0, &gtd->new_terminal))
+	if (tcgetattr(0, &gts->cur_terminal))
 	{
 		perror("tcgetattr");
 
@@ -89,16 +88,22 @@ void init_terminal()
 	}
 }
 
-void restore_terminal(void)
+void reset_terminal(void)
 {
 	tcsetattr(0, TCSANOW, &gtd->old_terminal);
 
 	printf("\e[?1000l\e[?1002l\e[?1004l\e[?1006l");
 }
 
-void refresh_terminal(void)
+
+void save_session_terminal(struct session *ses)
 {
-	tcsetattr(0, TCSANOW, &gtd->new_terminal);
+	tcgetattr(0, &ses->cur_terminal);
+}
+
+void refresh_session_terminal(struct session *ses)
+{
+//	tcsetattr(0, TCSANOW, &ses->cur_terminal);
 }
 
 void echo_off(struct session *ses)
@@ -123,42 +128,44 @@ void echo_on(struct session *ses)
 	tcsetattr(STDIN_FILENO, TCSADRAIN, &io);
 }
 
-void init_screen_size(struct session *ses)
+void init_terminal_size(struct session *ses)
 {
-	int top, bot;
 	struct winsize screen;
+	int top, bot;
 
-	top = ses->top_row == 0 ? 1 : ses->top_row;
-	bot = ses->bot_row == 0 ? 0 : ses->rows - ses->bot_row;
+	push_call("init_terminal_size(%p)",ses);
+
+	top = ses->top_row ? ses->top_row : 1;
+	bot = ses->bot_row ? gtd->screen->rows - ses->bot_row : 0;
 
 	if (ses == gts)
 	{
 		if (ioctl(0, TIOCGWINSZ, &screen) == -1)
 		{
-			ses->rows = SCREEN_HEIGHT;
-			ses->cols = SCREEN_WIDTH;
+			init_screen(SCREEN_HEIGHT, SCREEN_WIDTH);
 		}
 		else
 		{
-			ses->rows = screen.ws_row;
-			ses->cols = screen.ws_col;
+			init_screen(screen.ws_row, screen.ws_col);
 		}
 		SET_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
 	}
-	else
-	{
-		ses->rows = gts->rows;
-		ses->cols = gts->cols;
-	}
 
-	ses->top_row = top;
-	ses->bot_row = ses->rows - bot;
+	bot = gtd->screen->rows - bot;
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		init_split(ses, ses->top_row, ses->bot_row);
+		init_split(ses, top, bot);
 	}
-	check_all_events(ses, SUB_ARG, 0, 2, "SCREEN RESIZE", ntos(ses->cols), ntos(ses->rows));
+	else
+	{
+		ses->bot_row = bot;
+	}
+
+	check_all_events(ses, SUB_ARG, 0, 2, "SCREEN RESIZE", ntos(gtd->screen->cols), ntos(gtd->screen->rows));
+
+	pop_call();
+	return;
 }
 
 int get_scroll_size(struct session *ses)

@@ -88,11 +88,13 @@
 #define     TELOPT_AUTH          37
 #define     TELOPT_ENCRYPT       38
 #define     TELOPT_NEW_ENVIRON   39
+#define     TELOPT_CHARSET       42  /* Charset */
 #define     TELOPT_STARTTLS      46
 #define     TELOPT_MSDP          69  /* Mud Server Data Protocol */
 #define     TELOPT_MSSP          70  /* Mud Server Status Protocol */
 #define     TELOPT_MCCP1         85
-#define     TELOPT_MCCP2         86  /* Mud Client Compression Protocol */
+#define     TELOPT_MCCP2         86  /* Mud Client Compression Protocol v2 */
+#define     TELOPT_MCCP3         87  /* Mud Client Compression Protocol v3 */
 #define     TELOPT_MSP           90  /* Mud Sound Protocol */
 #define     TELOPT_MXP           91  /* Mud eXtention Protocol */
 #define     TELOPT_ZMP           93  /* Zenith Mud Protocol */
@@ -123,6 +125,16 @@ char *telcmds[] =
 #define     ENV_VAL               1
 #define     ENV_ESC               2 /* Not implemented in tintin */
 #define     ENV_USR               3
+
+#define     CHARSET_REQUEST       1
+#define     CHARSET_ACCEPTED      2
+#define     CHARSET_REJECTED      3
+/*
+ TTABLE-IS ..................04
+ TTABLE-REJECTED ............05
+ TTABLE-ACK .................06
+ TTABLE-NAK .................07
+*/
 
 #define     MSSP_VAR              1
 #define     MSSP_VAL              2

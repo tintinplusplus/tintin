@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,9 +13,9 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -29,7 +28,7 @@
 
 #include <errno.h>
 #include <signal.h>
-
+#include <sys/wait.h>
 
 DO_COMMAND(do_all)
 {
@@ -215,7 +214,7 @@ void show_session(struct session *ses, struct session *ptr)
 
 	strcat(temp, ptr == gtd->ses ? " (active)" :  "         ");
 
-	strcat(temp, ptr->mccp ? " (mccp)" : "       ");
+	strcat(temp, ptr->mccp ? ptr->mccp3 ? " (mccp 2+3)" : "(mccp 2)  " : "           ");
 
 	strcat(temp, HAS_BIT(ptr->flags, SES_FLAG_SNOOP) ? " (snoop)" : "        ");
 
@@ -367,12 +366,12 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 		}
 	}
 
-	newses->rows          = gts->rows;
-	newses->cols          = gts->cols;
-	newses->top_row       = gts->top_row;
-	newses->bot_row       = gts->bot_row;
+	newses->top_row = gts->top_row;
+	newses->bot_row = gts->bot_row;
 
 	init_buffer(newses, gts->scroll_max);
+
+	memcpy(&newses->cur_terminal, &gts->cur_terminal, sizeof(gts->cur_terminal));
 
 	if (desc == 0)
 	{
@@ -430,7 +429,7 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 
 		if (*file)
 		{
-			do_read(newses, file);
+			gtd->ses = do_read(newses, file);
 		}
 		check_all_events(newses, SUB_ARG, 0, 4, "SESSION CREATED", newses->name, newses->session_host, newses->session_ip, newses->session_port);
 	}
@@ -541,14 +540,20 @@ void cleanup_session(struct session *ses)
 		{
 			syserr("close in cleanup");
 		}
+//		else
+//		{
+//			int status;
+
+//			wait(&status);
+//		}
 
 		// the PID is stored in the session's port.
-
+/*
 		if (HAS_BIT(ses->flags, SES_FLAG_RUN))
 		{
-			kill(atoi(ses->session_port), SIGKILL);
+			kill(atoi(ses->session_port), SIGTERM);
 		}
-
+*/
 	}
 
 	if (ses->port)

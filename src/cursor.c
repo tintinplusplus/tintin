@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2005 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,10 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
 
 /******************************************************************************
 *              (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                   *
@@ -46,7 +45,7 @@ DO_COMMAND(do_cursor)
 		{
 			if (*cursor_table[cnt].name)
 			{
-				convert_meta(cursor_table[cnt].code, temp);
+				convert_meta(cursor_table[cnt].code, temp, FALSE);
 
 				tintin_printf2(ses, "  [%-18s] [%-6s] %s", cursor_table[cnt].name, temp, cursor_table[cnt].desc);
 			}
@@ -85,11 +84,9 @@ DO_COMMAND(do_cursor)
 	return ses;
 }
 
-// Multi-Byte support routines
-
 int inputline_str_str_len(int start, int end)
 {
-	int raw_cnt, str_cnt, ret_cnt;
+	int raw_cnt, str_cnt, ret_cnt, width;
 
 	raw_cnt = str_cnt = ret_cnt = 0;
 
@@ -100,32 +97,34 @@ int inputline_str_str_len(int start, int end)
 			break;
 		}
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && is_utf8_head(&gtd->input_buf[raw_cnt]))
 		{
-			raw_cnt++;
+			raw_cnt += get_utf8_width(&gtd->input_buf[raw_cnt], &width);
 
-			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
+			if (str_cnt >= start)
 			{
-				raw_cnt++;
+				ret_cnt += width;
 			}
+			str_cnt += width;
 		}
 		else
 		{
+			if (str_cnt >= start)
+			{
+				ret_cnt++;
+			}
 			raw_cnt++;
-		}
-		str_cnt++;
-
-		if (str_cnt > start)
-		{
-			ret_cnt++;
+			str_cnt++;
 		}
 	}
 	return ret_cnt;
 }
 
+// raw range
+
 int inputline_raw_str_len(int start, int end)
 {
-	int raw_cnt, ret_cnt;
+	int raw_cnt, ret_cnt, width;
 
 	raw_cnt = start;
 	ret_cnt = 0;
@@ -137,27 +136,25 @@ int inputline_raw_str_len(int start, int end)
 			break;
 		}
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && is_utf8_head(&gtd->input_buf[raw_cnt]))
 		{
-			raw_cnt++;
-
-			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
-			{
-				raw_cnt++;
-			}
+			raw_cnt += get_utf8_width(&gtd->input_buf[raw_cnt], &width);
+			ret_cnt += width;
 		}
 		else
 		{
 			raw_cnt++;
+			ret_cnt++;
 		}
-		ret_cnt++;
 	}
 	return ret_cnt;
 }
 
+// display range
+
 int inputline_str_raw_len(int start, int end)
 {
-	int raw_cnt, str_cnt, ret_cnt;
+	int raw_cnt, str_cnt, ret_cnt, width, tmp_cnt;
 
 	raw_cnt = str_cnt = ret_cnt = 0;
 
@@ -168,65 +165,44 @@ int inputline_str_raw_len(int start, int end)
 			break;
 		}
 
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
-		{
-			ret_cnt += (str_cnt >= start) ? 1 : 0;
-			raw_cnt++;
+		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && is_utf8_head(&gtd->input_buf[raw_cnt]))
+		{    
+			tmp_cnt = get_utf8_width(&gtd->input_buf[raw_cnt], &width);
 
-			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
+			if (str_cnt >= start)
 			{
-				ret_cnt += (str_cnt >= start) ? 1 : 0;
-				raw_cnt++;
+				ret_cnt += tmp_cnt;
 			}
+			raw_cnt += tmp_cnt;
+			str_cnt += width;
 		}
 		else
 		{
-			ret_cnt += (str_cnt >= start) ? 1 : 0;
+			if (str_cnt >= start)
+			{
+				ret_cnt++;
+			}
 			raw_cnt++;
+			str_cnt++;
 		}
-		str_cnt++;
 	}
 	return ret_cnt;
 }
 
 int inputline_raw_raw_len(int start, int end)
 {
-	int raw_cnt, ret_cnt;
-
-	raw_cnt = ret_cnt = 0;
-
-	while (raw_cnt < gtd->input_len)
+	if (start > end)
 	{
-		if (raw_cnt >= end)
-		{
-			break;
-		}
-
-		if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[raw_cnt] & 192) == 192)
-		{
-			ret_cnt += (raw_cnt >= start) ? 1 : 0;
-			raw_cnt++;
-
-			while (raw_cnt < gtd->input_len && (gtd->input_buf[raw_cnt] & 192) == 128)
-			{
-				ret_cnt += (raw_cnt >= start) ? 1 : 0;
-				raw_cnt++;
-			}
-		}
-		else
-		{
-			ret_cnt += (raw_cnt >= start) ? 1 : 0;
-			raw_cnt++;
-		}
+		return 0;
 	}
-	return ret_cnt;
+	return end - start;
 }
 
 // Get string length of the input area
 
 int inputline_max_str_len(void)
 {
-	return gtd->ses->cols + 1 - gtd->input_off - (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH) ? 11 : 0);
+	return gtd->screen->cols + 1 - gtd->input_off - (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH) ? 11 : 0);
 }
 
 int inputline_cur_str_len(void)
@@ -238,17 +214,27 @@ int inputline_cur_str_len(void)
 
 int inputline_str_chk(int offset, int totlen)
 {
+	int size;
+
 	while (offset < totlen)
 	{
 		if (HAS_BIT(gtd->ses->flags, SES_FLAG_BIG5))
 		{
-			if (gtd->input_buf[offset] & 128)
+			if (HAS_BIT(gtd->input_buf[offset], 128) && (unsigned char) gtd->input_buf[offset] < 255)
 			{
-				if (offset + 1 >= totlen || gtd->input_buf[offset+1] == 0)
+				if (offset + 1 >= totlen)
 				{
 					return FALSE;
 				}
-				offset += 2;
+
+				if (is_big5(&gtd->input_buf[offset]))
+				{
+					offset += 2;
+				}
+				else
+				{
+					offset += 1;
+				}
 			}
 			else
 			{
@@ -257,37 +243,24 @@ int inputline_str_chk(int offset, int totlen)
 		}
 		else if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8))
 		{
-			switch (gtd->input_buf[offset] & (128+64+32+16))
+			if (is_utf8_head(&gtd->input_buf[offset]))
 			{
-				case 128+64:
-				case 128+64+16:
-					if (offset + 1 >= totlen || (gtd->input_buf[offset+1] & 192) != 128)
-					{
-						return FALSE;
-					}
-					offset += 2;
-					break;
+				size = get_utf8_size(&gtd->input_buf[offset]);
 
-				case 128+64+32:
-					if (offset + 2 >= totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128)
-					{
-						return FALSE;
-					}
-					offset += 3;
-					break;
-
-				case 128+64+32+16:
-					if (offset + 3 >= totlen || (gtd->input_buf[offset+1] & 192) != 128 || (gtd->input_buf[offset+2] & 192) != 128 || (gtd->input_buf[offset+3] & 192) != 128)
-					{
-						return FALSE;
-					}
-					offset += 4;
-					break;
-
-				default:
-					offset += 1;
-					break;
+				if (size == 1 || offset + size > totlen)
+				{
+					return FALSE;
+				}
+				offset += size;
 			}
+			else
+			{
+				offset += 1;
+			}
+		}
+		else
+		{
+			return TRUE;
 		}
 	}
 	return TRUE;
@@ -465,6 +438,8 @@ DO_CURSOR(cursor_delete_or_exit)
 
 DO_CURSOR(cursor_delete)
 {
+	int size, width;
+
 	if (gtd->input_len == 0)
 	{
 		return;
@@ -475,38 +450,52 @@ DO_CURSOR(cursor_delete)
 		return;
 	}
 
-	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && (gtd->input_buf[gtd->input_cur] & 128) == 128)
+	if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && is_big5(&gtd->input_buf[gtd->input_cur]))
 	{
-		if (gtd->input_cur + 1 < gtd->input_len && gtd->input_buf[gtd->input_cur+1])
+		gtd->input_len--;
+
+		memmove(&gtd->input_buf[gtd->input_cur+1], &gtd->input_buf[gtd->input_cur+2], gtd->input_len - gtd->input_cur + 1);
+
+		input_printf("\e[2P");
+	}
+	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
+	{
+		size = get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
+
+		gtd->input_len -= size;
+
+		memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[gtd->input_cur + size], gtd->input_len - gtd->input_cur + 1);
+
+		if (width)
 		{
-			memmove(&gtd->input_buf[gtd->input_cur+1], &gtd->input_buf[gtd->input_cur+2], gtd->input_len - gtd->input_cur);
+			input_printf("\e[%dP", width);
+		}
 
-			gtd->input_len--;
+		while (gtd->input_len > gtd->input_cur)
+		{
+			size = get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
 
-			input_printf("\e[1P");
+			if (width)
+			{
+				break;
+			}
+			gtd->input_len -= size;
+
+			memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[gtd->input_cur + size], gtd->input_len - gtd->input_cur + 1);
 		}
 	}
-	else if (HAS_BIT(ses->flags, SES_FLAG_UTF8) && (gtd->input_buf[gtd->input_cur] & 192) == 192)
+	else
 	{
-		while (gtd->input_cur + 1 < gtd->input_len && (gtd->input_buf[gtd->input_cur+1] & 192) == 128)
-		{
-			memmove(&gtd->input_buf[gtd->input_cur+1], &gtd->input_buf[gtd->input_cur+2], gtd->input_len - gtd->input_cur);
+		gtd->input_len--;
 
-			gtd->input_len--;
-		}
+		memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[gtd->input_cur+1], gtd->input_len - gtd->input_cur + 1);
+
+		input_printf("\e[1P");
 	}
-
-	memmove(&gtd->input_buf[gtd->input_cur], &gtd->input_buf[gtd->input_cur+1], gtd->input_len - gtd->input_cur);
-
-	gtd->input_len--;
 
 	if (gtd->input_hid + inputline_max_str_len() <= inputline_raw_str_len(0, gtd->input_len))
 	{
 		cursor_redraw_line(ses, "");
-	}
-	else
-	{
-		input_printf("\e[1P");
 	}
 
 	modified_input();
@@ -514,7 +503,7 @@ DO_CURSOR(cursor_delete)
 
 DO_CURSOR(cursor_delete_word_left)
 {
-	int index_cur;
+	int index_cur, width;
 
 	if (gtd->input_cur == 0)
 	{
@@ -531,12 +520,30 @@ DO_CURSOR(cursor_delete_word_left)
 
 	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
-		if (!HAS_BIT(ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
+		{
+			if (is_utf8_tail(&gtd->input_buf[gtd->input_cur]))
+			{
+				gtd->input_cur--;
+			}
+			else if (is_utf8_head(&gtd->input_buf[gtd->input_cur]))
+			{
+				get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
+
+				gtd->input_cur -= 1;
+				gtd->input_pos -= width;
+			}
+			else
+			{
+				gtd->input_cur--;
+				gtd->input_pos--;
+			}
+		}
+		else
 		{
 			gtd->input_pos--;
+			gtd->input_cur--;
 		}
-
-		gtd->input_cur--;
 	}
 
 	sprintf(gtd->paste_buf, "%.*s", index_cur - gtd->input_cur, &gtd->input_buf[gtd->input_cur]);
@@ -585,7 +592,7 @@ DO_CURSOR(cursor_delete_word_right)
 	gtd->input_cur = index_cur;
 
 	cursor_redraw_line(ses, "");
-	
+
 	modified_input();
 }
 
@@ -933,34 +940,64 @@ DO_CURSOR(cursor_insert)
 
 DO_CURSOR(cursor_left)
 {
+	int width;
+
 	if (gtd->input_cur > 0)
 	{
-		gtd->input_cur--;
-		gtd->input_pos--;
-
-		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && inputline_str_chk(0, gtd->input_cur) == FALSE)
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5))
 		{
 			gtd->input_cur--;
 			gtd->input_pos--;
-
 			input_printf("\e[1D");
+
+			if (inputline_str_chk(0, gtd->input_cur) == FALSE)
+			{
+				gtd->input_cur--;
+				gtd->input_pos--;
+				input_printf("\e[1D");
+			}
 		}
 		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
 		{
-			while (gtd->input_cur > 0 && (gtd->input_buf[gtd->input_cur] & 192) == 128)
+			gtd->input_cur--;
+
+			if (gtd->input_cur > 0 && is_utf8_tail(&gtd->input_buf[gtd->input_cur]))
 			{
-				gtd->input_cur--;
+				do
+				{
+					gtd->input_cur--;
+				}
+				while (gtd->input_cur > 0 && is_utf8_tail(&gtd->input_buf[gtd->input_cur]));
+
+				get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
+
+				if (width == 0)
+				{
+					return cursor_left(ses, "");
+				}
+				input_printf("\e[%dD", width);
+				gtd->input_pos -= width;
 			}
+			else
+			{
+				gtd->input_pos--;
+				input_printf("\e[1D");
+			}
+
 		}
-
-		input_printf("\e[1D");
-
+		else
+		{
+			gtd->input_cur--;
+			gtd->input_pos--;
+			input_printf("\e[1D");
+		}
 		cursor_check_line(ses, "");
 	}
 }
 
 DO_CURSOR(cursor_left_word)
 {
+	int width;
 //	int index_pos;
 
 	if (gtd->input_cur == 0)
@@ -978,11 +1015,21 @@ DO_CURSOR(cursor_left_word)
 
 	while (gtd->input_cur > 0 && gtd->input_buf[gtd->input_cur - 1] != ' ')
 	{
-		if (!HAS_BIT(ses->flags, SES_FLAG_UTF8) || (gtd->input_buf[gtd->input_cur] & 192) != 128)
+		gtd->input_cur--;
+
+		if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
+		{
+			if (!is_utf8_tail(&gtd->input_buf[gtd->input_cur]))
+			{
+				get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
+
+				gtd->input_pos -= width;
+			}
+		}
+		else
 		{
 			gtd->input_pos--;
 		}
-		gtd->input_cur--;
 	}
 
 //	input_printf("\e[%dD", index_pos - gtd->input_pos);
@@ -1023,7 +1070,7 @@ DO_CURSOR(cursor_redraw_input)
 
 		gtd->input_cur = gtd->input_len;
 
-		gtd->input_pos = gtd->input_len % ses->cols;
+		gtd->input_pos = gtd->input_len % gtd->screen->cols;
 	}
 }
 
@@ -1092,30 +1139,48 @@ DO_CURSOR(cursor_redraw_line)
 
 DO_CURSOR(cursor_right)
 {
+	int size, width;
+
 	if (gtd->input_cur < gtd->input_len)
 	{
-		gtd->input_cur++;
-		gtd->input_pos++;
-
-		if (HAS_BIT(ses->flags, SES_FLAG_BIG5))
+		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && (gtd->input_buf[gtd->input_cur] & 128) == 128)
 		{
-			if (gtd->input_cur < gtd->input_len && inputline_str_chk(0, gtd->input_cur) == FALSE)
+			if (gtd->input_cur + 1 < gtd->input_len && gtd->input_buf[gtd->input_cur+1])
 			{
-				gtd->input_cur++;
-				gtd->input_pos++;
+				gtd->input_cur += 2;
+				gtd->input_pos += 2;
 
-				input_printf("\e[1C");
+				input_printf("\e[2C");
 			}
 		}
 		else if (HAS_BIT(ses->flags, SES_FLAG_UTF8))
 		{
-			while (gtd->input_cur < gtd->input_len && (gtd->input_buf[gtd->input_cur] & 192) == 128)
+			gtd->input_cur += get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
+
+			if (width == 0)
 			{
-				gtd->input_cur++;
+				return cursor_right(ses, "");
+			}
+			input_printf("\e[%dC", width);
+			gtd->input_pos += width;
+
+			while (gtd->input_cur < gtd->input_len)
+			{
+				size = get_utf8_width(&gtd->input_buf[gtd->input_cur], &width);
+
+				if (width)
+				{
+					break;
+				}
+				gtd->input_cur += size;
 			}
 		}
-
-		input_printf("\e[1C");
+		else
+		{
+			input_printf("\e[1C");
+			gtd->input_cur++;
+			gtd->input_pos++;
+		}
 	}
 
 	cursor_check_line(ses, "");
@@ -1356,9 +1421,8 @@ void cursor_show_completion(int input_now, int show_last_node)
 
 	gtd->input_len = input_now + strlen(node->left);
 	gtd->input_cur = gtd->input_len;
-	gtd->input_pos = gtd->input_len;
 
-	cursor_redraw_line(gtd->ses, "");
+	cursor_end(gtd->ses, "");
 
 	if (HAS_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH))
 	{
@@ -1568,10 +1632,10 @@ DO_CURSOR(cursor_mixed_tab_backward)
 
 DO_CURSOR(cursor_win_focus_in)
 {
-	check_all_events(gts, SUB_ARG, 0, 1, "WINDOW FOCUS IN", gtd->ses->name);
+	check_all_events(gtd->ses, SUB_ARG, 0, 1, "WINDOW FOCUS IN", gtd->ses->name);
 }
 
 DO_CURSOR(cursor_win_focus_out)
 {
-	check_all_events(gts, SUB_ARG, 0, 1, "WINDOW FOCUS OUT", gtd->ses->name);
+	check_all_events(gtd->ses, SUB_ARG, 0, 1, "WINDOW FOCUS OUT", gtd->ses->name);
 }

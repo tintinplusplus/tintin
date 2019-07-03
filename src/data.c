@@ -1,18 +1,21 @@
 /******************************************************************************
-*    TinTin++  Copyright (C) 2004 (See CREDITS file)                          *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*    This program is free software: you can redistribute it and/or modify     *
-*    it under the terms of the GNU General Public License as published by     *
-*    the Free Software Foundation, either version 2 of the License, or        *
-*    (at your option) any later version.                                      *
+*   Copyright 1992-2019 (See CREDITS file)                                    *
 *                                                                             *
-*    This program is distributed in the hope that it will be useful,          *
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of           *
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
-*    GNU General Public License for more details.                             *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
+*   it under the terms of the GNU General Public License as published by      *
+*   the Free Software Foundation; either version 3 of the License, or         *
+*   (at your option) any later version.                                       *
 *                                                                             *
-*    You should have received a copy of the GNU General Public License        *
-*    along with this program.  If not, see <http://www.gnu.org/licenses/>.    *
+*   This program is distributed in the hope that it will be useful,           *
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+*   GNU General Public License for more details.                              *
+*                                                                             *
+*                                                                             *
+*   You should have received a copy of the GNU General Public License         *
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
 
 /******************************************************************************
@@ -338,7 +341,7 @@ int locate_index_list(struct listroot *root, char *text, char *priority)
 int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 {
 	long long bot, top, val;
-	double toi, toj, srt;
+	long double toi, toj, srt;
 
 	push_call("bsearch_alpha_list(%p,%p,%d)",root,text,seek);
 
@@ -931,7 +934,7 @@ DO_COMMAND(do_info)
 				}
 				else
 				{
-					return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF|LIST|SAVE]", left);
+					return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF|LIST|SAVE|SYSTEM]", left);
 				}
 				found = TRUE;
 
@@ -951,6 +954,22 @@ DO_COMMAND(do_info)
 			else if (is_abbrev(left, "STACK"))
 			{
 				dump_stack();
+			}
+			else if (is_abbrev(left, "SYSTEM"))
+			{
+				if (is_abbrev(right, "SAVE"))
+				{
+					sprintf(name, "info[SYSTEM]");
+
+					set_nest_node(ses->list[LIST_VARIABLE], name, "{CLIENT_NAME}{%s}{CLIENT_VERSION}{%s}", CLIENT_NAME, CLIENT_VERSION);
+
+					show_message(ses, LIST_COMMAND, "#INFO: DATA WRITTEN TO {info[SYSTEM]}");
+				}
+				else
+				{
+					tintin_printf2(ses, "#INFO SYSTEM: CLIENT_NAME = %s", CLIENT_NAME);
+					tintin_printf2(ses, "#INFO SYSTEM: CLIENT_VERSION = %s", CLIENT_VERSION);
+				}
 			}
 			else
 			{
