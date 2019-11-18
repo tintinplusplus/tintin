@@ -1,12 +1,11 @@
 /******************************************************************************
-*   TinTin++                                                                  *
-*   Copyright (C) 2004 (See CREDITS file)                                     *
+*   This file is part of TinTin++                                             *
 *                                                                             *
-*   This program is protected under the GNU GPL (See COPYING)                 *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
-*   This program is free software; you can redistribute it and/or modify      *
+*   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
-*   the Free Software Foundation; either version 2 of the License, or         *
+*   the Free Software Foundation; either version 3 of the License, or         *
 *   (at your option) any later version.                                       *
 *                                                                             *
 *   This program is distributed in the hope that it will be useful,           *
@@ -14,10 +13,12 @@
 *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
 *   GNU General Public License for more details.                              *
 *                                                                             *
+*                                                                             *
 *   You should have received a copy of the GNU General Public License         *
-*   along with this program; if not, write to the Free Software               *
-*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA *
-*******************************************************************************/
+*   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
+******************************************************************************/
+
+#include "tintin.h"
 
 /*
 	telnet protocol.
@@ -101,17 +102,9 @@
 #define     TELOPT_GMCP         201  /* Generic Mud Communication Protocol */
 #define     TELOPT_EXOPL        255
 
-char *telcmds[] =
-{
-        "EOF",    "SUSP",   "ABORT",  "EOR",    "SE",
-        "NOP",    "DMARK",  "BRK",    "IP",     "AO",
-        "AYT",    "EC",     "EL",     "GA",     "SB",
-        "WILL",   "WONT",   "DO",     "DONT",   "IAC",
-};
-
 #define     TELCMD_OK(c)     ((c) >= xEOF)
 #define     TELCMD(c)        telcmds[(c)-xEOF]
-#define     TELOPT(c)       (telnet_table[(unsigned char) (c)].name)
+#define     TELOPT(c)       (telopt_table[(unsigned char) (c)].name)
 
 /*
         Sub negotiation
@@ -146,3 +139,6 @@ char *telcmds[] =
 #define     MSDP_ARRAY_OPEN       5
 #define     MSDP_ARRAY_CLOSE      6
 
+#define     ANNOUNCE_NONE         0
+#define     ANNOUNCE_WILL         1
+#define     ANNOUNCE_DO           2

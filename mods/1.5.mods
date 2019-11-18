@@ -297,3 +297,36 @@
 1/10/94		Rewrote the highlight parse functions to a) not use the
 		ends and tails, b) use the color names instead of the
 		numbers, c) allow multiple types to the first arg. (JCJ)
+
+6/1/93          TINTIN++ V1.0 beta test version
+
+                New commands since tintin3
+                #antisubstitute
+                #gag
+                #loop
+                #message
+                #map
+                #savepath 
+                #variable
+                #highlight
+                #math
+                #togglesubs
+                #presub
+                #showme
+                maybe more...
+
+                This version has fixed a few bugs with the original tintin
+                code as well as the older tt++ versions.  Highlighting now
+                works correctly and is much more powerful.  Subs and actions
+                are faster, and work better.  There was also a bug in the
+                #alias statement, look in tintin.doc for more info.
+
+                I have definitely created some new bugs with all of the new
+                stuff I added since 0.9 and I'm sorry for any inconvenience.
+                Please report bugs to me, and I'll endeavor to fix them.
+                I'm sorry for any delay on bug fixes from old versions, but
+                I thought this version would be done much sooner, and the
+                bugs were fixed in this version.
+
+                Bill Reiss (reiss@eggo.csee.usf.edu)
+

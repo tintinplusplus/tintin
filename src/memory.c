@@ -28,12 +28,15 @@
 
 char *restring(char *point, char *string)
 {
-	free(point);
+	if (point)
+	{
+		free(point);
+	}
 
 	return strdup(string);
 }
 
-char *refstring(char *point, char *fmt, ...)
+char *restringf(char *point, char *fmt, ...)
 {
 	char string[STRING_SIZE];
 	va_list args;
@@ -50,22 +53,56 @@ char *refstring(char *point, char *fmt, ...)
 	return strdup(string);
 }
 
-char *str_alloc(int len)
+
+/*
+	str_ functions
+*/
+
+char *str_alloc(int size)
 {
 	char *str;
 
-	struct str_data *str_ptr = (struct str_data *) calloc(1, gtd->str_size + len + 1);
+	struct str_data *str_ptr = (struct str_data *) calloc(1, gtd->str_size + size + 1);
 
-	str_ptr->max = len + 1;
+	str_ptr->max = size + 1;
+	str_ptr->len = 0;
 
 	str = (char *) str_ptr + gtd->str_size;
 
 	*str = 0;
 
-	return str; //(char *) str_ptr + gtd->str_size;
+	return str;
 }
 
-// set size of out pointer to in pointer
+struct str_data *str_realloc(struct str_data *str_ptr, int size)
+{
+	if (str_ptr->max <= size)
+	{
+		int len = str_ptr->len;
+
+		str_ptr = (struct str_data *) realloc(str_ptr, gtd->str_size + size + 1);
+
+		str_ptr->max = size + 1;
+		str_ptr->len = len;
+	}
+	return str_ptr;
+}
+
+struct str_data *str_resize(struct str_data *str_ptr, int add)
+{
+	int len = str_ptr->len;
+
+	if (str_ptr->max <= len + add)
+	{
+		str_ptr = (struct str_data *) realloc(str_ptr, gtd->str_size + (len + 1) * 2 + add + 1);
+
+		str_ptr->max = (len + 1) * 2 + add + 1;
+		str_ptr->len = len;
+	}
+	return str_ptr;
+}
+
+// like str_dup but return an empty string
 
 char *str_mim(char *original)
 {
@@ -74,11 +111,24 @@ char *str_mim(char *original)
 	str_cpy(&string, "");
 
 	return string;
-
-//	struct str_data *str_ptr = (struct str_data *) (original - gtd->str_size);
-
-//	return str_alloc(str_ptr->len);
 }
+
+// give **clone the same max length as *original.
+
+void str_clone(char **clone, char *original)
+{
+	struct str_data *clo_ptr = (struct str_data *) (*clone - gtd->str_size);
+	int len = str_len(original);
+
+	if (clo_ptr->max < len)
+	{
+		clo_ptr = str_realloc(clo_ptr, len * 2);
+
+		*clone = (char *) clo_ptr + gtd->str_size;
+	}
+}
+
+// call after a non str_ function alters *str to set the correct length.
 
 void str_fix(char *original)
 {
@@ -87,15 +137,20 @@ void str_fix(char *original)
 	str_ptr->len = strlen(original);
 }
 
-// allocates memory for the given string
+int str_len(char *str)
+{
+	struct str_data *str_ptr = (struct str_data *) (str - gtd->str_size);
+
+	return str_ptr->len;
+}
 
 char *str_dup(char *original)
 {
-	char *string = str_alloc(strlen(original));
+	char *dup = str_alloc(strlen(original));
 
-	str_cpy(&string, original);
+	str_cpy(&dup, original);
 
-	return string;
+	return dup;
 }
 
 char *str_dup_printf(char *fmt, ...)
@@ -103,7 +158,7 @@ char *str_dup_printf(char *fmt, ...)
 	char *str, *ptr;
 	va_list args;
 
-	push_call("str_dup_printf(%p)", fmt);
+	push_call("str_dup_printf(%s)", fmt);
 
 	va_start(args, fmt);
 	vasprintf(&str, fmt, args);
@@ -117,28 +172,26 @@ char *str_dup_printf(char *fmt, ...)
 	return ptr;
 }
 
-char *str_cpy(char **ptr, char *str)
+char *str_cpy(char **str, char *buf)
 {
-	int str_len;
+	int buf_len;
 	struct str_data *str_ptr;
 
-	str_len = strlen(str);
+	buf_len = strlen(buf);
 
-	str_ptr = (struct str_data *) (*ptr - gtd->str_size);
+	str_ptr = (struct str_data *) (*str - gtd->str_size);
 
-	if (str_ptr->max < str_len + 1)
+	if (str_ptr->max <= buf_len)
 	{
-		str_ptr = (struct str_data *) realloc(str_ptr, gtd->str_size + str_len + 1);
-		str_ptr->max = str_len + 1;
+		str_ptr = str_realloc(str_ptr, buf_len);
 
-		*ptr = (char *) str_ptr + gtd->str_size;
+		*str = (char *) str_ptr + gtd->str_size;
 	}
+	str_ptr->len = buf_len;
 
-	str_ptr->len = str_len;
+	strcpy(*str, buf);
 
-	strcpy(*ptr, str);
-
-	return *ptr;
+	return *str;
 }
 
 char *str_cpy_printf(char **ptr, char *fmt, ...)
@@ -157,67 +210,73 @@ char *str_cpy_printf(char **ptr, char *fmt, ...)
 	return *ptr;
 }
 
-char *str_ndup(char *original, int len)
+// unused
+
+char *str_ndup(char *buf, int len)
 {
-	char *string = str_alloc(len + 1);
+	char *dup = str_alloc(len + 1);
 
-	str_ncpy(&string, original, len);
+	str_ncpy(&dup, buf, len);
 
-	return string;
+	return dup;
 }
 
 // Like strncpy but handles the string terminator properly
 
-char *str_ncpy(char **ptr, char *str, int len)
+char *str_ncpy(char **str, char *buf, int len)
 {
-	int str_len;
+	int buf_len;
 	struct str_data *str_ptr;
 
-	str_len = strlen(str);
+	buf_len = strlen(buf);
 
-	str_ptr = (struct str_data *) (*ptr - gtd->str_size);
-
-	if (str_ptr->max < len)
+	if (buf_len > len)
 	{
-		str_ptr = (struct str_data *) realloc(str_ptr, gtd->str_size + len + 1);
-		str_ptr->max = len;
-
-		*ptr = (char *) str_ptr + gtd->str_size;
+		buf_len = len;
 	}
 
-	str_ptr->len = UMIN(str_len, len);
+	str_ptr = (struct str_data *) (*str - gtd->str_size);
 
-	strncpy(*ptr, str, len);
+	if (str_ptr->max <= buf_len)
+	{
+		str_ptr = str_realloc(str_ptr, len);
 
-	(*ptr)[len] = 0;
+		*str = (char *) str_ptr + gtd->str_size;
+	}
 
-	return *ptr;
+	str_ptr->len = UMIN(buf_len, len);
+
+	strncpy(*str, buf, len);
+
+	(*str)[len] = 0;
+
+	return *str;
 }
 
-char *str_cat(char **ptr, char *str)
+char *str_cat(char **str, char *buf)
 {
-	int str_len;
+	int buf_len;
 	struct str_data *str_ptr;
 
-	str_len = strlen(str);
+	buf_len = strlen(buf);
 
-	str_ptr = (struct str_data *) (*ptr - gtd->str_size);
+	str_ptr = (struct str_data *) (*str - gtd->str_size);
 
-	if (str_ptr->max < str_ptr->len + str_len + 1)
+	if (str_ptr->max <= str_ptr->len + buf_len)
 	{
-		str_ptr = (struct str_data *) realloc(str_ptr, gtd->str_size + str_ptr->max * 2 + str_len);
+		str_ptr = str_resize(str_ptr, buf_len);
 
-		str_ptr->max = str_ptr->max * 2 + str_len;
-
-		*ptr = (char *) str_ptr + gtd->str_size;
+		*str = (char *) str_ptr + gtd->str_size;
 	}
 
-	strcpy(&(*ptr)[str_ptr->len], str);
+	strcpy(&(*str)[str_ptr->len], buf);
 
-	str_ptr->len += str_len;
+	str_ptr->len += buf_len;
 
-	return *ptr;
+	return *str;
 }
+
+// Unused
 
 char *str_cat_chr(char **ptr, char chr)
 {
@@ -225,11 +284,9 @@ char *str_cat_chr(char **ptr, char chr)
 
 	str_ptr = (struct str_data *) (*ptr - gtd->str_size);
 
-	if (str_ptr->max < str_ptr->len + 1 + 1)
+	if (str_ptr->max <= str_ptr->len + 1)
 	{
-		str_ptr = (struct str_data *) realloc(str_ptr, gtd->str_size + str_ptr->max * 2 + 1);
-
-		str_ptr->max = str_ptr->max * 2 + 1;
+		str_ptr = str_resize(str_ptr, 1);
 
 		*ptr = (char *) str_ptr + gtd->str_size;
 	}

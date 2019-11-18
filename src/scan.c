@@ -347,19 +347,19 @@ struct session *scan_txt_file(struct session *ses, FILE *fp, char *filename)
 DO_COMMAND(do_scan)
 {
 	FILE *fp;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		show_error(ses, LIST_COMMAND, "#SYNTAX: #SCAN {ABORT|CSV|TXT} {<FILENAME>}");
 
 		return ses;
 	}
 
-	if (is_abbrev(left, "ABORT"))
+	if (is_abbrev(arg1, "ABORT"))
 	{
 		if (!HAS_BIT(ses->flags, SES_FLAG_SCAN))
 		{
@@ -372,16 +372,16 @@ DO_COMMAND(do_scan)
 		return ses;
 	}
 
-	if (*right == 0)
+	if (*arg2 == 0)
 	{
 		show_error(ses, LIST_COMMAND, "#SYNTAX: #SCAN {ABORT|CSV|TXT} {<FILENAME>}");
 
 		return ses;
 	}
 
-	if ((fp = fopen(right, "r")) == NULL)
+	if ((fp = fopen(arg2, "r")) == NULL)
 	{
-		show_error(ses, LIST_COMMAND, "#ERROR: #SCAN - FILE {%s} NOT FOUND.", right);
+		show_error(ses, LIST_COMMAND, "#ERROR: #SCAN - FILE {%s} NOT FOUND.", arg2);
 
 		return ses;
 	}
@@ -389,17 +389,17 @@ DO_COMMAND(do_scan)
 	SET_BIT(ses->flags, SES_FLAG_SCAN);
 
 
-	if (is_abbrev(left, "CSV"))
+	if (is_abbrev(arg1, "CSV"))
 	{
-		ses = scan_csv_file(ses, fp, right);
+		ses = scan_csv_file(ses, fp, arg2);
 	}
-	else if (is_abbrev(left, "TSV"))
+	else if (is_abbrev(arg1, "TSV"))
 	{
-		ses = scan_tsv_file(ses, fp, right);
+		ses = scan_tsv_file(ses, fp, arg2);
 	}
-	else if (is_abbrev(left, "TXT"))
+	else if (is_abbrev(arg1, "TXT"))
 	{
-		ses = scan_txt_file(ses, fp, right);
+		ses = scan_txt_file(ses, fp, arg2);
 	}
 	else
 	{

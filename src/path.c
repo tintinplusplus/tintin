@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -30,12 +30,12 @@
 
 DO_COMMAND(do_path)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 	int cnt;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " PATH COMMANDS ");
 
@@ -54,7 +54,7 @@ DO_COMMAND(do_path)
 	{
 		for (cnt = 0 ; *path_table[cnt].name ; cnt++)
 		{
-			if (is_abbrev(left, path_table[cnt].name))
+			if (is_abbrev(arg1, path_table[cnt].name))
 			{
 				break;
 			}
@@ -152,13 +152,13 @@ DO_PATH(path_describe)
 
 	while (i < root->used)
 	{
-		node = search_node_list(ses->list[LIST_PATHDIR], root->list[i++]->left);
+		node = search_node_list(ses->list[LIST_PATHDIR], root->list[i++]->arg1);
 
 		if (node)
 		{
-			x += (HAS_BIT(atoi(node->pr), MAP_EXIT_E) ? 1 : HAS_BIT(atoi(node->pr), MAP_EXIT_W) ? -1 : 0);
-			y += (HAS_BIT(atoi(node->pr), MAP_EXIT_N) ? 1 : HAS_BIT(atoi(node->pr), MAP_EXIT_S) ? -1 : 0);
-			z += (HAS_BIT(atoi(node->pr), MAP_EXIT_U) ? 1 : HAS_BIT(atoi(node->pr), MAP_EXIT_D) ? -1 : 0);
+			x += (HAS_BIT(atoi(node->arg3), MAP_EXIT_E) ? 1 : HAS_BIT(atoi(node->arg3), MAP_EXIT_W) ? -1 : 0);
+			y += (HAS_BIT(atoi(node->arg3), MAP_EXIT_N) ? 1 : HAS_BIT(atoi(node->arg3), MAP_EXIT_S) ? -1 : 0);
+			z += (HAS_BIT(atoi(node->arg3), MAP_EXIT_U) ? 1 : HAS_BIT(atoi(node->arg3), MAP_EXIT_D) ? -1 : 0);
 		}
 	}
 
@@ -216,28 +216,28 @@ DO_PATH(path_map)
 
 		for (i = 0 ; i < root->update ; i++)
 		{
-			if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > gtd->screen->cols - 4)
+			if ((int) strlen(buf) + (int) strlen(root->list[i]->arg1) > gtd->screen->cols - 4)
 			{
 				tintin_puts2(ses, buf);
 
 				sprintf(buf, "%-7s", "");
 			}
-			cat_sprintf(buf, " %s", root->list[i]->left);
+			cat_sprintf(buf, " %s", root->list[i]->arg1);
 		}
 
 		if (i != root->used)
 		{
-			cat_sprintf(buf, " [%s]", root->list[i++]->left);
+			cat_sprintf(buf, " [%s]", root->list[i++]->arg1);
 
 			for (i = root->update + 1 ; i < root->used ; i++)
 			{
-				if ((int) strlen(buf) + (int) strlen(root->list[i]->left) > gtd->screen->cols - 4)
+				if ((int) strlen(buf) + (int) strlen(root->list[i]->arg1) > gtd->screen->cols - 4)
 				{
 					tintin_puts2(ses, buf);
 
 					sprintf(buf, "%-7s", "");
 				}
-				cat_sprintf(buf, " %s", root->list[i]->left);
+				cat_sprintf(buf, " %s", root->list[i]->arg1);
 			}
 		}
 
@@ -257,73 +257,73 @@ DO_PATH(path_map)
 DO_PATH(path_save)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char result[STRING_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char result[STRING_SIZE], arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int i;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (root->used == 0)
 	{
 		tintin_puts2(ses, "#PATH SAVE: LOAD OR CREATE A PATH FIRST.");
 	}
-	else if (*right == 0)
+	else if (*arg2 == 0)
 	{
-		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <BACKWARD|FORWARD|LENGTH|POSITION> <VARIABLE NAME>");
+		show_error(ses, LIST_PATH, "#SYNTAX: #PATH SAVE <BACKWARD|FORWARD|LENGTH|POSITION> <VARIABLE NAME>");
 	}
-	else if (is_abbrev(left, "BACKWARDS"))
+	else if (is_abbrev(arg1, "BACKWARDS"))
 	{
 		result[0] = 0;
 
 		for (i = root->used - 1 ; i >= 0 ; i--)
 		{
-			strcat(result, root->list[i]->right);
+			strcat(result, root->list[i]->arg2);
 
 			if (i != 0)
 			{
 				cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 			}
 		}
-		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", result);
 
-		show_message(ses, LIST_PATH, "#PATH SAVE: BACKWARD PATH SAVED TO {%s}", right);
+		show_message(ses, LIST_PATH, "#PATH SAVE: BACKWARD PATH SAVED TO {%s}", arg2);
 	}
-	else if (is_abbrev(left, "FORWARDS"))
+	else if (is_abbrev(arg1, "FORWARDS"))
 	{
 		result[0] = 0;
 
 		for (i = 0 ; i < root->used ; i++)
 		{
-			strcat(result, root->list[i]->left);
+			strcat(result, root->list[i]->arg1);
 
 			if (i != root->used - 1)
 			{
 				cat_sprintf(result, "%c", COMMAND_SEPARATOR);
 			}
 		}
-		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", result);
 
-		show_message(ses, LIST_PATH, "#PATH SAVE: FORWARD PATH SAVED TO {%s}", right);
+		show_message(ses, LIST_PATH, "#PATH SAVE: FORWARD PATH SAVED TO {%s}", arg2);
 	}
-	else if (is_abbrev(left, "LENGTH"))
+	else if (is_abbrev(arg1, "LENGTH"))
 	{
 		sprintf(result, "%d", root->used);
 
-		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", result);
 
-		show_message(ses, LIST_PATH, "#PATH SAVE: PATH LENGTH SAVED TO {%s}", right);
+		show_message(ses, LIST_PATH, "#PATH SAVE: PATH LENGTH SAVED TO {%s}", arg2);
 	}
-	else if (is_abbrev(left, "POSITION"))
+	else if (is_abbrev(arg1, "POSITION"))
 	{
 		sprintf(result, "%d", root->update + 1);
 
-		set_nest_node(ses->list[LIST_VARIABLE], right, "%s", result);
+		set_nest_node(ses->list[LIST_VARIABLE], arg2, "%s", result);
 
-		show_message(ses, LIST_PATH, "#PATH SAVE: PATH POSITION SAVED TO {%s}", right);
+		show_message(ses, LIST_PATH, "#PATH SAVE: PATH POSITION SAVED TO {%s}", arg2);
 	}
 	else
 	{
-		tintin_puts2(ses, "#SYNTAX: #PATH SAVE <BACKWARD|FORWARD|LENGTH|POSITION> <VARIABLE NAME>");
+		show_error(ses, LIST_PATH, "#SYNTAX: #PATH SAVE <BACKWARD|FORWARD|LENGTH|POSITION> <VARIABLE NAME>");
 	}
 }
 
@@ -331,18 +331,18 @@ DO_PATH(path_save)
 DO_PATH(path_load)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], temp[BUFFER_SIZE];
 	struct listnode *node;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if ((node = search_node_list(ses->list[LIST_VARIABLE], left)) == NULL)
+	if ((node = search_node_list(ses->list[LIST_VARIABLE], arg1)) == NULL)
 	{
-		arg = left;
+		arg = arg1;
 	}
 	else
 	{
-		arg = node->right;
+		arg = node->arg2;
 	}
 
 	kill_list(root);
@@ -356,15 +356,15 @@ DO_PATH(path_load)
 			arg++;
 		}
 
-		arg = get_arg_in_braces(ses, arg, temp, TRUE);
+		arg = get_arg_in_braces(ses, arg, temp, GET_ALL);
 
 		if ((node = search_node_list(root, temp)))
 		{
-			insert_node_list(root, node->left, node->right, "0");
+			insert_node_list(root, node->arg1, node->arg2, "0", "");
 		}
 		else
 		{
-			insert_node_list(root, temp, temp, "0");
+			insert_node_list(root, temp, temp, "0", "");
 		}
 	}
 	show_message(ses, LIST_PATH, "#PATH LOAD: PATH WITH %d NODES LOADED.", root->used);
@@ -376,7 +376,7 @@ DO_PATH(path_delete)
 
 	if (root->used)
 	{
-		show_message(ses, LIST_PATH, "#PATH DELETE: DELETED MOVE {%s}.", root->list[root->used - 1]->left);
+		show_message(ses, LIST_PATH, "#PATH DELETE: DELETED MOVE {%s}.", root->list[root->used - 1]->arg1);
 
 		delete_index_list(root, root->used - 1);
 
@@ -395,20 +395,20 @@ DO_PATH(path_delete)
 DO_PATH(path_insert)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*left == 0 && *right == 0)
+	if (*arg1 == 0 && *arg2 == 0)
 	{
 		show_message(ses, LIST_PATH, "#PATH INSERT: ERROR: YOU MUST GIVE A COMMAND TO INSERT");
 	}
 	else
 	{
-		insert_node_list(root, left, right, "0");
+		insert_node_list(root, arg1, arg2, "0", "");
 
-		show_message(ses, LIST_PATH, "#PATH INSERT: FORWARD {%s} BACKWARD {%s}.", left, right);
+		show_message(ses, LIST_PATH, "#PATH INSERT: FORWARD {%s} BACKWARD {%s}.", arg1, arg2);
 
 		if (HAS_BIT(ses->flags, SES_FLAG_PATHMAPPING))
 		{
@@ -421,11 +421,11 @@ DO_PATH(path_insert)
 DO_PATH(path_run)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE], time[BUFFER_SIZE], name[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], time[BUFFER_SIZE], name[BUFFER_SIZE];
 
 	push_call("path_run(%p,%p)",ses,arg);
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
 	if (root->update == root->used)
 	{
@@ -435,7 +435,7 @@ DO_PATH(path_run)
 	{
 		DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
-		if (*left)
+		if (*arg1)
 		{
 			double delay = 0;
 
@@ -444,16 +444,16 @@ DO_PATH(path_run)
 				sprintf(name, "PATH %lld", utime());
 				sprintf(time, "%f", delay);
 
-				delay += get_number(ses, left);
+				delay += get_number(ses, arg1);
 
-				update_node_list(ses->list[LIST_DELAY], name, root->list[root->update++]->left, time);
+				update_node_list(ses->list[LIST_DELAY], name, root->list[root->update++]->arg1, time, "");
 			}
 		}
 		else
 		{
 			while (root->update < root->used)
 			{
-				script_driver(ses, LIST_PATH, root->list[root->update++]->left);
+				script_driver(ses, LIST_PATH, root->list[root->update++]->arg1);
 			}
 		}
 	}
@@ -465,13 +465,13 @@ DO_PATH(path_run)
 DO_PATH(path_walk)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
 	DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
-	if (is_abbrev(left, "BACKWARDS"))
+	if (is_abbrev(arg1, "BACKWARDS"))
 	{
 		if (root->update == 0)
 		{
@@ -479,7 +479,7 @@ DO_PATH(path_walk)
 		}
 		else
 		{
-			script_driver(ses, LIST_PATH, root->list[--root->update]->right);
+			script_driver(ses, LIST_PATH, root->list[--root->update]->arg2);
 
 			if (root->update == 0)
 			{
@@ -487,7 +487,7 @@ DO_PATH(path_walk)
 			}
 		}
 	}
-	else if (*left == 0 || is_abbrev(left, "FORWARDS"))
+	else if (*arg1 == 0 || is_abbrev(arg1, "FORWARDS"))
 	{
 		if (root->update == root->used)
 		{
@@ -495,7 +495,7 @@ DO_PATH(path_walk)
 		}
 		else
 		{
-			script_driver(ses, LIST_PATH, root->list[root->update++]->left);
+			script_driver(ses, LIST_PATH, root->list[root->update++]->arg1);
 
 			if (root->update == root->used)
 			{
@@ -505,7 +505,7 @@ DO_PATH(path_walk)
 	}
 	else
 	{
-		tintin_printf(ses, "#SYNTAX: #PATH WALK {FORWARD|BACKWARD}.");
+		show_error(ses, LIST_PATH, "#SYNTAX: #PATH WALK {FORWARD|BACKWARD}.");
 	}
 }
 
@@ -518,7 +518,7 @@ DO_PATH(path_swap)
 
 	if (root->used == 0)
 	{
-		show_message(ses, LIST_PATH, "#PATH SWAP: ERROR: PATH IS EMPTY.");
+		show_error(ses, LIST_PATH, "#PATH SWAP: ERROR: PATH IS EMPTY.");
 
 		return;
 	}
@@ -533,13 +533,13 @@ DO_PATH(path_swap)
 
 	while (z > a)
 	{
-		arg = root->list[z]->left;
-		root->list[z]->left = root->list[z]->right;
-		root->list[z]->right = arg;
+		arg = root->list[z]->arg1;
+		root->list[z]->arg1 = root->list[z]->arg2;
+		root->list[z]->arg2 = arg;
 
-		arg = root->list[a]->left;
-		root->list[a]->left = root->list[a]->right;
-		root->list[a]->right = arg;
+		arg = root->list[a]->arg1;
+		root->list[a]->arg1 = root->list[a]->arg2;
+		root->list[a]->arg2 = arg;
 
 		node = root->list[z];
 		root->list[z--] = root->list[a];
@@ -548,9 +548,9 @@ DO_PATH(path_swap)
 
 	if (z == a)
 	{
-		arg = root->list[z]->left;
-		root->list[z]->left = root->list[z]->right;
-		root->list[z]->right = arg;
+		arg = root->list[z]->arg1;
+		root->list[z]->arg1 = root->list[z]->arg2;
+		root->list[z]->arg2 = arg;
 	}
 
 	show_message(ses, LIST_PATH, "#PATH SWAP: PATH HAS BEEN SWAPPED.");
@@ -560,32 +560,32 @@ DO_PATH(path_swap)
 DO_PATH(path_zip)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int i, cnt;
 
 	cnt   =  1;
 
-	*left =  0;
-	*right = 0;
+	*arg1 =  0;
+	*arg2 = 0;
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (search_node_list(root, root->list[i]->left) == NULL || strlen(root->list[i]->left) != 1)
+		if (search_node_list(root, root->list[i]->arg1) == NULL || strlen(root->list[i]->arg1) != 1)
 		{
-			if (i && search_node_list(root, root->list[i - 1]->left) != NULL && strlen(root->list[i - 1]->left) == 1)
+			if (i && search_node_list(root, root->list[i - 1]->arg1) != NULL && strlen(root->list[i - 1]->arg1) == 1)
 			{
-				cat_sprintf(left, "%c", COMMAND_SEPARATOR);
+				cat_sprintf(arg1, "%c", COMMAND_SEPARATOR);
 			}
-			cat_sprintf(left, "%s", root->list[i]->left);
+			cat_sprintf(arg1, "%s", root->list[i]->arg1);
 
 			if (i < root->used - 1)
 			{
-				cat_sprintf(left, "%c", COMMAND_SEPARATOR);
+				cat_sprintf(arg1, "%c", COMMAND_SEPARATOR);
 			}
 			continue;
 		}
 
-		if (i < root->used - 1 && !strcmp(root->list[i]->left, root->list[i + 1]->left))
+		if (i < root->used - 1 && !strcmp(root->list[i]->arg1, root->list[i + 1]->arg1))
 		{
 			cnt++;
 		}
@@ -593,11 +593,11 @@ DO_PATH(path_zip)
 		{
 			if (cnt > 1)
 			{
-				cat_sprintf(left, "%d%s", cnt, root->list[i]->left);
+				cat_sprintf(arg1, "%d%s", cnt, root->list[i]->arg1);
 			}
 			else
 			{
-				cat_sprintf(left, "%s", root->list[i]->left);
+				cat_sprintf(arg1, "%s", root->list[i]->arg1);
 			}
 			cnt = 1;
 		}
@@ -605,22 +605,22 @@ DO_PATH(path_zip)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (search_node_list(root, root->list[i]->right) == NULL || strlen(root->list[i]->right) != 1)
+		if (search_node_list(root, root->list[i]->arg2) == NULL || strlen(root->list[i]->arg2) != 1)
 		{
-			if (i != root->used - 1 && search_node_list(root, root->list[i + 1]->right) != NULL && strlen(root->list[i + 1]->right) == 1)
+			if (i != root->used - 1 && search_node_list(root, root->list[i + 1]->arg2) != NULL && strlen(root->list[i + 1]->arg2) == 1)
 			{
-				cat_sprintf(right, "%c", COMMAND_SEPARATOR);
+				cat_sprintf(arg2, "%c", COMMAND_SEPARATOR);
 			}
-			cat_sprintf(right, "%s", root->list[i]->right);
+			cat_sprintf(arg2, "%s", root->list[i]->arg2);
 
 			if (i > 0)
 			{
-				cat_sprintf(right, "%c", COMMAND_SEPARATOR);
+				cat_sprintf(arg2, "%c", COMMAND_SEPARATOR);
 			}
 			continue;
 		}
 
-		if (i > 0 && !strcmp(root->list[i]->right, root->list[i - 1]->right))
+		if (i > 0 && !strcmp(root->list[i]->arg2, root->list[i - 1]->arg2))
 		{
 			cnt++;
 		}
@@ -628,11 +628,11 @@ DO_PATH(path_zip)
 		{
 			if (cnt > 1)
 			{
-				cat_sprintf(right, "%d%s", cnt, root->list[i]->right);
+				cat_sprintf(arg2, "%d%s", cnt, root->list[i]->arg2);
 			}
 			else
 			{
-				cat_sprintf(right, "%s", root->list[i]->right);
+				cat_sprintf(arg2, "%s", root->list[i]->arg2);
 			}
 			cnt = 1;
 		}
@@ -642,26 +642,26 @@ DO_PATH(path_zip)
 
 	kill_list(root);
 
-	insert_node_list(root, left, right, "0");
+	insert_node_list(root, arg1, arg2, "0", "");
 
-	show_message(ses, LIST_PATH, "#PATH ZIP: THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", left, right);
+	show_message(ses, LIST_PATH, "#PATH ZIP: THE PATH HAS BEEN ZIPPED TO {%s} {%s}.", arg1, arg2);
 }
 
 DO_PATH(path_unzip)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE], temp[BUFFER_SIZE], *str;
+	char arg1[BUFFER_SIZE], temp[BUFFER_SIZE], *str;
 	struct listnode *node;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if ((node = search_node_list(ses->list[LIST_VARIABLE], left)) == NULL)
+	if ((node = search_node_list(ses->list[LIST_VARIABLE], arg1)) == NULL)
 	{
-		arg = left;
+		arg = arg1;
 	}
 	else
 	{
-		arg = node->right;
+		arg = node->arg2;
 	}
 
 	kill_list(root);
@@ -675,7 +675,7 @@ DO_PATH(path_unzip)
 			arg++;
 		}
 
-		arg = get_arg_in_braces(ses, arg, temp, TRUE);
+		arg = get_arg_in_braces(ses, arg, temp, GET_ALL);
 
 		if (is_speedwalk(ses, temp))
 		{
@@ -705,11 +705,11 @@ DO_PATH(path_unzip)
 				{
 					if ((node = search_node_list(ses->list[LIST_PATHDIR], dir)))
 					{
-						insert_node_list(root, node->left, node->right, "0");
+						insert_node_list(root, node->arg1, node->arg2, "0", "");
 					}
 					else
 					{
-						insert_node_list(root, dir, dir, "0");
+						insert_node_list(root, dir, dir, "0", "");
 					}
 				}
 			}
@@ -718,11 +718,11 @@ DO_PATH(path_unzip)
 		{
 			if ((node = search_node_list(ses->list[LIST_PATHDIR], temp)))
 			{
-				insert_node_list(root, node->left, node->right, "0");
+				insert_node_list(root, node->arg1, node->arg2, "0", "");
 			}
 			else
 			{
-				insert_node_list(root, temp, temp, "0");
+				insert_node_list(root, temp, temp, "0", "");
 			}
 		}
 	}
@@ -733,31 +733,31 @@ DO_PATH(path_unzip)
 DO_PATH(path_goto)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (is_abbrev(left, "END"))
+	if (is_abbrev(arg1, "END"))
 	{
 		root->update = root->used;
 
 		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO {%d}.", root->update + 1);
 	}
-	else if (is_abbrev(left, "START"))
+	else if (is_abbrev(arg1, "START"))
 	{
 		root->update = 0;
 
 		show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update + 1);
 	}
-	else if (is_number(left))
+	else if (is_math(ses, arg1))
 	{
-		if (get_number(ses, left) < 1 || get_number(ses, left) > root->used + 1)
+		if (get_number(ses, arg1) < 1 || get_number(ses, arg1) > root->used + 1)
 		{
 			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION MUST BE BETWEEN 1 AND %d.", root->used + 1);
 		}
 		else
 		{
-			root->update = get_number(ses, left) - 1;
+			root->update = get_number(ses, arg1) - 1;
 
 			show_message(ses, LIST_PATH, "#PATH GOTO: POSITION SET TO %d.", root->update + 1);
 		}
@@ -768,11 +768,11 @@ DO_PATH(path_goto)
 DO_PATH(path_move)
 {
 	struct listroot *root = ses->list[LIST_PATH];
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (is_abbrev(left, "BACKWARD"))
+	if (is_abbrev(arg1, "BACKWARD"))
 	{
 		if (root->update == 0)
 		{
@@ -785,7 +785,7 @@ DO_PATH(path_move)
 			show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
 		}
 	}
-	else if (is_abbrev(left, "FORWARD"))
+	else if (is_abbrev(arg1, "FORWARD"))
 	{
 		if (root->update == root->used)
 		{
@@ -798,9 +798,9 @@ DO_PATH(path_move)
 			show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
 		}
 	}
-	else if (is_number(left))
+	else if (is_math(ses, arg1))
 	{
-		root->update = URANGE(0, root->update + get_number(ses, left), root->used);
+		root->update = URANGE(0, root->update + get_number(ses, arg1), root->used);
 
 		show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update + 1);
 	}
@@ -833,7 +833,7 @@ DO_PATH(path_undo)
 
 	DEL_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
-	script_driver(ses, LIST_PATH, root->list[root->used - 1]->right);
+	script_driver(ses, LIST_PATH, root->list[root->used - 1]->arg2);
 
 	SET_BIT(ses->flags, SES_FLAG_PATHMAPPING);
 
@@ -845,7 +845,7 @@ DO_PATH(path_undo)
 	show_message(ses, LIST_PATH, "#PATH MOVE: POSITION SET TO %d.", root->update);
 }
 
-void check_insert_path(struct session *ses, char *forward, char *backward, int follow)
+void check_append_path(struct session *ses, char *forward, char *backward, int follow)
 {
 	struct listroot *root = ses->list[LIST_PATH];
 	struct listnode *node;
@@ -854,7 +854,7 @@ void check_insert_path(struct session *ses, char *forward, char *backward, int f
 	{
 		if ((node = search_node_list(ses->list[LIST_PATHDIR], forward)))
 		{
-			insert_node_list(root, node->left, node->right, "0");
+			insert_node_list(root, node->arg1, node->arg2, "0", "");
 
 			root->update = root->used;
 		}
@@ -863,11 +863,11 @@ void check_insert_path(struct session *ses, char *forward, char *backward, int f
 	{
 		if ((node = search_node_list(ses->list[LIST_PATHDIR], forward)))
 		{
-			insert_node_list(root, node->left, node->right, "0");
+			insert_node_list(root, node->arg1, node->arg2, "0", "");
 		}
 		else
 		{
-			insert_node_list(root, forward, backward, "0");
+			insert_node_list(root, forward, backward, "0", "");
 		}
 	}
 }
@@ -899,7 +899,7 @@ DO_COMMAND(do_pathdir)
 		{
 			if ((node = search_node_list(ses->list[LIST_PATHDIR], arg1)) != NULL)
 			{
-				strcpy(arg3, node->pr);
+				strcpy(arg3, node->arg3);
 			}
 			else
 			{
@@ -915,7 +915,7 @@ DO_COMMAND(do_pathdir)
 			}
 			get_number_string(ses, arg3, arg3);
 		}
-		update_node_list(ses->list[LIST_PATHDIR], arg1, arg2, arg3);
+		update_node_list(ses->list[LIST_PATHDIR], arg1, arg2, arg3, "");
 
 		show_message(ses, LIST_PATHDIR, "#OK: DIRECTION {%s} WILL BE REVERSED AS {%s} @ {%s}.", arg1, arg2, arg3);
 	}

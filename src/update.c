@@ -29,7 +29,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <termios.h>
-#include <errno.h>
 
 
 void mainloop(void)
@@ -50,6 +49,8 @@ void mainloop(void)
 	short int pulse_update_time     = 1 + PULSE_UPDATE_TIME;
 
 	wait_time.tv_sec = 0;
+
+	push_call("mainloop()");
 
 	while (TRUE)
 	{
@@ -159,6 +160,8 @@ void mainloop(void)
 			select(0, NULL, NULL, NULL, &wait_time);
 		}
 	}
+	pop_call();
+	return;
 }
 
 void poll_input(void)
@@ -217,7 +220,21 @@ void poll_sessions(void)
 
 					rv = select(FD_SETSIZE, &readfds, NULL, &excfds, &to);
 
-					if (rv <= 0)
+					if (rv < 0)
+					{
+						break;
+
+//						ses->
+						syserr_printf(ses, "poll_sessions: select = %d:", rv);
+
+						cleanup_session(ses);
+
+						gtd->mud_output_len = 0;
+
+						break;;
+					}
+
+					if (rv == 0)
 					{
 						break;
 					}
@@ -291,12 +308,15 @@ void poll_chat(void)
 		{
 			if (rv == 0 || errno == EINTR)
 			{
-				return;
+				goto poll_chat_end;
 			}
-			syserr("select");
+			syserr_fatal(-1, "poll_chat: select");
 		}
 		process_chat_connections(&readfds, &writefds, &excfds);
 	}
+
+	poll_chat_end:
+
 	close_timer(TIMER_POLL_CHAT);
 }
 
@@ -335,13 +355,15 @@ void poll_port(void)
 			{
 				if (rv == 0 || errno == EINTR)
 				{
-					return;
+					continue;
 				}
-				syserr("select");
+				syserr_fatal(-1, "poll_port: select");
 			}
+
 			process_port_connections(ses, &readfds, &writefds, &excfds);
 		}
 	}
+
 	close_timer(TIMER_POLL_PORT);
 }
 
@@ -367,22 +389,22 @@ void tick_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = gtd->time + (long long) (get_number(ses, node->pr) * 1000000LL);
+				node->data = gtd->utime + (long long) (get_number(ses, node->arg3) * 1000000LL);
 
-				show_info(ses, LIST_DELAY, "#INFO TICK {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->left, node->data);
+				show_info(ses, LIST_DELAY, "#INFO TICK {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->arg1, node->data);
 			}
 
-			if (node->data <= gtd->time)
+			if (node->data <= gtd->utime)
 			{
-				node->data += (long long) (get_number(ses, node->pr) * 1000000LL);
+				node->data += (long long) (get_number(ses, node->arg3) * 1000000LL);
 
-				show_info(ses, LIST_DELAY, "#INFO TICK {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->left, node->data);
+				show_info(ses, LIST_DELAY, "#INFO TICK {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->arg1, node->data);
 
 				if (!HAS_BIT(root->flags, LIST_FLAG_IGNORE))
 				{
-					show_debug(ses, LIST_TICKER, "#DEBUG TICKER {%s}", node->right);
+					show_debug(ses, LIST_TICKER, "#DEBUG TICKER {%s}", node->arg2);
 
-					script_driver(ses, LIST_TICKER, node->right);
+					script_driver(ses, LIST_TICKER, node->arg2);
 				}
 			}
 		}
@@ -411,14 +433,14 @@ void delay_update(void)
 
 			if (node->data == 0)
 			{
-				node->data = gtd->time + (long long) (get_number(ses, node->pr) * 1000000LL);
+				node->data = gtd->utime + (long long) (get_number(ses, node->arg3) * 1000000LL);
 
-				show_info(ses, LIST_DELAY, "#INFO DELAY {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->left, node->data);
+				show_info(ses, LIST_DELAY, "#INFO DELAY {%s} INITIALIZED WITH TIMESTAMP {%lld}", node->arg1, node->data);
 			}
 
-			if (node->data <= gtd->time)
+			if (node->data <= gtd->utime)
 			{
-				strcpy(buf, node->right);
+				strcpy(buf, node->arg2);
 
 				show_debug(ses, LIST_DELAY, "#DEBUG DELAY {%s}", buf);
 
@@ -442,7 +464,7 @@ void packet_update(void)
 	{
 		gtd->update = ses->next;
 
-		if (ses->check_output && gtd->time > ses->check_output)
+		if (ses->check_output && gtd->utime > ses->check_output)
 		{
 			if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 			{
@@ -481,7 +503,7 @@ void chat_update(void)
 		{
 			buddy_next = buddy->next;
 
-			if (buddy->timeout && buddy->timeout < time(NULL))
+			if (buddy->timeout && buddy->timeout < gtd->time)
 			{
 				chat_socket_printf(buddy, "<CHAT> Connection timed out.");
 
@@ -489,7 +511,7 @@ void chat_update(void)
 			}
 		}
 
-		if (gtd->chat->paste_time && gtd->chat->paste_time < utime())
+		if (gtd->chat->paste_time && gtd->chat->paste_time < gtd->utime)
 		{
 			chat_paste(NULL, NULL);
 		}
@@ -534,138 +556,223 @@ void memory_update(void)
 
 void time_update(void)
 {
-	static char sec[3], min[3], hrs[3], day[3], wks[3], mon[3], yrs[5];
-	static char old_sec[3], old_min[3], old_hrs[3], old_day[3], old_wks[3], old_mon[3], old_yrs[5];
+	static char str_sec[9], str_min[9], str_hour[9], str_wday[9], str_mday[9], str_mon[9], str_year[9];
 
-	time_t timeval_t = (time_t) time(NULL);
-	struct tm timeval_tm = *localtime(&timeval_t);
+	static struct tm old_calendar;
+
+	gtd->time = time(NULL);
+
+	gtd->calendar = *localtime(&gtd->time);
 
 	open_timer(TIMER_UPDATE_TIME);
 
 	// Initialize on the first call.
 
-	if (old_sec[0] == 0)
+	if (old_calendar.tm_year == 0)
 	{
-		strftime(old_sec, 3, "%S", &timeval_tm);
-		strftime(old_min, 3, "%M", &timeval_tm);
-		strftime(old_hrs, 3, "%H", &timeval_tm);
-		strftime(old_day, 3, "%d", &timeval_tm);
-		strftime(old_wks, 3, "%W", &timeval_tm);
-		strftime(old_mon, 3, "%m", &timeval_tm);
-		strftime(old_yrs, 5, "%Y", &timeval_tm);
+		old_calendar.tm_sec  = gtd->calendar.tm_sec;
+		old_calendar.tm_min  = gtd->calendar.tm_min;
+		old_calendar.tm_hour = gtd->calendar.tm_hour;
+		old_calendar.tm_wday = gtd->calendar.tm_wday;
+		old_calendar.tm_mday = gtd->calendar.tm_mday;
+		old_calendar.tm_mon  = gtd->calendar.tm_mon;
+		old_calendar.tm_year = gtd->calendar.tm_year;
 
-		strftime(sec, 3, "%S", &timeval_tm);
-		strftime(min, 3, "%M", &timeval_tm);
-		strftime(hrs, 3, "%H", &timeval_tm);
-		strftime(day, 3, "%d", &timeval_tm);
-		strftime(wks, 3, "%W", &timeval_tm);
-		strftime(mon, 3, "%m", &timeval_tm);
-		strftime(yrs, 5, "%Y", &timeval_tm);
+		strftime(str_sec,  9, "%S", &gtd->calendar);
+		strftime(str_min,  9, "%M", &gtd->calendar);
+		strftime(str_hour, 9, "%H", &gtd->calendar);
+		strftime(str_wday, 9, "%w", &gtd->calendar);
+		strftime(str_mday, 9, "%d", &gtd->calendar);
+		strftime(str_mon,  9, "%m", &gtd->calendar);
+		strftime(str_year, 9, "%Y", &gtd->calendar);
+
+		return;
 	}
 
-	strftime(sec, 3, "%S", &timeval_tm);
-	strftime(min, 3, "%M", &timeval_tm);
-
-	if (min[0] == old_min[0] && min[1] == old_min[1])
+	if (gtd->calendar.tm_sec == old_calendar.tm_sec)
 	{
-		if (sec[0] == old_sec[0] && sec[1] == old_sec[1])
-		{
-			goto time_event_end;
-		}
+		goto time_event_end;
+	}
+
+	strftime(str_min, 9, "%S", &gtd->calendar);
+	old_calendar.tm_sec = gtd->calendar.tm_sec;
+
+	if (gtd->calendar.tm_min == old_calendar.tm_min)
+	{
 		goto time_event_sec;
 	}
 
-	strcpy(old_min, min);
+	strftime(str_min, 9, "%M", &gtd->calendar);
+	old_calendar.tm_min = gtd->calendar.tm_min;
 
-	strftime(hrs, 3, "%H", &timeval_tm);
-
-	if (hrs[0] == old_hrs[0] && hrs[1] == old_hrs[1])
+	if (gtd->calendar.tm_hour == old_calendar.tm_hour)
 	{
 		goto time_event_min;
 	}
 
-	strcpy(old_hrs, hrs);
+	strftime(str_hour, 9, "%H", &gtd->calendar);
+	old_calendar.tm_hour = gtd->calendar.tm_hour;
 
-	strftime(day, 3, "%d", &timeval_tm);
-	strftime(wks, 3, "%W", &timeval_tm);
-
-	if (day[0] == old_day[0] && day[1] == old_day[1])
+	if (gtd->calendar.tm_mday == old_calendar.tm_mday)
 	{
-		goto time_event_hrs;
+		goto time_event_hour;
 	}
 
-	strcpy(old_day, day);
+	strftime(str_wday, 9, "%w", &gtd->calendar);
+	old_calendar.tm_wday = gtd->calendar.tm_wday;
 
-	strftime(mon, 3, "%m", &timeval_tm);
+	strftime(str_mday, 9, "%d", &gtd->calendar);
+	old_calendar.tm_mday = gtd->calendar.tm_mday;
 
-	if (mon[0] == old_mon[0] && mon[1] == old_mon[1])
+	if (gtd->calendar.tm_mon == old_calendar.tm_mon)
 	{
-		goto time_event_day;
+		goto time_event_mday;
 	}
 
-	strcpy(old_mon, mon);
+	strftime(str_mon, 9, "%m", &gtd->calendar);
+	old_calendar.tm_mon = gtd->calendar.tm_mon;
 
-	strftime(yrs, 5, "%Y", &timeval_tm);
-
-	if (yrs[0] == old_yrs[0] && yrs[1] == old_yrs[1] && yrs[2] == old_yrs[2] && yrs[3] == old_yrs[3])
+	if (gtd->calendar.tm_year == old_calendar.tm_year)
 	{
 		goto time_event_mon;
 	}
 
-	strcpy(old_yrs, yrs);
+	strftime(str_year, 9, "%Y", &gtd->calendar);
+	old_calendar.tm_year = gtd->calendar.tm_year;
 
-	check_all_events(NULL, SUB_ARG, 0, 7, "YEAR", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, SUB_ARG, 1, 7, "YEAR %s", yrs, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 0, 7, "YEAR", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "YEAR %s", str_year, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
 
 	time_event_mon:
 
-	check_all_events(NULL, SUB_ARG, 0, 7, "MONTH", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, SUB_ARG, 1, 7, "MONTH %s", mon, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 0, 7, "MONTH", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "MONTH %s", str_mon, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
 
-	time_event_day:
+	time_event_mday:
 
-	if (wks[0] != old_wks[0] || wks[1] != old_wks[1])
-	{
-		strcpy(old_wks, wks);
+	check_all_events(NULL, SUB_ARG, 0, 7, "WEEK", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "WEEK %s", str_wday, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
-		check_all_events(NULL, SUB_ARG, 0, 7, "WEEK", yrs, mon, wks, day, hrs, min, sec);
-		check_all_events(NULL, SUB_ARG, 1, 7, "WEEK %s", wks, yrs, mon, wks, day, hrs, min, sec);
-	}
+	check_all_events(NULL, SUB_ARG, 2, 7, "DATE %s-%s", str_mon, str_mday, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
-	check_all_events(NULL, SUB_ARG, 2, 7, "DATE %s-%s", mon, day, yrs, mon, wks, day, hrs, min, sec);
-
-	check_all_events(NULL, SUB_ARG, 0, 7, "DAY", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, SUB_ARG, 1, 7, "DAY %s", day, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 0, 7, "DAY", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "DAY %s", str_mday, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
 
-	time_event_hrs:
+	time_event_hour:
 
-	check_all_events(NULL, SUB_ARG, 0, 7, "HOUR", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, SUB_ARG, 1, 7, "HOUR %s", hrs, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 0, 7, "HOUR", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "HOUR %s", str_hour, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
 
 	time_event_min:
 
-	check_all_events(NULL, SUB_ARG, 4, 7, "DATE %s-%s %s:%s", mon, day, hrs, min, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 4, 7, "DATE %s-%s %s:%s", str_mon, str_mday, str_hour, str_min, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
-	check_all_events(NULL, SUB_ARG, 2, 7, "TIME %s:%s", hrs, min, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 2, 7, "TIME %s:%s", str_hour, str_min, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
-	check_all_events(NULL, SUB_ARG, 0, 7, "MINUTE", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, SUB_ARG, 1, 7, "MINUTE %s", min, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 0, 7, "MINUTE", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "MINUTE %s", str_min, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
 
 	time_event_sec:
 
-	strcpy(old_sec, sec);
+	old_calendar.tm_sec = gtd->calendar.tm_sec;
 
-	check_all_events(NULL, SUB_ARG, 3, 7, "TIME %s:%s:%s", hrs, min, sec, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 3, 7, "TIME %s:%s:%s", str_hour, str_min, str_sec, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
-	check_all_events(NULL, SUB_ARG, 0, 7, "SECOND", yrs, mon, wks, day, hrs, min, sec);
-	check_all_events(NULL, SUB_ARG, 1, 7, "SECOND %s", sec, yrs, mon, wks, day, hrs, min, sec);
+	check_all_events(NULL, SUB_ARG, 0, 7, "SECOND", str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
+	check_all_events(NULL, SUB_ARG, 1, 7, "SECOND %s", str_sec, str_year, str_mon, str_wday, str_mday, str_hour, str_min, str_sec);
 
 	time_event_end:
 
 	close_timer(TIMER_UPDATE_TIME);
+}
+
+
+void show_cpu(struct session *ses)
+{
+	long long total_cpu;
+	int timer;
+
+	tintin_printf2(ses, "Section                           Time (usec)    Freq (msec)  %%Prog         %%CPU");
+
+	tintin_printf2(ses, "");
+
+	for (total_cpu = timer = 0 ; timer < TIMER_CPU ; timer++)
+	{
+		total_cpu += display_timer(ses, timer);
+	}
+
+	tintin_printf2(ses, "");
+
+	tintin_printf2(ses, "Unknown CPU Usage:             %7.3f percent", (gtd->total_io_exec - total_cpu) * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
+	tintin_printf2(ses, "Average CPU Usage:             %7.3f percent", (gtd->total_io_exec)             * 100.0 / (gtd->total_io_delay + gtd->total_io_exec));
+}
+
+
+long long display_timer(struct session *ses, int timer)
+{
+	long long total_usage, indicated_usage;
+
+	total_usage = gtd->total_io_exec + gtd->total_io_delay;
+
+	if (total_usage == 0)
+	{
+		return 0;
+	}
+
+	if (gtd->timer[timer][1] == 0 || gtd->timer[timer][4] == 0)
+	{
+		return 0;
+	}
+
+	indicated_usage = gtd->timer[timer][0] / gtd->timer[timer][1] * gtd->timer[timer][4];
+
+	tintin_printf2(ses, "%-30s%8lld       %8lld      %8.2f     %8.3f",
+		timer_table[timer].name,
+		gtd->timer[timer][0] / gtd->timer[timer][1],
+		gtd->timer[timer][3] / gtd->timer[timer][4] / 1000,
+		100.0 * (double) indicated_usage / (double) gtd->total_io_exec,
+		100.0 * (double) indicated_usage / (double) total_usage);
+
+	return indicated_usage;
+}
+
+
+void open_timer(int timer)
+{
+	struct timeval last_time;
+	long long current_time;
+
+	gettimeofday(&last_time, NULL);
+
+	current_time = (long long) last_time.tv_usec + 1000000LL * (long long) last_time.tv_sec;
+
+	if (gtd->timer[timer][2] == 0)
+	{
+		gtd->timer[timer][2] = current_time ;
+	}
+	else
+	{
+		gtd->timer[timer][3] += current_time - gtd->timer[timer][2];
+		gtd->timer[timer][2]  = current_time;
+		gtd->timer[timer][4] ++;
+	}
+}
+
+
+void close_timer(int timer)
+{
+	struct timeval last_time;
+	long long current_time;
+
+	gettimeofday(&last_time, NULL);
+
+	current_time = (long long) last_time.tv_usec + 1000000LL * (long long) last_time.tv_sec;
+
+	gtd->timer[timer][0] += (current_time - gtd->timer[timer][2]);
+	gtd->timer[timer][1] ++;
 }

@@ -28,15 +28,13 @@
 
 DO_COMMAND(do_history)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(ses, arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
-
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " HISTORY COMMANDS ");
 
@@ -51,12 +49,12 @@ DO_COMMAND(do_history)
 
 	for (cnt = 0 ; *history_table[cnt].name ; cnt++)
 	{
-		if (!is_abbrev(left, history_table[cnt].name))
+		if (!is_abbrev(arg1, history_table[cnt].name))
 		{
 			continue;
 		}
 
-		history_table[cnt].fun(ses, right);
+		history_table[cnt].fun(ses, arg2);
 
 		return ses;
 	}
@@ -82,7 +80,7 @@ void add_line_history(struct session *ses, char *line)
 	{
 		if (root->used && HAS_BIT(ses->flags, SES_FLAG_REPEATENTER))
 		{
-			strcpy(line, root->list[root->used - 1]->left);
+			strcpy(line, root->list[root->used - 1]->arg1);
 		}
 		return;
 	}
@@ -92,7 +90,7 @@ void add_line_history(struct session *ses, char *line)
 		search_line_history(ses, line);
 	}
 
-	update_node_list(ses->list[LIST_HISTORY], line, "", "");
+	update_node_list(ses->list[LIST_HISTORY], line, "", "", "");
 
 	while (root->used > gtd->history_size)
 	{
@@ -111,9 +109,9 @@ void search_line_history(struct session *ses, char *line)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (!strncmp(root->list[i]->left, &line[1], strlen(&line[1])))
+		if (!strncmp(root->list[i]->arg1, &line[1], strlen(&line[1])))
 		{
-			strcpy(line, root->list[i]->left);
+			strcpy(line, root->list[i]->arg1);
 
 			return;
 		}
@@ -152,7 +150,7 @@ DO_HISTORY(history_list)
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		tintin_printf2(ses, "%6d - %s", cnt++, root->list[i]->left);
+		tintin_printf2(ses, "%6d - %s", cnt++, root->list[i]->arg1);
 	}
 	return;
 }
@@ -182,11 +180,11 @@ DO_HISTORY(history_read)
 
 			if (*buffer)
 			{
-				insert_node_list(ses->list[LIST_HISTORY], buffer, "", "");
+				insert_node_list(ses->list[LIST_HISTORY], buffer, "", "", "");
 			}
 		}
 	}
-	insert_node_list(ses->list[LIST_HISTORY], "", "", "");
+	insert_node_list(ses->list[LIST_HISTORY], "", "", "", "");
 
 	fclose(file);
 
@@ -232,7 +230,7 @@ DO_HISTORY(history_write)
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		fprintf(file, "%s\n", root->list[i]->left);
+		fprintf(file, "%s\n", root->list[i]->arg1);
 	}
 
 	fclose(file);

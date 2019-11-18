@@ -1,213 +1,37 @@
-Due to continuous improvements old tintin scripts aren't always compatible with
-new versions. This document tries to document all common issues.
+ABOUT
 
+  TinTin++ is a command line MUD client which features support for TELNET,
+  PCRE, UTF-8, SSL, VT100, IPv6, the dynamic TINTIN scripting language,
+  a comprensive trigger system, and several other features geared towards
+  mudding, scripting, text processing, interprocess communication,
+  redirection, and VT100 / xterm terminal emulation and multiplexing.
 
-The following special characters are defined:
+INFO
 
-%0 - %99  The percentage sign followed by a number is used for arguments in
-          triggers.
+  You'll find answers to common questions in the FAQ and INSTALL documents. A
+  brief introduction to using TinTin++ is available in the docs/tintin19.txt
+  and docs/syntax.txt documents. The SCRIPTS document contains some useful
+  example scripts.
 
-          All variable and function names must begin with an alphabetic
-          character, followed by any number of alphanumeric characters
-          and underscores.
+  The NEWS document contains important announcements and a list of changes
+  that impact backward compatibility with older versions. A more detailed
+  list of changes can be found in the mods/igr.mods document.
 
-$         The dollar sign is used to retrieve the value of a variable.
+CONTACT
 
-&         The and sign is used to retrieve the index of a variable.
+  Easiest is to register on the forum linked from the website if you have
+  questions about using TinTin++. If you need to get in touch with one of
+  the contributors check the CREDITS file. 
 
-*         The astrix sign is used to retrieve the key of a variable.
+LICENSE
 
-@         The at sign followed by an alphanumeric string is used for functions.
+  TinTin++ is licensed under GPL 3, see the COPYING file for details.
 
-[ ]       Brackets are used for nested variables which function as an
-          associative array. Associative arrays are also known as tables and
-          maps.
+COPYRIGHT
 
-<000>     Three alphanumeric characters encapsulated by the less- and greater-
-          than signs are used for 4 and 8 bit color codes.
+  Copyright 2004-2019 Igor van den Hoven
 
-<0000>    Either a B (background) or F (foreground) followed by three
-          hexadecimal characters encapsulated by < > signs are used for 12
-          bit color codes. Requires truecolor capable terminal.
+WEBSITE
 
-<0000000> Either a B (background) or F (foreground) followed by six
-          hexadecimal characters encapsulated by < > signs are used for 24
-          bit color codes. Requires truecolor capable terminal.
-
-\         The back slash is used to escape a character
-
-{ }       Curly brackets aka braces are used for seperating multi word command
-          arguments, nesting commands, and nesting variables. Braces cannot
-          easily be escaped and should always be used in pairs.
-
-" "       Quote characters are used for strings in the #math, #if, #switch,
-          and #case commands. To process strings in triggers it's suggested
-          to use the #regex command because quotes are not escaped.
-
-&0- &99   The and sign followed by a number is used for arguments in the
-          regex command.
-
-
-If you want to convert your scripts take notice of the following changes:
-
-
-01) #LOOP, #FOREACH, and #PARSE take an additional argument which contains
-    the variable used for storing the intermediate values.
-
-    Instead of #FORALL the #FOREACH command should be used.
-
-
-02) #HIGHLIGHT is now parsed as: #HIGHLIGHT {string} {color}. You can
-    combine several colors by separating them by semicolons. The color
-    argument can be a color code. See #HELP COLORS.
-
-
-03) #FORMAT replaces many commands, I'd suggest checking it out.
-
-
-04) #MESSAGE, #CONFIG, #IGNORE, #DEBUG are all you need to configure tintin,
-    changes made with #CONFIG are written to file with #WRITE.
-
-
-05) The old walk code has been removed, instead you can use the #PATH command.
-
-
-06) #TICK has been changed quite a bit, new commands: #TICK and #UNTICK, you
-    can have as many tickers as you want. The old #TICK command is gone.
-
-    Syntax: #TICK {name} {commands} {seconds to tick}
-
-    The name is added so you can delete it. You will no longer receive spam,
-    but with a little bit of creativity you can rebuild the old tintin ticker
-    spam.
-
-    Use #READ to load the following ticker which emulates old behavior:
-
-    #tick {oldtick}
-    {
-            #delay 50 #showme #10 SECONDS TO TICK!!;
-            #showme #TICK!!!
-    }
-    {60}
-
-07) #READ now supports multiline triggers, it also checks the nesting level
-    before doing anything so you don't end up with bogus, and trims leading 
-    spaces/tabs. Make sure to remove non matching { }'s from #NOP comments,
-    cause it will (and should) create error messages with the line numbers
-    between which the error was found.
-
-
-08) Triggers now use PCRE (Perl Compatible Regular Expressions).
-
-
-09) Added #MACRO for macro support.
-
-10) $result is now a default variable that can be used in #FUNCTION.
-
-    #function dosomething {#math result 1 + 1}
-
-    say @dosomething{} will print 2, the #RESULT command has been removed.
-
-    It's possible to use #return <value> to exit the function and at the same
-    time set the result variable.
-    
-11) #FOREACH uses semicolons and braces to seprate arguments instead of commas.
-
-13) #MATH and #IF support 64 floating point arithmatic expressions. They also
-    support strings, which must be enclosed in quotes. See #HELP MATH for more
-    information.
-
-14) #PATHDIR is now specificly designed to hold a direction, the opposite
-    direction, and the vector of said direction for the #MAP command.
-
-15) Defaults are no longer in a default .rc file.
-
-16) #SPLIT supports 2 arguments to set the top and bottomw row.
-
-17) Can now have multiple prompt triggers, the 2nd argument is the substitution
-    string that works the same as #SUBSTITUTE. the 3rd argument is the row the
-    line should be printed on, if left blank it picks the default split line.
-
-19) #SLEEP has been removed. The #DELAY command can be used instead.
-
-20) All settings are inherited from the startup session when creating a new
-    session.
-
-21) In order to make a color trigger start a trigger with a tilda. In order to see
-    color codes the way tintin wants you to enter them type: #CONFIG convert on
-    when done use: #CONFIG convert off.
-
-    #action {~\0;32m%0 says '%1'} {say I don't like green says.}
-
-22) A scrollback buffer has been added, which can be browsed with page up,
-    page down, and the #GREP and #BUFFER command.
-
-23) !<argument> will repeat the last command starting with that argument.
-    score
-    who all
-    area
-    !          --> repeats area
-    !w         --> repeats who all
-    !s         --> repeats score
-    !ll        --> sends !ll as a command
-
-24) As of version 1.99.0 tintin supports PCRE (Perl Compatible Regular
-    Expressions), see #HELP ACTION for details.
-
-25) As of version 1.99.7 there are several differences in syntax:
-
-    #LOOP {min} {max} {variable} {commands}
-
-    #FOREACH {list} {variable} {commands}
-
-    #PARSE {string} {variable} {commands}
-
-27) The argument lists of #echo and #format are no longer nested. So change:
-    #format {%t:%t} {{%H}{%M}} to #format {%t} {%H} {%M}
-
-    Keep in mind that some functions allow option nesting, which is documented
-    in #help format.
-
-28) #replacestring has been renamed to #replace, keep in mind that TinTin++
-    has essentially a typeless scripting language.
-
-29) All commands require embedded regular expressions to be used
-    instead of wildcards. See #HELP REGEX for details.
-
-30) Variables can be nested using brackets. Non existent nested variables
-    report 0 if the base variable exists and always report 0 when the name
-    is encapsulated in braces.
-
-    Using & instead of $ will report the index of a variable.
-
-    Using $variable[+1] will report the first nest, and $variable[-1] will
-    report the last nest, $variable[-2] the second last nest, etc.
-
-    To display all nests use $variable[]
-
-    To check if a variable exists use: #if {&{variable}} which will report
-    0 if non existent, and the numeric index if the variable is found.
-
-31) #LIST now works with nested variables. Read #HELP VARIABLE.
-
-32) The #SWITCH, #CASE, #DEFAULT, #FOREACH, #BREAK, #CONTINUE, #ELSE, #ELSEIF,
-    and #RETURN statements have been added and should work more or less as
-    expected.
-
-33) The #regex command now uses the same regular expression syntax as triggers.
-
-34) #if {"%0" == "?test*"} needs to be replaced with #if {"%0" == "%?test%*"}
-    as per the regex syntax documented in #HELP ACTION, or use 
-    #if {&{test} != 0} to see if a variable exists.
-
-35) old lists need to be converted as following:
-    #var {friends} {{Alicia} {Bubba} {Cathie} {Kayla} {Zorro}}
-
-    to
-
-    #var {friends} {{1}{Alicia} {2}{Bubba} {3}{Cathie} {4}{Kayla} {5}{Zorro}}
-
-    or
-
-    #list friends create {{Alicia} {Bubba} {Cathie} {Kayla} {Zorro}}
+  https://tintin.sourceforge.io
 

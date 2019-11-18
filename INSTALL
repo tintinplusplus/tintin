@@ -1,8 +1,9 @@
-Installation is easy; cd to the src/ directory, then type this:
+INSTALLATION
+------------
+
+Installation should be easy; cd to the src/ directory, then type:
 
 ./configure
-
-make
 
 make install
 
@@ -10,29 +11,29 @@ If this went without errors or serious warnings type this to start tintin:
 
 tt++
 
-You might need to compile and install the following libraries:
+You might need to install the following libraries:
 
   pcre: pcre.org
   zlib: zlib.net
 gnutls: gnutls.org
 
-If you wish, you can edit src/Makefile.in before running ./configure.
-It shouldn't be necessary unless you have some unorthodox request
-(such as wanting to install tintin++ /usr/local).
-
 If you have any trouble with installing/compiling tintin you should check out
-the install section on the website, if that doesn't do the trick you can ask
-for assistance on the forum.
+the install section on the website.
+
+https://tintin.sourceforge.io/install.php
+
+If that doesn't do the trick you can ask for assistance on the forum.
 
 
-TERMINAL EMULATION:
+TERMINAL EMULATION
+------------------
 
 In order to run tintin full featured you will need a vt100 emulator. If your
-OS doesn't use one per default it's suggested to install xterm or rxvt (also
-known as wterm).
+OS doesn't use one per default it's suggested to install xterm.
 
 
-STATIC LINKING:
+STATIC LINKING
+--------------
 
 This is more so a note to myself to statically link PCRE on Cygwin.
 

@@ -28,12 +28,12 @@
 
 DO_COMMAND(do_line)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(ses, arg, left, FALSE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {<OPTION>} {argument}.");
 	}
@@ -41,7 +41,7 @@ DO_COMMAND(do_line)
 	{
 		for (cnt = 0 ; *line_table[cnt].name ; cnt++)
 		{
-			if (is_abbrev(left, line_table[cnt].name))
+			if (is_abbrev(arg1, line_table[cnt].name))
 			{
 				break;
 			}
@@ -62,9 +62,9 @@ DO_COMMAND(do_line)
 
 DO_LINE(line_gag)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
 
 	show_debug(ses, LIST_GAG, "#DEBUG LINE GAG");
 
@@ -77,23 +77,23 @@ DO_LINE(line_gag)
 
 DO_LINE(line_log)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	FILE *logfile;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (*left && *right)
+	if (*arg1 && *arg2)
 	{
-		substitute(ses, right, right, SUB_ESC|SUB_COL|SUB_LNF);
+		substitute(ses, arg2, arg2, SUB_ESC|SUB_COL|SUB_LNF);
 
-		if (ses->logline_time == time(NULL) && !strcmp(ses->logline_name, left))
+		if (ses->logline_time == gtd->time && !strcmp(ses->logline_name, arg1))
 		{
-			logit(ses, right, ses->logline_file, FALSE);
+			logit(ses, arg2, ses->logline_file, FALSE);
 		}
 		else
 		{
-			if ((logfile = fopen(left, "a")))
+			if ((logfile = fopen(arg1, "a")))
 			{
 				if (ses->logline_file)
 				{
@@ -101,9 +101,9 @@ DO_LINE(line_log)
 				}
 				free(ses->logline_name);
 
-				ses->logline_name = strdup(left);
+				ses->logline_name = strdup(arg1);
 				ses->logline_file = logfile;
-				ses->logline_time = time(NULL);
+				ses->logline_time = gtd->time;
 
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
 				{
@@ -115,21 +115,21 @@ DO_LINE(line_log)
 					}
 				}
 
-				logit(ses, right, ses->logline_file, FALSE);
+				logit(ses, arg2, ses->logline_file, FALSE);
 			}
 			else
 			{
-				show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
+				show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", arg1);
 			}
 		}
 	}
 	else
 	{
-		if (ses->lognext_time == time(NULL) && !strcmp(ses->lognext_name, left))
+		if (ses->lognext_time == gtd->time && !strcmp(ses->lognext_name, arg1))
 		{
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
 		}
-		else if ((logfile = fopen(left, "a")))
+		else if ((logfile = fopen(arg1, "a")))
 		{
 			if (ses->lognext_file)
 			{
@@ -137,15 +137,15 @@ DO_LINE(line_log)
 			}
 			free(ses->lognext_name);
 
-			ses->lognext_name = strdup(left);
+			ses->lognext_name = strdup(arg1);
 			ses->lognext_file = logfile;
-			ses->lognext_time = time(NULL);
+			ses->lognext_time = gtd->time;
 
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
 		}
 		else
 		{
-			show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOG {%s} - COULDN'T OPEN FILE.", arg1);
 		}
 	}
 	return ses;
@@ -153,28 +153,28 @@ DO_LINE(line_log)
 
 DO_LINE(line_logverbatim)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	FILE *logfile;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, right, GET_ALL);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
-	if (*left && *right)
+	if (*arg1 && *arg2)
 	{
-		if (!strcmp(ses->logline_name, left))
+		if (!strcmp(ses->logline_name, arg1))
 		{
-			logit(ses, right, ses->logline_file, TRUE);
+			logit(ses, arg2, ses->logline_file, TRUE);
 		}
 		else
 		{
-			if ((logfile = fopen(left, "a")))
+			if ((logfile = fopen(arg1, "a")))
 			{
 				if (ses->logline_file)
 				{
 					fclose(ses->logline_file);
 				}
 				free(ses->logline_name);
-				ses->logline_name = strdup(left);
+				ses->logline_name = strdup(arg1);
 				ses->logline_file = logfile;
 
 				if (HAS_BIT(ses->flags, SES_FLAG_LOGHTML))
@@ -187,35 +187,35 @@ DO_LINE(line_logverbatim)
 					}
 				}
 
-				logit(ses, right, ses->logline_file, TRUE);
+				logit(ses, arg2, ses->logline_file, TRUE);
 			}
 			else
 			{
-				show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
+				show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", arg1);
 			}
 		}
 	}
 	else
 	{
-		if (!strcmp(ses->lognext_name, left))
+		if (!strcmp(ses->lognext_name, arg1))
 		{
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
 		}
-		else if ((logfile = fopen(left, "a")))
+		else if ((logfile = fopen(arg1, "a")))
 		{
 			if (ses->lognext_file)
 			{
 				fclose(ses->lognext_file);
 			}
 			free(ses->lognext_name);
-			ses->lognext_name = strdup(left);
+			ses->lognext_name = strdup(arg1);
 			ses->lognext_file = logfile;
 
 			SET_BIT(ses->flags, SES_FLAG_LOGNEXT);
 		}
 		else
 		{
-			show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #LINE LOGVERBATIM {%s} - COULDN'T OPEN FILE.", arg1);
 		}
 	}
 	return ses;
@@ -223,18 +223,18 @@ DO_LINE(line_logverbatim)
 
 DO_LINE(line_strip)
 {
-	char left[BUFFER_SIZE], strip[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], strip[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_ESC|SUB_COL);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_ESC|SUB_COL);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {STRIP} {command}.");
 
 		return ses;
 	}
 
-	strip_vt102_codes(left, strip);
+	strip_vt102_codes(arg1, strip);
 
 	ses = script_driver(ses, LIST_COMMAND, strip);
 
@@ -243,22 +243,24 @@ DO_LINE(line_strip)
 
 DO_LINE(line_substitute)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], subs[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], subs[BUFFER_SIZE];
 	int i, flags = 0;
 
-	arg = get_arg_in_braces(ses, arg, left,  0);
-	arg = get_arg_in_braces(ses, arg, right, 1);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
-	if (*right == 0)
+	if (*arg2 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {SUBSTITUTE} {argument} {command}.");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {SUBSTITUTE} {argument} {command}.");
+		
+		return ses;
 	}
 
-	arg = left;
+	arg = arg1;
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(ses, arg, subs, 0);
+		arg = get_arg_in_braces(ses, arg, subs, GET_ONE);
 
 		for (i = 0 ; *substitution_table[i].name ; i++)
 		{
@@ -274,7 +276,7 @@ DO_LINE(line_substitute)
 		}
 	}
 
-	substitute(ses, right, subs, flags);
+	substitute(ses, arg2, subs, flags);
 
 	ses = script_driver(ses, LIST_COMMAND, subs);
 
@@ -283,18 +285,20 @@ DO_LINE(line_substitute)
 
 DO_LINE(line_verbatim)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {VERBATIM} {command}.");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {VERBATIM} {command}.");
+		
+		return ses;
 	}
 
 	gtd->verbatim_level++;
 
-	ses = parse_input(ses, left);
+	ses = parse_input(ses, arg1);
 
 	gtd->verbatim_level--;
 
@@ -303,18 +307,20 @@ DO_LINE(line_verbatim)
 
 DO_LINE(line_verbose)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {VERBOSE} {command}.");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {VERBOSE} {command}.");
+		
+		return ses;
 	}
 
 	gtd->verbose_level++;
 
-	ses = script_driver(ses, LIST_COMMAND, left);
+	ses = script_driver(ses, LIST_COMMAND, arg1);
 
 	gtd->verbose_level--;
 
@@ -323,18 +329,20 @@ DO_LINE(line_verbose)
 
 DO_LINE(line_ignore)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {IGNORE} {command}.");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {IGNORE} {command}.");
+		
+		return ses;
 	}
 
 	gtd->ignore_level++;
 
-	ses = script_driver(ses, LIST_COMMAND, left);
+	ses = script_driver(ses, LIST_COMMAND, arg1);
 
 	gtd->ignore_level--;
 
@@ -343,18 +351,20 @@ DO_LINE(line_ignore)
 
 DO_LINE(line_quiet)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, left,  TRUE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {QUIET} {command}.");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #LINE {QUIET} {command}.");
+		
+		return ses;
 	}
 
 	gtd->quiet++;
 
-	ses = script_driver(ses, LIST_COMMAND, left);
+	ses = script_driver(ses, LIST_COMMAND, arg1);
 
 	gtd->quiet--;
 

@@ -104,7 +104,7 @@ struct listroot *update_nest_root(struct listroot *root, char *arg)
 
 	if (node == NULL)
 	{
-		node = update_node_list(root, arg, "", "");
+		node = update_node_list(root, arg, "", "", "");
 	}
 
 	if (node->root == NULL)
@@ -126,8 +126,8 @@ void update_nest_node(struct listroot *root, char *arg)
 
 	while (*arg)
 	{
-		arg = get_arg_in_braces(root->ses, arg, arg1, FALSE);
-		arg = get_arg_in_braces(root->ses, arg, arg2, FALSE);
+		arg = get_arg_in_braces(root->ses, arg, arg1, GET_ONE);
+		arg = get_arg_in_braces(root->ses, arg, arg2, GET_ONE);
 
 		if (*arg2 == DEFAULT_OPEN)
 		{
@@ -135,7 +135,7 @@ void update_nest_node(struct listroot *root, char *arg)
 		}
 		else if (*arg1)
 		{
-			update_node_list(root, arg1, arg2, "");
+			update_node_list(root, arg1, arg2, "", "");
 		}
 
 		if (*arg == COMMAND_SEPARATOR)
@@ -218,7 +218,7 @@ int get_nest_size(struct listroot *root, char *variable)
 				{
 					for (index = count = 0 ; index < root->used ; index++)
 					{
-						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
+						if (match(root->ses, root->list[index]->arg1, name, SUB_NONE))
 						{
 							count++;
 						}
@@ -262,7 +262,7 @@ int get_nest_size_key(struct listroot *root, char *variable, char **result)
 		{
 			for (index = 0 ; index < root->used ; index++)
 			{
-				str_cat_printf(result, "{%s}", root->list[index]->left);
+				str_cat_printf(result, "{%s}", root->list[index]->arg1);
 			}
 			return root->used + 1;
 		}
@@ -288,9 +288,9 @@ int get_nest_size_key(struct listroot *root, char *variable, char **result)
 				{
 					for (index = count = 0 ; index < root->used ; index++)
 					{
-						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
+						if (match(root->ses, root->list[index]->arg1, name, SUB_NONE))
 						{
-							str_cat_printf(result, "{%s}", root->list[index]->left);
+							str_cat_printf(result, "{%s}", root->list[index]->arg1);
 							count++;
 						}
 					}
@@ -311,7 +311,7 @@ int get_nest_size_key(struct listroot *root, char *variable, char **result)
 			{
 				for (index = 0 ; index < root->used ; index++)
 				{
-					str_cat_printf(result, "{%s}", root->list[index]->left);
+					str_cat_printf(result, "{%s}", root->list[index]->arg1);
 				}
 				return root->used + 1;
 			}
@@ -337,7 +337,7 @@ int get_nest_size_val(struct listroot *root, char *variable, char **result)
 		{
 			for (index = 0 ; index < root->used ; index++)
 			{
-				str_cat_printf(result, "{%s}", root->list[index]->left);
+				str_cat_printf(result, "{%s}", root->list[index]->arg1);
 			}
 			return root->used + 1;
 		}
@@ -363,7 +363,7 @@ int get_nest_size_val(struct listroot *root, char *variable, char **result)
 				{
 					for (index = count = 0 ; index < root->used ; index++)
 					{
-						if (match(root->ses, root->list[index]->left, name, SUB_NONE))
+						if (match(root->ses, root->list[index]->arg1, name, SUB_NONE))
 						{
 							show_nest_node(root->list[index], result, FALSE); // behaves like strcat
 							count++;
@@ -386,7 +386,7 @@ int get_nest_size_val(struct listroot *root, char *variable, char **result)
 			{
 				for (index = 0 ; index < root->used ; index++)
 				{
-					str_cat_printf(result, "{%s}", root->list[index]->left);
+					str_cat_printf(result, "{%s}", root->list[index]->arg1);
 				}
 				return root->used + 1;
 			}
@@ -414,7 +414,7 @@ struct listnode *get_nest_node_key(struct listroot *root, char *variable, char *
 
 	if (node)
 	{
-		str_cpy_printf(result, "%s", node->left);
+		str_cpy_printf(result, "%s", node->arg1);
 
 		return node;
 	}
@@ -505,22 +505,22 @@ int get_nest_index(struct listroot *root, char *variable, char **result, int def
 
 // cats to result when initialize is 0
 
-void show_nest_node(struct listnode *node, char **result, int initialize)
+void show_nest_node(struct listnode *node, char **str_result, int initialize)
 {
 	if (initialize)
 	{
-		str_cpy(result, "");
+		str_cpy(str_result, "");
 	}
 
 	if (node->root == NULL)
 	{
 		if (initialize)
 		{
-			str_cat(result, node->right);
+			str_cat(str_result, node->arg2);
 		}
 		else
 		{
-			str_cat_printf(result, "{%s}", node->right);
+			str_cat_printf(str_result, "{%s}", node->arg2);
 		}
 	}
 	else
@@ -530,19 +530,65 @@ void show_nest_node(struct listnode *node, char **result, int initialize)
 
 		if (!initialize)
 		{
-			str_cat(result, "{");
+			str_cat(str_result, "{");
 		}
 
 		for (i = 0 ; i < root->used ; i++)
 		{
-			str_cat_printf(result, "{%s}", root->list[i]->left);
+			str_cat_printf(str_result, "{%s}", root->list[i]->arg1);
 
-			show_nest_node(root->list[i], result, FALSE);
+			show_nest_node(root->list[i], str_result, FALSE);
 		}
 
 		if (!initialize)
 		{
-			str_cat(result, "}");
+			str_cat(str_result, "}");
+		}
+	}
+}
+
+void view_nest_node(struct listnode *node, char **str_result, int nest, int initialize)
+{
+	if (initialize == TRUE)
+	{
+		str_cpy(str_result, "");
+	}
+
+	if (node->root == NULL)
+	{
+		if (initialize)
+		{
+			str_cat(str_result, node->arg2);
+		}
+		else
+		{
+			str_cat_printf(str_result, COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "}\n", node->arg2);
+		}
+	}
+	else
+	{
+		struct listroot *root = node->root;
+		int i;
+
+		if (initialize == FALSE)
+		{
+			str_cat_printf(str_result, "\n" COLOR_BRACE "%s{\n", indent(nest));
+		}
+
+		nest++;
+
+		for (i = 0 ; i < root->used ; i++)
+		{
+			str_cat_printf(str_result, COLOR_BRACE "%s{" COLOR_STRING "%s" COLOR_BRACE "} ", indent(nest), root->list[i]->arg1);
+
+			view_nest_node(root->list[i], str_result, nest, FALSE);
+		}
+
+		nest--;
+
+		if (initialize == FALSE)
+		{
+			str_cat_printf(str_result, COLOR_BRACE "%s}\n", indent(nest), "");
 		}
 	}
 }
@@ -595,7 +641,7 @@ struct listnode *set_nest_node(struct listroot *root, char *arg1, char *format, 
 	}
 	else
 	{
-		node = update_node_list(root, name, arg2, "");
+		node = update_node_list(root, name, arg2, "", "");
 	}
 	free(arg2);
 
@@ -647,7 +693,7 @@ struct listnode *add_nest_node(struct listroot *root, char *arg1, char *format, 
 	}
 	else
 	{
-		return update_node_list(root, name, arg2, "");
+		return update_node_list(root, name, arg2, "", "");
 	}
 }
 
@@ -665,7 +711,7 @@ void copy_nest_node(struct listroot *dst_root, struct listnode *dst, struct list
 
 	for (index = 0 ; index < src->root->used ; index++)
 	{
-		dst = insert_node_list(dst_root, src->root->list[index]->left, src->root->list[index]->right, src->root->list[index]->pr);
+		dst = insert_node_list(dst_root, src->root->list[index]->arg1, src->root->list[index]->arg2, src->root->list[index]->arg3, src->root->list[index]->arg4);
 
 		if (src->root->list[index]->root)
 		{

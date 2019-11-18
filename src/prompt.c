@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -29,20 +29,11 @@
 
 DO_COMMAND(do_prompt)
 {
-	struct listnode *node;
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], arg4[BUFFER_SIZE];
-	int col;
 
 	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
 	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
-	arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg4, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*arg3 == 0)
-	{
-		strcpy(arg, "1");
-	}
-	col = *arg4 ? get_number(ses, arg4) : 0;
 
 	if (*arg1 == 0)
 	{
@@ -57,11 +48,12 @@ DO_COMMAND(do_prompt)
 	}
 	else
 	{
-		node = update_node_list(ses->list[LIST_PROMPT], arg1, arg2, arg3);
+		arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
+		arg = sub_arg_in_braces(ses, arg, arg4, GET_ONE, SUB_VAR|SUB_FUN);
 
-		node->data = col;
+		update_node_list(ses->list[LIST_PROMPT], arg1, arg2, arg3, arg4);
 
-		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s} {%d}.", arg1, arg2, arg3, (int) node->data);
+		show_message(ses, LIST_PROMPT, "#OK. {%s} NOW PROMPTS {%s} @ {%s} {%s}.", arg1, arg2, arg3, arg4);
 	}
 	return ses;
 }
@@ -91,16 +83,16 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 		{
 			node = root->list[root->update];
 
-			if (*node->right)
+			if (*node->arg2)
 			{
-				substitute(ses, node->right, original, SUB_ARG);
+				substitute(ses, node->arg2, original, SUB_ARG);
 				substitute(ses, original, original, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 			}
 
-			show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", node->left);
-			show_debug(ses, LIST_GAG, "#DEBUG GAG {%s}", node->left);
+			show_debug(ses, LIST_PROMPT, "#DEBUG PROMPT {%s}", node->arg1);
+			show_debug(ses, LIST_GAG, "#DEBUG GAG {%s}", node->arg1);
 
-			do_one_prompt(ses, original, (int) get_number(ses, node->pr), (int) node->data);
+			do_one_prompt(ses, original, atoi(node->arg3), atoi(node->arg4));
 
 			SET_BIT(ses->flags, SES_FLAG_GAG);
 		}
@@ -110,50 +102,55 @@ void check_all_prompts(struct session *ses, char *original, char *line)
 void do_one_prompt(struct session *ses, char *prompt, int row, int col)
 {
 	char temp[BUFFER_SIZE];
-	int original_row, original_col, len;
-
-	if (ses != gtd->ses)
-	{
-		return;
-	}
+	int original_row, original_col, len, clear;
 
 	original_row = row;
 	original_col = col;
 
 	if (row < 0)
 	{
-		row = -1 * row;
+		row = 1 + gtd->screen->rows + row;
 	}
-	else
+	else if (row == 0)
 	{
-		row = gtd->screen->rows - row;
+		row = gtd->screen->rows - 2;
 	}
+
+	clear = 0;
 
 	if (col < 0)
 	{
-		col = 1 + gtd->screen->cols - col;
+		col = 1 + gtd->screen->cols + col;
 	}
 	else if (col == 0)
 	{
 		col = 1;
+		clear = 1;
 	}
 
 	if (row < 1 || row > gtd->screen->rows)
 	{
-		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS OUTSIDE THE SCREEN: {%s} {%d} {%d}.", prompt, original_row, original_col);
+		show_error(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS OUTSIDE THE SCREEN: {%s} {%d} {%d}.", prompt, original_row, original_col);
 
 		return;
 	}
 
 	if (col < 0 || col > gtd->screen->cols)
 	{
-		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT COLUMN IS OUTSIDE THE SCREEN: {%s} {%d} {%d}.", prompt, original_row, original_col);
+		show_error(ses, LIST_PROMPT, "#ERROR: PROMPT COLUMN IS OUTSIDE THE SCREEN: {%s} {%d} {%d}.", prompt, original_row, original_col);
+
+		return;
 	}
 
 	if (row > ses->top_row && row < ses->bot_row)
 	{
-		show_message(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS INSIDE THE SCROLLING REGION: {%s} {%d}.", prompt, original_row);
+		show_error(ses, LIST_PROMPT, "#ERROR: PROMPT ROW IS INSIDE THE SCROLLING REGION: {%s} {%d}.", prompt, original_row);
 
+		return;
+	}
+
+	if (ses != gtd->ses)
+	{
 		return;
 	}
 
@@ -187,7 +184,7 @@ void do_one_prompt(struct session *ses, char *prompt, int row, int col)
 	}
 	else
 	{
-		printf("\e[%d;%dH\e[%d;%dH%s\e[%d;1H", row, col, row, col, temp, ses->bot_row);
+		printf("\e[%d;%dH\e[%d;%dH%s%s\e[%d;1H", row, col, row, col, clear ? "\e[2K" : "", temp, ses->bot_row);
 	}
 
 	set_line_screen(temp, row - 1, col - 1);
@@ -196,4 +193,5 @@ void do_one_prompt(struct session *ses, char *prompt, int row, int col)
 	{
 		restore_pos(ses);
 	}
+
 }

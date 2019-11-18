@@ -54,25 +54,25 @@ int precision;
 
 DO_COMMAND(do_math)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	struct listnode *node;
 	long double result;
 
-	arg = sub_arg_in_braces(ses, arg, left, GET_NST, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_NST, SUB_VAR|SUB_FUN);
 
-	arg = get_arg_in_braces(ses, arg, right, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
-	if (*left == 0 || *right == 0)
+	if (*arg1 == 0 || *arg2 == 0)
 	{
 		show_error(ses, LIST_VARIABLE, "#SYNTAX: #MATH {variable} {expression}.");
 	}
 	else
 	{
-		result = get_number(ses, right);
+		result = get_number(ses, arg2);
 
-		node = set_nest_node(ses->list[LIST_VARIABLE], left, "%.*Lf", precision, result);
+		node = set_nest_node(ses->list[LIST_VARIABLE], arg1, "%.*Lf", precision, result);
 
-		show_message(ses, LIST_VARIABLE, "#MATH: VARIABLE {%s} HAS BEEN SET TO {%s}.", left, node->right);
+		show_message(ses, LIST_VARIABLE, "#MATH: VARIABLE {%s} HAS BEEN SET TO {%s}.", arg1, node->arg2);
 	}
 
 	return ses;
@@ -204,8 +204,9 @@ void del_math_node(struct link_data *node)
 int mathexp_tokenize(struct session *ses, char *str, int seed, int debug)
 {
 	char buf1[BUFFER_SIZE], buf2[BUFFER_SIZE], buf3[STRING_SIZE], *pti, *pta;
-	int level, status, point, badnumber;
+	int level, status, point, badnumber, nest;
 
+	nest      = 0;
 	level     = 0;
 	point     = -1;
 	status    = EXP_VARIABLE;
@@ -264,6 +265,19 @@ int mathexp_tokenize(struct session *ses, char *str, int seed, int debug)
 						}
 						break;
 
+					case '{':
+						if (pta != buf3)
+						{
+							if (debug)
+							{
+								show_debug(ses, LIST_VARIABLE, "MATH EXP: { FOUND INSIDE A NUMBER");
+							}
+							return FALSE;
+						}
+						*pta++ = *pti++;
+						status = EXP_STRING;
+						nest++;
+						break;
 					case '"':
 						if (pta != buf3)
 						{
@@ -274,6 +288,7 @@ int mathexp_tokenize(struct session *ses, char *str, int seed, int debug)
 							return FALSE;
 						}
 						*pta++ = *pti++;
+						nest++;
 						status = EXP_STRING;
 						break;
 
@@ -356,9 +371,27 @@ int mathexp_tokenize(struct session *ses, char *str, int seed, int debug)
 			case EXP_STRING:
 				switch (*pti)
 				{
+					case '{':
+						*pta++ = *pti++;
+						nest++;
+						break;
+
+					case '}':
+						*pta++ = *pti++;
+						nest--;
+						if (nest == 0)
+						{
+							MATH_NODE(FALSE, EXP_PR_VAR, EXP_OPERATOR);
+						}
+						break;
+
 					case '"':
 						*pta++ = *pti++;
-						MATH_NODE(FALSE, EXP_PR_VAR, EXP_OPERATOR);
+						nest--;
+						if (nest == 0)
+						{
+							MATH_NODE(FALSE, EXP_PR_VAR, EXP_OPERATOR);
+						}
 						break;
 
 					default:
@@ -980,12 +1013,90 @@ long double tintoi(char *str)
 	}
 }
 
+/*
+	Keep synched with tintoi() and is_math()
+*/
+
+int is_number(char *str)
+{
+	char *ptr = str;
+	int i = 1, d = 0, valid = 0;
+
+	if (*ptr == 0)
+	{
+		return FALSE;
+	}
+
+	ptr = str + strlen(str);
+
+	while (TRUE)
+	{
+		ptr--;
+
+		switch (*ptr)
+		{
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				valid = TRUE;
+				break;
+
+			case '.':
+				if (d)
+				{
+					return FALSE;
+				}
+				d = 1;
+				valid = FALSE;
+				break;
+
+			case ':':
+				if (i == 4)
+				{
+					return FALSE;
+				}
+				i++;
+				valid = FALSE;
+				break;
+
+			case '!':
+			case '~':
+			case '+':
+			case '-':
+				if (ptr != str)
+				{
+					return FALSE;
+				}
+				break;
+
+			default:
+				return FALSE;
+		}
+
+		if (ptr == str)
+		{
+			break;
+		}
+	}
+	return valid;
+}
+
 long double tincmp(char *left, char *right)
 {
 	long double left_val, right_val;
 
 	switch (left[0])
 	{
+		case '{':
+			return strcmp(left, right);
+
 		case '"':
 			return strcmp(left, right);
 
@@ -1003,6 +1114,12 @@ long double tineval(struct session *ses, char *left, char *right)
 
 	switch (left[0])
 	{
+		case '{':
+			get_arg_in_braces(ses, left, left, GET_ALL);
+			get_arg_in_braces(ses, right, right, GET_ALL);
+
+			return match(ses, left, right, SUB_NONE);
+
 		case '"':
 			return match(ses, left, right, SUB_NONE);
 

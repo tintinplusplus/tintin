@@ -21,23 +21,15 @@ Q01) What machines does tintin work on?
 A01) Pretty much any UNIX machine with a modern compiler as well as Windows,
      Mac OS X, and Android.
 
-
 Q02) What version should I use 1.50 or 1.86 or 2.00 ?
 
 A02) TinTin++ 2.00 is twice the size of 1.86 with over 90% of the 1.86 code
-     rewritten. 2.00 is not backward compatible with TinTin++ 1.50 or 1.86.
+     rewritten. TinTin++ 2.00 is not backward compatible with 1.50 or 1.86.
+     The NEWS file contains known compatibility issues.
 
 Q06) I can't get tintin compiled still.  Where can I get more help?
 
-A06) You can get help from a couple of places.  The first place to start
-     is to take a look at the message board, there should be a link to this
-     message board on the tintin++ website.
-
-     Check to see if your problem has been asked before and if there is a
-     solution.  If you don't see anything that looks like your problem, post
-     a message and ask.  Please provide as much information as possible
-     such as the OS, compiler, error messages, etc.
-
+A06) See the INSTALL file.
 
 Q07) I can't get tintin compiled, can't you send me a binary of tintin?
 
@@ -48,23 +40,33 @@ Q08) I would like to help, how can I contribute to tintin?
 
 A08) You can assist people on the message board and give bug reports or
      suggestions. A link to the beta version is often available on the
-     forum as well in the Announcements section, beta testing is very
-     helpful to avoid buggy releases.
+     forum in the Announcements section, beta testing is very helpful to
+     avoid buggy releases.
 
-     If you can program you can write snippets, though inclusion in the main
-     branch isn't guaranteed. Snippets should be released into the public
-     domain. 
+     TinTin++ is mostly a solo project and over 95% of the code has been
+     written by Igor van den Hoven. If you however feel the need to
+     contribute a code snippet it should be released into the public
+     domain, this to avoid weird situations where someone who contributed
+     0.1% of the code demands 50% of the ownership.
+
+     Another useful way to contribute is by working on tutorials, or
+     writing interesting scripts for others to use.
 
 Q09) Tintin is so awesome, how can I thank you guys for spending all that time
      to write tintin for free??
 
-A09) Fan mail is always welcome :)
+A09) Fan mail and donations are always welcome :)
 
 Q11) Can I use code from tintin?
 
 A11) Yes, provided that you follow the terms of the license.  The license
-     used for tintin 1.86 and higher is GPL 2. TINTIN III and TinTin++ 1.5
-     are public domain, meaning there are no restrinctions whatsoever.
+     used for tintin 1.86 till tintin 2.01.7 is GPL 2 and the license as of
+     tintin 2.01.8 is GPL 3. TINTIN III and TinTin++ 1.5 are public domain,
+     meaning there are no restrinctions whatsoever.
+
+     The TinTin++ 1.5 official documentation by Robert Ellsworth was
+     explicitly not released into the public domain, and subsequently it
+     wasn't included in the GPL 2 and 3 tintin releases. 
 
 Q12) I contributed code X, why isn't my name listed in the CREDITS file?
 
@@ -80,7 +82,7 @@ Q14) I've seen some nifty code and would like to use it in a different program.
 A14) If you read the COPYING file you will see you are allowed to modify and
      redistribute this version as long as you make it clear you made changes,
      and what those changes are. If you want to use tintin code in another
-     program not licensed under GPL you need to get permission from the author.
+     program not licensed under GPL 3 you need permission from the author.
      Make sure to see if the exact code you want to use isn't existent in older
      tintin++ versions before contacting me, because I obviously cannot give
      permission for code I didn't write :) Also notice that older tintin++
@@ -95,7 +97,7 @@ A15) Possibly, more likely your old script files do not work because a lot has
      work, and you might find out what you are doing wrong. Feel free to
      ask for help on the forum.
 
-     The README file lists most compatibility issues.
+     The NEWS file lists most compatibility issues.
 
 Q16) #prompt {string} does not work
 
@@ -109,7 +111,7 @@ A17) Use %%0 %%1 %%2 for the arguments of the nested action.
 
 Q18) How to enable support for chinese muds?
 
-A18  Use: #config BIG5 on
+A18  Use: #config BIG-5 on
 
 Q19) I use Mac OS X and ran tintin a few times, now every time I open a terminal
      window, it runs tintin automatically.

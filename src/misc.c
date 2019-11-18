@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -87,8 +87,8 @@ DO_COMMAND(do_echo)
 
 	if (*arg == DEFAULT_OPEN)
 	{
-		arg = get_arg_in_braces(ses, arg, left, TRUE);
-		      get_arg_in_braces(ses, arg, temp, TRUE);
+		arg = get_arg_in_braces(ses, arg, left, GET_ALL);
+		      get_arg_in_braces(ses, arg, temp, GET_ALL);
 
 		if (*temp)
 		{
@@ -125,7 +125,7 @@ DO_COMMAND(do_echo)
 			goto_rowcol(ses, ses->bot_row, 1);
 		}
 
-		printline(ses, &output, lnf);
+		print_line(ses, &output, lnf);
 
 		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
 		{
@@ -140,13 +140,13 @@ DO_COMMAND(do_echo)
 
 DO_COMMAND(do_end)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
 	if (*arg)
 	{
-		sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC|SUB_LNF);
+		sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC|SUB_LNF);
 
-		quitmsg(left);
+		quitmsg(arg1);
 	}
 	else
 	{
@@ -172,93 +172,32 @@ DO_COMMAND(do_nop)
 
 DO_COMMAND(do_send)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
 	push_call("do_send(%p,%p)",ses,arg);
 
-	get_arg_in_braces(ses, arg, left, TRUE);
+	get_arg_in_braces(ses, arg, arg1, GET_ALL);
 
-	write_mud(ses, left, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
+	write_mud(ses, arg1, SUB_VAR|SUB_FUN|SUB_ESC|SUB_EOL);
 
 	pop_call();
 	return ses;
 }
 
 
-DO_COMMAND(do_showme)
-{
-	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], temp[STRING_SIZE], *output;
-	int lnf;
-
-	arg = get_arg_in_braces(ses, arg, arg1, TRUE);
-
-	lnf = !str_suffix(arg1, "\\");
-
-	substitute(ses, arg1, temp, SUB_VAR|SUB_FUN);
-	substitute(ses, temp, arg1, SUB_COL|SUB_ESC);
-
-	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg3, GET_ONE, SUB_VAR|SUB_FUN);
-
-	do_one_line(arg1, ses);
-
-	if (HAS_BIT(ses->flags, SES_FLAG_GAG))
-	{
-		DEL_BIT(ses->flags, SES_FLAG_GAG);
-
-		gtd->ignore_level++;
-
-		show_info(ses, LIST_GAG, "#INFO GAG {%s}", arg1);
-
-		gtd->ignore_level--;
-
-		return ses;
-	}
-
-	if (*arg2)
-	{
-		do_one_prompt(ses, arg1, (int) get_number(ses, arg2), (int) get_number(ses, arg3));
-
-		return ses;
-	}
-
-	if (strip_vt102_strlen(ses, ses->more_output) != 0)
-	{
-		output = str_dup_printf("\n\e[0m%s\e[0m", arg1);
-	}
-	else
-	{
-		output = str_dup_printf("\e[0m%s\e[0m", arg1);
-	}
-
-	add_line_buffer(ses, output, lnf);
-
-	if (ses == gtd->ses)
-	{
-		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-		{
-			save_pos(ses);
-			goto_rowcol(ses, ses->bot_row, 1);
-		}
-
-		printline(ses, &output, lnf);
-
-		if (!HAS_BIT(ses->flags, SES_FLAG_READMUD) && IS_SPLIT(ses))
-		{
-			restore_pos(ses);
-		}
-	}
-
-	str_free(output);
-
-	return ses;
-}
 
 
 DO_COMMAND(do_test)
 {
+/*
 	char pts;
 	unsigned char ptu;
+	int bla = 0;
+
+	if (*arg == 'c')
+	{
+		strcpy((char *) bla, "crash baby crash");
+	}
 
 	pts = 140;
 	ptu = 140;
@@ -267,6 +206,6 @@ DO_COMMAND(do_test)
 	printf("ptu: %d %d\n", (signed char) ptu, ptu);
 	printf("pts: %d %d\n", pts, (unsigned int) pts);
 	printf("ptu: %d %d\n", (signed int) ptu, ptu);
-
+*/
 	return ses;
 }

@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -33,9 +33,9 @@ DO_COMMAND(do_highlight)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], temp[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, arg2, 1, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, arg3, 1);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg3, GET_ALL);
 
 	if (*arg3 == 0)
 	{
@@ -62,7 +62,7 @@ DO_COMMAND(do_highlight)
 		}
 		else
 		{
-			update_node_list(ses->list[LIST_HIGHLIGHT], arg1, arg2, arg3);
+			update_node_list(ses->list[LIST_HIGHLIGHT], arg1, arg2, arg3, "");
 
 			show_message(ses, LIST_HIGHLIGHT, "#OK. {%s} NOW HIGHLIGHTS {%s} @ {%s}.", arg1, arg2, arg3);
 		}
@@ -94,7 +94,7 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 		{
 			node = root->list[root->update];
 
-			get_highlight_codes(ses, node->right, color);
+			get_highlight_codes(ses, node->arg2, color);
 
 			*output = *reset = 0;
 
@@ -112,7 +112,7 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 				strip_vt102_codes(match, plain);
 
-				if (HAS_BIT(node->flags, NODE_FLAG_META))
+				if (*node->arg1 == '~')
 				{
 					ptm = strstr(pto, match);
 
@@ -133,7 +133,7 @@ void check_all_highlights(struct session *ses, char *original, char *line)
 
 				pto = ptm + len;
 
-				show_debug(ses, LIST_HIGHLIGHT, "#DEBUG HIGHLIGHT {%s}", node->left);
+				show_debug(ses, LIST_HIGHLIGHT, "#DEBUG HIGHLIGHT {%s}", node->arg1);
 			}
 			while (check_one_regexp(ses, node, ptl, pto, 0));
 

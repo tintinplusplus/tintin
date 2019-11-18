@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -26,26 +26,23 @@
 
 #include "tintin.h"
 
-#include <errno.h>
-#include <signal.h>
-#include <sys/wait.h>
-
 DO_COMMAND(do_all)
 {
-	char left[BUFFER_SIZE];
-	struct session *sesptr, *next_ses;
+	char arg1[BUFFER_SIZE];
+	struct session *sesptr;
 
 	if (gts->next)
 	{
-		get_arg_in_braces(ses, arg, left, TRUE);
+		sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
-		substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
-		for (sesptr = gts->next ; sesptr ; sesptr = next_ses)
+		for (sesptr = gts->next ; sesptr ; sesptr = gtd->all)
 		{
-			next_ses = sesptr->next;
+			gtd->all = sesptr->next;
 
-			script_driver(sesptr, LIST_COMMAND, left);
+			if (!HAS_BIT(sesptr->flags, SES_FLAG_CLOSED))
+			{
+				script_driver(sesptr, LIST_COMMAND, arg1);
+			}
 		}
 	}
 	else
@@ -58,7 +55,7 @@ DO_COMMAND(do_all)
 
 DO_COMMAND(do_session)
 {
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], arg1[BUFFER_SIZE];
 	struct session *sesptr;
 	int cnt;
 
@@ -66,9 +63,9 @@ DO_COMMAND(do_session)
 
 	arg = temp;
 
-	arg = get_arg_in_braces(ses, arg, left,  FALSE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_puts(ses, "#THESE SESSIONS HAVE BEEN DEFINED:");
 
@@ -77,23 +74,23 @@ DO_COMMAND(do_session)
 			show_session(ses, sesptr);
 		}
 	}
-	else if (*left && *arg == 0)
+	else if (*arg1 && *arg == 0)
 	{
-		if (*left == '+')
+		if (*arg1 == '+')
 		{
 			return activate_session(ses->next ? ses->next : gts->next ? gts->next : ses);
 		}
 
-		if (*left == '-')
+		if (*arg1 == '-')
 		{
 			return activate_session(ses->prev ? ses->prev : gts->prev ? gts->prev : ses);
 		}
 
-		if (is_number(left))
+		if (is_number(arg1))
 		{
 			for (cnt = 0, sesptr = gts ; sesptr ; cnt++, sesptr = sesptr->next)
 			{
-				if (cnt == atoi(left))
+				if (cnt == atoi(arg1))
 				{
 					return activate_session(sesptr);
 				}
@@ -104,27 +101,29 @@ DO_COMMAND(do_session)
 	}
 	else
 	{
-		ses = new_session(ses, left, arg, 0, 0);
+		ses = new_session(ses, arg1, arg, 0, 0);
 	}
-	return gtd->ses;
+	return ses;
 }
 
 
 DO_COMMAND(do_snoop)
 {
 	struct session *sesptr = ses;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, left, SUB_VAR|SUB_FUN, FALSE);
-	arg = sub_arg_in_braces(ses, arg, right, SUB_VAR|SUB_FUN, TRUE);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (*left)
+	if (*arg1)
 	{
-		sesptr = find_session(left);
+		sesptr = find_session(arg1);
 
 		if (sesptr == NULL)
 		{
-			return show_error(ses, LIST_COMMAND, "#SNOOP: THERE'S NO SESSION NAMED {%s}", left);
+			show_error(ses, LIST_COMMAND, "#SNOOP: THERE'S NO SESSION NAMED {%s}", arg1);
+			
+			return ses;
 		}
 	}
 	else
@@ -132,7 +131,7 @@ DO_COMMAND(do_snoop)
 		sesptr = ses;
 	}
 
-	if (*right == 0)
+	if (*arg2 == 0)
 	{
 		if (HAS_BIT(sesptr->flags, SES_FLAG_SNOOP))
 		{
@@ -144,13 +143,13 @@ DO_COMMAND(do_snoop)
 		}
 		TOG_BIT(sesptr->flags, SES_FLAG_SNOOP);
 	}
-	else if (is_abbrev(right, "ON"))
+	else if (is_abbrev(arg2, "ON"))
 	{
 		show_message(ses, LIST_COMMAND, "#SNOOP: SNOOPING SESSION '%s'", sesptr->name);
 
 		SET_BIT(sesptr->flags, SES_FLAG_SNOOP);
 	}
-	else if (is_abbrev(right, "OFF"))
+	else if (is_abbrev(arg2, "OFF"))
 	{
 		show_message(ses, LIST_COMMAND, "#SNOOP: NO LONGER SNOOPING SESSION '%s'", sesptr->name);
 
@@ -167,15 +166,15 @@ DO_COMMAND(do_snoop)
 DO_COMMAND(do_zap)
 {
 	struct session *sesptr;
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
 	push_call("do_zap(%p,%p)",ses,arg);
 
-	sub_arg_in_braces(ses, arg, left, GET_ALL, SUB_VAR|SUB_FUN);
+	sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (*left)
+	if (*arg1)
 	{
-		sesptr = find_session(left);
+		sesptr = find_session(arg1);
 
 		if (sesptr == NULL)
 		{
@@ -199,10 +198,18 @@ DO_COMMAND(do_zap)
 		pop_call();
 		return do_end(NULL, "");
 	}
+
+	if (ses == sesptr)
+	{
+		cleanup_session(sesptr);
+
+		pop_call();
+		return gtd->ses;
+	}
 	cleanup_session(sesptr);
 
 	pop_call();
-	return gtd->ses;
+	return ses;
 }
 
 
@@ -212,15 +219,15 @@ void show_session(struct session *ses, struct session *ptr)
 
 	sprintf(temp, "%-10s %18s:%-5s", ptr->name, ptr->session_host, ptr->session_port);
 
-	strcat(temp, ptr == gtd->ses ? " (active)" :  "         ");
+	cat_sprintf(temp, " %8s", ptr == gtd->ses ? "(active)" :  "");
 
-	strcat(temp, ptr->mccp ? ptr->mccp3 ? " (mccp 2+3)" : "(mccp 2)  " : "           ");
+	cat_sprintf(temp, " %10s", ptr->mccp ? ptr->mccp3 ? "(mccp 2+3)" : "(mccp 2)  " : "");
 
-	strcat(temp, HAS_BIT(ptr->flags, SES_FLAG_SNOOP) ? " (snoop)" : "        ");
+	cat_sprintf(temp, " %7s", HAS_BIT(ptr->flags, SES_FLAG_SNOOP) ? "(snoop)" : "");
 
-	strcat(temp, ptr->logfile ? " (log)" : "       ");
+	cat_sprintf(temp, " %5s", ptr->logfile ? "(log)" : "");
 
-	strcat(temp, ptr->ssl ? " (ssl)" : "      ");
+	cat_sprintf(temp, " %5s", ptr->ssl ? "(ssl)" : "");
 
 	tintin_puts2(ses, temp);
 }
@@ -236,6 +243,12 @@ struct session *find_session(char *name)
 			return ses;
 		}
 	}
+
+	if (!strcmp("ats", name))
+	{
+		return gtd->ses;
+	}
+
 	return NULL;
 }
 
@@ -327,6 +340,7 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 	newses->session_host  = strdup(host);
 	newses->session_ip    = strdup("");
 	newses->session_port  = strdup(port);
+	newses->created       = gtd->time;
 
 	newses->group         = strdup(gts->group);
 	newses->flags         = gts->flags;
@@ -369,7 +383,7 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 	newses->top_row = gts->top_row;
 	newses->bot_row = gts->bot_row;
 
-	init_buffer(newses, gts->scroll_max);
+	init_buffer(newses, -1);
 
 	memcpy(&newses->cur_terminal, &gts->cur_terminal, sizeof(gts->cur_terminal));
 
@@ -408,31 +422,34 @@ struct session *new_session(struct session *ses, char *name, char *arg, int desc
 		newses->socket = desc;
 	}
 
-	if (newses)
+	if (newses == NULL)
 	{
-#ifdef HAVE_GNUTLS_H
-
-		if (ssl)
-		{
-			newses->ssl = ssl_negotiate(newses);
-
-			if (newses->ssl == 0)
-			{
-				cleanup_session(newses);
-
-				pop_call();
-				return gtd->ses;
-			}
-		}
-#endif
-		gtd->ses = newses;
-
-		if (*file)
-		{
-			gtd->ses = do_read(newses, file);
-		}
-		check_all_events(newses, SUB_ARG, 0, 4, "SESSION CREATED", newses->name, newses->session_host, newses->session_ip, newses->session_port);
+		pop_call();
+		return gtd->ses;
 	}
+
+#ifdef HAVE_GNUTLS_H
+	if (ssl)
+	{
+		newses->ssl = ssl_negotiate(newses);
+
+		if (newses->ssl == 0)
+		{
+			cleanup_session(newses);
+
+			pop_call();
+			return ses;
+		}
+	}
+#endif
+
+	gtd->ses = newses;
+
+	if (*file)
+	{
+		gtd->ses = do_read(newses, file);
+	}
+	check_all_events(newses, SUB_ARG, 0, 4, "SESSION CREATED", newses->name, newses->session_host, newses->session_ip, newses->session_port);
 
 	pop_call();
 	return gtd->ses;
@@ -453,6 +470,8 @@ struct session *connect_session(struct session *ses)
 
 	if (sock == -1)
 	{
+		syserr_printf(ses, "connect_session: connect");
+
 		cleanup_session(ses);
 
 		pop_call();
@@ -461,6 +480,12 @@ struct session *connect_session(struct session *ses)
 
 	if (sock)
 	{
+/*
+		if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
+		{
+			syserr_printf(ses, "connect_session: fcntl O_NDELAY|O_NONBLOCK");
+		}
+*/
 		ses->socket = sock;
 
 		ses->connect_retry = 0;
@@ -532,13 +557,18 @@ void cleanup_session(struct session *ses)
 		gtd->update = ses->next;
 	}
 
+	if (ses == gtd->all)
+	{
+		gtd->all = ses->next;
+	}
+
 	UNLINK(ses, gts->next, gts->prev);
 
 	if (ses->socket)
 	{
 		if (close(ses->socket) == -1)
 		{
-			syserr("close in cleanup");
+			syserr_printf(ses, "cleanup_session: close");
 		}
 //		else
 //		{
@@ -583,21 +613,6 @@ void cleanup_session(struct session *ses)
 		gtd->ses = newactive_session();
 	}
 
-	if (ses->logfile)
-	{
-		fclose(ses->logfile);
-	}
-
-	if (ses->lognext_file)
-	{
-		fclose(ses->lognext_file);
-	}
-
-	if (ses->logline_file)
-	{
-		fclose(ses->logline_file);
-	}
-
 #ifdef HAVE_GNUTLS_H
 
 	if (ses->ssl)
@@ -620,6 +635,21 @@ void dispose_session(struct session *ses)
 	push_call("dispose_session(%p)", ses);
 
 	UNLINK(ses, gtd->dispose_next, gtd->dispose_prev);
+
+	if (ses->logfile)
+	{
+		fclose(ses->logfile);
+	}
+
+	if (ses->lognext_file)
+	{
+		fclose(ses->lognext_file);
+	}
+
+	if (ses->logline_file)
+	{
+		fclose(ses->logline_file);
+	}
 
 	for (index = 0 ; index < LIST_MAX ; index++)
 	{

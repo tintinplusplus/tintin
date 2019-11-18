@@ -21,7 +21,7 @@
 /******************************************************************************
 *               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
 *                                                                             *
-*                     coded by Igor van den Hoven 2019                        *
+*                     coded by Igor van den Hoven 2014                        *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -31,6 +31,8 @@ struct interval_type
 	int head;
 	int tail;
 };
+
+// Copyright 2014-2019 Igor van den Hoven
 
 static int boundless_binary_search(struct interval_type *table, int size, int key)
 {
@@ -362,42 +364,44 @@ int get_utf8_index(char *str, int *index)
 
 int unicode_to_utf8(int index, char *out)
 {
+	unsigned char *pto = (unsigned char *) out;
+
 	if (index < 128)
 	{
-		*out++ = index;
-		*out++ = 0;
+		*pto++ = index;
+		*pto++ = 0;
 		return 1;
 	}
 	else if (index < 4096)
 	{
-		*out++ = 192 + index / 64;
-		*out++ = 128 + index % 64;
-		*out++ = 0;
+		*pto++ = 192 + index / 64;
+		*pto++ = 128 + index % 64;
+		*pto++ = 0;
 		return 2;
 	}
 	else if (index < 65536)
 	{
-		*out++ = 224 + index / 4096;
-		*out++ = 128 + index / 64 % 64;
-		*out++ = 128 + index % 64;
-		*out++ = 0;
+		*pto++ = 224 + index / 4096;
+		*pto++ = 128 + index / 64 % 64;
+		*pto++ = 128 + index % 64;
+		*pto++ = 0;
 		return 3;
 	}
 	else if (index < 1114112)
 	{
-		*out++ = 240 + index / 262144;
-		*out++ = 128 + index / 4096 % 64;
-		*out++ = 128 + index / 64 % 64;
-	        *out++ = 128 + index % 64;
-	        *out++ = 0;
+		*pto++ = 240 + index / 262144;
+		*pto++ = 128 + index / 4096 % 64;
+		*pto++ = 128 + index / 64 % 64;
+	        *pto++ = 128 + index % 64;
+	        *pto++ = 0;
 	        return 4;
 	}
 	else // �
 	{
-		*out++ = 239;
-		*out++ = 191;
-		*out++ = 189;
-		*out++ = 0;
+		*pto++ = 239;
+		*pto++ = 191;
+		*pto++ = 189;
+		*pto++ = 0;
 		return 3;
 	}
 }
@@ -1143,7 +1147,7 @@ int koi8_to_utf8(char *input, char *output)
 }
 
 
-	// Special thanks to Tom Dwaggy for the data table
+// Special thanks to Tom Dwaggy for the data table
 
 int fansi_to_utf8(char *input, char *output)
 {

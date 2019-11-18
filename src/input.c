@@ -65,14 +65,14 @@ void process_input(void)
 		echo_command(gtd->ses, "");
 	}
 
-	if (gtd->ses->scroll_line != -1)
+	if (gtd->ses->scroll->line != -1)
 	{
 		buffer_end(gtd->ses, "");
 	}
 
 	check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "RECEIVED INPUT", gtd->input_buf);
 
-	if (check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "CATCH RECEIVED INPUT", gtd->input_buf))
+	if (check_all_events(gtd->ses, SUB_ARG|SUB_SEC, 0, 1, "CATCH RECEIVED INPUT", gtd->input_buf) == 1)
 	{
 		return;
 	}
@@ -127,15 +127,15 @@ void read_line()
 			{
 				node = root->list[root->update];
 
-				if (!strcmp(gtd->macro_buf, node->pr))
+				if (!strcmp(gtd->macro_buf, node->arg3))
 				{
-					script_driver(gtd->ses, LIST_MACRO, node->right);
+					script_driver(gtd->ses, LIST_MACRO, node->arg2);
 
 					gtd->macro_buf[0] = 0;
 
 					return;
 				}
-				else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
+				else if (!strncmp(gtd->macro_buf, node->arg3, strlen(gtd->macro_buf)))
 				{
 					match = 1;
 				}
@@ -144,7 +144,7 @@ void read_line()
 
 		for (cnt = 0 ; *cursor_table[cnt].fun != NULL ; cnt++)
 		{
-			if (!HAS_BIT(cursor_table[cnt].flags, CURSOR_FLAG_NEVER))
+			if (*cursor_table[cnt].code)
 			{
 				if (!strcmp(gtd->macro_buf, cursor_table[cnt].code))
 				{
@@ -165,42 +165,123 @@ void read_line()
 			return;
 		}
 
-		if (!strncmp(gtd->macro_buf, "\e[<", 3))
+		if (gtd->macro_buf[0] == ESCAPE)
 		{
-			val[0] = val[1] = val[2] = cnt = buffer[0] = 0;
-
-			for (len = 3 ; gtd->macro_buf[len] ; len++)
+			if (gtd->macro_buf[1] == '[')
 			{
-				if (isdigit(gtd->macro_buf[len]))
+				if (gtd->macro_buf[2] == '<')
 				{
-					cat_sprintf(buffer, "%c", gtd->macro_buf[len]);
-				}
-				else
-				{
-					switch (gtd->macro_buf[len])
+					val[0] = val[1] = val[2] = cnt = buffer[0] = 0;
+
+					for (len = 3 ; gtd->macro_buf[len] ; len++)
 					{
-						case ';':
-							val[cnt++] = get_number(gtd->ses, buffer);
-							buffer[0] = 0;
-							break;
+						if (isdigit(gtd->macro_buf[len]))
+						{
+							cat_sprintf(buffer, "%c", gtd->macro_buf[len]);
+						}
+						else
+						{
+							switch (gtd->macro_buf[len])
+							{
+								case ';':
+									val[cnt++] = get_number(gtd->ses, buffer);
+									buffer[0] = 0;
+									break;
 
-						case 'm':
-						case 'M':
-							val[cnt++] = get_number(gtd->ses, buffer);
-							mouse_handler(gtd->ses, val[0], val[1], val[2], gtd->macro_buf[len]);
-							gtd->macro_buf[0] = 0;
-							return;
+								case 'm':
+								case 'M':
+									val[cnt++] = get_number(gtd->ses, buffer);
+									mouse_handler(gtd->ses, val[0], val[2], val[1], gtd->macro_buf[len]); // swap x y to row col
+									gtd->macro_buf[0] = 0;
+									return;
 
-						default:
-							printf("mouse input error (%s)\n", gtd->macro_buf);
-							gtd->macro_buf[0] = 0;
-							return;
+								default:
+									printf("unknownmouse input error (%s)\n", gtd->macro_buf);
+									gtd->macro_buf[0] = 0;
+									return;
+							}
+						}
 					}
+					return;
+				}
+
+				if (gtd->macro_buf[2] >= '0' && gtd->macro_buf[2] <= '9')
+				{
+					val[0] = val[1] = val[2] = cnt = buffer[0] = 0;
+
+					for (len = 2 ; gtd->macro_buf[len] ; len++)
+					{
+						if (isdigit(gtd->macro_buf[len]))
+						{
+							cat_sprintf(buffer, "%c", gtd->macro_buf[len]);
+						}
+						else
+						{
+							switch (gtd->macro_buf[len])
+							{
+								case '-':
+									if (buffer[0] == 0)
+									{
+										strcat(buffer, "-");
+									}
+									else
+									{
+										tintin_printf2(NULL, "\e[1;31merror: bad csi input (%s)\n", &gtd->macro_buf[1]);
+										gtd->macro_buf[0] = 0;
+										continue;
+									}
+									break;
+								case ';':
+									val[cnt++] = get_number(gtd->ses, buffer);
+									buffer[0] = 0;
+									break;
+
+								case 't':
+									val[cnt++] = get_number(gtd->ses, buffer);
+									csit_handler(val[0], val[1], val[2]);
+									gtd->macro_buf[0] = 0;
+									return;
+
+								default:
+									goto end_of_loop;
+							}
+						}
+					}
+					return;
 				}
 			}
-			return;
+			else if (gtd->macro_buf[1] == ']')
+			{
+				switch (gtd->macro_buf[2])
+				{
+					case 'L':
+					case 'l':
+						for (len = 3 ; gtd->macro_buf[len] ; len++)
+						{
+							if (gtd->macro_buf[len] < 32)
+							{
+								buffer[len - 3] = 0;
+								osc_handler(gtd->macro_buf[2], buffer);
+								gtd->macro_buf[0] = 0;
+								return;
+							}
+							else
+							{
+								buffer[len - 3 ] = gtd->macro_buf[len];
+							}
+						}
+						break;
+
+					default:
+						printf("\e[1;31merror: unknown osc input (%s)\n", gtd->macro_buf);
+						gtd->macro_buf[0] = 0;
+						return;
+				}
+			}
 		}
 	}
+
+	end_of_loop:
 
 	if (HAS_BIT(gtd->ses->flags, SES_FLAG_UTF8) && is_utf8_head(gtd->macro_buf))
 	{
@@ -221,7 +302,7 @@ void read_line()
 
 	check_all_events(gtd->ses, SUB_ARG, 0, 2, "RECEIVED KEYPRESS", gtd->macro_buf, ntos(index));
 
-	if (check_all_events(gtd->ses, SUB_ARG, 0, 2, "CATCH RECEIVED KEYPRESS", gtd->macro_buf, ntos(index)))
+	if (check_all_events(gtd->ses, SUB_ARG, 0, 2, "CATCH RECEIVED KEYPRESS", gtd->macro_buf, ntos(index)) == 1)
 	{
 		gtd->macro_buf[0] = 0;
 		return;
@@ -349,14 +430,14 @@ void read_key(void)
 			{
 				node = root->list[root->update];
 
-				if (!strcmp(gtd->macro_buf, node->pr))
+				if (!strcmp(gtd->macro_buf, node->arg3))
 				{
-					script_driver(gtd->ses, LIST_MACRO, node->right);
+					script_driver(gtd->ses, LIST_MACRO, node->arg2);
 
 					gtd->macro_buf[0] = 0;
 					return;
 				}
-				else if (!strncmp(gtd->macro_buf, node->pr, strlen(gtd->macro_buf)))
+				else if (!strncmp(gtd->macro_buf, node->arg3, strlen(gtd->macro_buf)))
 				{
 					match = 1;
 				}
@@ -421,6 +502,8 @@ void read_key(void)
 void convert_meta(char *input, char *output, int eol)
 {
 	char *pti, *pto;
+
+	push_call("convert_meta(%p,%p,%d)",input,output,eol);
 
 	DEL_BIT(gtd->flags, TINTIN_FLAG_CONVERTMETACHAR);
 
@@ -517,6 +600,18 @@ void convert_meta(char *input, char *output, int eol)
 		}
 	}
 	*pto = 0;
+
+	pop_call();
+	return;
+}
+
+char *str_convert_meta(char *input, int eol)
+{
+	static char buf[BUFFER_SIZE];
+
+	convert_meta(input, buf, eol);
+
+	return buf;
 }
 
 void unconvert_meta(char *input, char *output)
@@ -653,11 +748,11 @@ void echo_command(struct session *ses, char *line)
 
 		add_line_buffer(ses, buffer, -1);
 
-		SET_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+		gtd->scroll_level++;
 
 		tintin_printf2(ses, "%s", result);
 
-		DEL_BIT(ses->flags, SES_FLAG_SCROLLSTOP);
+		gtd->scroll_level--;
 	}
 	else
 	{

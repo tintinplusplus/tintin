@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -32,8 +32,8 @@ DO_COMMAND(do_function)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, arg2, 1);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
 	if (*arg1 == 0)
 	{
@@ -49,7 +49,7 @@ DO_COMMAND(do_function)
 	}
 	else
 	{
-		update_node_list(ses->list[LIST_FUNCTION], arg1, arg2, "");
+		update_node_list(ses->list[LIST_FUNCTION], arg1, arg2, "", "");
 
 		show_message(ses, LIST_FUNCTION, "#OK. FUNCTION {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
 	}

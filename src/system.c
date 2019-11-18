@@ -36,20 +36,22 @@
 
 DO_COMMAND(do_run)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE], file[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], temp[BUFFER_SIZE], file[BUFFER_SIZE];
 	int desc, pid;
 	struct winsize size;
 	struct termios run_terminal;
 
 	char *argv[4] = {"sh", "-c", "", NULL};
 
-	arg = sub_arg_in_braces(ses, arg, left,  GET_ONE, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
-	arg = sub_arg_in_braces(ses, arg, file,  GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ALL, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, file, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*left == 0 || *right == 0)
+	if (*arg1 == 0 || *arg2 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #RUN {NAME} {SYSTEM SHELL COMMAND}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #RUN {NAME} {SYSTEM SHELL COMMAND}");
+		
+		return ses;
 	}
 
 	size.ws_row = get_scroll_size(ses);
@@ -60,27 +62,27 @@ DO_COMMAND(do_run)
 	switch (pid)
 	{
 		case -1:
-			perror("forkpty");
+			syserr_printf(ses, "do_run: forkpty");
 			break;
 
 		case 0:
-			sprintf(temp, "exec %s", right);
+			sprintf(temp, "exec %s", arg2);
 			argv[2] = temp;
 			execv("/bin/sh", argv);
 			tcgetattr(0, &run_terminal);
 			break;
 
 		default:
-			sprintf(temp, "{%s} {%d} {%s}", right, pid, file);
+			sprintf(temp, "{%s} {%d} {%s}", arg2, pid, file);
 
-			ses = new_session(ses, left, temp, desc, 0);
+			ses = new_session(ses, arg1, temp, desc, 0);
 
 //			memcpy(&ses->cur_terminal, &run_terminal, sizeof(run_terminal));
 
 //			refresh_session_terminal(ses);
 			break;
 	}
-	return gtd->ses;
+	return ses;
 }
 
 DO_COMMAND(do_script)
@@ -118,7 +120,7 @@ DO_COMMAND(do_script)
 		}
 		else
 		{
-			perror("popen");
+			syserr_printf(ses, "do_script: popen 1");
 		}
 	}
 	else
@@ -151,7 +153,7 @@ DO_COMMAND(do_script)
 		}
 		else
 		{
-			perror("popen");
+			syserr_printf(ses, "do_script: popen 2");
 		}
 	}
 	refresh_session_terminal(ses);
@@ -170,17 +172,18 @@ DO_COMMAND(do_suspend)
 
 DO_COMMAND(do_system)
 {
-	char left[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE];
 
-	get_arg_in_braces(ses, arg, left, TRUE);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+	sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #SYSTEM {COMMAND}.");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #SYSTEM {COMMAND}.");
+		
+		return ses;
 	}
 
-	show_message(ses, LIST_COMMAND, "#OK: EXECUTING '%s'", left);
+	show_message(ses, LIST_COMMAND, "#OK: EXECUTING '%s'", arg1);
 
 	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_READMUD) && IS_SPLIT(gtd->ses))
 	{
@@ -189,7 +192,7 @@ DO_COMMAND(do_system)
 	}
 	fflush(stdout);
 
-	system(left);
+	system(arg1);
 
 	if (!HAS_BIT(gtd->ses->flags, SES_FLAG_READMUD) && IS_SPLIT(gtd->ses))
 	{
@@ -206,16 +209,16 @@ DO_COMMAND(do_system)
 DO_COMMAND(do_textin)
 {
 	FILE *fp;
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], buffer[BUFFER_SIZE], *cptr;
 
-	arg = get_arg_in_braces(ses, arg, left, FALSE);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
-
-	if ((fp = fopen(left, "r")) == NULL)
+	if ((fp = fopen(arg1, "r")) == NULL)
 	{
-		return show_error(ses, LIST_COMMAND, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", left);
+		show_error(ses, LIST_COMMAND, "#ERROR: #TEXTIN {%s} - FILE NOT FOUND.", arg1);
+		
+		return ses;
 	}
 
 	while (fgets(buffer, BUFFER_SIZE - 1, fp))
@@ -229,14 +232,14 @@ DO_COMMAND(do_textin)
 
 		write_mud(ses, buffer, SUB_EOL);
 
-		if (*right)
+		if (*arg2)
 		{
-			usleep((long long) (get_number(ses, right) * 1000000));
+			usleep((long long) (get_number(ses, arg2) * 1000000));
 		}
 	}
 	fclose(fp);
 
-	show_message(ses, LIST_COMMAND, "#OK. FILE READ.");
+	show_message(ses, LIST_COMMAND, "#TEXTIN {%s} - FILE READ.", arg1);
 
 	return ses;
 }

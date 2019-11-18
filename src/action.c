@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -30,9 +30,9 @@ DO_COMMAND(do_action)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, arg1, 1);
-	arg = get_arg_in_braces(ses, arg, arg2, 1);
-	arg = get_arg_in_braces(ses, arg, arg3, 1);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, arg3, GET_ALL);
 
 	if (*arg3 == 0)
 	{
@@ -52,9 +52,9 @@ DO_COMMAND(do_action)
 	}
 	else
 	{
-		update_node_list(ses->list[LIST_ACTION], arg1, arg2, arg3);
+		update_node_list(ses->list[LIST_ACTION], arg1, arg2, arg3, "");
 
-		show_message(ses, LIST_ACTION, "#OK. {%s} NOW TRIGGERS {%s} @ {%s}.", arg1, arg2, arg3);
+		show_message(ses, LIST_ACTION, "#OK. #ACTION {%s} NOW TRIGGERS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -77,9 +77,9 @@ void check_all_actions(struct session *ses, char *original, char *line)
 	{
 		if (check_one_regexp(ses, root->list[root->update], line, original, 0))
 		{
-			show_debug(ses, LIST_ACTION, "#DEBUG ACTION {%s}", root->list[root->update]->left);
+			show_debug(ses, LIST_ACTION, "#DEBUG ACTION {%s}", root->list[root->update]->arg1);
 
-			substitute(ses, root->list[root->update]->right, buf, SUB_ARG|SUB_SEC);
+			substitute(ses, root->list[root->update]->arg2, buf, SUB_ARG|SUB_SEC);
 
 			script_driver(ses, LIST_ACTION, buf);
 

@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -21,8 +21,7 @@
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                         coded by Peter Unold 1992                           *
-*                     recoded by Igor van den Hoven 2004                      *
+*                      coded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include <sys/types.h>
@@ -61,31 +60,28 @@ int find(struct session *ses, char *str, char *exp, int sub)
 
 DO_COMMAND(do_regexp)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], is_true[BUFFER_SIZE], is_false[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], is_t[BUFFER_SIZE], is_f[BUFFER_SIZE];
 
-	arg = get_arg_in_braces(ses, arg, left,  0);
-	arg = get_arg_in_braces(ses, arg, right, 0);
-	arg = get_arg_in_braces(ses, arg, is_true,  1);
-	arg = get_arg_in_braces(ses, arg, is_false, 1);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, is_t, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, is_f, GET_ALL);
 
-	if (*is_true == 0)
+	if (*is_t == 0)
 	{
-		tintin_printf2(ses, "SYNTAX: #REGEXP {string} {expression} {true} {false}.");
+		show_error(ses, LIST_COMMAND, "SYNTAX: #REGEXP {string} {expression} {true} {false}.");
 	}
 	else
 	{
-		substitute(ses, left,  left,  SUB_VAR|SUB_FUN);
-		substitute(ses, right, right, SUB_VAR|SUB_FUN);
-
-		if (tintin_regexp(ses, NULL, left, right, 0, SUB_CMD))
+		if (tintin_regexp(ses, NULL, arg1, arg2, 0, SUB_CMD))
 		{
-			substitute(ses, is_true, is_true, SUB_CMD);
+			substitute(ses, is_t, is_t, SUB_CMD);
 
-			ses = script_driver(ses, LIST_COMMAND, is_true);
+			ses = script_driver(ses, LIST_COMMAND, is_t);
 		}
-		else if (*is_false)
+		else if (*is_f)
 		{
-			ses = script_driver(ses, LIST_COMMAND, is_false);
+			ses = script_driver(ses, LIST_COMMAND, is_f);
 		}
 	}
 	return ses;
@@ -129,7 +125,7 @@ int regexp_compare(pcre *nodepcre, char *str, char *exp, int option, int flag)
 		case SUB_CMD:
 			for (i = 0 ; i < matches ; i++)
 			{
-				gtd->cmds[i] = refstring(gtd->cmds[i], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+				gtd->cmds[i] = restringf(gtd->cmds[i], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
 			}
 			break;
 
@@ -138,14 +134,14 @@ int regexp_compare(pcre *nodepcre, char *str, char *exp, int option, int flag)
 			{
 				j = gtd->args[i];
 
-				gtd->cmds[j] = refstring(gtd->cmds[j], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+				gtd->cmds[j] = restringf(gtd->cmds[j], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
 			}
 			break;
 
 		case SUB_ARG:
 			for (i = 0 ; i < matches ; i++)
 			{
-				gtd->vars[i] = refstring(gtd->vars[i], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+				gtd->vars[i] = restringf(gtd->vars[i], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
 			}
 			break;
 
@@ -154,7 +150,7 @@ int regexp_compare(pcre *nodepcre, char *str, char *exp, int option, int flag)
 			{
 				j = gtd->args[i];
 
-				gtd->vars[j] = refstring(gtd->vars[j], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
+				gtd->vars[j] = restringf(gtd->vars[j], "%.*s", match[i*2+1] - match[i*2], &str[match[i*2]]);
 			}
 			break;
 	}
@@ -311,16 +307,16 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 				*pto = 0;
 
-				pop_call();
-
 				if (string == result)
 				{
 					strcpy(result, buffer);
 
+					pop_call();
 					return pto - buffer;
 				}
 				else
 				{
+					pop_call();
 					return pto - result;
 				}
 				break;
@@ -381,7 +377,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						continue;
 					}
 
-					pti = get_arg_in_braces(ses, &pti[i], temp, FALSE);
+					pti = get_arg_in_braces(ses, &pti[i], temp, GET_ONE);
 
 					if (sesptr)
 					{
@@ -396,7 +392,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 						substitute(ses, temp, buf, flags_neol);
 					}
 
-					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->left);
+					show_debug(ses, LIST_FUNCTION, "#DEBUG FUNCTION {%s}", node->arg1);
 
 					RESTRING(gtd->vars[0], buf);
 
@@ -404,7 +400,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					for (i = 1 ; i < 100 ; i++)
 					{
-						pte = get_arg_in_braces(ses, pte, temp, TRUE);
+						pte = get_arg_in_braces(ses, pte, temp, GET_ALL);
 
 						RESTRING(gtd->vars[i], temp);
 
@@ -427,7 +423,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 
 					}
 
-					substitute(ses, node->right, buf, SUB_ARG);
+					substitute(ses, node->arg2, buf, SUB_ARG);
 
 					script_driver(ses, LIST_FUNCTION, buf);
 
@@ -463,7 +459,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						brace = TRUE;
 
-						ptt = get_arg_in_braces(ses, &pti[i], buf, TRUE);
+						ptt = get_arg_in_braces(ses, &pti[i], buf, GET_ALL);
 
 						i += strlen(buf) + 2;
 
@@ -561,7 +557,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						brace = TRUE;
 
-						ptt = get_arg_in_braces(ses, &pti[i], buf, TRUE);
+						ptt = get_arg_in_braces(ses, &pti[i], buf, GET_ALL);
 
 						i += strlen(buf) + 2;
 
@@ -687,7 +683,7 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					{
 						brace = TRUE;
 
-						ptt = get_arg_in_braces(ses, &pti[i], buf, TRUE);
+						ptt = get_arg_in_braces(ses, &pti[i], buf, GET_ALL);
 
 						i += strlen(buf) + 2;
 
@@ -1211,6 +1207,10 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 					*pto++ = '\\';
 					*pto++ = *pti++;
 				}
+				else if (HAS_BIT(flags, SUB_LIT))
+				{
+					*pto++ = *pti++;
+				}
 				else
 				{
 					*pto++ = *pti++;
@@ -1259,6 +1259,8 @@ int substitute(struct session *ses, char *string, char *result, int flags)
 				break;
 		}
 	}
+	pop_call();
+	return 0;
 }
 
 
@@ -1275,16 +1277,16 @@ int check_one_regexp(struct session *ses, struct listnode *node, char *line, cha
 	{
 		char result[BUFFER_SIZE];
 
-		substitute(ses, node->left, result, SUB_VAR|SUB_FUN);
+		substitute(ses, node->arg1, result, SUB_VAR|SUB_FUN);
 
 		exp = result;
 	}
 	else
 	{
-		exp = node->left;
+		exp = node->arg1;
 	}
 
-	if (HAS_BIT(node->flags, NODE_FLAG_META))
+	if (*node->arg1 == '~')
 	{
 		exp++;
 		str = original;
@@ -1431,9 +1433,9 @@ int tintin_regexp(struct session *ses, pcre *nodepcre, char *str, char *exp, int
 				break;
 
 			case '{':
-				gtd->args[up(var)] = up(arg);
+				gtd->args[next_arg(var)] = next_arg(arg);
 				*pto++ = '(';
-				pti = get_arg_in_braces(ses, pti, pto, TRUE);
+				pti = get_arg_in_braces(ses, pti, pto, GET_ALL);
 				pto += strlen(pto);
 				*pto++ = ')';
 				break;
@@ -1485,21 +1487,21 @@ int tintin_regexp(struct session *ses, pcre *nodepcre, char *str, char *exp, int
 					case '9':
 						fix = SUB_FIX;
 						arg = isdigit((int) pti[2]) ? (pti[1] - '0') * 10 + (pti[2] - '0') : pti[1] - '0';
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += isdigit((int) pti[2]) ? 3 : 2;
 						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'd':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "([0-9]*)" : "([0-9]*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'D':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "([^0-9]*)" : "([^0-9]*?)");
 						pto += strlen(pto);
@@ -1518,56 +1520,56 @@ int tintin_regexp(struct session *ses, pcre *nodepcre, char *str, char *exp, int
 						break;
 
 					case 's':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(\\s*)" : "(\\s*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'S':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(\\S*)" : "(\\S*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'w':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "([a-zA-Z]*)" : "([a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 
 					case 'W':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "([^a-zA-Z]*)" : "([^a-zA-Z]*?)");
 						pto += strlen(pto);
 						break;
 
 					case '?':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(.?)" : "(.?" "?)");
 						pto += strlen(pto);
 						break;
 
 					case '*':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(.*)" : "(.*?)");
 						pto += strlen(pto);
 						break;
 
 					case '+':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, *pti == 0 ? "(.+)" : "(.+?)");
 						pto += strlen(pto);
 						break;
 
 					case '.':
-						gtd->args[up(var)] = up(arg);
+						gtd->args[next_arg(var)] = next_arg(arg);
 						pti += 2;
 						strcpy(pto, "(.)");
 						pto += strlen(pto);
@@ -1642,7 +1644,7 @@ int tintin_regexp(struct session *ses, pcre *nodepcre, char *str, char *exp, int
 								break;
 
 							case '{':
-								pti = get_arg_in_braces(ses, pti+2, pto, TRUE);
+								pti = get_arg_in_braces(ses, pti+2, pto, GET_ALL);
 								pto += strlen(pto);
 								break;
 
@@ -1678,10 +1680,6 @@ pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *ex
 	if (*pti == '~')
 	{
 		pti++;
-		if (node)
-		{
-			SET_BIT(node->flags, NODE_FLAG_META);
-		}
 	}
 
 	while (*pti == '^')
@@ -1724,7 +1722,7 @@ pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *ex
 
 			case '{':
 				*pto++ = '(';
-				pti = get_arg_in_braces(ses, pti, pto, TRUE);
+				pti = get_arg_in_braces(ses, pti, pto, GET_ALL);
 				while (*pto)
 				{
 					if (pto[0] == '$' || pto[0] == '@')
@@ -1949,7 +1947,7 @@ pcre *tintin_regexp_compile(struct session *ses, struct listnode *node, char *ex
 								break;
 
 							case '{':
-								pti = get_arg_in_braces(ses, pti+2, pto, TRUE);
+								pti = get_arg_in_braces(ses, pti+2, pto, GET_ALL);
 
 								while (*pto)
 								{

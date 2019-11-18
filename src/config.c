@@ -30,14 +30,14 @@
 
 DO_COMMAND(do_configure)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	struct listnode *node;
 	int index;
 
-	arg = get_arg_in_braces(ses, arg, left,  FALSE);
-	arg = sub_arg_in_braces(ses, arg, right, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg1,  GET_ONE);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " CONFIGURATIONS ");
 
@@ -48,9 +48,9 @@ DO_COMMAND(do_configure)
 			if (node)
 			{
 				tintin_printf2(ses, "[%-14s] [%8s] %s", 
-					node->left,
-					node->right,
-					strcmp(node->right, "ON") == 0 ? config_table[index].msg_on : config_table[index].msg_off);
+					node->arg1,
+					node->arg2,
+					strcmp(node->arg2, "ON") == 0 ? config_table[index].msg_on : config_table[index].msg_off);
 			}
 		}
 
@@ -60,21 +60,21 @@ DO_COMMAND(do_configure)
 	{
 		for (index = 0 ; *config_table[index].name != 0 ; index++)
 		{
-			if (is_abbrev(left, config_table[index].name))
+			if (is_abbrev(arg1, config_table[index].name))
 			{
-				if (config_table[index].config(ses, right, index) != NULL)
+				if (config_table[index].config(ses, arg2, index) != NULL)
 				{
 					node = search_node_list(ses->list[LIST_CONFIG], config_table[index].name);
 
 					if (node)
 					{
-						show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[index].name, node->right);
+						show_message(ses, LIST_CONFIG, "#CONFIG {%s} HAS BEEN SET TO {%s}.", config_table[index].name, node->arg2);
 					}
 				}
 				return ses;
 			}
 		}
-		show_error(ses, LIST_CONFIG, "#ERROR: #CONFIG {%s} IS NOT A VALID OPTION.", capitalize(left));
+		show_error(ses, LIST_CONFIG, "#ERROR: #CONFIG {%s} IS NOT A VALID OPTION.", capitalize(arg1));
 	}
 	return ses;
 }
@@ -96,7 +96,7 @@ DO_CONFIG(config_speedwalk)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -118,7 +118,7 @@ DO_CONFIG(config_verbatim)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -139,7 +139,7 @@ DO_CONFIG(config_repeatenter)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -152,7 +152,7 @@ DO_CONFIG(config_commandcolor)
 
 	RESTRING(ses->cmd_color, buf);
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "", "");
 
 	return ses;
 }
@@ -173,7 +173,7 @@ DO_CONFIG(config_commandecho)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -194,7 +194,7 @@ DO_CONFIG(config_verbose)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -215,7 +215,7 @@ DO_CONFIG(config_wordwrap)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	SET_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
 
@@ -245,7 +245,7 @@ DO_CONFIG(config_log)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -268,7 +268,7 @@ DO_CONFIG(config_buffersize)
 
 	init_buffer(ses, atoi(arg));
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -289,7 +289,7 @@ DO_CONFIG(config_scrolllock)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -305,13 +305,24 @@ DO_CONFIG(config_connectretry)
 
 	gts->connect_retry = atoll(arg) * 1000000LL;
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
 
 DO_CONFIG(config_packetpatch)
 {
+	if (is_abbrev("AUTO", arg))
+	{
+		gts->check_output = 0;
+
+		update_node_list(ses->list[LIST_CONFIG], config_table[index].name, "AUTO", "", "");
+
+		SET_BIT(ses->flags, SES_FLAG_AUTOPATCH);
+
+		return ses;
+	}
+
 	if (!is_number(arg))
 	{
 		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {PACKET PATCH} <NUMBER>");
@@ -326,9 +337,11 @@ DO_CONFIG(config_packetpatch)
 		return NULL;
 	}
 
+	DEL_BIT(ses->flags, SES_FLAG_AUTOPATCH);
+
 	gts->check_output = (unsigned long long) (tintoi(arg) * 1000000ULL);
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -350,7 +363,7 @@ DO_CONFIG(config_historysize)
 
 	gtd->history_size = atoi(arg);
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -359,7 +372,7 @@ DO_CONFIG(config_tintinchar)
 {
 	gtd->tintin_char = arg[0];
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "", "");
 
 	return ses;
 }
@@ -368,7 +381,7 @@ DO_CONFIG(config_verbatimchar)
 {
 	gtd->verbatim_char = arg[0];
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "", "");
 
 	return ses;
 }
@@ -377,7 +390,7 @@ DO_CONFIG(config_repeatchar)
 {
 	gtd->repeat_char = arg[0];
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "", "");
 
 	return ses;
 }
@@ -398,7 +411,7 @@ DO_CONFIG(config_debugtelnet)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -419,7 +432,7 @@ DO_CONFIG(config_convertmeta)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -440,7 +453,7 @@ DO_CONFIG(config_loglevel)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -461,7 +474,7 @@ DO_CONFIG(config_colorpatch)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -482,7 +495,7 @@ DO_CONFIG(config_mccp)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -505,7 +518,7 @@ DO_CONFIG(config_autotab)
 
 	ses->auto_tab = atoi(arg);
 
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -564,11 +577,11 @@ DO_CONFIG(config_charset)
 	}
 	else
 	{
-		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|ASCII|BIG5|FANSI|UTF-8|BIG2UTF|KOI2UTF>", config_table[index].name);
+		show_error(ses, LIST_CONFIG, "#SYNTAX: #CONFIG {%s} <AUTO|ASCII|BIG-5|FANSI|UTF-8|BIG2UTF|KOI2UTF>", config_table[index].name);
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -618,7 +631,7 @@ DO_CONFIG(config_colormode)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "", "");
 
 	return ses;
 }
@@ -640,7 +653,7 @@ DO_CONFIG(config_screenreader)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -661,7 +674,7 @@ DO_CONFIG(config_inheritance)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -684,7 +697,7 @@ DO_CONFIG(config_randomseed)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, arg, "", "");
 
 	return ses;
 }
@@ -707,7 +720,7 @@ DO_CONFIG(config_mousetracking)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }
@@ -728,7 +741,7 @@ DO_CONFIG(config_childlock)
 
 		return NULL;
 	}
-	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "");
+	update_node_list(ses->list[LIST_CONFIG], config_table[index].name, capitalize(arg), "", "");
 
 	return ses;
 }

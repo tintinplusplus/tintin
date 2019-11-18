@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -45,7 +45,22 @@ DO_COMMAND(do_variable)
 
 		if (node)
 		{
-			show_node(root, node, 0);
+			if (node->root)
+			{
+				char *str_result;
+
+				str_result = str_dup("");
+
+				view_nest_node(node, &str_result, 0, 1);
+
+				tintin_printf2(ses, COLOR_TINTIN "%c" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "}\n{\n" COLOR_STRING "%s" COLOR_BRACE "}" COLOR_RESET "\n", gtd->tintin_char, list_table[LIST_VARIABLE].name, node->arg1, str_result);
+
+				str_free(str_result);
+			}
+			else
+			{
+				tintin_printf2(ses, COLOR_TINTIN "%c" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "}" COLOR_RESET "\n", gtd->tintin_char, list_table[LIST_VARIABLE].name, node->arg1, node->arg2);
+			}
 		}
 		else if (show_node_with_wild(ses, arg1, ses->list[LIST_VARIABLE]) == FALSE)
 		{
@@ -188,13 +203,13 @@ DO_COMMAND(do_replace)
 		}
 	}
 
-	if (tintin_regexp(ses, NULL, node->right, arg2, 0, SUB_CMD) == FALSE)
+	if (tintin_regexp(ses, NULL, node->arg2, arg2, 0, SUB_CMD) == FALSE)
 	{
-		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", arg2, node->right);
+		show_message(ses, LIST_VARIABLE, "#REPLACE: {%s} NOT FOUND IN {%s}.", arg2, node->arg2);
 	}
 	else
 	{
-		pti = node->right;
+		pti = node->arg2;
 		*buf = 0;
 
 		do
@@ -234,7 +249,7 @@ DO_COMMAND(do_replace)
 
 void numbertocharacter(struct session *ses, char *str)
 {
-	if (get_number(ses, str) < 128)
+	if (get_number(ses, str) < 256)
 	{
 		sprintf(str, "%c", (int) get_number(ses, str));
 	}
@@ -417,28 +432,28 @@ void stripspaces(char *str)
 
 void wrapstring(struct session *ses, char *str)
 {
-	char *pti, *lis, *sos, *soc, buf[BUFFER_SIZE], color[BUFFER_SIZE], tmp[BUFFER_SIZE], sec[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
+	char *pti, *lis, *sos, *soc, buf[BUFFER_SIZE], color[BUFFER_SIZE], tmp[BUFFER_SIZE], sec[BUFFER_SIZE], arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *arg;
 	int col = 1, cnt = 1, len, size, width;
 
 	push_call("wrapstring(%p,%p)",ses,str);
 
-	arg = get_arg_in_braces(ses, str, buf, TRUE);
+	arg = get_arg_in_braces(ses, str, buf, GET_ALL);
 
-	substitute(ses, buf, left, SUB_COL|SUB_ESC);
+	substitute(ses, buf, arg1, SUB_COL|SUB_ESC);
 
 	if (*arg == COMMAND_SEPARATOR)
 	{
 		arg++;
 	}
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
-	if (*right)
+	if (*arg2)
 	{
-		len = get_number(ses, right);
+		len = get_number(ses, arg2);
 
 		if (len <= 0)
 		{
-			show_error(ses, LIST_VARIABLE, "#FORMAT %w: INVALID LENTGH {%s}", right);
+			show_error(ses, LIST_VARIABLE, "#FORMAT %w: INVALID LENTGH {%s}", arg2);
 			len = gtd->screen->cols;
 		}
 	}
@@ -447,7 +462,7 @@ void wrapstring(struct session *ses, char *str)
 		len = gtd->screen->cols;
 	}
 
-	pti = lis = sos = soc = left;
+	pti = lis = sos = soc = arg1;
 
 	buf[0] = color[0] = 0;
 
@@ -678,31 +693,31 @@ int string_raw_str_len(struct session *ses, char *str, int start, int end)
 
 void timestring(struct session *ses, char *str)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], *arg;
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], *arg;
 
 	struct tm timeval_tm;
 	time_t    timeval_t;
 
-	arg = get_arg_in_braces(ses, str, left, TRUE);
+	arg = get_arg_in_braces(ses, str, arg1, GET_ALL);
 
 	if (*arg == COMMAND_SEPARATOR)
 	{
 		arg++;
 	}
-	arg = get_arg_in_braces(ses, arg, right, TRUE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
-	if (*right)
+	if (*arg2)
 	{
-		timeval_t = (time_t) get_number(ses, right);
+		timeval_t = (time_t) get_number(ses, arg2);
 	}
 	else
 	{
-		timeval_t = (time_t) time(NULL);
+		timeval_t = gtd->time;
 	}
 
 	timeval_tm = *localtime(&timeval_t);
 
-	strftime(str, BUFFER_SIZE, left, &timeval_tm);
+	strftime(str, BUFFER_SIZE, arg1, &timeval_tm);
 }
 
 
@@ -738,25 +753,35 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 
 			if (*ptf == 0)
 			{
+				*ptn++ = '%';
 				break;
 			}
 			else if (*ptf == '%')
 			{
 				*ptn++ = *ptf++;
 			}
+			else if (*ptf == ' ')
+			{
+				*ptn++ = '%';
+			}
 			else
 			{
 				while (!isalpha((int) *ptf))
 				{
+					if (*ptf == 0)
+					{
+						break;
+					}
 					*ptn++ = *ptf++;
 				}
 
+				*ptn = 0;
+
 				if (*ptf == 0)
 				{
-					break;
+					show_error(ses, LIST_VARIABLE, "#FORMAT STRING: UNKNOWN ARGUMENT {%s}.", pts);
+					continue;
 				}
-
-				*ptn = 0;
 
 				if (*ptf == 'd' || *ptf == 'f' || *ptf == 'X')
 				{
@@ -910,7 +935,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						break;
 
 /*					case 'D':
-						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : time(NULL);
+						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : gtd->time;
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%d", &timeval_tm);
 						break;
@@ -927,8 +952,9 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						sprintf(arglist[i], "%d", stringlength(ses, arglist[i]));
 						break;
 
+					// undocumented
 					case 'M':
-						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : time(NULL);
+						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : gtd->time;
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%m", &timeval_tm);
 						break;
@@ -942,7 +968,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						break;
 
 					case 'T':
-						sprintf(arglist[i], "%d", (int) time(NULL));
+						sprintf(arglist[i], "%ld", gtd->time);
 						break;
 
 					case 'U':
@@ -954,14 +980,15 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 						sprintf(arglist[i], temp, (unsigned long long) get_number(ses, arglist[i]));
 						break;
 
+					// undocumented
 					case 'Y': // print the year, experimental
-						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : time(NULL);
+						timeval_t  = (time_t) *arglist[i] ? atoll(arglist[i]) : gtd->time;
 						timeval_tm = *localtime(&timeval_t);
 						strftime(arglist[i], BUFFER_SIZE, "%Y", &timeval_tm);
 						break;
 
 					default:
-						show_error(ses, LIST_VARIABLE, "#FORMAT STRING: UNKNOWN ARGUMENT {%%%c}.", *ptf);
+						show_error(ses, LIST_VARIABLE, "#FORMAT STRING: UNKNOWN ARGUMENT {%s%c}.", pts, *ptf);
 						break;
 				}
 				*ptn++ = 's';
@@ -976,7 +1003,7 @@ void format_string(struct session *ses, char *format, char *arg, char *out)
 	}
 	*ptn = 0;
 
-	sprintf(out, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19], arglist[20], arglist[21], arglist[22], arglist[23], arglist[24], arglist[25], arglist[26], arglist[27], arglist[28], arglist[29]);
+	snprintf(out, BUFFER_SIZE - 1, newformat, arglist[0], arglist[1], arglist[2], arglist[3], arglist[4], arglist[5], arglist[6], arglist[7], arglist[8], arglist[9], arglist[10], arglist[11], arglist[12], arglist[13], arglist[14], arglist[15], arglist[16], arglist[17], arglist[18], arglist[19], arglist[20], arglist[21], arglist[22], arglist[23], arglist[24], arglist[25], arglist[26], arglist[27], arglist[28], arglist[29]);
 
 	return;
 }

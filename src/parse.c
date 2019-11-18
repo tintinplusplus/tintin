@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -22,9 +22,91 @@
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
 *                         coded by Peter Unold 1992                           *
+*                     recoded by Igor van den Hoven 2005                      *
 ******************************************************************************/
 
 #include "tintin.h"
+
+// whether str1 is an abbreviation of str2
+
+int case_table[256] =
+{
+	  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
+	 16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
+	 95,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
+	 48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,
+	 64,
+	 65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,
+	 91,  92,  93,  94,
+	 95,  96,
+	 65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,
+	123, 124, 125, 126, 127,
+	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+	160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+	176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
+	192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
+	208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
+	224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
+	240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
+};
+
+int is_abbrev(char *str1, char *str2)
+{
+	if (*str1 == 0)
+	{
+		return false;
+	}
+
+	if (*str2 == 0)
+	{
+		tintin_printf2(gtd->ses, "\e[1;31mis_abbrev(%s,%s)", str1, str2);
+		dump_stack();
+
+		return false;
+	}
+
+	while (true)
+	{
+		if (*str1 == 0)
+		{
+			return true;
+		}
+
+		if (case_table[(int) *str1] != case_table[(int) *str2])
+		{
+			return false;
+		}
+		str1++;
+		str2++;
+	}
+}
+
+void filename_string(char *input, char *output)
+{
+	while (*input)
+	{
+		*output++ = (char) case_table[(int) *input++];
+	}
+	*output = 0;
+}
+
+int is_suffix(char *str1, char *str2)
+{
+	int len1, len2;
+
+	len1 = strlen(str1);
+	len2 = strlen(str2);
+
+	if (len1 >= len2)
+	{
+		if (is_abbrev(str1 + len1 - len2, str2))
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 
 struct session *parse_input(struct session *ses, char *input)
 {
@@ -75,7 +157,7 @@ struct session *parse_input(struct session *ses, char *input)
 	{
 		input = space_out(input);
 
-		input = get_arg_all(ses, input, line, FALSE);
+		input = get_arg_all(ses, input, line, GET_ONE);
 
 		if (parse_command(ses, line))
 		{
@@ -117,7 +199,7 @@ struct session *parse_command(struct session *ses, char *input)
 
 	push_call("parse_command(%p,%p)",ses,input);
 
-	arg = get_arg_stop_spaces(ses, input, cmd1, 0);
+	arg = get_arg_stop_spaces(ses, input, cmd1, GET_ONE);
 
 	substitute(ses, cmd1, cmd2, SUB_VAR|SUB_FUN);
 
@@ -214,7 +296,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	char line[BUFFER_SIZE];
 	struct session *sesptr;
 
-	input = get_arg_stop_spaces(ses, input, line, 0);
+	input = get_arg_stop_spaces(ses, input, line, GET_ONE);
 
 	substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
@@ -222,7 +304,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	{
 		int cnt = atoi(line);
 
-		input = get_arg_in_braces(ses, input, line, TRUE);
+		input = get_arg_in_braces(ses, input, line, GET_ALL);
 
 		while (cnt-- > 0)
 		{
@@ -237,7 +319,7 @@ struct session *parse_tintin_command(struct session *ses, char *input)
 	{
 		if (*input)
 		{
-			input = get_arg_in_braces(ses, input, line, TRUE);
+			input = get_arg_in_braces(ses, input, line, GET_ALL);
 
 			substitute(ses, line, line, SUB_VAR|SUB_FUN);
 
@@ -518,48 +600,8 @@ char *space_out(char *string)
 	return string;
 }
 
-void cap_input(struct session *ses, char *string)
-{
-	int nest = 0;
-	char *pti = string;
-
-	while (*string)
-	{
-		if (HAS_BIT(ses->flags, SES_FLAG_BIG5) && *pti & 128 && pti[1] != 0)
-		{
-			pti += 2;
-			continue;
-		}
-
-		if (*pti == '\\' && pti[1] == COMMAND_SEPARATOR)
-		{
-			pti += 2;
-		}
-		else if (*pti == COMMAND_SEPARATOR && nest == 0)
-		{
-			return;
-		}
-		else if (*pti == DEFAULT_OPEN)
-		{
-			nest++;
-		}
-		else if (*pti == DEFAULT_CLOSE)
-		{
-			nest--;
-		}
-		pti++;
-
-		if (pti - string >= BUFFER_SIZE - 2)
-		{
-			tintin_printf2(ses, "#ERROR: INPUT BUFFER OVERFLOW.");
-
-			*pti = 0;
-		}
-	}
-}
-
 /*
-	For list handling
+	For variable handling
 */
 
 char *get_arg_to_brackets(struct session *ses, char *string, char *result)
@@ -734,7 +776,7 @@ char *get_arg_in_brackets(struct session *ses, char *string, char *result)
 }
 
 /*
-	send command+argument to the mud
+	send command to the mud
 */
 
 void write_mud(struct session *ses, char *command, int flags)
@@ -748,18 +790,15 @@ void write_mud(struct session *ses, char *command, int flags)
 	{
 		if (ses->map == NULL || ses->map->nofollow == 0)
 		{
-			check_insert_path(ses, command, NULL, 1);
+			check_append_path(ses, command, NULL, 1);
 		}
 	}
 
 	if (ses->map && ses->map->in_room && ses->map->nofollow == 0)
 	{
-		if (!HAS_BIT(ses->map->flags, MAP_FLAG_NOFOLLOW))
+		if (follow_map(ses, command))
 		{
-			if (follow_map(ses, command))
-			{
-				return;
-			}
+			return;
 		}
 	}
 
@@ -767,10 +806,9 @@ void write_mud(struct session *ses, char *command, int flags)
 }
 
 
-/******************************************************************************
-* do all of the functions to one line of buffer, VT102 codes and variables    *
-* substituted beforehand                                                      *
-******************************************************************************/
+/*
+	Check line for triggers
+*/
 
 void do_one_line(char *line, struct session *ses)
 {

@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2008-2019 Adam Borowski and Igor van den Hoven                  *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -22,7 +22,7 @@
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
 *                         coded by Adam Borowski 2008                         *
-*                       added by Igor van den Hoven 2014                      *
+*                   modifications by Igor van den Hoven 2014                  *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -35,21 +35,21 @@ static int ssl_check_cert(struct session *ses, gnutls_session_t sslses);
 
 DO_COMMAND(do_ssl)
 {
-	char temp[BUFFER_SIZE], left[BUFFER_SIZE];
+	char temp[BUFFER_SIZE], arg1[BUFFER_SIZE];
 
 	substitute(ses, arg, temp, SUB_VAR|SUB_FUN);
 
 	arg = temp;
 
-	arg = get_arg_in_braces(ses, arg, left, FALSE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
 
-	if (*left == 0 || *arg == 0)
+	if (*arg1 == 0 || *arg == 0)
 	{
-		tintin_printf2(ses, "#SYNTAX: #SSL {name} {host} {port}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #SSL {name} {host} {port}");
 	}
 	else
 	{
-		ses = new_session(ses, left, arg, 0, 1);
+		ses = new_session(ses, arg1, arg, 0, 1);
 	}
 	return gtd->ses;
 }
@@ -79,7 +79,7 @@ gnutls_session_t ssl_negotiate(struct session *ses)
 
 	if (ret)
 	{
-		tintin_printf2(ses, "#SSL handshake failed: %s", gnutls_strerror(ret));
+		tintin_printf2(ses, "#SSL: handshake failed error: %s", gnutls_strerror(ret));
 		gnutls_deinit(ssl_ses);
 		return 0;
 	}

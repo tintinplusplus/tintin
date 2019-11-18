@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -27,7 +27,6 @@
 
 #include "tintin.h"
 
-#include <errno.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -80,14 +79,21 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	if (sock < 0)
 	{
-		syserr("socket");
+		syserr_printf(ses, "connect_mud: socket");
+
+		freeaddrinfo(address);
+
+		return -1;
 	}
 
 	ses->connect_error = connect(sock, address->ai_addr, address->ai_addrlen);
 
 	if (ses->connect_error)
 	{
+		syserr_printf(ses, "connect_mud: connect");
+
 		close(sock);
+
 		freeaddrinfo(address);
 
 		return 0;
@@ -95,7 +101,13 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
 	{
-		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
+		syserr_printf(ses, "connect_mud: fcntl O_NDELAY|O_NONBLOCK");
+
+		close(sock);
+
+		freeaddrinfo(address);
+
+		return 0;
 	}
 
 	getnameinfo(address->ai_addr, address->ai_addrlen, ip, 100, NULL, 0, NI_NUMERICHOST);
@@ -143,7 +155,9 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
-		syserr("socket");
+		syserr_printf(ses, "old_connect_mud: socket()");
+
+		return -1;
 	}
 
 	sockaddr.sin_family = AF_INET;
@@ -152,6 +166,8 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	if (ses->connect_error)
 	{
+		syserr_printf(ses, "connect_mud: connect");
+
 		close(sock);
 
 		return 0;
@@ -159,10 +175,10 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
 	{
-		perror("connect_mud: fcntl O_NDELAY|O_NONBLOCK");
+		syserr_printf(ses, "connect_mud: fcntl O_NDELAY|O_NONBLOCK");
 	}
 
-	RESTRING(ses->ip, inet_ntoa(sockaddr.sin_addr));
+	RESTRING(ses->session_ip, inet_ntoa(sockaddr.sin_addr));
 
 	return sock;
 }
@@ -171,6 +187,8 @@ int connect_mud(struct session *ses, char *host, char *port)
 
 void write_line_mud(struct session *ses, char *line, int size)
 {
+	int result;
+
 	push_call("write_line_mud(%p,%p)",line,ses);
 
 	if (ses == gts)
@@ -215,35 +233,46 @@ void write_line_mud(struct session *ses, char *line, int size)
 		}
 	}
 
-	if (ses->mccp3)
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "SEND OUTPUT", line, ntos(size));
+
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "CATCH SEND OUTPUT", line, ntos(size)))
 	{
-		write_compressed(ses, line, size);
-	}
+		if (ses->mccp3)
+		{
+			result = client_write_compressed(ses, line, size);
+		}
 #ifdef HAVE_GNUTLS_H
 
-	else if (ses->ssl)
-	{
-		int result;
-
-		result = gnutls_record_send(ses->ssl, line, size);
-
-		while (result == GNUTLS_E_INTERRUPTED || result == GNUTLS_E_AGAIN)
+		else if (ses->ssl)
 		{
-			result = gnutls_record_send(ses->ssl, 0, 0);
+			result = gnutls_record_send(ses->ssl, line, size);
+
+			while (result == GNUTLS_E_INTERRUPTED || result == GNUTLS_E_AGAIN)
+			{
+				result = gnutls_record_send(ses->ssl, 0, 0);
+			}
+		}
+#endif
+		else
+		{
+			result = write(ses->socket, line, size);
+
+			if (result == -1)
+			{
+				syserr_printf(ses, "write_line_mud: write");
+			}
+		}
+		
+		if (result == -1)
+		{
+			cleanup_session(ses);
+
+			pop_call();
+			return;
 		}
 	}
-#endif
-	else if (write(ses->socket, line, size) == -1)
-	{
-		perror("write in write_line_mud");
 
-		cleanup_session(ses);
-
-		pop_call();
-		return;
-	}
-
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 1, "SEND OUTPUT", line);
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "SENT OUTPUT", line, ntos(size));
 
 	pop_call();
 	return;
@@ -281,7 +310,7 @@ int read_buffer_mud(struct session *ses)
 		pop_call();
 		return FALSE;
 	}
-	ses->read_len = translate_telopts(ses, buffer, size);
+	ses->read_len = client_translate_telopts(ses, buffer, size);
 
 	pop_call();
 	return TRUE;
@@ -356,6 +385,13 @@ void readmud(struct session *ses)
 
 						break;
 					}
+					else if (HAS_BIT(ses->flags, SES_FLAG_AUTOPATCH))
+					{
+						if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
+						{
+							ses->check_output = utime() + 100000ULL;
+						}
+					}
 				}
 			}
 		}
@@ -426,9 +462,21 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED LINE", linebuf, line);
 
+	if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "CATCH RECEIVED LINE", linebuf, line))
+	{
+		pop_call();
+		return;
+	}
+
 	if (prompt)
 	{
 		check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "RECEIVED PROMPT", linebuf, line);
+
+		if (check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "CATCH RECEIVED PROMPT", linebuf, line))
+		{
+			pop_call();
+			return;
+		}
 	}
 
 	if (HAS_BIT(ses->flags, SES_FLAG_COLORPATCH))
@@ -462,26 +510,28 @@ void process_mud_output(struct session *ses, char *linebuf, int prompt)
 		return;
 	}
 
-	add_line_buffer(ses, linebuf, prompt);
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "CATCH BUFFERED LINE", linebuf, line))
+	{
+		add_line_buffer(ses, linebuf, prompt);
+	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "BUFFERED LINE", linebuf, line);
 
 	if (ses == gtd->ses)
 	{
 		char *output = str_dup(linebuf);
 
-		printline(ses, &output, prompt);
+		print_line(ses, &output, prompt);
 
 		str_free(output);
 
-		if (!IS_SPLIT(ses))
+		if (prompt)
 		{
-			gtd->input_off = 1 + strip_vt102_strlen(ses, linebuf);
+			if (!IS_SPLIT(ses))
+			{
+				gtd->input_off = 1 + strip_vt102_strlen(ses, linebuf);
+			}
 		}
-	}
-	else if (HAS_BIT(ses->flags, SES_FLAG_SNOOP))
-	{
-		strip_vt102_codes_non_graph(linebuf, linebuf);
-
-		tintin_printf2(gtd->ses, "[%s] %s", ses->name, linebuf);
 	}
 	pop_call();
 	return;

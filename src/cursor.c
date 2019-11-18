@@ -29,15 +29,15 @@
 
 DO_COMMAND(do_cursor)
 {
-	char all[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
+	char all[BUFFER_SIZE], arg1[BUFFER_SIZE], right[BUFFER_SIZE], temp[BUFFER_SIZE];
 	int cnt;
 
-	get_arg_in_braces(ses, arg, all,  TRUE);
+	get_arg_in_braces(ses, arg, all, GET_ALL);
 
-	arg = get_arg_in_braces(ses, arg, left, FALSE);
-	arg = sub_arg_in_braces(ses, arg, right, TRUE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = sub_arg_in_braces(ses, arg, right, GET_ALL, SUB_VAR|SUB_FUN);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " CURSOR OPTIONS ");
 
@@ -67,7 +67,7 @@ DO_COMMAND(do_cursor)
 			}
 			else if (HAS_BIT(cursor_table[cnt].flags, CURSOR_FLAG_GET_ONE))
 			{
-				if (is_abbrev(left, cursor_table[cnt].name))
+				if (is_abbrev(arg1, cursor_table[cnt].name))
 				{
 					cursor_table[cnt].fun(ses, right);
 
@@ -644,7 +644,7 @@ DO_CURSOR(cursor_enter)
 
 		if (root->update >= 0 && root->update < root->used)
 		{
-			strcpy(gtd->input_buf, root->list[root->update]->left);
+			strcpy(gtd->input_buf, root->list[root->update]->arg1);
 		}
 
 		DEL_BIT(gtd->flags, TINTIN_FLAG_HISTORYSEARCH);
@@ -694,7 +694,7 @@ DO_CURSOR(cursor_history_next)
 
 		for (root->update++ ; root->update < root->used ; root->update++)
 		{
-			if (*gtd->input_buf && find(ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
+			if (*gtd->input_buf && find(ses, root->list[root->update]->arg1, gtd->input_buf, SUB_NONE))
 			{
 				break;
 			}
@@ -702,7 +702,7 @@ DO_CURSOR(cursor_history_next)
 
 		if (root->update < root->used)
 		{
-			input_printf("\e[%dG  \e[0K%.*s\e[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("\e[%dG  \e[0K%.*s\e[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->arg1, gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		return;
 	}
@@ -720,7 +720,7 @@ DO_CURSOR(cursor_history_next)
 	{
 		for (root->update++ ; root->update < root->used ; root->update++)
 		{
-			if (!strncmp(gtd->input_tmp, root->list[root->update]->left, strlen(gtd->input_tmp)))
+			if (!strncmp(gtd->input_tmp, root->list[root->update]->arg1, strlen(gtd->input_tmp)))
 			{
 				break;
 			}
@@ -735,7 +735,7 @@ DO_CURSOR(cursor_history_next)
 	}
 	else
 	{
-		strcpy(gtd->input_buf, root->list[root->update]->left);
+		strcpy(gtd->input_buf, root->list[root->update]->arg1);
 	}
 
 	gtd->input_len = strlen(gtd->input_buf);
@@ -758,7 +758,7 @@ DO_CURSOR(cursor_history_prev)
 
 		for (root->update-- ; root->update >= 0 ; root->update--)
 		{
-			if (*gtd->input_buf && find(ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
+			if (*gtd->input_buf && find(ses, root->list[root->update]->arg1, gtd->input_buf, SUB_NONE))
 			{
 				break;
 			}
@@ -766,7 +766,7 @@ DO_CURSOR(cursor_history_prev)
 
 		if (root->update >= 0)
 		{
-			input_printf("\e[%dG  \e[0K%.*s\e[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
+			input_printf("\e[%dG  \e[0K%.*s\e[%dG", gtd->input_off + inputline_cur_str_len() + 2, gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->arg1, gtd->input_off + gtd->input_pos - gtd->input_hid);
 		}
 		return;
 	}
@@ -782,7 +782,7 @@ DO_CURSOR(cursor_history_prev)
 
 		for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 		{
-			if (!strncmp(gtd->input_tmp, root->list[root->update]->left, strlen(gtd->input_tmp)))
+			if (!strncmp(gtd->input_tmp, root->list[root->update]->arg1, strlen(gtd->input_tmp)))
 			{
 				break;
 			}
@@ -792,7 +792,7 @@ DO_CURSOR(cursor_history_prev)
 	{
 		for (root->update-- ; root->update >= 0 ; root->update--)
 		{
-			if (!strncmp(gtd->input_tmp, root->list[root->update]->left, strlen(gtd->input_tmp)))
+			if (!strncmp(gtd->input_tmp, root->list[root->update]->arg1, strlen(gtd->input_tmp)))
 			{
 				break;
 			}
@@ -807,7 +807,7 @@ DO_CURSOR(cursor_history_prev)
 	}
 	else
 	{
-		strcpy(gtd->input_buf, root->list[root->update]->left);
+		strcpy(gtd->input_buf, root->list[root->update]->arg1);
 	}
 
 	gtd->input_len = strlen(gtd->input_buf);
@@ -844,7 +844,7 @@ DO_CURSOR(cursor_history_search)
 	{
 		if (root->update >= 0 && root->update < root->used)
 		{
-			strcpy(gtd->input_buf, root->list[root->update]->left);
+			strcpy(gtd->input_buf, root->list[root->update]->arg1);
 		}
 		input_printf("\e[1G\e[0K");
 
@@ -879,7 +879,7 @@ DO_CURSOR(cursor_history_find)
 
 	for (root->update = root->used - 1 ; root->update >= 0 ; root->update--)
 	{
-		if (*gtd->input_buf && find(ses, root->list[root->update]->left, gtd->input_buf, SUB_NONE))
+		if (*gtd->input_buf && find(ses, root->list[root->update]->arg1, gtd->input_buf, SUB_NONE))
 		{
 			break;
 		}
@@ -887,7 +887,7 @@ DO_CURSOR(cursor_history_find)
 
 	if (root->update >= 0)
 	{
-		input_printf("\e[%dG ]  %.*s\e[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->left, gtd->input_off + gtd->input_pos - gtd->input_hid);
+		input_printf("\e[%dG ]  %.*s\e[%dG", gtd->input_off + inputline_cur_str_len(), gtd->input_off + inputline_max_str_len() - inputline_cur_str_len() - 4, root->list[root->update]->arg1, gtd->input_off + gtd->input_pos - gtd->input_hid);
 	}
 	else
 	{
@@ -1259,7 +1259,7 @@ int cursor_tab_add(int input_now, int stop_after_first)
 	{
 		for (root->update = 0 ; root->update < root->used ; root->update++)
 		{
-			substitute(gtd->ses, root->list[root->update]->left, tab, SUB_VAR|SUB_FUN);
+			substitute(gtd->ses, root->list[root->update]->arg1, tab, SUB_VAR|SUB_FUN);
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
@@ -1267,7 +1267,7 @@ int cursor_tab_add(int input_now, int stop_after_first)
 				{
 					continue;
 				}
-				insert_node_list(gtd->ses->list[LIST_COMMAND], tab, "", "");
+				insert_node_list(gtd->ses->list[LIST_COMMAND], tab, "", "", "");
 
 				if (stop_after_first)
 				{
@@ -1288,11 +1288,11 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 	line_cnt = 0;
 
-	scroll_cnt = gtd->ses->scroll_row;
+	scroll_cnt = gtd->ses->scroll->row;
 
 	do
 	{
-		if (scroll_cnt == gtd->ses->scroll_max -1)
+		if (scroll_cnt == gtd->ses->scroll->max -1)
 		{
 			scroll_cnt = 0;
 		}
@@ -1301,12 +1301,12 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 			scroll_cnt++;
 		}
 
-		if (gtd->ses->buffer[scroll_cnt] == NULL)
+		if (gtd->ses->scroll->buffer[scroll_cnt] == NULL)
 		{
 			break;
 		}
 
-		if (str_hash_grep(gtd->ses->buffer[scroll_cnt], FALSE))
+		if (str_hash_grep(gtd->ses->scroll->buffer[scroll_cnt], FALSE))
 		{
 			continue;
 		}
@@ -1316,13 +1316,13 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 			break;
 		}
 
-		strip_vt102_codes(gtd->ses->buffer[scroll_cnt], buf);
+		strip_vt102_codes(gtd->ses->scroll->buffer[scroll_cnt], buf);
 
 		arg = buf;
 
 		while (*arg)
 		{
-			arg = get_arg_stop_spaces(gtd->ses, arg, tab, 0);
+			arg = get_arg_in_braces(gtd->ses, arg, tab, GET_ONE);
 
 			if (!strncmp(tab, &gtd->input_buf[input_now], strlen(&gtd->input_buf[input_now])))
 			{
@@ -1340,7 +1340,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 				{
 					continue;
 				}
-				insert_node_list(gtd->ses->list[LIST_COMMAND], tab, "", "");
+				insert_node_list(gtd->ses->list[LIST_COMMAND], tab, "", "", "");
 
 				if (stop_after_first)
 				{
@@ -1355,7 +1355,7 @@ int cursor_auto_tab_add(int input_now, int stop_after_first)
 
 		}
 	}
-	while (scroll_cnt != gtd->ses->scroll_row);
+	while (scroll_cnt != gtd->ses->scroll->row);
 
 	return FALSE;
 }
@@ -1370,9 +1370,9 @@ void cursor_hide_completion(int input_now)
 	f_node = root->list[0];
 	l_node = root->list[root->used - 1];
 
-	if (root->used && !strcmp(l_node->left, gtd->input_buf + input_now))
+	if (root->used && !strcmp(l_node->arg1, gtd->input_buf + input_now))
 	{
-		len_change = strlen(l_node->left) - strlen(f_node->left);
+		len_change = strlen(l_node->arg1) - strlen(f_node->arg1);
 
 		if (len_change > 0)
 		{
@@ -1412,14 +1412,14 @@ void cursor_show_completion(int input_now, int show_last_node)
 	{
 		input_printf("\e[%dD\e[%dP", gtd->input_len - input_now, gtd->input_len - input_now);
 	}
-	if (input_now + (int) strlen(node->left) < gtd->ses->cols - 2)
+	if (input_now + (int) strlen(node->arg1) < gtd->ses->cols - 2)
 	{
-		input_printf("%s", node->left);
+		input_printf("%s", node->arg1);
 	}
 */
-	strcpy(&gtd->input_buf[input_now], node->left);
+	strcpy(&gtd->input_buf[input_now], node->arg1);
 
-	gtd->input_len = input_now + strlen(node->left);
+	gtd->input_len = input_now + strlen(node->arg1);
 	gtd->input_cur = gtd->input_len;
 
 	cursor_end(gtd->ses, "");
@@ -1476,7 +1476,7 @@ DO_CURSOR(cursor_tab_forward)
 
 	if (!root->list[0])
 	{
-		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "", "");
 	}
 	tab_found = cursor_tab_add(gtd->input_tab, TRUE);
 
@@ -1506,7 +1506,7 @@ DO_CURSOR(cursor_tab_backward)
 
 	if (!root->list[0])
 	{
-		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "", "");
 
 		cursor_tab_add(gtd->input_tab, FALSE);
 	}
@@ -1532,7 +1532,7 @@ DO_CURSOR(cursor_auto_tab_forward)
 
 	if (!root->list[0])
 	{
-		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "", "");
 	}
 
 	tab_found = cursor_auto_tab_add(gtd->input_tab, TRUE);
@@ -1563,7 +1563,7 @@ DO_CURSOR(cursor_auto_tab_backward)
 
 	if (!root->list[0])
 	{
-		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "", "");
 
 		cursor_auto_tab_add(gtd->input_tab, FALSE);
 	}
@@ -1591,7 +1591,7 @@ DO_CURSOR(cursor_mixed_tab_forward)
 
 	if (!root->list[0])
 	{
-		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "", "");
 	}
 	tab_found = cursor_tab_add(gtd->input_tab, TRUE) || cursor_auto_tab_add(gtd->input_tab, TRUE);
 
@@ -1621,7 +1621,7 @@ DO_CURSOR(cursor_mixed_tab_backward)
 
 	if (!root->list[0])
 	{
-		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "");
+		insert_node_list(root, &gtd->input_buf[gtd->input_tab], "", "", "");
 
 		cursor_tab_add(gtd->input_tab, FALSE);
 		cursor_auto_tab_add(gtd->input_tab, FALSE);
@@ -1630,12 +1630,20 @@ DO_CURSOR(cursor_mixed_tab_backward)
 	cursor_show_completion(gtd->input_tab, TRUE);
 }
 
-DO_CURSOR(cursor_win_focus_in)
+DO_CURSOR(cursor_screen_focus_in)
 {
-	check_all_events(gtd->ses, SUB_ARG, 0, 1, "WINDOW FOCUS IN", gtd->ses->name);
+	gtd->screen->focus = 1;
+
+	check_all_events(gtd->ses, SUB_ARG, 1, 1, "SCREEN FOCUS", ntos(gtd->screen->focus));
+
+	msdp_update_all("SCREEN_FOCUS", "%d", gtd->screen->focus);
 }
 
-DO_CURSOR(cursor_win_focus_out)
+DO_CURSOR(cursor_screen_focus_out)
 {
-	check_all_events(gtd->ses, SUB_ARG, 0, 1, "WINDOW FOCUS OUT", gtd->ses->name);
+	gtd->screen->focus = 0;
+
+	check_all_events(gtd->ses, SUB_ARG, 0, 1, "SCREEN FOCUS", ntos(gtd->screen->focus));
+
+	msdp_update_all("SCREEN_FOCUS", "%d", gtd->screen->focus);
 }

@@ -1,152 +1,490 @@
-Mar 2019       2.01.8
+Jul 2019        2.02.0
+------------------------------------------------------------------------------
+mapper.c        Added MAP FOLLOWED MAP event which triggers on map movement.
+                %0 = new vnum %1 = old vnum %2 = exit name. Keep in mind
+                that this event isn't triggered when using #map goto.
+
+config.c        Added #config {PACKET PATCH {AUTO} option which currently
+                only enables to 0.1 seconds when #split is enabled.
+
+msdp.c          Added MAP_ROOM_INFO msdp event.
+
+math.c          Strings in #if and #math can now be defined using {string}
+                instead of "string". The quote syntax will remain valid.
+
+mapper.c        Added #map offset <row> <col> <row> <col> to define a square
+                within which the vt map will be printed.
+
+screen.c        Added #screen clear option which allows clearing the screen,
+                the scrolling region, or a <row> <col> <row> <col> square.
+                For all square operations you must define the top left and
+                bottom right corner. Negative numbers are allowed which
+                behave identical to #showme.
+
+mapper.c        #map map now allows a very large range and when logging will
+                use the configured log mode. This allows generating a large
+                html map.
+
+mapper.c        Improved the #map legend interface and made it easier to
+                update by using the index number. I haven't added special
+                legends for ascii and unicode graphic modes yet.
+
+buffer.c        Added #buffer up 1 and #buffer down 1 to scroll the buffer up
+                or down by one line. Values of 2 and higher are allowed as
+                well with the maximum set at the screen size.
+
+msdp.c          Added some SCREEN based MSDP events to #port. Renamed a few
+                #screen arguments / events to something I was happier with.
+
+chat.c          Added #chat accept <buddy> [boost] option for faster file
+                transfer. The boost value must be between 1 and 1000.
+
+screen.c        Added #screen get <top_row|bot_row|top_split|bot_split> <var>
+
+vt100.c         Added VT100 SCROLL REGION event.
+
+main.c          Added SYSTEM ERROR and CATCH SYSTEM ERROR events.
+
+mapper.c        Added #map color symbol option.
+
+files.c         Added accidental overwrite protection when trying to write
+                a command file to a .map file. Use {force} to force. It's
+                suggested to use .tin files for command files.
+
+mapper.c        Added accidental overwrite protection when trying to save a
+                map to a .tin file. Can add the {force} argument to force
+                writing anyways. It's suggested to use .map for map files.
+
+mapper.c        Made all map search options require a perfect match. To look
+                for a sub string one needs to use #map find {text%*} or
+                #map find {%*text%*}
+
+mapper.c        Exits created in the global room should now work without
+                needing to set a special alias that performs a #map goto.
+                This also means that if you set the exit command on an exit
+                in the global room it ought to work.
+
+mccp.c          Enabled MCCP3 for #port which allows two-way compression.
+                This should be useful for people who send a lot of data back
+                and forth. It uses TELNET option code 87.
+
+port.c          Added initial telnet support to #port. This still needs some
+                more work to get MSDP working, and I'm also working on
+                the ability to use JSON syntax with MSDP event handling.
+
+telopt_server.c Enabled.
+
+parse.c         Added a debug call for incorrect abbreviation checks.
+
+mapper.c        Added invisible exit flag. It's intended to make exits
+                invisible. If you want to make hidden rooms invisible try
+                #map color hide <208>
+
+mapper.c        Added up/down exit flag colors in unicodegraphics mode.
+
+screen.c        Added some more screen stuff, see #help screen.
+
+parse.c         Added experimental change where in command lookups a space
+                can be substituted with a _ character. For example
+                #config {COMMAND ECHO} ON equals #config COMMAND_ECHO ON.
+
+                If this change causes unforseen problems it'll likely be
+                reverted.
+
+telopt_client.c No longer sending proper telnet replies for echo due to
+                infinite loop problems on a few muds that improperly
+                handle telnet negotiations.
+
+mapper.c        Improved void room handling in unicodegraphics mode.
+
+prompt.c        Using #prompt or #showme without a column argument will
+                clear the line.
+
+main.c          Improved signal handling.
+
+update.c        The %2 value of TIME events now holds the day of the week
+                instead of the week of the year. The value is between 0 and 6
+                and specific events for each week day are possible.
+
+update.c        The %3 value of TIME events holds the day of the month. The
+                value is between 0 and 31 and specific events for a day of the
+                month are now possible.
+
+main.c          Updated system error handling.
+
+mapper.c        Improved #map color command.
+
+mapper.c        Further improved unicodegraphics mode.
+
+mapper.c        Further improved blockgraphics mode.
+
+mapper.c        Hidden rooms are now shown to avoid confusion.
+
+mapper.c        Added #map color avoid
+
+mapper.c        Added #map color hide
+
+prompt.c        Changed #prompt to use the new {row} {col} input.
+
+mapper.c        Changed the #map map command which now has the syntax:
+
+                #map map {rows} {cols} {append|write|list|variable} {arg}
+
+terminal.c      Changed WINDOW RESIZE %0 to list rows, and %1 to list cols.
+
+event.c         Changed all MOUSE events to %0=row %1=col %2=-row %3=-row
+
+*.c             Currently there are two big problems that need to be addressed
+                to continue smooth development.
+
+                1. In VT100 row 1 is the top line, while in tintin row 1 is
+                   the split line.
+                2. In VT100 row, col (y, x) notation is used, while I've been
+                   favoring col, row (x, y) notation.
+
+                While this may seem like a minor issue, I'm utilizing VT100
+                more often using more complex operations, and TinTin++ is
+                currently pretty much mirrored in the way it behaves. This
+                results in relatively simple math becoming weird unintuitive
+                math, making already complex code even more complex, resulting
+                in bugs and unreadable code that requires a lot of mental
+                gymnastics to figure out.
+
+                Subsequently I decided on a major interface change that will
+                result in several compatibility issues.
+
+                #split will stay the way it is.
+
+                #showme {text} will stay the same
+                #showme {text} {0} will become invalid.
+                #showme {text} {1} will print on the top line.
+                #showme {text} {-1} will print on the bottom line / input
+                   line.
+                #showme {text} {-2} will print on the default split line.
+
+                #prompt {text} {substitution} will stay the same and print
+                   on the default split line.
+                #prompt {text} {substitution} {0} will become invalid.
+                #prompt {test] {substitution} {1} will write to the top line.
+                #prompt {text} {substitution} {-1} will write to the bottom
+                   line / input line.
+                #prompt {text} {substitution} {-2} will write to the 2nd line
+                   from the bottom, which is the default split line.
+
+                All code that takes {col} {row} as an argument will be changed
+                to {row} {col}. The main reason for this change is consistency,
+                and because I've repeatedly swapped row and col in VT100 which
+                can be a tricky bug to track down.
+
+Jul 2019        2.01.9 (beta)
 ------------------------------------------------------------------------------
 
-update.c       Added MAP UPDATED VTMAP event, triggers right after each
-               vtmap redraw.
 
-config.c       Added CHILD LOCK config option to disable tintin command input.
+session.c       Added the 'ats' keyword to the session find routine to return
+                the active tintin session.
 
-line.c         Enabled the #line substitute arguments option which has a few
-               limited usecases.
+mapper.c        Fixed the #map map {<width> x <height>} calculations.
 
-main.c         Added better #! hashbang support, with %0 in the PROGRAM START
-               event holding all unrecognized launch arguments. %1 holds the
-               1st argument (program name), %2 the 2nd argument, etc.
+buffer.c        When using #snoop on a session #showme and a few other things
+                were not displayed. This should be fixed now.
 
-data.c         Added #INFO SYSTEM option, with #INFO SYSTEM SAVE saving the
-               data to the info[SYSTEM] variable. Current variables
-               supported are CLIENT_NAME and CLIENT_VERSION. 
+nest.c          Added basic syntax highlighting for variables, only works
+                when using #var {variable>
 
-event.c        Added %4 and %5 arguments to mouse click events which hold the
-               word and line that was clicked. This is still under
-               construction and non-functional.
+tokenize.c      Added basic syntax highlight for lists, only works when
+                using #<list> {list}
 
-net.c          Slightly improved traditional prompt handling, but the code
-               will need a proper update to work properly.
+help.c          Added TIME help file.
 
-parse.c        Added UNKNOWN COMMAND event, triggers on #jklfdjl and other
-               non-existent commands.
+tokenize.c      Fixed a bug with nested #while commands.
 
-screen.c       Added the #screen command, still under development.
+port.c          Changed #event {PORT MESSAGE} to {PORT RECEIVED MESSAGE}
+                which triggers when a message is received from a connection.
 
-telopt.c       Added VT100 OSC en CATCH VT100 OSC events.
+                Added #event {PORT MESSAGE} and {PORT LOG MESSAGE} which
+                trigger on internal messages.
 
-port.c         Fixed an issue with #port and #chat on Mac OS X.
+                All these can be prefixed with CATCH.
 
-mapper.c       Added #map global which allow setting the vnum of a room that
-               contains exits for global transportation commands, like for
-               example the recall location.
+variable.c      Fixed two crash bugs in #format, it remains a somewhat
+                vulnerable command, so you should never allow a 3rd party
+                argument to set the format string of #format or #echo, though
+                parsing 3rd party arguments as a #format/echo argument is safe.
 
-mapper.c       #added #map roomflag noglobal to indicate rooms that block
-               global transportation commands, like norecall rooms.
+                Safest is to use #line ignore #showme {text} if you want to
+                print text that is ignored by triggers.
 
-input.c        Added CATCH RECEIVED INPUT event.
-               Added RECEIVED KEYPRESS event.
-               Added CATCH RECEIVED KEYPRESS event.
+telopt_server.c Added a TELNET server for #port, it's not hooked up yet,
+                but the code merge may have caused some telnet bugs. Please
+                report any unusual telnet behavior.
 
-mapper.c       Added support for up/down displaying in blockgraphics mode.
+mapper.c        Fixed some issues with #map legend, should be able to use it
+                to change the legend now.
 
-mapper.c       Added #map flag direction to enable/disable the showing of the
-               direction arrow in the mapper. Also includes a minor
-               modification in the legend.
+buffer.c        Fixed some more scrolling issues.
 
-utf8.c         Added KOI-8 to UTF-8 conversion support, which is enabled with
-               #config charset koi2utf
+README          Updated the README file and added the NEWS and docs/syntax.txt
+                files. The NEWS file primarily contains a list of changes that
+                impact compatibility between versions.
 
-mapper.c       Added #map flag blockgraphics mode, still needs some more work.
+tel_client.c    Fixed CHARSET REQUEST handling.
 
-variable.c     Updated %a to take a UTF-8 sequence and print the corresponding
-               21 bit decimal unicode value. This requires for #config CHARSET
-               to be set to an UTF-8 mode to work.
+buffer.c        Fixed longstanding issue with the handling of long lines.
 
-               Updated %A to take a 32 bit decimal value and print the
-               corresponding unicode UTF-8 sequence. This requires for
-               #config CHARSET to be set to an UTF-8 mode to work.
 
-               Added %x which takes a hexadecimal value and prints the
-               corresponding unicode UTF-8 sequence.
 
-               Added %X which convers a 64 bit unsigned decimal value to
-               a 64 bit hexadecimal value.
 
-               Added %D which converts a 64 bit hexadecimal value to
-               a 64 bit unsigned decimal value.
+Mar 2019        2.01.8
+------------------------------------------------------------------------------
 
-math.c         Fixed an issue with 63-64 bit math.
+update.c        Added MAP UPDATED VTMAP event, triggers right after each
+                vtmap redraw.
 
-mapper.c       Added #map flag unicodegraphics mode.
+config.c        Added CHILD LOCK config option to disable tintin command
+                input. This is useful for people who want to give third
+                parties remote access to a tintin++ session.
 
-utf8.c         Added #config charset FANSI option that maps code page 437 to
-               UTF-8. Requires an UTF-8 terminal to work and you can try out
-               fansi art at 8bit.fansi.org 4201.
+line.c          Enabled the #line substitute arguments option which has a few
+                limited usecases.
 
-main.c         The -s startup option will start tt++ in screen reader mode.
+main.c          Added better #! hashbang support, with %0 in the PROGRAM START
+                event holding all unrecognized launch arguments. %1 holds the
+                1st argument (program name), %2 the 2nd argument, etc.
 
-mapper.c       Added support for direction displaying in mudfont mode.
+data.c          Added #INFO SYSTEM option, with #INFO SYSTEM SAVE saving the
+                data to the info[SYSTEM] variable. Current variables
+                supported are CLIENT_NAME and CLIENT_VERSION. 
 
-utf8.c         UTF-8 character detection should be synched with xterm.
+event.c         Added %4 and %5 arguments to mouse click events which hold the
+                word and line that was clicked. This is still under
+                construction and non-functional.
 
-mapper.c       #map legend is now completely different and supports various
-               default legends to choose from, namely:
+net.c           Slightly improved traditional prompt handling, but the code
+                will need a proper update to work properly.
 
-               [ASCII NESW          ]     [  1]  [ 32]
-               [UNICODE NESW        ]     [  1]  [ 32]
-               [UNICODE NESW LINE   ]     [  1]  [ 16]
-               [UNICODE NESW MISC   ]     [ 17]  [ 24]
-               [UNICODE NESW DIRS   ]     [ 25]  [ 32]
-               [UNICODE NESW TUBE   ]     [  1]  [ 32]
-               [MUDFONT BRAILLE TUBE]     [ 33]  [164]
-               [MUDFONT BRAILLE LINE]     [ 33]  [164]
-               [MUDFONT PRIVATE     ]     [ 33]  [164]
-               [MUDFONT CURVED      ]     [161]  [164]
-               [RESET               ]     [  1]  [164]
+parse.c         Added UNKNOWN COMMAND event, triggers on #jklfdjl and other
+                non-existent commands.
 
-               The legend exits of 164 characters and when setting for example
-               UNICODE NESW DIRS you're only redefining 8 characters from
-               position 17 to position 24.
+screen.c        Added the #screen command, still under development.
 
-prompt.c       #prompt and #showme now take a 3rd argument that sets the
-               column number at which the text is printed. The column number
-               must be between 1 and the maximum width of the screen. If a
-               negative number is provided the distance is measured from the
-               right. The line isn't automatically cleared when using
-               #showme with a column argument.
+telopt.c        Added VT100 OSC en CATCH VT100 OSC events.
 
-input.c        Added support for fullwidth UTF-8 characters. This won't be
-               working perfectly until unicode is better standardized.
+port.c          Fixed an issue with #port and #chat on Mac OS X.
 
-config.c       Added #config CHARSET BIG2UTF. When enabled text you receive
-               will be translated from BIG-5 to UTF-8, and data you send will
-               be translated from UTF-8 to BIG-5. This should allow someone
-               to play a BIG-5 mud using an UTF-8 capable terminal.
+mapper.c        Added #map global which allow setting the vnum of a room that
+                contains exits for global transportation commands, like for
+                example the recall location.
 
-path.c         Added #path describe to give a basic description of the
-               mapped path. Might be of interesting for anyone using a
-               screen reader.
+mapper.c        #added #map roomflag noglobal to indicate rooms that block
+                global transportation commands, like norecall rooms.
 
-utf8.c         Added UTF-8 character width detection.
+input.c         Added CATCH RECEIVED INPUT event.
+                Added RECEIVED KEYPRESS event.
+                Added CATCH RECEIVED KEYPRESS event.
 
-mapper.c       When #map list is used with a variable the variable is now
-               properly cleared. In addition #map list will report the
-               relative x y and z coordinates of the found rooms which can
-               be used with #map jump. This update changes the table
-               structure of the variable returned by #map list.
+mapper.c        Added support for up/down displaying in blockgraphics mode.
 
-mapper.c       Added #map legend reset option and fixed legend saving.
+mapper.c        Added #map flag direction to enable/disable the showing of the
+                direction arrow in the mapper. Also includes a minor
+                modification in the legend.
 
-mapper.c       Added new mudfont mode based on the braille unicode block.
+utf8.c          Added KOI-8 to UTF-8 conversion support, which is enabled with
+                #config charset koi2utf
 
-mapper.c       Changed the RIVER map room flag to CURVED and added support
-               for it in simple and mudfont mode.
+mapper.c        Added #map flag blockgraphics mode, still needs some more
+                work.
 
-mapper.c       Added click events that trigger when clicking a room on the
-               vt map reporting the room vnum.
+variable.c      Updated %a to take a UTF-8 sequence and print the
+                corresponding 21 bit decimal unicode value. This requires for
+                #config CHARSET to be set to an UTF-8 mode to work.
 
-session.c      Trying to properly terminate zombie processes after using #run.
+                Updated %A to take a 32 bit decimal value and print the
+                corresponding unicode UTF-8 sequence. This requires for
+                #config CHARSET to be set to an UTF-8 mode to work.
 
-telopt.c       Added support for the CHARSET telnet option.
+                Added %x which takes a hexadecimal value and prints the
+                corresponding unicode UTF-8 sequence.
 
-path.c         Added #path save <length|position> <variable> options.
+                Added %X which convers a 64 bit unsigned decimal value to
+                a 64 bit hexadecimal value.
+
+                Added %D which converts a 64 bit hexadecimal value to
+                a 64 bit unsigned decimal value.
+
+math.c          Fixed an issue with 63-64 bit math.
+
+mapper.c        Added #map flag unicodegraphics mode.
+
+utf8.c          Added #config charset FANSI option that maps code page 437 to
+                UTF-8. Requires an UTF-8 terminal to work and you can try out
+                fansi art at 8bit.fansi.org 4201.
+
+main.c          The -s startup option will start tt++ in screen reader mode.
+
+mapper.c        Added support for direction displaying in mudfont mode.
+
+utf8.c          UTF-8 character detection should be synched with xterm.
+
+mapper.c        #map legend is now completely different and supports various
+                default legends to choose from, namely:
+
+                [ASCII NESW          ]     [  1]  [ 32]
+                [UNICODE NESW        ]     [  1]  [ 32]
+                [UNICODE NESW LINE   ]     [  1]  [ 16]
+                [UNICODE NESW MISC   ]     [ 17]  [ 24]
+                [UNICODE NESW DIRS   ]     [ 25]  [ 32]
+                [UNICODE NESW TUBE   ]     [  1]  [ 32]
+                [MUDFONT BRAILLE TUBE]     [ 33]  [164]
+                [MUDFONT BRAILLE LINE]     [ 33]  [164]
+                [MUDFONT PRIVATE     ]     [ 33]  [164]
+                [MUDFONT CURVED      ]     [161]  [164]
+                [RESET               ]     [  1]  [164]
+
+                The legend exits of 164 characters and when setting for
+                example UNICODE NESW DIRS you're only redefining 8 characters
+                from position 17 to position 24.
+
+prompt.c        #prompt and #showme now take a 3rd argument that sets the
+                column number at which the text is printed. The column number
+                must be between 1 and the maximum width of the screen. If a
+                negative number is provided the distance is measured from the
+                right. The line isn't automatically cleared when using
+                #showme with a column argument.
+
+input.c         Added support for fullwidth UTF-8 characters. This won't be
+                working perfectly until unicode is better standardized.
+
+config.c        Added #config CHARSET BIG2UTF. When enabled text you receive
+                will be translated from BIG-5 to UTF-8, and data you send will
+                be translated from UTF-8 to BIG-5. This should allow someone
+                to play a BIG-5 mud using an UTF-8 capable terminal.
+
+path.c          Added #path describe to give a basic description of the
+                mapped path. Might be of interesting for anyone using a
+                screen reader.
+
+utf8.c          Added UTF-8 character width detection.
+
+mapper.c        When #map list is used with a variable the variable is now
+                properly cleared. In addition #map list will report the
+                relative x y and z coordinates of the found rooms which can
+                be used with #map jump. This update changes the table
+                structure of the variable returned by #map list.
+
+mapper.c        Added #map legend reset option and fixed legend saving.
+
+mapper.c        Added new mudfont mode based on the braille unicode block.
+
+mapper.c        Changed the RIVER map room flag to CURVED and added support
+                for it in simple and mudfont mode.
+
+mapper.c        Added click events that trigger when clicking a room on the
+                vt map reporting the room vnum.
+
+session.c       More properly terminating zombie processes after using #run.
+
+telopt.c        Added support for the CHARSET telnet option. Currently
+                supporting UTF-8, BIG-5, and FANSI.
+
+path.c          Added #path save <length|position> <variable> options.
+
+
+Feb 2019       
+------------------------------------------------------------------------------
+                There was a question regarding copyright and licensing
+                recently so I made some changes and I'm writing this entry to
+                clarify a few things.
+
+           1992 Peter Joachim Unold released TINTIN III with the implicit
+                right to create derived works and the request for derived
+                work to rename the client and clearly state the author. On
+                usenet Peter Unold later confirmed that he considered his
+                source code release to be public domain.
+
+           1995 Bill Reiss released TinTin++ 1.5 without a copyright notice,
+                two mentions of authorship, and the implicit understanding
+                that the work is considered public domain with the exception
+                of the tintin15.txt manual which is explicitly copyrighted to
+                Joann Ellsworth. It is also made clear that derived works
+                should not use the name TinTin++.
+
+           2001 David Chan released TinTin++ 1.85 without a copyright notice
+                just like all previous TinTin++ releases and 4 mentions of
+                having made changes in the source code.
+
+           2001 David Chan and Robert Ellsworth released TinTin++ 1.86 under
+                the GPL 2 or later with the 2002 copyright assigned to David
+                Chan, Robert Ellsworth, and a reference to the CREDITS file
+                on July 12th, 2001.
+
+                David Chan would have been unable to do so legally without the
+                explicit permission of Bill Reiss and several other notable
+                contributors unless TinTin++ 1.85 which was released without
+                a copyright notice or license was considered by all parties to
+                be public domain software.
+
+                Subsequently David Chan nor Robert Ellsworth could
+                retroactively return copyright to previous authors. However,
+                David Chan and Robert Ellsworth could consider themselves,
+                and they in fact did, the copyright holders of the public
+                domain TinTin++ 1.85 derived GPL 2 licensed software they
+                titled TinTin++ 1.86.
+
+                The reason they did this can only be guessed at, but I assume
+                they were tired of hosting, developing, and answering
+                questions about TinTin++. The easiest way to get the source
+                code permanently hosted was by debianizing it, which required
+                licensing the code under GPL 2, which could only be done by the
+                copyright holder.
+
+           2001 The TinTin++ 1.86 package was debianized by Jordi Mallach
+                <jordi@debian.org> on 22 Aug 2001.
+
+           2001 Robert Ellsworth, aka Joann Ellsworth, as the copyright holder
+                licensed the tintin15.txt manual under the GPL on 28 Aug 2001.
+
+           2004 Igor van den Hoven received permission from Bill Reiss to 
+                release TinTin++ derived code under the name TinTin++.
+
+           2004 Igor van den Hoven released TinTin++ 1.90 on March 13 under
+                the GPL 2 or later with the 2004 copyright notice referring
+                to the CREDITS file. Due to the inclusion of the tintin15.txt
+                file the code could only be legally released under the GPL
+                2 or later.
+
+                Version 1.90 featured a new mathematics engine and regular 
+                expression interpreter, telnet negotations, a scroll back
+                buffer, enhanced VT102 interpretation, a more standardized
+                TINTIN scripting language, a nifty string formatter, internal
+                color manipulation, and a back to basics command structure.
+
+                TinTin++ 1.90 contained no source code from TinTin++ 1.86 and
+                over 50% of the 1.85 code had been deleted or rewritten.
+
+           2008 Igor van den Hoven released TinTin++ 1.98.3 under the GPL 2
+                or later with the copyrighted tintin15.txt manual removed.
+
+                At this point 90% of the code was rewritten and what remained
+                was primarily heavily modified code originally written by
+                Peter Unold and Bill Reiss.
+
+           2019 Igor van den Hoven released TinTin++ 2.01.8 under the GPL 3
+                or later. The copyright of over 99% of the source code is
+                held by Igor van den Hoven with minimal contributions from
+                others, making him the sole copyright holder.
+
+                TinTin++, as of version 2.01.8, may not be distributed under
+                GPL 2, and can only be distributed under GPL 3 or later. The
+                reason for this is the exploitation of a serious loophole in
+                the GPL 2 license.
+
+                The TinTin++ software as of version 1.87 is NOT public domain,
+                as the GPL 2 & 3 licenses explicitly require a legal copyright
+                holder in order to legally enforce the license. Nor do I
+                desire to relinquish my rights to do as I please with software
+                that I've worked on for close to 20 years.
+
+                If anything is unclear feel free to contact me.
 
 Feb 2019       2.01.7
 ------------------------------------------------------------------------------
@@ -181,6 +519,7 @@ path.c         Added #path create, destroy, goto, move start, stop, swap, undo
                You can now have a position on a path, which is displayed
                with #path map. This allows using #path move backward when a
                #path walk forward is interrupted.
+
 
 Jan 2019       2.01.6
 ------------------------------------------------------------------------------
@@ -249,6 +588,7 @@ scan.c         Changed #scan syntax to #scan {ABORT|CSV|TSV|TXT} {filename}
 config.c       Changed the random number generator to 64 bit with each
                session having its own unique seed that can be set with
                #config {random seed}.
+
 
 Jan 2018       2.01.5
 ------------------------------------------------------------------------------
@@ -595,6 +935,7 @@ mapper.c       Added #map color here option to set the color of the current
 
 mapper.c       Fixed a path finding issue related to the avoid flag.
 
+
 Sep 2011       2.00.8
 --------------------------------------------------------------------------------
 
@@ -641,6 +982,7 @@ highlight.c    Added support for xterm 256 color names, dark azure, dark ebony,
 variables.c    Added the %A #format option which prints the corresponding ASCII
                value of the given character. Useful for low level string
                handling.
+
 
 Apr 2011       2.00.7
 --------------------------------------------------------------------------------
@@ -805,6 +1147,7 @@ tokenize.c     Fixed a bug with the verbose state being lost when starting a
 tinexp.c       Fixed a bug with embedded variables not getting substituted when
                used in nested variables.
 
+
 Aug 2010       2.00.4
 --------------------------------------------------------------------------------
 
@@ -851,6 +1194,7 @@ path.c         Added the option to use #path load {n;e;s;w;u;d}
 path.c         When using #path run {delay} you can remove pending run commands
                (fairly) safely using: #undelay PATH %d
                This will also work for #map run {location} {delay}
+
 
 Jul 2010       2.00.3
 --------------------------------------------------------------------------------
@@ -911,6 +1255,7 @@ mapper.c       Added MAP ENTER MAP and MAP EXIT MAP events.
 split.c        Redrawing the VTMAP whenever the split settings are reset,
                typically on session switch and screen resize.
 
+
 Apr 2010       2.00.2
 --------------------------------------------------------------------------------
 
@@ -951,6 +1296,7 @@ tinexp.c       Function arguments are no longer space but semicolon separated.
 mapper.c       Updated messages to be non triggerable and to only echo on manual
                input.
 
+
 Feb 2010       2.00.1
 --------------------------------------------------------------------------------
 
@@ -981,6 +1327,7 @@ math.c         Fixed floating point handling.
 
 data.c         Fixed floating point associative array handling.
 
+
 Jan 2010       2.00.0
 --------------------------------------------------------------------------------
 
@@ -998,6 +1345,7 @@ tinexp.c       Fixed COMMAND_SEPARATOR related bug introduce in 1.99.9.
 misc.c         Added escape substitutions to vt row echo calls.
 
 buffer.c       Added #buffer get option.
+
 
 Nov 2009       1.99.9
 --------------------------------------------------------------------------------
@@ -1043,6 +1391,7 @@ misc.c         Added support for using ; in #forall.
 
 mapper.c       Updated the map grid to allocate memory for a future
                #map dump 99x99 <file> command.
+
 
 Jul 2009       1.99.7
 --------------------------------------------------------------------------------
@@ -1140,12 +1489,14 @@ cursor.c       Replaced #cursor echo with 'echo on' and 'echo off'
 cursor.c       Modifying the input buffer while tabbing will reset the
                tab finder.
 
+
 May 2009       1.99.6
 --------------------------------------------------------------------------------
 cursor.c       Added forward and backward tab completion patch by Ben Love.
 
 forkpty.c      Added forkpty patch by David Champion. It allows tintin to
                run on Solaris and other systems that lack forkpty().
+
 
 April 2009     1.99.5
 --------------------------------------------------------------------------------
@@ -1160,6 +1511,7 @@ substitute.c   #sub {trigger} {.} no longer gags text, use #gag instead.
 substitute.c   Now allowing multiple substitutions per line which are
                automatically substring substitutions.
 
+
 March 2009     1.99.4
 --------------------------------------------------------------------------------
 utils.c        Fixed 100 move map crash bug.
@@ -1170,6 +1522,7 @@ input.c        Now sending \r on enter when using #run, seems to give the best
 log.c          Added xterm 256 color html logging.
 
 terminal.c     Disabled default ctrl-s and ctrl-q behavior.
+
 
 March 2009     1.99.3
 --------------------------------------------------------------------------------
@@ -1207,6 +1560,7 @@ alias.c        Now possible to #ignore aliases.
 
 highlight.c    Fixed highlights.
 
+
 March 2009     1.99.2
 --------------------------------------------------------------------------------
 tinexp.c       Added pre-compiler for triggers, making them execute much faster.
@@ -1219,6 +1573,7 @@ input.c        Macros now default to \ca to \cz for control characters instead
 mapper.c       Can now use #map create {number of rooms}, by default the number
                of rooms is set to 15000. World size is stored as C <number> in
                map files.
+
 
 February 2009  1.99.1
 --------------------------------------------------------------------------------
@@ -1466,6 +1821,8 @@ tinexp.c       All regexp's should substitute escape codes.
 tintin19.txt   Rewrote the large manual file to contain a brief up to date
                manual instead. #help remains the primary help source.
 
+tintin15.cr    Removed the tintin15.txt copyright notice as the documentation
+               by Robert Ellsworth is no longer used.
 
 May 2008       1.98.2
 --------------------------------------------------------------------------------
@@ -1644,6 +2001,7 @@ May 2007       1.97.1
                Set #delay {name} {command} {delay} as alternative syntax
                opposed to #delay {delay} {command}
 
+
 April 2007     1.97.0
 --------------------------------------------------------------------------------
 
@@ -1736,6 +2094,7 @@ main.c         Added pathdirs for diagonal exits and spatial coordinate info.
 mapper.c       Now using spatial coordinates from pathdirs. This requires
                users to reset their saved pathdirs. If used correctly mapping
                should work for muds with a non standard exit system.
+
 mapper.c       Added movement history for #map undo
 
 mapper.c       Updated #map undo to use the map movement history
@@ -1778,58 +2137,96 @@ December 2006  1.96.5
 --------------------------------------------------------------------------------
 
 buffer.c       fixed up color handling of commands.
+
 *.c            Put on my dirty boots and annihilated all lib readline related
                stuff. Readline sucks donkey balls. You can quote me on that.
+
 terminal.c     Merger of echo.c and scrsize.c
+
 terminal.c     Added init_terminal to force character mode for input handling.
+
 terminal.c     Added custom screensize handling.
+
 rl.c           Now forwarding data on stdin to input.c
+
 input.c        Added basic command parsing options.
+
 history.c      Added tintin-esque command history support.
+
 cursor.c       Deals with cursor handling for input.c
+
 tables.c       Added a command table for cursor.c
+
 cursor.c       Added support for some readline-esque input handling.
+
 tab.c          Added my own (improved) tab handling.
+
 tab.c          Moved tab handling to cursor.c
+
 vt102.c        Made some improvements to the VT102 support.
+
 cursor.c       Added history browsing with up, down, ctrl-p and ctrl-n. Made
                some minor improvements over the readline version.
+
 utils.c        Added ins_sprintf function that properly inserts a string
                within another strong. Has formatting capabilities.
+
 input.c        Added process_input as the main input function.
+
 input.c        Added read_line function for default command parsing.
+
 input.c        Added read_key function for character mode.
+
 main.c         Moved suspend and exit functions to main.c
+
 main.c         Fixed #suspend handling.
+
 split.c        Now adjusting NAWS when changing split screen.
+
 cursor.c       Added do_cursor for using cursor features in macros.
+
 history.c      Added do_history for history manipulation.
+
 rl.c           Moved to update.c
+
 *.c            Tintin is now officially lib readline free. Good riddance.
                The binaries are 40% smaller.
+
 tinexp.c       Added 256 xterm color support using <aaa> to <fff> with rgb
                values. Background colors are set with <AAA> to <FFF>
+
 tintin.h       Added gtd->flags for global flags instead of using cludgy
                flags on gts->flags.
+
 cursor.c       Added cursor_redraw_line routine which adds readline input
                scrolling behavior. Tintin will probably work quite poorly on
                non VT100 terminals now.
+
 tables.c       Added list flags to work around the fact that I use lists for
                stuff they weren't originally intended for. Updated list parsers
                throughout the source code.
+
 main.c         Added a signal handler for SIG_TSTP to handle ctrl-z smoothly.
+
 input.c        Escaped unmatched sequences are now automagically meta converted.
+
 cursor.c       history prev and next can now be used in combination with the
                history search function.
+
 mapper.c       Improved map drawing by using virtual coordinates. 
+
 mapper.c       Added a flag to enable vt graphics mode. A hopefully universal
                legenda is: 250 223 222 200 220 186 201 204 221 188 205 202 187
                185 203 206 246
+
 mapper.c       Added a flag to draw 6x3 ascii graphics which allows displaying
                rooms going ne, nw, se, sw, u, and d.
+
 misc.c         Can no longer use commas in #loop. When using 1 argument with
                #loop it's assumed 
+
 misc.c         Can now use math in delays, as in #delay 1d5 smile.
+
 mapper.c       Added the void roomflag which can be used to turn rooms into
                links. This is mainly useful to fit overlapping areas on the
                same map without using the hide flag.
@@ -1839,9 +2236,13 @@ December 2006  1.96.4
 --------------------------------------------------------------------------------
 
 class.c        classes are now properly inherited from the main session.
+
 misc.c         fixed chinese character issue with #parse.
+
 parse.c        fixed parsing issues introduced in 1.96.3.
+
 mapper.c       debugged and updated alpha mapping code to beta.
+
 tables.c       added a mapping related sub-command table.
 
 
@@ -1849,12 +2250,16 @@ November 2006  1.96.3
 --------------------------------------------------------------------------------
 
 telopt.c       Updated telopts to login on globalvillage bbs.
+
 buffer.c       Added buffer find option, which works much like grep but instead
                places the scrollback buffer at the given search string.
+
 tinexp.c       Can now add lists of keywords between square brackets divided
                by seperators, for example [his|her|its] in actions. The actual
                text is stored in the next %0-9. Cannot be used for highlights.
+
 list.c         array_fnd function allows searching for words in lists.
+
 path.c         can now save loaded paths backward.
 
 
@@ -1862,11 +2267,16 @@ August 2006    1.96.2
 --------------------------------------------------------------------------------
 
 variables.c    Removed #getitemnr, obsolete with the #list command.
+
 variables.c    Removed #getlistlength, obsolete with the #list command.
+
 variables.c    Removed #removestring, obsolete with the #replacestring command.
+
 math.c         Added tineval to properly evaluate == and !=
+
 chat.c         Now setting NONBLOCK on the chat port due to reports about
                disconnects hanging tintin.
+
 config.c       Added #config {log level} {low|high} which is a hidden config
                option. Defaults to high, when set to low tintin will log the
                raw mud output.
@@ -1876,11 +2286,17 @@ August 2006    1.96.1
 --------------------------------------------------------------------------------
 
 misc.c         Fixed a spacing issue in do_showme.
+
 mapper.c       Fixed map drawing.
+
 telopt.c       Fixed telnet negotations to login on ISCA BBS.
+
 math.c         Commas are now stripped from numbers.
+
 math.c         Added support for floating point math.
+
 tick.c         Can use 1d10 etc for the times in #delay.
+
 main.c         Added -h and -e as startup options.
 
 
@@ -1888,12 +2304,19 @@ June 2006      1.96.0
 --------------------------------------------------------------------------------
 
 data.c         Rewrote #killall to accept arguments to kill specific lists.
+
 chat.c         Added #chat unitialize.
+
 chat.c         Added basic support for group chats.
+
 chat.c         Added support for colored names.
+
 highlight.c    Fixed crash bug for invalid highlights.
+
 class.c        Fixed crash bug with #killall related to classes.
+
 chat.c         Added #chat send which allows sending custom chat commands.
+
 chat.c         Fixed link lost crash bug.
 
 
@@ -1901,32 +2324,46 @@ April 2006     1.95.9
 --------------------------------------------------------------------------------
 
 input.c        Fixed some bugs in the character mode support.
+
 misc.c         Placed the functions in alphabetic order and added #SEND which
                will send the given argument directly to the mud. Useful for
                sending escape sequences because you cannot start a mud
                command with an escape sequence.
+
 scrsize.c      If in character mode tintin depreps the terminal temporarily
                when sending NAWS. Yet another annoying readline bug.
+
 chat.c         Added DND (do not disturb) feature. When enabled tintin will
                no longer accept new chat connections.
+
                Fixed a bug in the DNS lookup routine for addresses starting
                with a number.
+
                Can now chat to people by entering their ip address. Useful to
                deal with auto ip bans.
+
 parse.c        Complex multi words aliasses are now possible.
+
 data.c         Priority lists are now sorted alphabetically per priority level
 class.c        #class class read <file> no longer parses files for the given
                class. The code was too messy to maintain. Instead it'll open
                the class, read the file, and close the file.
+
 alias.c        Added support for complex multi word aliasses.
+
 chat.c         Added #chat public option, accepts the all argument.
+
 chat.c         Added #forward all which included session output
 chat.c         Added #color which sets the default color
 chat.c         Added a boost option for #chat accept to quadruple download
                speeds, might cause file corruption on bad connections.
+
 class.c        Rewrote some code, #unclass should work now.
+
 data.c         Issueing #tick {name} twice will now reset the ticker.
+
 math.c         Fixed invalid input handling.
+
 misc.c         Snooping a non existant session no longer crashes tintin.
 
 
@@ -1936,19 +2373,26 @@ March 2006     1.95.8
 buffer.c       While the concept works the code should be more solid. Fixed
                some bugs in the buffer code causing scrolling to crash
                on long help files.
+
 buffer.c       Added a #buffer lock option which resembles scroll lock.
+
 log.c          Fixed a bug in #log append which caused it to not generate
                html headers.
+
 chat.c         Modified the threaded chat functions to minimize accessing
                global data.
+
 chat.c         Fixed formatting bug causing chat messages containing %s to
                crash the client.
+
 chat.c         #chat who now shows user flags
 parse.c        Removed old code that allowed using " " instead of { } in
                a couple of commands such as #format. While I used it in
                some example scripts the code is causing problems.
+
 data.c         Can now use #unmacro by exactly matching the macro instead of
                having to use \\ for a single \.
+
 input.c        TinTin now enables character mode with echo off and SGA enabled.
 
 
@@ -1957,16 +2401,21 @@ December 2005  1.95.7
 
 main.c         Added a command reference table to speed up the processing of
                commands slightly.
+
 tinexp.c       The body of a by braces surrounded variable name will be
                substituted now, allowing variables as variable names.
+
 parse.c        No longer sending message spam when using an alias
 buffer.c       Fixed a long standing crash bug in the buffer cleanup routine.
+
 tinexp.c       Now matching arguments in triggers like the old tintin did. This
                will interfere with a couple of triggers but shouldn't be too
                big a problem. %0 to %9 will capture the smallest possible
                amount of text instead of the biggest.
+
 telopt.c       IAC EOR and GA spams are dealt with better with {debug telnet}
                enabled.
+
 telopt.c       Dealing with packet fragmentation in the odd case an IAC EOR or
                GA code is split, not sure if it works since it's hard to test.
 
@@ -1975,26 +2424,39 @@ October 2005   1.95.6
 --------------------------------------------------------------------------------
 
 chat.c         Added multi threading for opening new chat connections.
+
 parse.c        Added protection for infinite loops.
+
 utils.c        Added hex_number translation function.
+
 tinexp.c       Can now use \x?? where ?? is a hexadecimal number.
+
 *.c            Changed usage of \e with \033 since \e isn't supported on all
                systems.
+
 misc.c         #debug all log, logs debug info without displaying it.
+
 Makefile.in    make install now copies tt++ to /usr/bin
 parse.c        Can now disable verbatim mode after enabling it.
+
 tables.c       Got rid of unneeded table size for the command, help, and
                config table.
-variable.c     Added %D %M %Y options to print the day month year
-misc.c         Added parse command to parse strings
-misc.c         Fixed double variable substitution for #echo
+
+variable.c     Added %D %M %Y options to print the day month year.
+
+misc.c         Added parse command to parse strings.
+
+misc.c         Fixed double variable substitution for #echo.
+
 
 August 2005    1.95.5
 --------------------------------------------------------------------------------
 
 chat.c         Added some extra chat functionality: paste, serve, forward,
                ignore and peek.
+
 tinexp.c       Fixed parsing of function arguments some more.
+
 list.c         Added #list command with basic list support.
 
 
@@ -2002,57 +2464,80 @@ August 2005    1.95.4
 --------------------------------------------------------------------------------
 
 tinexp.c       Fixed some bugs in substitute that slipped in.
+
 tinexp.c       Added skipping of chinese characters in regexp functions.
+
 data.c         Fixed crash bug with killing classes
 function.c     Fixed an issue with #return in fuctions stopping the execution
                of multiple commands.
+
 rl.c           pressing control-c while connecting will abort the connection
                instead of exiting the program.
+
 chat.c         Added back the chat module that was originally included with
                version 1.86. I pretty much rewrote it while at it.
+
 configure      BIG5 configuration was giving me issues on slackware.
+
                Since I didn't feel like figuring out how the script works
                I changed it from --enable-big5 to --big5 and fiddled with
                the script till it seemed to work again.
+
 
 July 2005      1.95.3
 --------------------------------------------------------------------------------
 
 tinexp.c       Now substituting functions and arguments (if needed) in a
                function's argument list.
+
 tinexp.c       Ending a command with \ will escape the EOL (\r\n) which won't
                be appended to the end of the line. Same story for #showme.
-telopt.c       Added negotiating of EOR (end of record)
+
+telopt.c       Added negotiating of EOR (end of record).
+
 telopt.c       IAC GA and EOR will now be seen as prompt markers.
+
 files.c        Now skipping chinese characters in #read
+
 
 July 2005      1.95.2
 --------------------------------------------------------------------------------
 
 data.c         Added option to use 'all' in #message, #ignore, and #debug to
                toggle everything at once.
+
 files.c        Removed the #writesession command, it's obsolete with the new
                #class command.
+
 class.c        #class write now adds #class open/close to the begin and end
                of the file.
+
 files.c        Cleaned up a bunch of confirmation messages and made them
                gaggable.
+
 tab.c          Variables and functions in a #tab are now substituted at
                evaluation time.
+
 
 Juny 2005      1.95.1
 --------------------------------------------------------------------------------
 
 files.c        If the bracing level is off in the last line tintin reports
                the correct line instead of 0.
+
 rl.c           reading the default readline init file when leaving tintin.
                Should help with a couple of shells not handling this properly.
+
 echo.c         removed some experimental code that ended up causing double
                echoing when switching between sessions.
+
 split.c        fixed screen switching for muds with native vt102 interfaces.
+
 session.c      added #session {-|+|number} options to switch between sessions.
+
 files.c        no longer showing output while using #scan to speed things up
                for huge log files.
+
 misc.c         Added #return which used in an #if check allows bailing out of
                a semicolon seperated command string. If used in a #function
                you can also add an argument to it to set the result, as
@@ -2063,18 +2548,27 @@ June 2005      1.95.0
 --------------------------------------------------------------------------------
 
 macro.c        Added prompt handling for macro's. Still not perfect.
+
 scrsize.c      Fixed resetting of split data when resizing the screen.
+
 split.c        Now drawing split lines on all static regions to increase
                clarity for newbies.
+
 misc.c         Can now use #showme {text} {row}, with a row number given
                #showme will act like #prompt.
+
 misc.c         Can use #echo {{format} {row}} {{arguments}} as well.
+
 rl.c           Fixed #snoop messing up in #split mode.
+
 parse.c        Got rid of the code seperating high and low priority actions,
                no longer valid with the #gagline command.
+
 antisubstitute Removed antisubstitutions since there seems little reason to
                ever need them.
+
 rl.c           Checking internal messages for prompt gags now
+
 
 May 2005       1.94.9
 --------------------------------------------------------------------------------
@@ -2085,6 +2579,7 @@ files.c        Added #scan {filename} which will read in a file and send it to
                format, as well as adding gags and other text filters to make
                things more readable. I set the default logging mode to raw
                since ansi log files can now be converted to html ones.
+
 data.c         updatenode_list was acting odd, fiddled with it till it stopped
                crashing. Not sure what the problem was.
 
@@ -2095,24 +2590,31 @@ May 2005       1.94.8
 rl.c           Fixed packet patch, and added a default patcher for split mode.
                Fixed the displaying of #alias, #action, etc.
 
+
 May 2005       1.94.7
 --------------------------------------------------------------------------------
 
 main.c         Fixed #split mode being handled correctly when suspending a
                session.
+
 data.c         Removed excessive color usage when displaying triggers which was
                resulting in crashes.
+
 rl.c           No longer clearing the screen when exiting tintin++.
+
 table.c        Added flags for commands, so far only automatically substituting
                variables and functions for commands that have the sub flag.
+
 
 May 2005       1.94.6
 --------------------------------------------------------------------------------
 
 rl.c           Now adding all keyboard input to the scrollback buffer.
+
 rl.c           When in #split mode with no #prompt defined tintin tries to
                mimic normal behavior, which includes placing input at the
                end of the prompt.
+
 prompt.c       #prompt matched lines are now written to the scrollback buffer,
                to simulate the old behavior make an #action executing #gagline.
 
@@ -2121,16 +2623,23 @@ May 2005       1.94.5
 --------------------------------------------------------------------------------
 
 rl.c           Fixed a bug that caused prompts to be printed twice.
+
 debug.c        Fixed possible crash from overloading the debug stack.
+
 variable.c     Added #debug messages for #replacestring and #format.
+
 split.c        Fixed various #split bugs when creating or switching sessions.
+
 buffer.c       #buffer {i} will now give some info about the scrollback buffer.
+
 tick.c         #delay now works in the startup session. Tickers are still 
                disabled.
+
 class.c        #class <class> read <file>, now only reads in stuff that belongs
                to the given class name. Hence in order for this to work you
                need #class <class> open, and #class <class> close, calls in
                the file itself for this to work.
+
 help.c         Removed David Chan from the credit screen shown when starting
                up TinTin++. I'm sure he had the best intentions, but he spend
                two years making insignificant changes, fiddling with variables,
@@ -2142,9 +2651,11 @@ April 2005     1.94.4
 
 tintin.h       Now using strtoll instead of atoll since old platforms only
                support strtoll.
+
 telopt.c       With #config {CONVERT META} set to ON mud output will have
                it's meta characters translated, this to aid in making color
                triggers.
+
 split.c        Using #split 0 0 will create an input line without the split
                line. Useful for people who don't use #prompt.
 
@@ -2154,33 +2665,43 @@ April 2005     1.94.3
 
 log.c          Now flushing the log stream after every call so tailing a log
                file is an option.
+
 class.c        Finished the #class command.
-split.c        placed #prompt stuff in prompt.c
+
+split.c        placed #prompt stuff in prompt.c.
+
 tinexp.c       Added option to start a trigger with ~ in which case colors
                are included in string comparisons and substitutions.
+
 buffer.c       Removed the #writebuffer command, must now use:
                #buffer {write} {filename}
+
 
 May 2005       1.94.2
 --------------------------------------------------------------------------------
 
 rl.c           Internal messages are now printed to both the logfile and
                scrollback buffer.
+
 rl.c           Fixed internal messages bumping the screen while scrolling in
                locked mode.
+
 rl.c           Fixed a bug with displaying text that slipped in.
+
 buffer.c       Added the option to use #buffer h/u/d/e for scrolling.
 
-tintin.h       Removed unused macro DEFAULT_FILE_DIR
+tintin.h       Removed unused macro DEFAULT_FILE_DIR.
+
 utils.c        utime() function doesn't work correctly on cygwin, changed it's
                behavior to guarantee unique time stamps.
+
 buffer.c       No longer writing #grep output the the scrollback buffer
 main.c         Now clearing last command (often quit) when starting up tintin++
-
-
 config.c       Turned #debugtelnet command into a hidden config option.
+
                Added a hidden config option named CONVERT META, which turns key
                presses into macro readable keyboard input.
+
 class.c        Added basic support for classes, which is grouping for real.
 tables.c       Set substitute priority to save correctly.
 
@@ -2191,6 +2712,7 @@ May 2005       1.94.1
 log.c          Added the option for a second argument to the #logline command.
                If second argument is used it will instead print the given line
                to file.
+
 variable.c     Added %G thousandgroupingstring function to format to change
                for example 1000 into 1,000.
 
@@ -2202,64 +2724,98 @@ rl.c           mainloop now uses a threaded call for the old mainloop. This
                because the readline() function is blocking and I'm too lazy
                to code the stuff readline takes care of.
                The new mainloop tries to go at 100 loops per second.
+
 session.c      Got rid of connect_delay for connecting sessions. Now using
                1 timer.
+
 tick.c         Changed #ticker to use floating point precision.
+
                Added delay command: #delay {seconds delay} {command}
+
 variable.c     #format, added %L to print the argument's string length, and
                %U to print the number of micro seconds since epoch, increased
                the number of arguments from 10 to 20.
+
 misc.c         Removed the #sleep command, never worked well and should be
                obsolete with the #delay command.
+
 misc.c         #gagline, when called within an action it will gag the line.
+
 rl.c           The #snoop code wasn't working, fixed it up.
+
 data.c         Increased the buffer of show_list a little to avoid an overflow
+
 macro.h        Changed how macros work, fixing problems like needing a \n at
                the end, needing an empty line, macros being added to the
                command history. Still can't find a way to have rl erase macros.
+
                Players can enter a command within a line of text using
                [[ command ]].
                Example: tell bubba (long line) [[chat hi bibbi]] (more text)
+
 rl.c           Added the option to delay displaying and parsing possibly broken
                packets. Delay in micro seconds can be set with the PACKET PATCH
                config option. By default it's set to 0 (disabled).
+
 variables.c    Fixed #replacestring which got messed up while I added variable
                substitution to it.
+
 rl.c           Fixed echoing of commands in split mode.
+
 split.c        Changes split and prompt to work more logical, people might
                have to change their scripts, new syntax:
                #split {number of top lines} {number of bottom lines}
                default equals: #split {0} {1}
                Fixed possible color bleeding in the split line, this for noobs
                who don't know how to use tintin's color codes.
+
 files.c        /* and */ now only work when used outside braces.
+
 rl.c           No more threading, made tintin crashy as well.
+
 variable.c     Added %n (name) to #format, which capitalizes the first letter
                of the given string.
+
 buffer.c       No longer resetting the buffer if the new scrollback size 
                is the same as the old one.
+
 rl.c           prompts automatically get a newline added in split mode.
+
 session.c      Fixed problem with aliasses changing focus.
+
 rl.c           Made #snoop output non triggerable.
+
 misc.c         Added the $loop and $forall variables set in the #loop and
                #forall commands. Avoids dodgy &0 behavior in #functions.
+
 telopt.c       Added dynamic allocation of buffer space for mccp and the
                normal output buffer.
+
 rlhist.c       1 character long commands are once again added to the command
                history.
+
 files.c        If a bracket is missing TinTin gives a hint at what line the
                error might be.
+
 tinexp.c       Added option to surround a variable with brackets.
+
 variables.c    Removed restrictions on variable names.
+
 math.c         Fixed bug with #if returning the wrong session pointer.
+
 log.c          Added #logline command for actions to log 1 line of text
 rlhist.c       If no repeat match is found an error message is printed.
+
 parse.c        Added a check to ingore a trailing ';'.
+
 data.c         Increased buffer size for displaying aliasses.
+
 config.c       Changed packet patch config option from micro to milli seconds.
+
 files.c        Changed calls to isblank() (GNU only) with isspace()
 files.c        Only stripping leading spaces now, so #var bla { } will work
                once again.
+
 files.c        I got tired of confusing readnew and readold, so I removed
                readold.
 
@@ -2268,13 +2824,18 @@ February 2005  1.93.9
 --------------------------------------------------------------------------------
 
 split.c        Fixed infinite loop in do_unprompt
+
 rl.c           Added the option to call show_message() with a NULL argument
                for more generic usage.
+
 tintin.h       Set BUFFER_SIZE to 10000 OUTPUT_SIZE to 65000
                and FILE_SIZE to 150000
-files.c        Added option to #read and #write using a variable
+
+files.c        Added option to #read and #write using a variable.
+
 buffer.c       Fixed some dodgy behavior of the scroll back buffer, it should
                scroll ultra fast as well now.
+
                The buffer command now only prints the last screen worth of
                text, too lazy to re-code floating screen indexes atm.
                Added scroll lock to the config menu, to freeze the screen
@@ -2285,9 +2846,13 @@ February 2005  1.93.8
 --------------------------------------------------------------------------------
 
 tick.c         Took care of uninitalized tickers firing prematurely.
+
 session.c      Added option to make a trigger on session termination.
+
 files.c        Added a check for #read being used on a directory.
-rl.c           Fixed home/end keys being bound correctly
+
+rl.c           Fixed home/end keys being bound correctly.
+
 split.c        Allowing multiple prompt triggers to fire on the same line
                Fixed split line being 4 '-' short
 
@@ -2296,22 +2861,29 @@ December 2004  1.93.7
 --------------------------------------------------------------------------------
 
 tinexp.c       Now only converting ; to : for actions, not for aliasses etc.
+
 path.c         Made END OF PATH message triggerable.
+
 variable.c     added the do_internal_variable command, which does the same
                as do_variable, but allows to set a blank variable. Used by
                do_format and do_replacestring.
+
 rl.c           added the show_message function which only shows messages from
                setting aliasses, variables, etc when called from the command
                line, unless debug is enabled.
+
 rl.c           Now using the more_output buffer previously only used by the
                scrollback buffer to double check actions.
+
 
 December 2004  1.93.6
 --------------------------------------------------------------------------------
 
 net.c          Fixed a crash bug that slipped in with hiding passwords.
+
 net.c          Commands are now added to the buffer/log files while in split
                mode.
+
 highlight.c    Fixed bug with variables and functions not being used.
                Finished highlight code, it no longer messes up old colors.
 
@@ -2320,25 +2892,34 @@ October 2004   1.93.5
 --------------------------------------------------------------------------------
 
 files.c        Added the option to comment using /* comment */ in script files.
+
 math.c         Upgraded to do 64 bit instead of 32 bit operations.
+
 variables.c    Added the replacestring command.
+
 mapper.c       Added the function find_coord, which tries to find a room at the
                given coordinate, starting room being 0,0,0
+
 
 October 2004   1.93.4
 --------------------------------------------------------------------------------
 
-math.c         Fixed a crash bug that slipped in
-tinexp.c       Set \[ to escape as { and \] to escape as }
-main.c         Now setting application keypad mode and ESC 0 prefix on startup
+math.c         Fixed a crash bug that slipped in.
+
+tinexp.c       Set \[ to escape as { and \] to escape as }.
+
+main.c         Now setting application keypad mode and ESC 0 prefix on startup.
+
 telopt.c       Changed dont_oldenviron response to wont_oldenviron response,
                reported to fix the ability to login on some server types.
+
 
 September 2004 1.93.3
 --------------------------------------------------------------------------------
 
 log.c          Fixed a typo that broke the log command, as well as adding
                newlines to plain logging.
+
 rlhist.c       one letter commands are no longer added to the history.
 
 
@@ -2347,9 +2928,11 @@ August 2004    1.93.2
 
 mapper.c       added the redit command, for basic mapper manipulation, still
                needs a bit more work.
+
 telopts.c      Added a telnet patch from Julia Longtin which adds the basic
                telopt negotiations to initialize a telnet session when
                connecting to port 23.
+
 rl.c           Seeming the readline_echoing_p is reset to TRUE whenever
                something is written to the terminal, so I simply set it to
                whatever it should be several times a second now in the main
@@ -2359,12 +2942,17 @@ rl.c           Seeming the readline_echoing_p is reset to TRUE whenever
 July 2004      1.93.1
 --------------------------------------------------------------------------------
 
-tintin.h       added a room and exit structure for an auto mapper
-mapper.c       added a creation functions for rooms and exits
-files.c        added the #readmap function to read in a map
-mapper.c       added a routine to display an ascii map
+tintin.h       added a room and exit structure for an auto mapper.
+
+mapper.c       added a creation functions for rooms and exits.
+
+files.c        added the #readmap function to read in a map.
+
+mapper.c       added a routine to display an ascii map.
+
 mapper.c       added an algorithm to calculate the shortest path between two
-               rooms
+               rooms.
+
 main.c         the verbatimchar is set as \\ instead of \ as default, this to
                allow escaping braces at a later date with this config option
                causing trouble.
@@ -2373,13 +2961,17 @@ main.c         the verbatimchar is set as \\ instead of \ as default, this to
 June 2004      1.93.0
 --------------------------------------------------------------------------------
 
-log.c          added variable substitution to *arg
-misc.c         added variable substitution to *arg
+log.c          added variable substitution to *arg.
+
+misc.c         added variable substitution to *arg.
+
 parse.c        changed escape character behavior, #format will need %+4s
                instead of %4s if used in an argument or action. Used to
                be possible to use \%4s but that's no good.
+
 tinexp.c       \a \e \n \r \t are now translated to the according characters.
                (\a equals what #bell does, \r\n would equal #cr, \e is ESC)
+
 parse.c        removed premature stripping of '\' character in the parsing
                routines. Escaped characters are dealt with when data is send
                to the mud or screen.
@@ -2398,70 +2990,98 @@ parse.c        made sure $variables are substituted in the parsing command,
                as well as $vars being substituted as session A passes a
                command to session B. Otherwise variables remain variable
                untill the final execution stage.
+
 data.c         Added nesting syntax highlighting for lists.
+
 math.c         Added support for "T" and "F" (feature was lost in rewrite)
+
 math.c         Added the 'd' operator for a random dice roll
+
 config.c       rewrote some basic stuff in the configuration routines,
                the original setup was a bit dodgy.
+
 highlight.c    Added priorities to highlighting
+
 substitute.c   Added priorities to substitutions
+
 split.c        Added check so a prompt isn't shown for background sessions.
+
 variable.c     Added %R and %C to #format for nr of rows and columns
 
 
 March 2004     1.90.0
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
--misc.c        added a higher precision to the #sleep command, you can now
+misc.c         added a higher precision to the #sleep command, you can now
                enter #sleep 0.5 to sleep for half a second, precision is in
                miliseconds. Also using nanosleep now, with additional support
-               to continue sleeping
--variables.c   added %t to #format, which will print the epoch time.
+               to continue sleeping.
+
+variables.c    added %t to #format, which will print the epoch time.
                added %T to #format, which will print the military time
                of the provided number as: hours:minuts
                added %d to #format, which will print the military data of the
                provided number as: day:month:year (if there's no such thing
-               as a military date I hope you still know what I mean)
--rl.c          set tintin to 100 loops per second, might seem too much, but
+               as a military date I hope you still know what I mean).
+
+rl.c           set tintin to 100 loops per second, might seem too much, but
                it doesn't matter cpu wise, and it's always fun when tintin's
                triggers beat those of most other client.
--math.c        added + - ! and ~ to the mathexp interpreter.
--regexp.c      added color support. codes are entered as <abc> and is pretty
+
+math.c         added + - ! and ~ to the mathexp interpreter.
+
+regexp.c       added color support. codes are entered as <abc> and is pretty
                much translated as : \e[a;b+30;c+40m with '8' counting as
                a skipped color code. People can write their own functions to
                make tintin display colors of their own choice.
--variables.c   added %R to #format, which will print a number between 1 and
+
+variables.c    added %R to #format, which will print a number between 1 and
                the given number in the argument. Removed #random command.
                added %m to #format, which will do the same as #math
--regexp.c      added option for end of line terminator ^ so adding ^ to the
+
+regexp.c       added option for end of line terminator ^ so adding ^ to the
                end of the line will make tintin return false if the regexp
                returns with an unfinished match string.
--main.c        I update the credit screen, figured it would appropriate to
+
+main.c         I update the credit screen, figured it would appropriate to
                put my own name on it after all this work. I turned it into
                a helpfile while at it, #help credits should show it.
--regexp.c      made the substitute recursively double check variables and
+
+regexp.c       made the substitute recursively double check variables and
                functions if they hold a variable of a different kind, useful
                for variables or functions holding color codes.
--misc.c        added ignore and debug commands, debug won't do an aweful lot
+
+misc.c         added ignore and debug commands, debug won't do an aweful lot
                as of yet though.
--variable.c    figured I should add some more color support, so added a way
+
+variable.c     figured I should add some more color support, so added a way
                to format tintin color names, using #format %c {name}
--variable.c    #format again, %h will create a tintin header line
--variable.c    fixed how variable assignment was being dealt with in triggers,
+
+variable.c     #format again, %h will create a tintin header line.
+
+variable.c     fixed how variable assignment was being dealt with in triggers,
                can now change and display variables correctly on the fly.
--rlhist.c      changed command repeation behavior.
--rlhist.c      removed the history command, no longer needed to look up the
+
+rlhist.c       changed command repeation behavior.
+
+rlhist.c       removed the history command, no longer needed to look up the
                index, just a working short memory.
--config.c      added repeat on enter option in config
--parse.c       the command part of a line received by parse input
+
+config.c       added repeat on enter option in config.
+
+parse.c        the command part of a line received by parse input
                has vars and functions substituted right away.
+
                If passing a command to another session the functions and
                variables are substituted as well, setting the values of
                the controlling session.
--math.c        Added the tintoi and tincmp functions, which are enhanced
+
+math.c         Added the tintoi and tincmp functions, which are enhanced
                versions of atoi and strcmp.
+
 net.c          Added some code to stop enters being written to the scrollback
                buffer, useful for people using #cr to bust a prompt.
+
 rl.c           Got rid of the prompt saving stuff, now using brute force,
                refresh the prompt everytime the screen is updated. This to
                work around a bug in readline that gives odd behavior with
@@ -2469,129 +3089,232 @@ rl.c           Got rid of the prompt saving stuff, now using brute force,
 
 
 March 2004     1.89.0
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-- math.c       Added a close to complete mathematical expression routine.
+math.c         Added a close to complete mathematical expression routine.
                Needs some work still but it works. Also allows for comparing
                strings <= >= == != if you enclose the strings in " ". It's
                quite a bit better than the old one, though it's not supporting
                T, F, and '!' since it's string based, shouldn't be too hard
                adding some better string support.
-- ivars.c      stripped all the stuff that is now covered by math.c or
+
+ivars.c        stripped all the stuff that is now covered by math.c or
                variables.c only leaving #ifexits. And then it occured to me
                that #if {"$variable" != "$*"} {true} {false} would
                very well replace the 'ifexits' check. So ivars.c is no more.
-- data.c       deletenode_list now properly keeps track of a global update
+
+data.c         deletenode_list now properly keeps track of a global update
                node. Can only use one noderoot->update per program state.
-- session.c    cleanup_session now properly keeps track of a global update
+
+session.c      cleanup_session now properly keeps track of a global update
                node. Can only use one gtd->update per program state.
-- rl.c         fixed up the split screen behavior, should be a stable prompt
+
+rl.c           fixed up the split screen behavior, should be a stable prompt
                and correct text presentation in split mode now.
 
 
 February 2004  1.88.0
---------------------------------------------------------------------------------
-- net.c        added telopt negotiations in net.c for naws, terminal type,
+-------------------------------------------------------------------------------
+net.c          added telopt negotiations in net.c for naws, terminal type,
                and mccp (version 2)
-- tintin.h     added the zlib library and a session buffer for mccp
-- tintin.h     added a 64KB output buffer, I'll just asume that the mud
+
+tintin.h       added the zlib library and a session buffer for mccp
+
+tintin.h       added a 64KB output buffer, I'll just asume that the mud
                output contains a linefeed before BUFFER_SIZE is reached. This
                should make output processing a bit smoother, and saves me
                from fiddling too much with chopped up data.
-- rl.c         added the tintin_printf and tintin_printf2 functions which
+
+rl.c           added the tintin_printf and tintin_printf2 functions which
                format the argument list and pass the data on to tintin_puts
                or tintin_puts2
-- tintin.h     changed the node list struct to work with a head/tail pointer,
+
+tintin.h       changed the node list struct to work with a head/tail pointer,
                and turned it into a double linked list, updated all .c files
                affected by this change.
-- *.c          cleaned up the code, using tabs instead of spaces and aligning
+
+*.c            cleaned up the code, using tabs instead of spaces and aligning
                the brackets.
-- main.c       switched from rand to rand48, it's seeded once upon startup
+
+main.c         switched from rand to rand48, it's seeded once upon startup
                which is sufficient.
-- main.c       added a global tintin session (gts) the idea is to get rid of
+
+main.c         added a global tintin session (gts) the idea is to get rid of
                most global variables.
-- tintin.h     added a bitvector to the session structure which will contain
+
+tintin.h       added a bitvector to the session structure which will contain
                all session flags, various changes throughout the code changing
                global variables into flags.
-- rl.c         fixed up the cursor positioning for split mode and fixed the
+
+rl.c           fixed up the cursor positioning for split mode and fixed the
                linewrap routine which was off by 1 character, resulting in
                extra lines on a perfect match.
                added a special flag for mud output for split mode, to avoid
                color loss when restoring the cursor (which also restores the
                cursor color, hence the color loss)
-- tables.c     new c file, which will contain some tables, the current setup
+
+tables.c       new c file, which will contain some tables, the current setup
                is a bit tedious.
-- tintin.h     moved all header files into tintin.h cause the old setup with
+
+tintin.h       moved all header files into tintin.h cause the old setup with
                40 headerfiles was giving me a headache (literally).
                Grouped it into typedefs, globals, constants, macros,
                structures and functions
-- tintin.h     changed all commands to use the COMMAND typedef, as well as
+
+tintin.h       changed all commands to use the COMMAND typedef, as well as
                all commands now use universal arguments and naming, this to
                make a command table.
-- *.c          There's always a session now, with a few checks for gts (global
+
+*.c            There's always a session now, with a few checks for gts (global
                tintin session) which cannot send or receive data. Passing
                session data along with a couple of functions which should
                make background sessions less spammy.
-- strhash.c    Added a simple string hash routines which I'll be using for a
+
+strhash.c      Added a simple string hash routines which I'll be using for a
                scroll back buffer. It uses a bit of memory, but should save a
                lot more for big scroll back buffers.
-- main.c       changed tstphandler to call kill with a null pid, otherwise it
+
+main.c         changed tstphandler to call kill with a null pid, otherwise it
                wouldn't work when tintin was started from a script
-- ivars.c      removed backwards compatibility for fixedmath
-- buffer.c     scroll back buffer and a grep command added
-- rl.c         made the init_readline function actually initilize readline,
+
+ivars.c        removed backwards compatibility for fixedmath
+
+buffer.c       scroll back buffer and a grep command added
+
+rl.c           made the init_readline function actually initilize readline,
                added 4 default keybinds for the scrollback buffer.
-- tintin.h     added a keymap to the tintin_data structure, which will be
+
+tintin.h       added a keymap to the tintin_data structure, which will be
                used for keybinding.
-- text.c       got rid of the linewrapper in rl.c and added a word wrap
+
+text.c         got rid of the linewrapper in rl.c and added a word wrap
                routine instead.
-- log.c        all vt102 codes cept the linefeed are stripped for logged data,
+
+log.c          all vt102 codes cept the linefeed are stripped for logged data,
                the lowlog thingie can still be used.
-- chat.c       Removed this entirely, it's a mess and there are many stand
+
+chat.c         Removed this entirely, it's a mess and there are many stand
                alone p2p chat programs available.
-- *.c          moved some more global data to the session and data structures
-- rltick.c     removed entirely
-- ticks.c      removed entirely
-- tick.c       wrote a new ticker from scratch, uses alarm(1) to sleep 1
+
+*.c            moved some more global data to the session and data structures
+
+rltick.c       removed entirely
+
+ticks.c        removed entirely
+
+tick.c         wrote a new ticker from scratch, uses alarm(1) to sleep 1
                second, the user can now define a list of tickers, pretty much
                like aliasses, they'll trigger when the timer expires. Added
                the 'tick' and 'untick' command for manipulation.
-- macro.c      added 'macro' and 'unmacro' commands for keybinding, I couldn't
+
+macro.c        added 'macro' and 'unmacro' commands for keybinding, I couldn't
                figure out how to actually undo the real macro's though
                without using a messy hack, so I just skipped that till later
                for now.
-- session.c    Got rid of the zombi code, will try to add a better connection
+
+session.c      Got rid of the zombi code, will try to add a better connection
                handler at a later data, but the zombi code is not the answer.
-- tintin.h     Changed architecture further turning the lists from individual
+
+tintin.h       Changed architecture further turning the lists from individual
                lists into an array of lists. Added an array in tables.c for
                additional data.
-- substitute.c Changed the default #gag char from '.' to character 255, this
+
+substitute.c   Changed the default #gag char from '.' to character 255, this
                to prevent weird behavior when a dot is displayed on an empty
                line for any kind of reason.
-- config.c     Added a configuration menu, defaults are loaded upon startup.
-- walk.c       Removed, didn't really look into it deeply, but I adjusted
+
+config.c       Added a configuration menu, defaults are loaded upon startup.
+
+walk.c         Removed, didn't really look into it deeply, but I adjusted
                path.c to allow user progged walking using a ticker.
-- parse.c      Added 2 action checkers, first one checks priority 0 to 4,
+
+parse.c        Added 2 action checkers, first one checks priority 0 to 4,
                after that substitutions are checked, priority 5 to 9 is
                checked after substitutions.
-- parse.c      do_one_line now strips colors per default before passing the
+
+parse.c        do_one_line now strips colors per default before passing the
                text on to check_one_action
-- action.c     rewrote the %0 - %9 check_one_action regexp routine, it's
+
+action.c       rewrote the %0 - %9 check_one_action regexp routine, it's
                a bit cleaner and slightly faster now.
-- action.c     rewrote substitute_vars, ';' is changed to : per default
-- variable.c   rewrote subsitute_myvariables, no longer supporting $number
+
+action.c       rewrote substitute_vars, ';' is changed to : per default
+
+variable.c     rewrote subsitute_myvariables, no longer supporting $number
                variables. ';' is stripped per default. This also easily 
                allows a change so variables can contain numbers.
-- variable.c   #format {variable} {format} {arguments}
+
+variable.c     #format {variable} {format} {arguments}
                This allows string formatting, numbers are not supported.
                Added a format parser for further functionality, for now %l
                will lowercase, %u will upper, and %r will reverse the
                argument given. There's a maximum of 10 arguments.
-- variable.c   Due to the format command, prepad, postpad, tolower, and
+
+variable.c     Due to the format command, prepad, postpad, tolower, and
                toupper are no longer required, so I removed the commands.
                I realise this generates a backward compatibility issue, but
                it's easier to find the new commands without 70 old commands
                spamming the help files and command lists.
-- split.c      moved the split screen stuff from rl.c to this new file, and
+
+split.c        moved the split screen stuff from rl.c to this new file, and
                placed the prompt commands/routines there as well.
 
+January 2004   1.87.0
+------------------------------------------------------------------------------
+               After getting tired of seeing my favorite mud client being
+               trashed on TMC or simply not having the required functionality
+               that is expected nowadays to be worth mentioning, I figured it
+               was time to see what I could do. So I downloaded the latest
+               official tintin++ release v1.86b and started an evaluation.
+
+               It didn't take long to find out the main problems. Over
+               functionality, inconsistant command syntax, total chaos,
+               anarchistic implementation views, all in all enough to end up
+               deleting about 33% of the code, and rewriting over 50% of what
+               remained. Halfways during that process I ran into Bill on the
+               wintin forum and I promptly asked him permission to release an
+               official tintin++ derivative. And it was agreed that I could,
+               if he liked what I came up with. To make a long story short, I
+               finished a beta version several weeks later and got Bill's
+               permission to name it tintin++.
+
+               The next step was getting permission for the manual, I googled
+               up a notification from the authors which said the manual had
+               been GPL'ed, see tintin15.cr, last issue fixed.
+
+August 2001    tintin15.cr
+------------------------------------------------------------------------------
+
+This package was debianized by Jordi Mallach <jordi@debian.org> on
+Wed, 22 Aug 2001 03:23:36 +0200.
+
+It was downloaded from http://mail.newclear.net/tintin/archive.htm.
+
+Upstream Authors: Davin Chan <davinchan@earthlink.net>
+                  Robert Ellsworth <rse@newclear.net>
+        See the CREDITS document for the full list of contributors.
+
+
+Copyright:
+
+Tintin++ was relicensed under the GNU General Public License on
+July 12th, 2001, when version 1.86 was released. The full text
+of the GNU GPL can be found in /usr/share/common-licenses/GPL on
+Debian systems.
+
+Additionally, the Tintin++ manual was placed under the GPL at my request
+by Robert Ellsworth, it's author. The following is the mail in which he
+granted me permission to publish it under the new license:
+
+> From: "Robert Ellsworth" <rellsworth@wattsup.com>
+> Subject: RE: Tintin install mess
+> To: "'Davin Chan'" <davinchan@earthlink.com>,
+>         "'Jordi Mallach'" <jordi@sindominio.net>
+> Date: Tue, 28 Aug 2001 09:53:50 -0400
+> In-Reply-To: <3B8AF5A5.557E35E0@earthlink.com>
+> X-Mailer: Microsoft Outlook, Build 10.0.2627
+>
+> Well,
+>
+> RE #1) Well, being that I am the author, then yes, I have no problem
+> with the changing of the manual to GPL. :-)

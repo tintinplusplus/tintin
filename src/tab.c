@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -32,7 +32,7 @@ DO_COMMAND(do_tab)
 {
 	char arg1[BUFFER_SIZE];
 
-	sub_arg_in_braces(ses, arg, arg1, 1, SUB_VAR|SUB_FUN);
+	sub_arg_in_braces(ses, arg, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
 	if (*arg1 == 0)
 	{
@@ -40,7 +40,7 @@ DO_COMMAND(do_tab)
 	}
 	else
 	{
-		update_node_list(ses->list[LIST_TAB], arg1, "", "0");
+		update_node_list(ses->list[LIST_TAB], arg1, "", "0", "");
 
 		show_message(ses, LIST_TAB, "#OK. {%s} IS NOW A TAB.", arg1);
 	}

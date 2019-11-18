@@ -31,17 +31,14 @@
   #include <sys/ioctl.h>
 #endif
 #include <termios.h>
-#include <errno.h>
 
-void init_terminal()
+void init_terminal(struct session *ses)
 {
 	struct termios io;
 
 	if (tcgetattr(0, &gtd->old_terminal))
 	{
-		perror("tcgetattr");
-
-		exit(errno);
+		syserr_fatal(-1, "init_terminal: tcgetattr 1");
 	}
 
 	io = gtd->old_terminal;
@@ -75,22 +72,21 @@ void init_terminal()
 
 	if (tcsetattr(0, TCSANOW, &io))
 	{
-		perror("tcsetattr");
-
-		exit(errno);
+		syserr_printf(ses, "init_terminal: tcsetattr");
 	}
 
 	if (tcgetattr(0, &gts->cur_terminal))
 	{
-		perror("tcgetattr");
-
-		exit(errno);
+		syserr_fatal(-1, "init_terminal: tcgetattr 2");
 	}
 }
 
-void reset_terminal(void)
+void reset_terminal(struct session *ses)
 {
-	tcsetattr(0, TCSANOW, &gtd->old_terminal);
+	if (tcsetattr(0, TCSANOW, &gtd->old_terminal))
+	{
+		syserr_printf(ses, "reset_terminal: tcsetattr");
+	}
 
 	printf("\e[?1000l\e[?1002l\e[?1004l\e[?1006l");
 }
@@ -131,38 +127,38 @@ void echo_on(struct session *ses)
 void init_terminal_size(struct session *ses)
 {
 	struct winsize screen;
-	int top, bot;
 
 	push_call("init_terminal_size(%p)",ses);
-
-	top = ses->top_row ? ses->top_row : 1;
-	bot = ses->bot_row ? gtd->screen->rows - ses->bot_row : 0;
 
 	if (ses == gts)
 	{
 		if (ioctl(0, TIOCGWINSZ, &screen) == -1)
 		{
-			init_screen(SCREEN_HEIGHT, SCREEN_WIDTH);
+			init_screen(SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT * 16, SCREEN_WIDTH * 10);
 		}
 		else
 		{
-			init_screen(screen.ws_row, screen.ws_col);
+			init_screen(screen.ws_row, screen.ws_col, screen.ws_ypixel, screen.ws_xpixel);
 		}
 		SET_BIT(gtd->flags, TINTIN_FLAG_RESETBUFFER);
 	}
 
-	bot = gtd->screen->rows - bot;
-
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		init_split(ses, top, bot);
+		init_split(ses, 1 + ses->top_split, gtd->screen->rows - 1 - ses->bot_split);
 	}
 	else
 	{
-		ses->bot_row = bot;
+		ses->top_row = 1;
+		ses->bot_row = gtd->screen->rows;
 	}
 
-	check_all_events(ses, SUB_ARG, 0, 2, "SCREEN RESIZE", ntos(gtd->screen->cols), ntos(gtd->screen->rows));
+	check_all_events(ses, SUB_ARG, 0, 4, "SCREEN RESIZE", ntos(gtd->screen->rows), ntos(gtd->screen->cols), ntos(gtd->screen->height), ntos(gtd->screen->width));
+
+	msdp_update_all("SCREEN_ROWS",   "%d", gtd->screen->rows);
+	msdp_update_all("SCREEN_COLS",   "%d", gtd->screen->cols);
+	msdp_update_all("SCREEN_HEIGHT", "%d", gtd->screen->height);
+	msdp_update_all("SCREEN_WIDTH",  "%d", gtd->screen->width);
 
 	pop_call();
 	return;

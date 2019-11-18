@@ -74,9 +74,19 @@ void dump_stack(void)
 {
 	unsigned char i;
 
-	for (i = 0 ; i < debug_index && i < MAX_STACK_SIZE ; i++)
+	if (gtd && gtd->ses)
 	{
-		printf("\e[1;32mDEBUG_STACK[\e[1;31m%03d\e[1;32m] = \e[1;31m%s\e[0m\n", i, debug_stack[i]);
+		for (i = 0 ; i < debug_index && i < MAX_STACK_SIZE ; i++)
+		{
+			tintin_printf2(gtd->ses, "\e[1;32mDEBUG_STACK[\e[1;31m%03d\e[1;32m] = \e[1;31m%s\e[0m", i, debug_stack[i]);
+		}
+	}
+	else
+	{
+		for (i = 0 ; i < debug_index && i < MAX_STACK_SIZE ; i++)
+		{
+			tintin_printf2(gtd->ses, "\e[1;32mDEBUG_STACK[\e[1;31m%03d\e[1;32m] = \e[1;31m%s\e[0m\n", i, debug_stack[i]);
+		}
 	}
 }
 

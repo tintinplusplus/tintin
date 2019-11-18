@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -22,14 +22,12 @@
 *               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
 *                                                                             *
 *                        coded by Peter Unold 1992                            *
+*                    recoded by Igor van den Hoven 2004                       *
 ******************************************************************************/
 
 #include "tintin.h"
 #include <sys/stat.h>
 
-/*
-	read and execute a command file, supports multi lines - Igor
-*/
 
 DO_COMMAND(do_read)
 {
@@ -367,15 +365,31 @@ DO_COMMAND(do_read)
 DO_COMMAND(do_write)
 {
 	FILE *file;
-	char filename[BUFFER_SIZE];
+	char filename[BUFFER_SIZE], forceful[BUFFER_SIZE];
 	struct listroot *root;
 	int i, j, cnt = 0;
 
-	get_arg_in_braces(ses, arg, filename, TRUE);
+	arg = get_arg_in_braces(ses, arg, filename, GET_ONE);
+	arg = get_arg_in_braces(ses, arg, forceful, GET_ONE);
 
-	if (*filename == 0 || (file = fopen(filename, "w")) == NULL)
+	if (*filename == 0)
+	{
+		tintin_printf2(ses, "#SYNTAX: #WRITE {<filename>} {[FORCE]}");
+
+		return ses;
+	}
+	
+	if (!str_suffix(filename, ".map") && !is_abbrev(forceful, "FORCE"))
+	{
+		tintin_printf2(ses, "#WRITE {%s}: USE {FORCE} TO OVERWRITE .map FILES.", filename);
+
+		return ses;
+	}
+
+	if ((file = fopen(filename, "w")) == NULL)
 	{
 		tintin_printf(ses, "#ERROR: #WRITE: COULDN'T OPEN {%s} TO WRITE.", filename);
+
 		return ses;
 	}
 
@@ -411,8 +425,8 @@ void write_node(struct session *ses, int list, struct listnode *node, FILE *file
 {
 	char *result, *str;
 
-	int llen = UMAX(20, strlen(node->left));
-	int rlen = UMAX(25, strlen(node->right));
+	int llen = UMAX(20, strlen(node->arg1));
+	int rlen = UMAX(25, strlen(node->arg2));
 
 	push_call("write_node(%d,%p,%p)",list,node,file);
 
@@ -421,12 +435,12 @@ void write_node(struct session *ses, int list, struct listnode *node, FILE *file
 		case LIST_EVENT:
 		case LIST_FUNCTION:
 		case LIST_MACRO:
-			asprintf(&result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right));
+			asprintf(&result, "%c%s {%s}\n{\n%s\n}\n\n", gtd->tintin_char, list_table[list].name, node->arg1, script_writer(ses, node->arg2));
 			break;
 
 		case LIST_ACTION:
 		case LIST_ALIAS:
-			asprintf(&result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->left, script_writer(ses, node->right), node->pr);
+			asprintf(&result, "%c%s {%s}\n{\n%s\n}\n{%s}\n\n", gtd->tintin_char, list_table[list].name, node->arg1, script_writer(ses, node->arg2), node->arg3);
 			break;
 
 		case LIST_VARIABLE:
@@ -434,7 +448,7 @@ void write_node(struct session *ses, int list, struct listnode *node, FILE *file
 
 			show_nest_node(node, &str, 1);
 
-			asprintf(&result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", str);
+			asprintf(&result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->arg1, 20 - llen, "", str);
 
 			str_free(str);
 
@@ -447,13 +461,16 @@ void write_node(struct session *ses, int list, struct listnode *node, FILE *file
 					result = strdup("");
 					break;
 				case 1:
-					asprintf(&result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->left);
+					asprintf(&result, "%c%-16s {%s}\n", gtd->tintin_char, list_table[list].name, node->arg1);
 					break;
 				case 2:
-					asprintf(&result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right);
+					asprintf(&result, "%c%-16s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->arg1, 20 - llen, "", node->arg2);
 					break;
 				case 3:
-					asprintf(&result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->left, 20 - llen, "", node->right, 25 - rlen, "", node->pr);
+					asprintf(&result, "%c%-16s {%s} %*s {%s} %*s {%s}\n", gtd->tintin_char, list_table[list].name, node->arg1, 20 - llen, "", node->arg2, 25 - rlen, "", node->arg3);
+					break;
+				case 4:
+					asprintf(&result, "%c%-16s {%s} %*s {%s} %*s {%s} {%s}\n", gtd->tintin_char, list_table[list].name, node->arg1, 20 - llen, "", node->arg2, 25 - rlen, "", node->arg3, node->arg4);
 					break;
 			}
 			break;

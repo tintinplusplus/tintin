@@ -1,12 +1,11 @@
 ###############################################################################
-#   TinTin++                                                                  #
-#   Copyright (C) 2006 (See CREDITS file)                                     #
+#   This file is part of TinTin++                                             #
 #                                                                             #
-#   This program is protected under the GNU GPL (See COPYING)                 #
+#   Copyright 2004-2019 Igor van den Hoven                                    #
 #                                                                             #
-#   This program is free software; you can redistribute it and/or modify      #
+#   TinTin++ is free software; you can redistribute it and/or modify          #
 #   it under the terms of the GNU General Public License as published by      #
-#   the Free Software Foundation; either version 2 of the License, or         #
+#   the Free Software Foundation; either version 3 of the License, or         #
 #   (at your option) any later version.                                       #
 #                                                                             #
 #   This program is distributed in the hope that it will be useful,           #
@@ -14,9 +13,9 @@
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             #
 #   GNU General Public License for more details.                              #
 #                                                                             #
+#                                                                             #
 #   You should have received a copy of the GNU General Public License         #
-#   along with this program; if not, write to the Free Software               #
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA #
+#   along with TinTin++.  If not, see https://www.gnu.org/licenses.           #
 ###############################################################################
 
 DEFINES = -D_GNU_SOURCE @DEFS@
@@ -62,9 +61,10 @@ OFILES = action.o alias.o files.o help.o highlight.o strhash.o input.o log.o \
          main.o misc.o net.o parse.o path.o update.o history.o tab.o vt102.o \
          terminal.o session.o function.o text.o substitute.o tick.o memory.o \
          math.o split.o debug.o tinexp.o mapper.o tables.o buffer.o prompt.o \
-         class.o  event.o utils.o chat.o macro.o  config.o gag.o advertise.o \
-         list.o forkpty.o cursor.o system.o line.o data.o variable.o utf8.o  \
-         tokenize.o nest.o ssl.o port.o scan.o telopt_client.o screen.o
+         class.o event.o tokenize.o chat.o utf8.o config.o gag.o advertise.o \
+         list.o forkpty.o cursor.o system.o line.o data.o variable.o macro.o \
+         msdp.o ssl.o port.o scan.o telopt_client.o screen.o telopt_server.o \
+         utils.o nest.o show.o mccp.o
 
 
 default: all

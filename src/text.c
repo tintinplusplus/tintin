@@ -27,13 +27,13 @@
 #include "tintin.h"
 
 
-void printline(struct session *ses, char **str, int prompt)
+void print_line(struct session *ses, char **str, int prompt)
 {
 	char *out;
 
-	push_call("printline(%p,%p,%d)",ses,*str,prompt);
+	push_call("print_line(%p,%p,%d)",ses,*str,prompt);
 
-	if (ses->scroll_line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
+	if (ses->scroll->line != -1 && HAS_BIT(ses->flags, SES_FLAG_SCROLLLOCK))
 	{
 		pop_call();
 		return;
@@ -45,11 +45,12 @@ void printline(struct session *ses, char **str, int prompt)
 		return;
 	}
 
-	out = str_alloc(strlen(*str) * 2 + 2);
+	out = str_alloc(100 + strlen(*str) * 2 + 2);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_CONVERTMETA))
 	{
 		convert_meta(*str, out, TRUE);
+
 		str_cpy(str, out);
 	}
 
@@ -191,12 +192,12 @@ int word_wrap(struct session *ses, char *textin, char *textout, int display)
 
 // store whatever falls inbetween skip and keep. Used by #buffer
 
-int word_wrap_split(struct session *ses, char *textin, char *textout, int display, int skip, int keep)
+int word_wrap_split(struct session *ses, char *textin, char *textout, int display, int start, int end)
 {
 	char *pti, *pto, *lis, *los, *chi, *cho, *ptb;
 	int width, size, i = 0, cnt = 0;
 
-	push_call("word_wrap_split(%s,%p,%p,%d,%d)",ses->name, textin,textout, skip, keep);
+	push_call("word_wrap_split(%s,%p,%p,%d,%d)",ses->name, textin,textout, start, end);
 
 	pti = chi = lis = textin;
 	pto = cho = los = textout;
@@ -207,23 +208,23 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int displa
 	{
 		if (skip_vt102_codes(pti))
 		{
-			if (cnt >= skip && cnt < keep)
+//			if (cnt >= start && cnt < end)
 			{
 				for (i = skip_vt102_codes(pti) ; i > 0 ; i--)
 				{
 					*pto++ = *pti++;
 				}
 			}
-			else
+/*			else
 			{
 				pti += skip_vt102_codes(pti);
-			}
+			}*/
 			continue;
 		}
 
 		if (*pti == '\n')
 		{
-			if (cnt >= skip && cnt < keep)
+			if (cnt++ >= start && cnt < end)
 			{
 				*pto++ = *pti++;
 			}
@@ -231,7 +232,6 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int displa
 			{
 				pti++;
 			}
-			cnt = cnt + 1;
 			los = pto;
 			lis = pti;
 
@@ -255,7 +255,7 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int displa
 			{
 				if (pto - los > 15 || !SCROLL(ses))
 				{
-					if (cnt >= skip && cnt < keep)
+					if (cnt >= start && cnt < end)
 					{
 						*pto++ = '\n';
 					}
@@ -264,7 +264,7 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int displa
 				}
 				else if (lis != chi) // infinite VT loop detection
 				{
-					if (cnt >= skip && cnt < keep)
+					if (cnt >= start && cnt < end)
 					{
 						pto = los;
 						*pto++ = '\n';
@@ -274,7 +274,7 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int displa
 				}
 				else if (los != cho)
 				{
-					if (cnt >= skip && cnt < keep)
+					if (cnt >= start && cnt < end)
 					{
 						pto = cho = los;
 						pto++;
@@ -314,7 +314,7 @@ int word_wrap_split(struct session *ses, char *textin, char *textout, int displa
 				ses->cur_col++;
 			}
 
-			if (cnt < skip || cnt >= keep)
+			if (cnt < start || cnt >= end)
 			{
 				pto = ptb;
 			}

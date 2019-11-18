@@ -75,6 +75,8 @@ void scroll_region(struct session *ses, int top, int bot)
 	ses->top_row = top;
 	ses->bot_row = bot;
 
+	check_all_events(ses, SUB_ARG, 0, 2, "VT100 SCROLL REGION", ntos(top), ntos(bot));
+
 	pop_call();
 	return;
 }

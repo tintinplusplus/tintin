@@ -33,21 +33,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <errno.h>
-
-#ifdef HAVE_PTHREAD_H
-	#include <pthread.h>
-#endif
-
 
 #define CALL_TIMEOUT 5
 
 DO_COMMAND(do_port)
 {
-	char cmd[BUFFER_SIZE], left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char cmd[BUFFER_SIZE], arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int cnt;
 
-	arg = get_arg_in_braces(ses, arg, cmd, FALSE);
+	arg = get_arg_in_braces(ses, arg, cmd, GET_ONE);
 
 	if (*cmd == 0)
 	{
@@ -76,14 +70,12 @@ DO_COMMAND(do_port)
 			return ses;
 		}
 
-		arg = get_arg_in_braces(ses, arg, left,  port_table[cnt].lval);
-		substitute(ses, left, left, SUB_VAR|SUB_FUN);
+		arg = sub_arg_in_braces(ses, arg, arg1,  port_table[cnt].lval, SUB_VAR|SUB_FUN);
 
-		arg = get_arg_in_braces(ses, arg, right, port_table[cnt].rval);
-		substitute(ses, right, right, SUB_VAR|SUB_FUN);
+		arg = sub_arg_in_braces(ses, arg, arg2, port_table[cnt].rval, SUB_VAR|SUB_FUN);
 
-		ses = port_table[cnt].fun(ses, left, right, arg);
-		
+		ses = port_table[cnt].fun(ses, arg1, arg2, arg);
+
 		return ses;
 	}
 
@@ -92,10 +84,6 @@ DO_COMMAND(do_port)
 	return ses;
 }
 
-
-/*
-	Get ready to receive connections.
-*/
 
 DO_PORT(port_initialize)
 {
@@ -106,30 +94,32 @@ DO_PORT(port_initialize)
 
 	arg = sub_arg_in_braces(ses, arg, file,  GET_ONE, SUB_VAR|SUB_FUN);
 
-	if (*left == 0 || *right == 0)
+	if (*arg1 == 0 || *arg2 == 0)
 	{
-		return show_error(ses, LIST_COMMAND, "#SYNTAX: #PORT INITIALIZE {NAME} {PORT} {FILE}");
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #PORT INITIALIZE {NAME} {PORT} {FILE}");
+		
+		return ses;
 	}
 
-	if (find_session(left))
+	if (find_session(arg1))
 	{
-		tintin_printf(ses, "#PORT INITIALIZE: THERE'S A SESSION NAMED {%s} ALREADY.", left);
+		tintin_printf(ses, "#PORT INITIALIZE: THERE'S A SESSION NAMED {%s} ALREADY.", arg1);
 
 		return ses;
 	}
 
-	if (!is_number(right))
+	if (!is_number(arg2))
 	{
-		tintin_printf(ses, "#PORT INITIALIZE: {%s} IS NOT A VALID PORT NUMBER.", right);
+		tintin_printf(ses, "#PORT INITIALIZE: {%s} IS NOT A VALID PORT NUMBER.", arg2);
 
 		return ses;
 	}
 
-	tintin_printf(ses, "#TRYING TO LAUNCH '%s' ON PORT '%s'.", left, right);
+	tintin_printf(ses, "#TRYING TO LAUNCH '%s' ON PORT '%s'.", arg1, arg2);
 
-	sprintf(temp, "{localport} {%d} {%s}", atoi(right), file);
+	sprintf(temp, "{localport} {%d} {%s}", atoi(arg2), file);
 
-	port = atoi(right);
+	port = atoi(arg2);
 
 	sa.sin_family      = AF_INET;
 	sa.sin_addr.s_addr = INADDR_ANY;
@@ -139,14 +129,16 @@ DO_PORT(port_initialize)
 
 	if (sock < 0)
 	{
-		perror("port_initialize: socket()");
+		syserr_printf(ses, "port_initialize: socket");
 
 		return ses;
 	}
 
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1)
 	{
-		perror("port_initialize: setsockopt()");
+		syserr_printf(ses, "port_initialize: setsockopt");
+
+		return ses;
 	}
 
 	ld.l_onoff  = 0; 
@@ -154,13 +146,11 @@ DO_PORT(port_initialize)
 
 	setsockopt(sock, SOL_SOCKET, SO_LINGER, (char *) &ld, sizeof(ld));
 
-	/*
-		Might make things unstable
-	*/
-
 	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
 	{
-		perror("port_initialize: fcntl O_NDELAY|O_NONBLOCK");
+		syserr_printf(ses, "port_initialize: fcntl O_NDELAY|O_NONBLOCK");
+
+		return ses;
 	}
 
 	if (bind(sock, (struct sockaddr *) &sa, sizeof(sa)) < 0)
@@ -174,7 +164,7 @@ DO_PORT(port_initialize)
 
 	if (listen(sock, 50) == -1)
 	{
-		perror("port_initialize: listen:");
+		syserr_printf(ses, "port_initialize: listen");
 
 		close(sock);
 
@@ -183,14 +173,14 @@ DO_PORT(port_initialize)
 
 	// kind of dodgy, but should be a mere formality.
 
-	ses = new_session(ses, left, temp, -1, 0);
+	ses = new_session(ses, arg1, temp, -1, 0);
 
 	ses->port = (struct port_data *) calloc(1, sizeof(struct port_data));
 
 	ses->port->fd       = sock;
 	ses->port->port     = port;
 
-	ses->port->name     = strdup(left);
+	ses->port->name     = strdup(arg1);
 	ses->port->group    = strdup("");
 	ses->port->color    = strdup("\e[0;1;36m");
 	ses->port->ip       = strdup("<Unknown>");
@@ -220,38 +210,51 @@ DO_PORT(port_uninitialize)
 }
 
 
-/*
-	Accept an incoming port connection.
-*/
-
-int port_new(struct session *ses, int s)
+int port_new(struct session *ses, int sock)
 {
 	struct port_data *new_buddy;
-	struct sockaddr_in sock;
+	struct sockaddr_in sock_addr;
 	socklen_t i;
 	int fd;
 
+	push_call("port_new(%p,%d)",ses,sock);
+
 	i = sizeof(sock);
 
-	getsockname(s, (struct sockaddr *) &sock, &i);
+	getsockname(sock, (struct sockaddr *) &sock_addr, &i);
 
-	if ((fd = accept(s, (struct sockaddr *) &sock, &i)) < 0)
+	if ((fd = accept(sock, (struct sockaddr *) &sock_addr, &i)) < 0)
 	{
-		perror("port_new: accept");
+		syserr_printf(ses, "port_new: accept");
 
+		pop_call();
 		return -1;
 	}
 
 	if (fcntl(fd, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
 	{
-		perror("port_new: fcntl O_NDELAY|O_NONBLOCK");
+		syserr_printf(ses, "port_new: fcntl O_NDELAY|O_NONBLOCK");
 	}
 
-	if (HAS_BIT(ses->port->flags, CHAT_FLAG_DND))
+	if (HAS_BIT(ses->port->flags, PORT_FLAG_DND))
 	{
 		close(fd);
 
+		pop_call();
 		return -1;
+	}
+
+	if (HAS_BIT(ses->port->flags, PORT_FLAG_PRIVATE))
+	{
+		if (strcmp(inet_ntoa(sock_addr.sin_addr), "127.0.0.1"))
+		{
+			port_printf(ses, "%s D%d Refusing remote connection, private flag set.", inet_ntoa(sock_addr.sin_addr), fd);
+
+			close(fd);
+
+			pop_call();
+			return -1;
+		}
 	}
 
 	new_buddy = (struct port_data *) calloc(1, sizeof(struct port_data));
@@ -260,34 +263,360 @@ int port_new(struct session *ses, int s)
 
 	new_buddy->name     = strdup(ntos(fd));
 	new_buddy->group    = strdup("");
-	new_buddy->ip       = strdup(inet_ntoa(sock.sin_addr));
+	new_buddy->ip       = strdup(inet_ntoa(sock_addr.sin_addr));
 	new_buddy->prefix   = strdup("");
 	new_buddy->color    = strdup("");
+	new_buddy->proxy    = strdup("");
+	new_buddy->ttype    = strdup("");
 
 	new_buddy->port     = 0;
+
+	ses->port->total++;
 
 	LINK(new_buddy, ses->port->next, ses->port->prev);
 
 	port_printf(ses, "New connection: %s D%d.", new_buddy->ip, new_buddy->fd);
 
+	announce_support(ses, new_buddy);
+
 	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT CONNECTION", new_buddy->name, new_buddy->ip, ntos(new_buddy->port));
 
+	pop_call();
 	return 0;
 }
 
 
-/*
-	Places a call to another port client.
-*/
 
-#ifdef HAVE_GETADDRINFO
-
-void *threaded_port_call(void *arg)
+void close_port(struct session *ses, struct port_data *buddy, int unlink)
 {
-	struct session *ses;
+	buddy->flags = 0;
+
+	push_call("close_port(%p,%p,%d)",ses,buddy,unlink);
+
+	if (unlink)
+	{
+		ses->port->total--;
+
+		if (buddy == ses->port->update)
+		{
+			ses->port->update = buddy->next;
+		}
+		UNLINK(buddy, ses->port->next, ses->port->prev);
+	}
+
+	SET_BIT(buddy->flags, PORT_FLAG_LINKLOST);
+
+	if (buddy != ses->port)
+	{
+		if (*buddy->name == 0)
+		{
+			port_printf(ses, "Closing connection to %s D%d", buddy->ip, buddy->fd);
+		}
+		else
+		{
+			port_printf(ses, "Closing connection to %s@%s D%d.", buddy->name, buddy->ip, buddy->fd);
+		}
+	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT DISCONNECTION", buddy->name, buddy->ip, ntos(buddy->port));
+
+	if (close(buddy->fd) == -1)
+	{
+		syserr_printf(ses, "close_port: close");
+	}
+
+	end_mccp2(ses, buddy);
+	end_mccp3(ses, buddy);
+
+	free(buddy->group);
+	free(buddy->ip);
+	free(buddy->name);
+	free(buddy->prefix);
+	free(buddy->color);
+
+	free(buddy);
+
+	pop_call();
+	return;
+}
+
+
+void process_port_connections(struct session *ses, fd_set *read_set, fd_set *write_set, fd_set *exc_set)
+{
+	struct port_data *buddy;
+
+	push_call("process_port_connections(%p,%p,%p)",read_set,write_set,exc_set);
+
+	if (FD_ISSET(ses->port->fd, read_set))
+	{
+		port_new(ses, ses->port->fd);
+	}
+
+	for (buddy = ses->port->next ; buddy ; buddy = ses->port->update)
+	{
+		ses->port->update = buddy->next;
+
+		if (HAS_BIT(buddy->flags, PORT_FLAG_LINKLOST) || FD_ISSET(buddy->fd, exc_set))
+		{
+			FD_CLR(buddy->fd, write_set);
+			FD_CLR(buddy->fd, read_set);
+
+			close_port(ses, buddy, TRUE);
+		}
+		else if (FD_ISSET(buddy->fd, read_set))
+		{
+			if (process_port_input(ses, buddy) < 0)
+			{
+				FD_CLR(buddy->fd, write_set);
+				FD_CLR(buddy->fd, read_set);
+
+				close_port(ses, buddy, TRUE);
+			}
+		}
+
+		if (HAS_BIT(buddy->comm_flags, COMM_FLAG_MSDPUPDATE))
+		{
+			msdp_send_update(ses, buddy);
+		}
+	}
+	pop_call();
+	return;
+}
+
+void port_socket_write(struct session *ses, struct port_data *buddy, char *str, int len)
+{
+	if (!HAS_BIT(buddy->flags, PORT_FLAG_LINKLOST))
+	{
+		if (buddy->mccp2)
+		{
+			write_mccp2(ses, buddy, str, len);
+		}
+		else
+		{
+			if (write(buddy->fd, str, len) < 0)
+			{
+				port_printf(ses, "Lost link to socket '%s'.", buddy->name);
+
+				SET_BIT(buddy->flags, PORT_FLAG_LINKLOST);
+			}
+		}
+	}
+}
+
+void port_socket_printf(struct session *ses, struct port_data *buddy, char *format, ...)
+{
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
+	va_end(args);
+
+	port_socket_write(ses, buddy, buf, strlen(buf));
+}
+
+void port_telnet_printf(struct session *ses, struct port_data *buddy, size_t length, char *format, ...)
+{
+	size_t size;
+
+	char buf[BUFFER_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	size = vsprintf(buf, format, args);
+	va_end(args);
+
+	if (size != length && HAS_BIT(ses->telopts, TELOPT_FLAG_DEBUG))
+	{
+		tintin_printf(ses, "DEBUG TELNET: port_telnet_printf size difference: %d vs %d", size, length);
+	}
+
+	port_socket_write(ses, buddy, buf, length);
+}
+
+void port_printf(struct session *ses, char *format, ...)
+{
+	char buf[STRING_SIZE], tmp[STRING_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
+	va_end(args);
+
+	sprintf(tmp, "%s%s", ses->port->prefix, buf);
+
+	strip_vt102_codes_non_graph(tmp, buf);
+
+	sprintf(tmp, "%s%s%s", ses->port->color, buf, "\e[0m");
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "PORT MESSAGE", tmp, buf);
+
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "CATCH PORT MESSAGE", tmp, buf))
+	{
+		tintin_puts(ses, tmp);
+	}
+}
+
+void port_log_printf(struct session *ses, struct port_data *buddy, char *format, ...)
+{
+	char buf[STRING_SIZE], tmp[STRING_SIZE];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
+	va_end(args);
+
+	sprintf(tmp, "%s%s@%s %s", ses->port->prefix, buddy->name, buddy->ip, buf);
+
+	strip_vt102_codes_non_graph(tmp, buf);
+
+	sprintf(tmp, "%s%s\e[0m", ses->port->color, buf);
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 5, "PORT LOG MESSAGE", buddy->name, buddy->ip, ntos(buddy->fd), tmp, buf);
+
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 5, "CATCH PORT LOG MESSAGE", buddy->name, buddy->ip, ntos(buddy->fd), tmp, buf))
+	{
+		tintin_puts(ses, tmp);
+	}
+}
+
+int process_port_input(struct session *ses, struct port_data *buddy)
+{
+	char input[BUFFER_SIZE], *pt1, *pt2;
+	int size, echo;
+
+	push_call("process_port_input(%p)",buddy);
+
+//	while (TRUE)
+	{
+		size = read(buddy->fd, input, BUFFER_SIZE / 4);
+
+		if (size < 0)
+		{
+			if (errno == EWOULDBLOCK)
+			{
+				pop_call();
+				return 0;
+			}
+
+			syserr_printf(ses, "process_port_input: read:");
+
+			pop_call();
+			return -1;
+		}
+
+		if (size == 0)
+		{
+			pop_call();
+			return -1;
+		}
+
+		input[size] = 0;
+
+		echo = buddy->intop;
+
+		buddy->intop += server_translate_telopts(ses, buddy, (unsigned char *) input, size, (unsigned char *) buddy->inbuf, buddy->intop);
+
+		// Handle local echo for Windows telnet
+
+		if (HAS_BIT(buddy->comm_flags, COMM_FLAG_REMOTEECHO))
+		{
+			while (echo < buddy->intop)
+			{
+				switch (input[echo++])
+				{
+					case   8:
+					case 127:
+						input[echo] = '\b';
+						port_socket_printf(ses, buddy, "\b \b");
+						break;
+
+					case '\n':
+						port_socket_printf(ses, buddy, "\r\n");
+						break;
+
+					default:
+						if (HAS_BIT(buddy->comm_flags, COMM_FLAG_PASSWORD))
+						{
+							port_socket_printf(ses, buddy, "*");
+						}
+						else
+						{
+							port_socket_printf(ses, buddy, "%c", input[echo]);
+						}
+						break;
+				}
+			}
+		}
+
+		if (buddy->intop > BUFFER_SIZE / 4)
+		{
+			port_socket_printf(ses, buddy, "\e[1;31mYou overflowed your input buffer, you must reconnect.\n");
+			port_log_printf(ses, buddy, "Buffer overflow, closing connection.");
+			
+			pop_call();
+			return -1;
+		}
+
+		if (buddy->intop)
+		{
+			pt2 = buddy->inbuf;
+
+			while (pt2)
+			{
+				pt1 = pt2;
+				pt2 = strchr(pt1, '\n');
+
+				if (pt2)
+				{
+					*pt2++ = 0;
+
+					get_port_commands(ses, buddy, pt1, pt2 - pt1);
+				}
+			}
+			buddy->intop = strlen(pt1);
+
+			memmove(buddy->inbuf, pt1, buddy->intop);
+		}
+	}
+	pop_call();
+	return 0;
+}
+
+void get_port_commands(struct session *ses, struct port_data *buddy, char *buf, int len)
+{
+	char txt[STRING_SIZE];
+
+	push_call("get_port_commands(%s,%d,%s)",buddy->name,len,buf);
+
+	strip_vt102_codes(buf, txt);
+
+	if (!check_all_events(ses, SUB_ARG|SUB_SEC, 0, 5, "CATCH PORT RECEIVED MESSAGE", buddy->name, buddy->ip, ntos(buddy->port), buf, txt))
+	{
+		port_receive_message(ses, buddy, buf);
+	}
+
+	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 5, "PORT RECEIVED MESSAGE", buddy->name, buddy->ip, ntos(buddy->port), buf, txt);
+
+	pop_call();
+	return;
+}
+
+
+void port_receive_message(struct session *ses, struct port_data *buddy, char *txt)
+{
+	if (HAS_BIT(buddy->flags, PORT_FLAG_IGNORE))
+	{
+		return;
+	}
+
+	port_printf(ses, "%s", txt);
+}
+
+DO_PORT(port_call)
+{
 	int sock, error;
-	char host[BUFFER_SIZE], port[BUFFER_SIZE], name[BUFFER_SIZE];
-	char *str;
+	char host[BUFFER_SIZE], port[BUFFER_SIZE];
 	struct addrinfo *address;
 	static struct addrinfo hints;
 	struct port_data *new_buddy;
@@ -297,48 +626,40 @@ void *threaded_port_call(void *arg)
 	to.tv_sec = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	str = arg;
+	strcpy(host, arg1);
+	strcpy(port, arg2);
 
-	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, name, FALSE);
-	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, host, FALSE);
-	arg = (void *) get_arg_in_braces(gtd->ses, (char *) arg, port, FALSE);
+	port_printf(ses, "Attempting to call {%s} {%s} ...", host, port);
 
-	free(str);
-
-	ses = find_session(name);
-
-	if (ses == NULL)
-	{
-		perror("threaded_port_call: null session");
-		
-		return NULL;
-	}
-
-	port_printf(ses, "Attempting to call {%s} {%s} {%s} ...", name, host, port);
-
-	hints.ai_family   = AF_UNSPEC;
+	hints.ai_family   = AF_INET;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_socktype = SOCK_STREAM;
 
 	error = getaddrinfo(host, port, &hints, &address);
 
-	switch (error)
+	if (error)
 	{
-		case 0:
-			break;
+		hints.ai_family = AF_INET6;
 
-		case -2:
+		error = getaddrinfo(host, port, &hints, &address);
+
+		if (error)
+		{
 			port_printf(ses, "Failed to call %s, unknown host.", host);
-			return NULL;
-
-		default:
-			port_printf(ses, "Failed to call %s.", host);
-			return NULL;
+			
+			return ses;
+		}
 	}
 
-	if ((sock = socket(address->ai_family, address->ai_socktype, address->ai_protocol)) < 0)
+	sock = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
+
+	if (sock < 0)
 	{
-		syserr("socket");
+		syserr_printf(ses, "port_call: socket");
+
+		freeaddrinfo(address);
+
+		return ses;
 	}
 
 	switch (address->ai_family)
@@ -352,28 +673,38 @@ void *threaded_port_call(void *arg)
 			break;
 	}
 
-	if (connect(sock, address->ai_addr, address->ai_addrlen) != 0)
+	error = connect(sock, address->ai_addr, address->ai_addrlen);
+
+	if (error)
 	{
+		syserr_printf(ses, "port_call: connect");
+
 		port_printf(ses, "Failed to connect to %s:%s", host, port);
 
 		close(sock);
+
 		freeaddrinfo(address);
 
-		return NULL;
+		return ses;
 	}
+
+	freeaddrinfo(address);
 
 	FD_ZERO(&wds);
 
-	FD_SET(sock, &wds); /* mother port desc */
+	FD_SET(sock, &wds);
 
-	if (select(FD_SETSIZE, NULL, &wds, NULL, &to) == -1)
+	error = select(FD_SETSIZE, NULL, &wds, NULL, &to);
+
+	if (error < 0)
 	{
+		syserr_printf(ses, "port_call: select wds:");
+
 		port_printf(ses, "Failed to connect to %s %s", host, port);
 
 		close(sock);
-		freeaddrinfo(address);
 
-		return NULL;
+		return ses;
 	}
 
 	if (!FD_ISSET(sock, &wds))
@@ -381,9 +712,8 @@ void *threaded_port_call(void *arg)
 		port_printf(ses, "Connection timed out.");
 
 		close(sock);
-		freeaddrinfo(address);
 
-		return NULL;
+		return ses;
 	}
 
 	new_buddy = calloc(1, sizeof(struct port_data));
@@ -405,463 +735,55 @@ void *threaded_port_call(void *arg)
 	to.tv_sec  = CALL_TIMEOUT;
 	to.tv_usec = 0;
 
-	if (select(FD_SETSIZE, &rds, NULL, NULL, &to) == -1)
-	{
-		close_port(ses, new_buddy, FALSE);
-		freeaddrinfo(address);
+	error = select(FD_SETSIZE, &rds, NULL, NULL, &to);
 
-		return NULL;
+	if (error < 0)
+	{
+		syserr_printf(ses, "port_call: select rds:");
+
+		close_port(ses, new_buddy, FALSE);
+
+		return ses;
 	}
 
 	if (process_port_input(ses, new_buddy) == -1)
 	{
 		FD_CLR(new_buddy->fd, &rds);
+
 		close_port(ses, new_buddy, FALSE);
-		freeaddrinfo(address);
 
-		return NULL;
+		return ses;
 	}
 
-	if (*new_buddy->name == 0)
-	{
-		close_port(ses, new_buddy, FALSE);
-	}
-	else
-	{
-		if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
-		{
-			perror("port_new: fcntl O_NDELAY|O_NONBLOCK");
-		}
+	// NULL check because of threading.
 
-		LINK(new_buddy, ses->port->next, ses->port->prev);
-		port_printf(ses, "Connection made to %s.", new_buddy->name);
-	}
-	freeaddrinfo(address);
-
-	return NULL;
-}
-
-#else
-
-void *threaded_port_call(void *arg)
-{
-	struct session *ses;
-	int sock, dig;
-	char host[BUFFER_SIZE], port[BUFFER_SIZE], name[BUFFER_SIZE];
-	struct sockaddr_in dest_addr;
-	struct port_data *new_buddy;
-	struct timeval to;
-	fd_set wds, rds;
-
-	to.tv_sec = CALL_TIMEOUT;
-	to.tv_usec = 0;
-
-	arg = (void *) get_arg_in_braces(ses, (char *) arg, name, FALSE);
-	arg = (void *) get_arg_in_braces(ses, (char *) arg, host, FALSE);
-	arg = (void *) get_arg_in_braces(ses, (char *) arg, port, FALSE);
-
-	ses = find_session(name);
-
-	if (ses == NULL)
-	{
-		perror("threaded_port_call: null session");
-		
-		return NULL;
-	}
-
-	port_printf(ses, "Attempting to call {%s} {%s} {%s} ...", name, host, port);
-
-	if (sscanf(host, "%d.%d.%d.%d", &dig, &dig, &dig, &dig) == 4)
-	{
-		dest_addr.sin_addr.s_addr = inet_addr(host);
-	}
-	else
-	{
-		struct hostent *hp;
-		int addr, address[4];
-
-		if ((hp = gethostbyname(host)) == NULL)
-		{
-			port_printf(ses, "Failed to call %s, unknown host.", host);
-
-			return NULL;
-		}
-		memcpy((char *)&dest_addr.sin_addr, hp->h_addr, sizeof(dest_addr.sin_addr));
-
-		addr = ntohl(dest_addr.sin_addr.s_addr);
-
-		address[0] = ( addr >> 24 ) & 0xFF ; 
-		address[1] = ( addr >> 16 ) & 0xFF ;
-		address[2] = ( addr >>  8 ) & 0xFF ;
-		address[3] = ( addr       ) & 0xFF ;
-
-		sprintf(host, "%d.%d.%d.%d", address[0], address[1], address[2], address[3]);
-	}
-
-	if (is_number(port))
-	{
-		dest_addr.sin_port = htons(atoi(port));
-	}
-	else
-	{
-		port_printf(ses, "The port should be a number.");
-
-		return NULL;
-	}
-
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		syserr("socket");
-	}
-
-	dest_addr.sin_family = AF_INET;
-
-	if (connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) != 0)
-	{
-		port_printf(ses, "Failed to connect to %s:%s", host, port);
-
-		close(sock);
-
-		return NULL;
-	}
-
-	FD_ZERO(&wds);
-
-	FD_SET(sock, &wds); /* mother port desc */
-
-	if (select(FD_SETSIZE, NULL, &wds, NULL, &to) == -1)
-	{
-		port_printf(ses, "Failed to connect to %s %s", host, port);
-
-		close(sock);
-
-		return NULL;
-	}
-
-	if (!FD_ISSET(sock, &wds))
-	{
-		port_printf(ses, "Connection timed out.");
-
-		close(sock);
-
-		return NULL;
-	}
-
-	new_buddy = (struct port_data *) calloc(1, sizeof(struct port_data));
-
-	new_buddy->fd       = sock;
-	new_buddy->port     = atoi(port);
-
-	new_buddy->group    = strdup("");
-	new_buddy->ip       = strdup(host);
-	new_buddy->name     = strdup(ntos(sock));
-	new_buddy->color    = strdup("");
-	new_buddy->prefix   = strdup("");
-
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT CONNECTION", new_buddy->name, new_buddy->ip, ntos(new_buddy->port));
-
-	FD_ZERO(&rds);
-	FD_SET(sock, &rds);
-
-	to.tv_sec  = CALL_TIMEOUT;
-	to.tv_usec = 0;
-
-	if (select(FD_SETSIZE, &rds, NULL, NULL, &to) == -1)
+	if (ses->port == NULL || *new_buddy->name == 0)
 	{
 		close_port(ses, new_buddy, FALSE);
 
-		return NULL;
+		return ses;
 	}
 
-	if (process_port_input(new_buddy) == -1)
+	if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
 	{
-		FD_CLR(new_buddy->fd, &rds);
-		close_port(ses, new_buddy, FALSE);
-
-		return NULL;
+		syserr_printf(ses, "port_new: fcntl O_NDELAY|O_NONBLOCK");
 	}
 
-	if (*new_buddy->name == 0)
-	{
-		close_port(ses, new_buddy, FALSE);
-	}
-	else
-	{
-		if (fcntl(sock, F_SETFL, O_NDELAY|O_NONBLOCK) == -1)
-		{
-			perror("port_new: fcntl O_NDELAY|O_NONBLOCK");
-		}
+	ses->port->total++;
 
-		LINK(new_buddy, ses->port->next, ses->port->prev);
-		port_printf(ses, "Connection made to %s.", new_buddy->name);
-	}
+	LINK(new_buddy, ses->port->next, ses->port->prev);
 
-	return NULL;
-}
-
-#endif
-
-#ifdef HAVE_LIBPTHREAD
-
-DO_PORT(port_call)
-{
-	char buf[BUFFER_SIZE];
-	char *str;
-
-	pthread_t thread;
-
-	sprintf(buf, "{%s} {%s} {%s}", ses->name, left, right);
-
-	str = strdup(buf);
-
-	pthread_create(&thread, NULL, threaded_port_call, (void *) str);
+	port_printf(ses, "Connection made to %s.", new_buddy->name);
 
 	return ses;
 }
-	
-#else
-
-DO_PORT(port_call)
-{
-	char buf[BUFFER_SIZE];
-
-	sprintf(buf, "{%s} {%s}", left, right);
-
-	threaded_port_call((void *) buf);
-}
-
-#endif
-
-/*
-	Clean up and close a port conneciton.
-*/
-
-void close_port(struct session *ses, struct port_data *buddy, int unlink)
-{
-	buddy->flags = 0;
-
-	push_call("close_port(%p,%p,%d)",ses,buddy,unlink);
-
-	if (unlink)
-	{
-		UNLINK(buddy, ses->port->next, ses->port->prev);
-	}
-
-	if (buddy != ses->port)
-	{
-		if (*buddy->name == 0)
-		{
-			port_printf(ses, "Closing connection to %s D%d", buddy->ip, buddy->fd);
-		}
-		else
-		{
-			port_printf(ses, "Closing connection to %s@%s D%d.", buddy->name, buddy->ip, buddy->fd);
-		}
-	}
-
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 3, "PORT DISCONNECTION", buddy->name, buddy->ip, ntos(buddy->port));
-
-	if (close(buddy->fd) == -1)
-	{
-		perror("close_port: close()");
-	}
-
-	free(buddy->group);
-	free(buddy->ip);
-	free(buddy->name);
-	free(buddy->prefix);
-	free(buddy->color);
-
-	free(buddy);
-
-	pop_call();
-	return;
-}
-
-
-/*
-	Check for incoming calls and poll for input on 
-	                              connected sockets.
-*/
-
-void process_port_connections(struct session *ses, fd_set *read_set, fd_set *write_set, fd_set *exc_set)
-{
-	struct port_data *buddy, *buddy_next;
-
-	push_call("process_port_connections(%p,%p,%p)",read_set,write_set,exc_set);
-
-	/*
-		accept incoming connections
-	*/
-
-	if (FD_ISSET(ses->port->fd, read_set))
-	{
-		port_new(ses, ses->port->fd);
-	}
-
-	/*
-		read from sockets
-	*/
-
-	for (buddy = ses->port->next ; buddy ; buddy = buddy_next)
-	{
-		buddy_next = buddy->next;
-
-		if (HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST) || FD_ISSET(buddy->fd, exc_set))
-		{
-			FD_CLR(buddy->fd, write_set);
-			FD_CLR(buddy->fd, read_set);
-
-			close_port(ses, buddy, TRUE);
-		}
-		else if (FD_ISSET(buddy->fd, read_set) && process_port_input(ses, buddy) < 0)
-		{
-			FD_CLR(buddy->fd, write_set);
-			FD_CLR(buddy->fd, read_set);
-
-			close_port(ses, buddy, TRUE);
-		}
-	}
-	pop_call();
-	return;
-}
-
-void port_socket_printf(struct session *ses, struct port_data *buddy, char *format, ...)
-{
-	char buf[BUFFER_SIZE];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
-	va_end(args);
-
-	if (!HAS_BIT(buddy->flags, CHAT_FLAG_LINKLOST))
-	{
-		if (write(buddy->fd, buf, strlen(buf)) < 0)
-		{
-			port_printf(ses, "Lost link to socket '%s'.", buddy->name);
-
-			SET_BIT(buddy->flags, CHAT_FLAG_LINKLOST);
-		}
-	}
-}
-
-void port_printf(struct session *ses, char *format, ...)
-{
-	char buf[STRING_SIZE], tmp[STRING_SIZE];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(buf, BUFFER_SIZE / 3, format, args);
-	va_end(args);
-
-	sprintf(tmp, "%s%s", ses->port->prefix, buf);
-
-	strip_vt102_codes_non_graph(tmp, buf);
-
-//	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 2, "PORT MESSAGE", tmp, buf);
-
-	sprintf(tmp, "%s%s%s", ses->port->color, buf, "\e[0m");
-
-	tintin_puts(ses, tmp);
-}
-
-/*
-	Read and store for parsing all input on a socket.
-	Then call get_port_commands() to parse out the commands.
-*/
-
-int process_port_input(struct session *ses, struct port_data *buddy)
-{
-	char buf[BUFFER_SIZE], *pt1, *pt2;
-	int size;
-
-	push_call("process_port_input(%p)",buddy);
-
-	size = read(buddy->fd, buf, BUFFER_SIZE / 3);
-
-	if (size <= 0)
-	{
-		pop_call();
-		return -1;
-	}
-
-	buf[size] = 0;
-
-	pt1 = buf;
-
-	for (pt2 = buf ; *pt2 ; pt2++)
-	{
-		switch (*pt2)
-		{
-			case '\r':
-			case '\n':
-				*pt2 = 0;
-
-				get_port_commands(ses, buddy, pt1, size);
-
-				do
-				{
-					pt2++;
-				}
-				while (*pt2 == '\r' || *pt2 == '\n');
-
-				pt1 = pt2;
-				break;
-		}
-	}
-
-	if (pt1[0])
-	{
-		get_port_commands(ses, buddy, pt1, size);
-	}
-
-	pop_call();
-	return 0;
-}
-
-/*
-	Parse the input queue for commands and execute the
-	apropriate function.
-*/
-
-void get_port_commands(struct session *ses, struct port_data *buddy, char *buf, int len)
-{
-	char txt[STRING_SIZE];
-
-	push_call("get_port_commands(%s,%d,%s)",buddy->name,len,buf);
-
-	port_receive_message(ses, buddy, buf);
-
-	strip_vt102_codes(buf, txt);
-
-	check_all_events(ses, SUB_ARG|SUB_SEC, 0, 5, "PORT MESSAGE", buddy->name, buddy->ip, ntos(buddy->port), txt, buf);
-
-	pop_call();
-	return;
-}
-
-/**************************************************************************
- *  CHAT COMMUNICATION ROUTINES                                           *
- *************************************************************************/
-
-
-void port_receive_message(struct session *ses, struct port_data *buddy, char *txt)
-{
-	if (HAS_BIT(buddy->flags, CHAT_FLAG_IGNORE))
-	{
-		return;
-	}
-
-	port_printf(ses, "%s", txt);
-}
-
 
 DO_PORT(port_info)
 {
-	tintin_printf2(NULL, "Port                 : %d", ses->port->port);
-	tintin_printf2(NULL, "Prefix               : %s", ses->port->prefix);
-	tintin_printf2(NULL, "DND                  : %s", HAS_BIT(ses->port->flags, CHAT_FLAG_DND) ? "On" : "Off");
+	tintin_printf2(ses, "Port                 : %d", ses->port->port);
+	tintin_printf2(ses, "Prefix               : %s", ses->port->prefix);
+	tintin_printf2(ses, "Color                : %s", str_convert_meta(ses->port->color, TRUE));
+	tintin_printf2(ses, "DND                  : %s", HAS_BIT(ses->port->flags, PORT_FLAG_DND) ? "On" : "Off");
 
 	return ses;
 }
@@ -871,20 +793,20 @@ DO_PORT(port_name)
 {
 	struct port_data *buddy;
 
-	buddy = find_port_buddy(ses, left);
+	buddy = find_port_buddy(ses, arg1);
 
-	substitute(ses, right, right, SUB_COL|SUB_ESC);
+	substitute(ses, arg2, arg2, SUB_COL|SUB_ESC);
 
 	if (buddy == NULL)
 	{
-		port_printf(ses, "There is no socket named '%s'.", left);
+		port_printf(ses, "There is no socket named '%s'.", arg1);
 
 		return ses;
 	}
 
-	RESTRING(buddy->name, right);
+	RESTRING(buddy->name, arg2);
 
-	port_printf(ses, "Name of socket '%s' changed to '%s'.", left, buddy->name);
+	port_printf(ses, "Name of socket '%s' changed to '%s'.", arg1, buddy->name);
 
 	return ses;
 }
@@ -892,7 +814,7 @@ DO_PORT(port_name)
 
 DO_PORT(port_prefix)
 {
-	RESTRING(ses->port->prefix, left);
+	RESTRING(ses->port->prefix, arg1);
 
 	port_printf(ses, "Prefix set to '%s'", ses->port->prefix);
 
@@ -903,34 +825,34 @@ DO_PORT(port_send)
 {
 	struct port_data *buddy;
 
-	substitute(gtd->ses, right, right, SUB_COL|SUB_ESC|SUB_LNF);
+	substitute(gtd->ses, arg2, arg2, SUB_COL|SUB_ESC|SUB_LNF);
 
-	if (!strcasecmp(left, "ALL"))
+	if (!strcasecmp(arg1, "ALL"))
 	{
 		for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
 		{
-			port_socket_printf(ses, buddy, "%s", right);
+			port_socket_printf(ses, buddy, "%s", arg2);
 		}
 	}
 	else
 	{
-		if ((buddy = find_port_buddy(ses, left)) != NULL)
+		if ((buddy = find_port_buddy(ses, arg1)) != NULL)
 		{
-			port_socket_printf(ses, buddy, "%s", right);
+			port_socket_printf(ses, buddy, "%s", arg2);
 		}
-		else if (find_port_group(ses, left) != NULL)
+		else if (find_port_group(ses, arg1) != NULL)
 		{
 			for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
 			{
-				if (!strcmp(buddy->group, left))
+				if (!strcmp(buddy->group, arg1))
 				{
-					port_socket_printf(ses, buddy, "%s", right);
+					port_socket_printf(ses, buddy, "%s", arg2);
 				}
 			}
 		}
 		else
 		{
-			port_printf(ses, "There is no socket named '%s'.", left);
+			port_printf(ses, "There is no socket named '%s'.", arg1);
 		}
 	}
 
@@ -947,15 +869,14 @@ DO_PORT(port_who)
 
 	for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
 	{
-		tintin_printf(ses, "here goes");
 		tintin_printf(ses, " %03d %+15s  %s%s%s%s%s  %+20s  %+5u",
 			cnt++,
 			buddy->name,
-			HAS_BIT(buddy->flags, CHAT_FLAG_PRIVATE)   ? "P" : " ",
-			HAS_BIT(buddy->flags, CHAT_FLAG_IGNORE)    ? "I" : " ",
-			HAS_BIT(buddy->flags, CHAT_FLAG_SERVE)     ? "S" : " ",
-			HAS_BIT(buddy->flags, CHAT_FLAG_FORWARD)   ? "F" :
-			HAS_BIT(buddy->flags, CHAT_FLAG_FORWARDBY) ? "f" : " ",
+			HAS_BIT(buddy->flags, PORT_FLAG_PRIVATE)   ? "P" : " ",
+			HAS_BIT(buddy->flags, PORT_FLAG_IGNORE)    ? "I" : " ",
+			HAS_BIT(buddy->flags, PORT_FLAG_SERVE)     ? "S" : " ",
+			HAS_BIT(buddy->flags, PORT_FLAG_FORWARD)   ? "F" :
+			HAS_BIT(buddy->flags, PORT_FLAG_FORWARDBY) ? "f" : " ",
 			" ",
 			buddy->ip,
 			buddy->port);
@@ -970,7 +891,7 @@ DO_PORT(port_zap)
 {
 	struct port_data *buddy;
 
-	if (!strcasecmp(left, "ALL"))
+	if (!strcasecmp(arg1, "ALL"))
 	{
 		while (ses->port->next)
 		{
@@ -979,13 +900,13 @@ DO_PORT(port_zap)
 	}
 	else
 	{
-		if ((buddy = find_port_buddy(ses, left)))
+		if ((buddy = find_port_buddy(ses, arg1)))
 		{
 			close_port(ses, buddy, TRUE);
 		}
 		else
 		{
-			port_printf(ses, "There is no socket named '%s'.", left);
+			port_printf(ses, "There is no socket named '%s'.", arg1);
 		}
 	}
 
@@ -995,24 +916,24 @@ DO_PORT(port_zap)
 
 DO_PORT(port_color)
 {
-	if (*left == 0 || get_highlight_codes(gtd->ses, left, right) == FALSE)
+	if (*arg1 == 0 || get_highlight_codes(gtd->ses, arg1, arg2) == FALSE)
 	{
 		port_printf(ses, "Valid colors are:\n\nreset, bold, dim, light, dark, underscore, blink, reverse, black, red, green, yellow, blue, magenta, cyan, white, b black, b red, b green, b yellow, b blue, b magenta, b cyan, b white");
 
 		return ses;
 	}
-	RESTRING(ses->port->color, right);
+	RESTRING(ses->port->color, arg2);
 
-	port_printf(ses, "Color has been set to %s", left);
+	port_printf(ses, "Color has been set to %s", arg1);
 
 	return ses;
 }
 
 DO_PORT(port_dnd)
 {
-	TOG_BIT(ses->port->flags, CHAT_FLAG_DND);
+	TOG_BIT(ses->port->flags, PORT_FLAG_DND);
 
-	if (HAS_BIT(ses->port->flags, CHAT_FLAG_DND))
+	if (HAS_BIT(ses->port->flags, PORT_FLAG_DND))
 	{
 		port_printf(ses, "New connections are no longer accepted.");
 	}
@@ -1020,7 +941,76 @@ DO_PORT(port_dnd)
 	{
 		port_printf(ses, "New connections are accepted.");
 	}
-	
+
+	return ses;
+}
+
+DO_PORT(port_flag)
+{
+	if (*arg1 == 0)
+	{
+		tintin_printf2(ses, "#SYNTAX: #PORT FLAG <DND|PRIVATE> [ON|OFF]");
+	}
+	else if (is_abbrev(arg1, "DND"))
+	{
+		if (!strcasecmp(arg2, "ON"))
+		{
+			SET_BIT(ses->port->flags, PORT_FLAG_DND);
+		}
+		else if (!strcasecmp(arg2, "OFF"))
+		{
+			DEL_BIT(ses->port->flags, PORT_FLAG_DND);
+		}
+		else if (*arg2 == 0)
+		{
+			TOG_BIT(ses->port->flags, PORT_FLAG_DND);
+		}
+		else
+		{
+			tintin_printf2(ses, "#SYNTAX: #PORT FLAG DND [ON|OFF]");
+			
+			return ses;
+		}
+
+		if (HAS_BIT(ses->port->flags, PORT_FLAG_DND))
+		{
+			port_printf(ses, "New connections are no longer accepted.");
+		}
+		else
+		{
+			port_printf(ses, "New connections are accepted.");
+		}
+	}
+	else if (is_abbrev(arg1, "PRIVATE"))
+	{
+		if (!strcasecmp(arg2, "ON"))
+		{
+			SET_BIT(ses->port->flags, PORT_FLAG_PRIVATE);
+		}
+		else if (!strcasecmp(arg2, "OFF"))
+		{
+			DEL_BIT(ses->port->flags, PORT_FLAG_PRIVATE);
+		}
+		else if (*arg2 == 0)
+		{
+			TOG_BIT(ses->port->flags, PORT_FLAG_PRIVATE);
+		}
+		else
+		{
+			tintin_printf2(ses, "#SYNTAX: #PORT FLAG PRIVATE [ON|OFF]");
+			
+			return ses;
+		}
+
+		if (HAS_BIT(ses->port->flags, PORT_FLAG_PRIVATE))
+		{
+			port_printf(ses, "Remote connections are no longer accepted.");
+		}
+		else
+		{
+			port_printf(ses, "Remote connections are accepted.");
+		}
+	}
 	return ses;
 }
 
@@ -1029,7 +1019,7 @@ DO_PORT(port_group)
 	struct port_data *buddy;
 	int cnt = 0;
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_printf(NULL, "     %-15s  %-20s  %-5s  %-15s", "Name", "Address", "Port", "Group");
 		tintin_printf(NULL, "     ===============  ====================  =====  ==================== ");
@@ -1045,50 +1035,47 @@ DO_PORT(port_group)
 		}
 		tintin_printf(NULL, "     ===============  ====================  =====  ==================== ");
 	}
-	else if (!strcasecmp(left, "ALL"))
+	else if (!strcasecmp(arg1, "ALL"))
 	{
-		port_printf(ses, "You set everyone's group to '%s'", right);
+		port_printf(ses, "You set everyone's group to '%s'", arg2);
 
 		for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
 		{
-			RESTRING(buddy->group, right);
+			RESTRING(buddy->group, arg2);
 		}
 	}
 	else
 	{
-		if ((buddy = find_port_buddy(ses, left)) != NULL)
+		if ((buddy = find_port_buddy(ses, arg1)) != NULL)
 		{
-			RESTRING(buddy->group, right);
+			RESTRING(buddy->group, arg2);
 
-			port_printf(ses, "You set %s's group to '%s'", buddy->name, right);
+			port_printf(ses, "You set %s's group to '%s'", buddy->name, arg2);
 		}
 		else
 		{
-			port_printf(ses, "You are not connected to anyone named '%s'.", left);
+			port_printf(ses, "You are not connected to anyone named '%s'.", arg1);
 		}
 	}
 
 	return ses;
 }
 
-/*
-	The ignore feature.
-*/
 
 DO_PORT(port_ignore)
 {
 	struct port_data *buddy;
 
-	if ((buddy = find_port_buddy(ses, left)) == NULL)
+	if ((buddy = find_port_buddy(ses, arg1)) == NULL)
 	{
-		port_printf(ses, "You are not connected to anyone named '%s'.", left);
+		port_printf(ses, "You are not connected to anyone named '%s'.", arg1);
 
 		return ses;
 	}
 
-	TOG_BIT(buddy->flags, CHAT_FLAG_IGNORE);
+	TOG_BIT(buddy->flags, PORT_FLAG_IGNORE);
 
-	if (HAS_BIT(buddy->flags, CHAT_FLAG_IGNORE))
+	if (HAS_BIT(buddy->flags, PORT_FLAG_IGNORE))
 	{
 		port_printf(ses, "You are now ignoring %s.", buddy->name);
 	}
@@ -1159,4 +1146,76 @@ struct port_data *find_port_group(struct session *ses, char *arg)
 		}
 	}
 	return NULL;
+}
+
+DO_PORT(port_rank)
+{
+	struct port_data *buddy;
+	int cnt, rank;
+
+	if (*arg1 == 0)
+	{
+		tintin_printf(NULL, "     %-15s  %-20s  %-5s  %-15s", "Name", "Address", "Port", "Rank");
+		tintin_printf(NULL, "     ===============  ====================  =====  ==================== ");
+
+		cnt = 0;
+
+		for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
+		{
+			tintin_printf(NULL, " %03d %-15s  %-20s  %-5u  %-20s",
+				cnt++,
+				buddy->name,
+				buddy->ip,
+				buddy->port,
+				rank_table[buddy->rank].name);
+		}
+		tintin_printf(NULL, "     ===============  ====================  =====  ==================== ");
+
+		return ses;
+	}
+
+	if (*arg2 == 0)
+	{
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #PORT RANK <NAME> <SPY|SCOUT>");
+
+		return ses;
+	}
+	else if (is_abbrev(arg2, "SPY"))
+	{
+		rank = PORT_RANK_SPY;
+	}
+	else if (is_abbrev(arg2, "SCOUT"))
+	{
+		rank = PORT_RANK_SCOUT;
+	}
+	else
+	{
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #PORT RANK <NAME> <SPY|SCOUT>");
+		
+		return ses;
+	}
+
+	if (!strcasecmp(arg1, "ALL"))
+	{
+		port_printf(ses, "You set everyone's rank to '%s'", rank_table[rank].name);
+
+		for (buddy = ses->port->next ; buddy ; buddy = buddy->next)
+		{
+			buddy->rank = rank;
+		}
+	}
+	else
+	{
+		if ((buddy = find_port_buddy(ses, arg1)) != NULL)
+		{
+			buddy->rank = rank;
+
+			port_printf(ses, "YOU SET %s'S RANK TO '%s'", buddy->name, rank_table[buddy->rank]);
+		}
+		else
+		{
+			port_printf(ses, "YOU ARE NOT CONNECTED TO ANYONE NAMED '%s'.", arg1);
+		}
+	}
+	return ses;
 }

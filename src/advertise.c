@@ -107,6 +107,37 @@ struct advertisement_type advertisement_table[] =
 		100,
 
 		"\n"
+                "<138>                             Lowlands\n"
+		"\n"
+		"<078>Lowlands is based on the Storms of Time codebase which in turn is based on the\n"
+		"<078>Mortal Realms codebase which was established in 1993. Lowlands has many unique\n"
+		"<078>systems and features. Its main strength is the inclusion of over 100 detailed\n"
+		"<078>quests which have been custom coded using a powerful mob prog engine.\n"
+		"<078>\n"
+		"<078>Lowlands has a generic medieval fantasy theme with a mature playerbase that has\n"
+		"<078>little interest in roleplaying, but make up for that with their enthusiasm when\n"
+		"<078>it comes to grinding, raiding, questing and exploring.\n"
+		"\n"
+		"<178>To connect to Lowlands enter: #session lol lolamud.net 6969\n"
+		"\n",
+
+		"\n"
+		"<138>Lowlands\n"
+		"\n"
+		"<078>Lowlands is based on the Storms of Time codebase which in turn is based on the Mortal Realms codebase. It's a very polished MUD with many unique systems and features. Its main strength is the inclusion of over 100 detailed area quests which have been custom coded using a powerful mob prog engine.\n"
+		"<078>\n"
+		"<078>Lowlands has a generic medieval fantasy theme and the codebase is open source so anyone wanting to build or code can easily set up their own test mud.\n"
+		"\n"
+		"<178>To connect to Lowlands enter: #session lol lolamud.net 6969\n"
+		"\n"
+	},
+
+/*	{
+		1400000000,
+ 		1800000000,
+		100,
+
+		"\n"
 		"<138>                The Last Outpost  -  https://www.last-outpost.com\n"
 		"\n"
 		"<078>The Last Outpost has been serving up adventure since 1992.  Along with\n"
@@ -129,7 +160,7 @@ struct advertisement_type advertisement_table[] =
 		"<178>To connect to The Last Outpost enter: #session lo last-outpost.com 4000\n"
 		"\n"
 	},
-
+*/
 	{
 		1400000000,  /* 2014 */ 
 		1800000000,  /* 2027 */ 
@@ -319,13 +350,11 @@ struct advertisement_type advertisement_table[] =
 
 int valid_advertisement(int i)
 {
-	time_t current_time = time(NULL);
-
-	if (advertisement_table[i].start > current_time)
+	if (advertisement_table[i].start > gtd->time)
 	{
 		return 0;
 	}
-	if (advertisement_table[i].end < current_time)
+	if (advertisement_table[i].end < gtd->time)
 	{
 		return 0;
 	}

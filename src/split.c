@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -30,39 +30,83 @@
 
 DO_COMMAND(do_split)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
+	int top, bot;
 
-	arg = get_arg_in_braces(ses, arg, left,  FALSE);
-	substitute(ses, left, left, SUB_VAR|SUB_FUN);
-
-	arg = get_arg_in_braces(ses, arg, right, FALSE);
-	substitute(ses, right, right, SUB_VAR|SUB_FUN);
-
-	if (*left == 0 && *right == 0)
+	if (arg == NULL)
 	{
-		init_split(ses, 1, gtd->screen->rows - 2);
+		show_error(ses, LIST_COMMAND, "#SYNTAX: #SPLIT {[TOP ROWS]} {[BOTTOM ROWS]}");
+
+		return ses;
 	}
-	else if (*right == 0)
+
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = sub_arg_in_braces(ses, arg, arg2, GET_ONE, SUB_VAR|SUB_FUN);
+
+	if (*arg1 == 0)
 	{
-		init_split(ses, 1 + atoi(left), gtd->screen->rows - 2);
+		if (*arg2 == 0)
+		{
+			top = 0;
+			bot = 1;
+		}
+		else if (is_math(ses, arg2))
+		{
+			top = 0;
+			bot = get_number(ses, arg2);
+		}
+		else
+		{
+			return do_split(ses, NULL);
+		}
+	}
+	else if (*arg2 == 0)
+	{
+		if (is_math(ses, arg1))
+		{
+			top = 0;
+			bot = get_number(ses, arg1);
+		}
+		else
+		{
+			return do_split(ses, NULL);
+		}
+	}
+	else if (!is_math(ses, arg1) || !is_math(ses, arg2))
+	{
+		return do_split(ses, NULL);
 	}
 	else
 	{
-		init_split(ses, 1 + atoi(left), gtd->screen->rows - 1 - atoi(right));
+		top = get_number(ses, arg1);
+		bot = get_number(ses, arg2);
 	}
+
+	if (top < 0 || bot < 0)
+	{
+		show_error(ses, LIST_COMMAND, "#ERROR: NEGATIVE VALUE(S): #SPLIT {%d} {%d}", top, bot);
+
+		return ses;
+	}
+
+	ses->top_split = top;
+	ses->bot_split = bot;
+
+	init_split(ses, 1 + ses->top_split, gtd->screen->rows - 1 - ses->bot_split);
+
 	return ses;
 }
 
 
 DO_COMMAND(do_unsplit)
 {
-	clean_screen(ses);
+	reset_screen(ses);
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
 		if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
 		{
-			send_sb_naws(ses, 0, NULL);
+			client_send_sb_naws(ses, 0, NULL);
 		}
 		DEL_BIT(ses->flags, SES_FLAG_SPLIT);
 	}
@@ -99,21 +143,21 @@ void init_split(struct session *ses, int top, int bot)
 
 	for (bot = 1 ; gtd->screen->rows - bot > ses->bot_row ; bot++)
 	{
-		do_one_prompt(ses, "", +bot, 0);
+		do_one_prompt(ses, "", gtd->screen->rows - bot, 0);
 	}
 
 	set_line_screen("", ses->bot_row - 1, 0);
 
 	for (top = 1 ; top < ses->top_row ; top++)
 	{
-		do_one_prompt(ses, "", -top, 0);
+		do_one_prompt(ses, "", top, 0);
 	}
 
 	goto_rowcol(ses, gtd->screen->rows, 1);
 
 	if (HAS_BIT(ses->telopts, TELOPT_FLAG_NAWS))
 	{
-		send_sb_naws(ses, 0, NULL);
+		client_send_sb_naws(ses, 0, NULL);
 	}
 
 	if (ses->map && HAS_BIT(ses->map->flags, MAP_FLAG_VTMAP))
@@ -132,7 +176,7 @@ void init_split(struct session *ses, int top, int bot)
 	unsplit
 */
 
-void clean_screen(struct session *ses)
+void reset_screen(struct session *ses)
 {
 	reset_scroll_region(ses);
 
@@ -157,7 +201,7 @@ void dirty_screen(struct session *ses)
 
 	if (HAS_BIT(ses->flags, SES_FLAG_SPLIT))
 	{
-		init_split(ses, ses->top_row, ses->bot_row);
+		init_split(ses, 1 + ses->top_split, gtd->screen->rows - 1 - ses->bot_split);
 	}
 	else if (IS_SPLIT(ses))
 	{
@@ -165,7 +209,7 @@ void dirty_screen(struct session *ses)
 	}
 	else
 	{
-		clean_screen(ses);
+		reset_screen(ses);
 	}
 
 	if (IS_SPLIT(ses) && ses == gtd->ses)

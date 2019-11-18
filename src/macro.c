@@ -31,8 +31,8 @@ DO_COMMAND(do_macro)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, arg2, 1);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
 	if (*arg1 == 0)
 	{
@@ -49,7 +49,7 @@ DO_COMMAND(do_macro)
 	{
 		unconvert_meta(arg1, arg3);
 
-		update_node_list(ses->list[LIST_MACRO], arg1, arg2, arg3);
+		update_node_list(ses->list[LIST_MACRO], arg1, arg2, arg3, "");
 
 		show_message(ses, LIST_MACRO, "#OK. MACRO {%s} HAS BEEN SET TO {%s}.", arg1, arg2);
 	}

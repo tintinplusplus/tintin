@@ -1,12 +1,85 @@
 * STUFF THAT IS PROBABLY GONNA GET DONE
 
+  - add #line background option that prevents automatic session
+    activation.
+
+  - add syntax highlighting to map data.
+
+  - add maze flag for maze handling.
+
+  - asciivnum void room display.
+
+  - look into empty symbol setting.
+
+  - easier bit checks for map data
+
+  - #buffer copy {lines} with strip option.
+
+  - add #line logmode {raw|html|plain} option
+
+  - add class specific debug
+
+  - add screen draw options to draw lines and boxes.
+
+  - Work on VT2020
+
+  - massive map / html map drawing.
+
+  - add tunnel void utility to #map interface. (covered by #map move tho)
+
+  - make #split static and fix wrapping of split line on horizontal shrink.
+
+  - add dont_echo check
+
+  - look into storing exit info in the grid map.
+
+  - look into utf-8 text obfuscation.
+
+  - look into socket code (linger?) and socket error handling
+
+  - better color syntax highlighting configuration.
+
+  - split up list data flag.
+
+  - Add #log delete option.
+
+  - See about filling COMMAND_LIST table.
+
+  - See about adding SESSIONS to the list table.
+
+  - disable packet patch in echo off mode / PACKET PATCH AUTO mode.
+
+  - set packet patch on EOR and GA detection. #config packet patch auto ?
+
+  - See if cpu usage of time events can be lowered.
+
+  - Add debugger to syntax highlighter, substitution highlighing, 256 color support, and variable expansion.
+
+  - allow #class save/load to memory.
+
+  - document #map legend
+
+  - better background in #map.
+
+  - only #map autolink rooms in same area.
+
+  - look at scripts/bug.tin
+
+  - check term_table code
+
+  - Fix #log helpfile and look into #log {remove} option for wintin++
+
+  - Add #map center {x} {y} {z} option to change the center room of #map map
+
+  - Look into adding gb18030 GBK translation table.
+
   - Add vtmap positioning options.
 
   - Add FILE READ <name> event
 
   - fix readmud in net.c to not move the cursor on inactive sessions.
 
-  - add #con packet patch auto
+  - add #con packet patch auto split mode / prompt telnet codes
 
   - add packets patched counter
 
@@ -57,8 +130,6 @@
 
   - CAPTURED INPUT event
 
-  - Look into color patch support for #snoop.
-
   - see if #break 2 is possible, maybe #continue 2 as well.
 
   - Add options to #cursor to implement custom behaviour.
@@ -101,8 +172,28 @@
 
 --------------------------------------------------------------------------------
 
+* ROADMAP
+
+  - #screen support
+
+  - tintin commander
+
+  - syntax highlighter (more work to be done)
+
+  - sixtel graphics
+
+  - #window support
+
+  - clickable link support
+
+  - buttons
+
+
+--------------------------------------------------------------------------------
 
 * STUFF THAT MIGHT BE IMPLEMENTED
+
+  - fix ctrl-r ctrl-d / ctrl-c / enter
 
   - Option to run #script in background.
 
@@ -116,7 +207,7 @@
 
   - BINARY TELOPT support.
 
-  - Split pane scrollback
+  - Split pane scrollback (event system?)
 
   - add #line gag {lines} option or #lines {lines} {gag}.
 

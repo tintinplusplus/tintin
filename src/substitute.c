@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -31,9 +31,9 @@ DO_COMMAND(do_substitute)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE], *str;
 
-	str = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, str, arg2, 1);
-	arg = get_arg_in_braces(ses, arg, arg3, 1);
+	str = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, str, arg2, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, arg3, GET_ALL);
 
 	if (*arg3 == 0)
 	{
@@ -53,7 +53,7 @@ DO_COMMAND(do_substitute)
 	}
 	else
 	{
-		update_node_list(ses->list[LIST_SUBSTITUTE], arg1, arg2, arg3);
+		update_node_list(ses->list[LIST_SUBSTITUTE], arg1, arg2, arg3, "");
 
 		show_message(ses, LIST_SUBSTITUTE, "#OK. {%s} IS NOW SUBSTITUTED AS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
@@ -95,10 +95,10 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 				strcpy(match, gtd->vars[0]);
 
-				substitute(ses, node->right, temp, SUB_ARG);
+				substitute(ses, node->arg2, temp, SUB_ARG);
 				substitute(ses, temp, subst, SUB_VAR|SUB_FUN|SUB_COL|SUB_ESC);
 
-				if (HAS_BIT(node->flags, NODE_FLAG_META))
+				if (*node->arg1 == '~')
 				{
 					ptm = strstr(pto, match);
 
@@ -117,7 +117,7 @@ void check_all_substitutions(struct session *ses, char *original, char *line)
 
 				pto = ptm + len;
 
-				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->left, match);
+				show_debug(ses, LIST_SUBSTITUTE, "#DEBUG SUBSTITUTE {%s} {%s}", node->arg1, match);
 			}
 			while (check_one_regexp(ses, node, ptl, pto, 0));
 

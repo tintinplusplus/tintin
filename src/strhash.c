@@ -28,13 +28,13 @@
 
 struct str_hash_index_data str_hash_index[MAX_STR_HASH];
 
-unsigned short str_hash_len;
+int str_hash_len;
 
 /*
 	Performs as well as Jenkin's one-at-a-time hash.- Igor
 */
 
-unsigned short generate_str_hash_key(char *str)
+int generate_str_hash_key(char *str)
 {
 	unsigned int h = 4321;
 
@@ -64,7 +64,7 @@ unsigned long long generate_hash_key(char *str)
 
 char *str_hash(char *str, int lines)
 {
-	unsigned short hash;
+	int hash;
 	struct str_hash_data *hash_ptr;
 
 	hash = generate_str_hash_key(str);
@@ -107,17 +107,17 @@ char *str_unhash(char *str)
 }
 
 
-unsigned short str_hash_lines(char *str)
+int str_hash_lines(char *str)
 {
 	return ((struct str_hash_data *) (str - gtd->str_hash_size))->lines;
 }
 
-unsigned short str_hash_length(char *str)
+int str_hash_length(char *str)
 {
 	return ((struct str_hash_data *) (str - gtd->str_hash_size))->length;
 }
 
-unsigned short str_hash_grep(char *str, int write)
+int str_hash_grep(char *str, int write)
 {
 	struct str_hash_data *hash_ptr;
 
@@ -157,7 +157,7 @@ void reset_hash_table(void)
 	return;
 }
 
-DO_BUFFER(buffer_info)
+void str_hash_info(struct session *ses)
 {
 	struct str_hash_data *hash_ptr;
 	int hash, hash_cnt, hash_max, index_cnt, string_cnt, pointer_cnt, hashed_size, unhashed_size;

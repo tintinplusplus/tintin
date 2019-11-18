@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -17,6 +17,7 @@
 *   You should have received a copy of the GNU General Public License         *
 *   along with TinTin++.  If not, see https://www.gnu.org/licenses.           *
 ******************************************************************************/
+
 /******************************************************************************
 *               (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                  *
 *                                                                             *
@@ -31,9 +32,9 @@ DO_COMMAND(do_alias)
 {
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], arg3[BUFFER_SIZE];
 
-	arg = sub_arg_in_braces(ses, arg, arg1, 0, SUB_VAR|SUB_FUN);
-	arg = get_arg_in_braces(ses, arg, arg2, 1);
-	arg = get_arg_in_braces(ses, arg, arg3, 1);
+	arg = sub_arg_in_braces(ses, arg, arg1, GET_ONE, SUB_VAR|SUB_FUN);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ALL);
+	arg = get_arg_in_braces(ses, arg, arg3, GET_ALL);
 
 	if (*arg3 == 0)
 	{
@@ -53,9 +54,9 @@ DO_COMMAND(do_alias)
 	}
 	else
 	{
-		update_node_list(ses->list[LIST_ALIAS], arg1, arg2, arg3);
+		update_node_list(ses->list[LIST_ALIAS], arg1, arg2, arg3, "");
 
-		show_message(ses, LIST_ALIAS, "#OK. {%s} NOW ALIASES {%s} @ {%s}.", arg1, arg2, arg3);
+		show_message(ses, LIST_ALIAS, "#ALIAS {%s} NOW TRIGGERS {%s} @ {%s}.", arg1, arg2, arg3);
 	}
 	return ses;
 }
@@ -90,22 +91,28 @@ int check_all_aliases(struct session *ses, char *input)
 		{
 			node = root->list[root->update];
 
-			i = strlen(node->left);
+			i = strlen(node->arg1);
 
-			if (!strncmp(node->left, line, i))
+			if (!strncmp(node->arg1, line, i))
 			{
-				if (line[i] && line[i] != ' ')
+				if (line[i])
 				{
-					continue;
+					if (line[i] != ' ')
+					{
+						continue;
+					}
+					arg = &line[i + 1];
 				}
-				
-				arg = get_arg_in_braces(ses, line, tmp, FALSE);
+				else
+				{
+					arg = &line[i];
+				}
 
 				RESTRING(gtd->vars[0], arg)
 
 				for (i = 1 ; i < 100 ; i++)
 				{
-					arg = get_arg_in_braces(ses, arg, tmp, FALSE);
+					arg = get_arg_in_braces(ses, arg, tmp, GET_ONE);
 
 					RESTRING(gtd->vars[i], tmp);
 
@@ -124,9 +131,9 @@ int check_all_aliases(struct session *ses, char *input)
 				}
 			}
 
-			substitute(ses, node->right, tmp, SUB_ARG);
+			substitute(ses, node->arg2, tmp, SUB_ARG);
 
-			if (!strncmp(node->left, line, strlen(node->left)) && !strcmp(node->right, tmp) && *gtd->vars[0])
+			if (!strncmp(node->arg1, line, strlen(node->arg1)) && !strcmp(node->arg2, tmp) && *gtd->vars[0])
 			{
 				sprintf(input, "%s %s", tmp, gtd->vars[0]);
 			}
@@ -135,7 +142,7 @@ int check_all_aliases(struct session *ses, char *input)
 				sprintf(input, "%s", tmp);
 			}
 
-			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s} {%s}", node->left, gtd->vars[0]);
+			show_debug(ses, LIST_ALIAS, "#DEBUG ALIAS {%s} {%s}", node->arg1, gtd->vars[0]);
 
 			return TRUE;
 		}

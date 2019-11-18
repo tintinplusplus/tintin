@@ -1,7 +1,7 @@
 /******************************************************************************
 *   This file is part of TinTin++                                             *
 *                                                                             *
-*   Copyright 1992-2019 (See CREDITS file)                                    *
+*   Copyright 2004-2019 Igor van den Hoven                                    *
 *                                                                             *
 *   TinTin++ is free software; you can redistribute it and/or modify          *
 *   it under the terms of the GNU General Public License as published by      *
@@ -21,8 +21,7 @@
 /******************************************************************************
 *                (T)he K(I)cki(N) (T)ickin D(I)kumud Clie(N)t                 *
 *                                                                             *
-*                         coded by Peter Unold 1992                           *
-*                     recoded by Igor van den Hoven 2004                      *
+*                       coded by Igor van den Hoven 2004                      *
 ******************************************************************************/
 
 #include "tintin.h"
@@ -34,8 +33,7 @@ struct listroot *init_list(struct session *ses, int type, int size)
 
 	if ((listhead = (struct listroot *) calloc(1, sizeof(struct listroot))) == NULL)
 	{
-		fprintf(stderr, "couldn't alloc listhead\n");
-		exit(1);
+		syserr_fatal(-1, "init_list: calloc");
 	}
 
 	listhead->ses  = ses;
@@ -81,15 +79,16 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 		{
 			node = (struct listnode *) calloc(1, sizeof(struct listnode));
 
-			node->left  = strdup(sourcelist->list[i]->left);
-			node->right = strdup(sourcelist->list[i]->right);
-			node->pr    = strdup(sourcelist->list[i]->pr);
+			node->arg1  = strdup(sourcelist->list[i]->arg1);
+			node->arg2  = strdup(sourcelist->list[i]->arg2);
+			node->arg3  = strdup(sourcelist->list[i]->arg3);
+			node->arg4  = strdup(sourcelist->list[i]->arg4);
 			node->group = strdup(sourcelist->list[i]->group);
 
 			switch (type)
 			{
 				case LIST_ALIAS:
-					node->regex = tintin_regexp_compile(ses, node, node->left, PCRE_ANCHORED);
+					node->regex = tintin_regexp_compile(ses, node, node->arg1, PCRE_ANCHORED);
 					break;
 
 				case LIST_ACTION:
@@ -97,7 +96,7 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 				case LIST_HIGHLIGHT:
 				case LIST_PROMPT:
 				case LIST_SUBSTITUTE:
-					node->regex = tintin_regexp_compile(ses, node, node->left, 0);
+					node->regex = tintin_regexp_compile(ses, node, node->arg1, 0);
 					break;
 
 				case LIST_VARIABLE:
@@ -114,27 +113,25 @@ struct listroot *copy_list(struct session *ses, struct listroot *sourcelist, int
 	return ses->list[type];
 }
 
-/*
-	create a node and stuff it into the list in the desired order
-*/
 
-struct listnode *insert_node_list(struct listroot *root, char *ltext, char *rtext, char *prtext)
+struct listnode *insert_node_list(struct listroot *root, char *arg1, char *arg2, char *arg3, char *arg4)
 {
 	int index;
 	struct listnode *node;
 
 	node = (struct listnode *) calloc(1, sizeof(struct listnode));
 
-	node->left  = strdup(ltext);
-	node->right = strdup(rtext);
-	node->pr    = strdup(prtext);
+	node->arg1 = strdup(arg1);
+	node->arg2 = strdup(arg2);
+	node->arg3 = strdup(arg3);
+	node->arg4 = strdup(arg4);
 
 	node->group = HAS_BIT(root->flags, LIST_FLAG_CLASS) ? strdup(root->ses->group) : strdup("");
 
 	switch (root->type)
 	{
 		case LIST_ALIAS:
-			node->regex = tintin_regexp_compile(root->ses, node, node->left, PCRE_ANCHORED);
+			node->regex = tintin_regexp_compile(root->ses, node, node->arg1, PCRE_ANCHORED);
 			break;
 
 		case LIST_ACTION:
@@ -142,61 +139,67 @@ struct listnode *insert_node_list(struct listroot *root, char *ltext, char *rtex
 		case LIST_HIGHLIGHT:
 		case LIST_PROMPT:
 		case LIST_SUBSTITUTE:
-			node->regex = tintin_regexp_compile(root->ses, node, node->left, 0);
+			node->regex = tintin_regexp_compile(root->ses, node, node->arg1, 0);
 			break;
 	}
 
-	index = locate_index_list(root, ltext, prtext);
+	index = locate_index_list(root, arg1, arg3);
 
 	return insert_index_list(root, node, index);
 }
 
 
-struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtext, char *prtext)
+struct listnode *update_node_list(struct listroot *root, char *arg1, char *arg2, char *arg3, char *arg4)
 {
 	int index;
 	struct listnode *node;
 
-	index = search_index_list(root, ltext, NULL);
+	index = search_index_list(root, arg1, NULL);
 
 	if (index != -1)
 	{
-		if (list_table[root->type].mode == SORT_DELAY && is_number(ltext))
+		if (list_table[root->type].mode == SORT_DELAY && is_number(arg1))
 		{
-			return insert_node_list(root, ltext, rtext, prtext);
+			return insert_node_list(root, arg1, arg2, arg3, arg4);
 		}
 
 		node = root->list[index];
 
-		if (strcmp(node->right, rtext) != 0)
+		if (strcmp(node->arg2, arg2) != 0)
 		{
-			free(node->right);
-			node->right = strdup(rtext);
+			free(node->arg2);
+			node->arg2 = strdup(arg2);
 		}
 
-		node->data = 0;
+		switch (root->type)
+		{
+			case LIST_DELAY:
+			case LIST_TICKER:
+				node->data = 0;
+				break;
+		}
 
 		switch (list_table[root->type].mode)
 		{
 			case SORT_PRIORITY:
-				if (atof(node->pr) != atof(prtext))
+				if (atof(node->arg3) != atof(arg3))
 				{
 					delete_index_list(root, index);
-					return insert_node_list(root, ltext, rtext, prtext);
+					return insert_node_list(root, arg1, arg2, arg3, arg4);
 				}
 				break;
 
 			case SORT_APPEND:
 				delete_index_list(root, index);
-				return insert_node_list(root, ltext, rtext, prtext);
+				return insert_node_list(root, arg1, arg2, arg3, arg4);
 				break;
 
 			case SORT_ALPHA:
 			case SORT_DELAY:
-				if (strcmp(node->pr, prtext) != 0)
+				if (strcmp(node->arg3, arg3) != 0)
 				{
-					free(node->pr);
-					node->pr = strdup(prtext);
+					free(node->arg3);
+					node->arg3 = strdup(arg3);
 				}
 				break;
 
@@ -208,7 +211,7 @@ struct listnode *update_node_list(struct listroot *root, char *ltext, char *rtex
 	}
 	else
 	{
-		return insert_node_list(root, ltext, rtext, prtext);
+		return insert_node_list(root, arg1, arg2, arg3, arg4);
 	}
 }
 
@@ -232,7 +235,7 @@ struct listnode *insert_index_list(struct listroot *root, struct listnode *node,
 
 void delete_node_list(struct session *ses, int type, struct listnode *node)
 {
-	int index = search_index_list(ses->list[type], node->left, node->pr);
+	int index = search_index_list(ses->list[type], node->arg1, node->arg3);
 
 	delete_index_list(ses->list[type], index);
 }
@@ -251,14 +254,18 @@ void delete_index_list(struct listroot *root, int index)
 		root->update--;
 	}
 
-	free(node->left);
-	free(node->right);
-	free(node->pr);
+	free(node->arg1);
+	free(node->arg2);
+	free(node->arg3);
+	free(node->arg4);
 	free(node->group);
 
-	if (node->regex)
+	if (HAS_BIT(list_table[root->type].flags, LIST_FLAG_REGEX))
 	{
-		free(node->regex);
+		if (node->regex)
+		{
+			free(node->regex);
+		}
 	}
 	free(node);
 
@@ -292,11 +299,8 @@ struct listnode *search_node_list(struct listroot *root, char *text)
 		pop_call();
 		return root->list[index];
 	}
-	else
-	{
-		pop_call();
-		return NULL;
-	}
+	pop_call();
+	return NULL;
 }
 
 int search_index_list(struct listroot *root, char *text, char *priority)
@@ -376,7 +380,7 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 
 	while (bot <= top)
 	{
-		toj = is_number(root->list[val]->left) ? tintoi(root->list[val]->left) : 0;
+		toj = is_number(root->list[val]->arg1) ? tintoi(root->list[val]->arg1) : 0;
 
 		if (toi)
 		{
@@ -388,7 +392,7 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 		}
 		else
 		{
-			srt = strcmp(text, root->list[val]->left);
+			srt = strcmp(text, root->list[val]->arg1);
 		}
 
 		if (srt == 0)
@@ -414,11 +418,8 @@ int bsearch_alpha_list(struct listroot *root, char *text, int seek)
 		pop_call();
 		return UMAX(0, val);
 	}
-	else
-	{
-		pop_call();
-		return -1;
-	}
+	pop_call();
+	return -1;
 }
 
 /*
@@ -436,11 +437,11 @@ int bsearch_priority_list(struct listroot *root, char *text, char *priority, int
 
 	while (bot <= top)
 	{
-		srt = atof(priority) - atof(root->list[val]->pr);
+		srt = atof(priority) - atof(root->list[val]->arg3);
 
 		if (!srt)
 		{
-			srt = strcmp(text, root->list[val]->left);
+			srt = strcmp(text, root->list[val]->arg1);
 		}
 
 		if (srt == 0)
@@ -480,7 +481,7 @@ int nsearch_list(struct listroot *root, char *text)
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (!strcmp(text, root->list[i]->left))
+		if (!strcmp(text, root->list[i]->arg1))
 		{
 			return i;
 		}
@@ -500,14 +501,17 @@ void show_node(struct listroot *root, struct listnode *node, int level)
 
 	switch (list_table[root->type].args)
 	{
+		case 4:
+			tintin_printf2(root->ses, "%s" COLOR_TINTIN "#" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "}", indent(level), list_table[root->type].name, node->arg1, str, node->arg3, node->arg4);
+			break;
 		case 3:
-			tintin_printf2(root->ses, "%*s#%s \e[1;31m{\e[0m%s\e[1;31m}\e[1;36m=\e[1;31m{\e[0m%s\e[1;31m} \e[1;36m@ \e[1;31m{\e[0m%s\e[1;31m}", level * 2, "", list_table[root->type].name, node->left, str, node->pr);
+			tintin_printf2(root->ses, "%s" COLOR_TINTIN "#" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "}", indent(level), list_table[root->type].name, node->arg1, str, node->arg3);
 			break;
 		case 2:
-			tintin_printf2(root->ses, "%*s#%s \e[1;31m{\e[0m%s\e[1;31m}\e[1;36m=\e[1;31m{\e[0m%s\e[1;31m}", level * 2, "", list_table[root->type].name, node->left, str);
+			tintin_printf2(root->ses, "%s" COLOR_TINTIN "#" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "} {" COLOR_STRING "%s" COLOR_BRACE "}", indent(level), list_table[root->type].name, node->arg1, str);
 			break;
 		case 1:
-			tintin_printf2(root->ses, "%*s#%s \e[1;31m{\e[0m%s\e[1;31m}", level * 2, "", list_table[root->type].name, node->left);
+			tintin_printf2(root->ses, "%s" COLOR_TINTIN "#" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "}", indent(level), list_table[root->type].name, node->arg1);
 			break;
 	}
 	str_free(str);
@@ -536,7 +540,7 @@ void show_list(struct listroot *root, int level)
 int show_node_with_wild(struct session *ses, char *text, struct listroot *root)
 {
 	struct listnode *node;
-	int i, flag = FALSE;
+	int i, found = FALSE;
 
 	push_call("show_node_with_wild(%p,%p,%p)",ses,text,root);
 
@@ -544,25 +548,44 @@ int show_node_with_wild(struct session *ses, char *text, struct listroot *root)
 
 	if (node)
 	{
-		show_node(root, node, 0);
+		switch(root->type)
+		{
+			case LIST_EVENT:
+			case LIST_FUNCTION:
+			case LIST_MACRO:
+				tintin_printf2(ses, COLOR_TINTIN "%c" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "}\n{\n" COLOR_STRING "%s\n" COLOR_BRACE "}\n\n", gtd->tintin_char, list_table[root->type].name, node->arg1, script_viewer(ses, node->arg2));
+//				show_lines(ses, SUB_COL, "<138>%c<168>%s <258>{<278>%s<258>}\n<158>{\n<278>%s\n<258>}<088>\n\n", gtd->tintin_char, list_table[root->type].name, node->arg1, script_viewer(ses, node->arg2));
+				break;
 
+			case LIST_ACTION:
+			case LIST_ALIAS:
+			case LIST_DELAY:
+			case LIST_TICKER:
+			case LIST_SUBSTITUTE:
+				tintin_printf2(ses, COLOR_TINTIN "%c" COLOR_COMMAND "%s " COLOR_BRACE "{" COLOR_STRING "%s" COLOR_BRACE "}\n{\n" COLOR_STRING "%s\n" COLOR_BRACE "}\n{" COLOR_STRING "%s" COLOR_BRACE "}\n\n", gtd->tintin_char, list_table[root->type].name, node->arg1, script_viewer(ses, node->arg2), node->arg3);
+//				show_lines(ses, SUB_COL, "<138>%c<168>%s <258>{<278>%s<258>}\n<258>{\n<278>%s\n<258>}\n<258>{<278>%s<258>}<088>\n\n", gtd->tintin_char, list_table[root->type].name, node->arg1, script_viewer(ses, node->arg2), node->arg3);
+				break;
+
+			default:
+				show_node(root, node, 0);
+				break;
+		}
 		pop_call();
 		return TRUE;
 	}
 
 	for (i = 0 ; i < root->used ; i++)
 	{
-		if (match(ses, root->list[i]->left, text, SUB_VAR|SUB_FUN))
+		if (match(ses, root->list[i]->arg1, text, SUB_VAR|SUB_FUN))
 		{
 			show_node(root, root->list[i], 0);
 
-			flag = TRUE;
+			found = TRUE;
 		}
 	}
 	pop_call();
-	return flag;
+	return found;
 }
-
 
 void delete_node_with_wild(struct session *ses, int type, char *text)
 {
@@ -571,13 +594,13 @@ void delete_node_with_wild(struct session *ses, int type, char *text)
 	char arg1[BUFFER_SIZE];
 	int i, found = FALSE;
 
-	sub_arg_in_braces(ses, text, arg1, 1, SUB_VAR|SUB_FUN);
+	sub_arg_in_braces(ses, text, arg1, GET_ALL, SUB_VAR|SUB_FUN);
 
 	node = search_node_list(root, arg1);
 
 	if (node)
 	{
-		show_message(ses, type, "#OK. {%s} IS NO LONGER %s %s.", node->left, (*list_table[type].name == 'A' || *list_table[type].name == 'E') ? "AN" : "A", list_table[type].name);
+		show_message(ses, type, "#OK. {%s} IS NO LONGER %s %s.", node->arg1, (*list_table[type].name == 'A' || *list_table[type].name == 'E') ? "AN" : "A", list_table[type].name);
 
 		delete_node_list(ses, type, node);
 
@@ -586,9 +609,9 @@ void delete_node_with_wild(struct session *ses, int type, char *text)
 
 	for (i = root->used - 1 ; i >= 0 ; i--)
 	{
-		if (match(ses, root->list[i]->left, arg1, SUB_VAR|SUB_FUN))
+		if (match(ses, root->list[i]->arg1, arg1, SUB_VAR|SUB_FUN))
 		{
-			show_message(ses, type, "#OK. {%s} IS NO LONGER %s %s.", root->list[i]->left, (*list_table[type].name == 'A' || *list_table[type].name == 'E') ? "AN" : "A", list_table[type].name);
+			show_message(ses, type, "#OK. {%s} IS NO LONGER %s %s.", root->list[i]->arg1, (*list_table[type].name == 'A' || *list_table[type].name == 'E') ? "AN" : "A", list_table[type].name);
 
 			delete_index_list(root, i);
 
@@ -608,8 +631,8 @@ DO_COMMAND(do_kill)
 	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int index;
 
-	arg = get_arg_in_braces(ses, arg, arg1, 0);
-	      get_arg_in_braces(ses, arg, arg2, 1);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	      get_arg_in_braces(ses, arg, arg2, GET_ALL);
 
 	if (*arg1 == 0 || !strcasecmp(arg1, "ALL"))
 	{
@@ -652,13 +675,13 @@ DO_COMMAND(do_kill)
 
 DO_COMMAND(do_message)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int index, found = FALSE;
 
-	arg = get_arg_in_braces(ses, arg, left,  FALSE);
-	arg = get_arg_in_braces(ses, arg, right, FALSE);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ONE);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " MESSAGES ");
 
@@ -681,26 +704,28 @@ DO_COMMAND(do_message)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(arg1, list_table[index].name) && !is_abbrev(arg1, list_table[index].name_multi) && strcasecmp(arg1, "ALL"))
 			{
 				continue;
 			}
 
-			if (*right == 0)
+			if (*arg2 == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE);
 			}
-			else if (is_abbrev(right, "ON"))
+			else if (is_abbrev(arg2, "ON"))
 			{
 				SET_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE);
 			}
-			else if (is_abbrev(right, "OFF"))
+			else if (is_abbrev(arg2, "OFF"))
 			{
 				DEL_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE);
 			}
 			else
 			{
-				return show_error(ses, LIST_COMMAND, "#SYNTAX: #MESSAGE {%s} [ON|OFF]",  left);
+				show_error(ses, LIST_COMMAND, "#SYNTAX: #MESSAGE {%s} [ON|OFF]",  arg1);
+				
+				return ses;
 			}
 			show_message(ses, LIST_COMMAND, "#OK: #%s MESSAGES HAVE BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_MESSAGE) ? "ON" : "OFF");
 
@@ -709,7 +734,7 @@ DO_COMMAND(do_message)
 
 		if (found == FALSE)
 		{
-			show_error(ses, LIST_COMMAND, "#ERROR: #MESSAGE {%s} - NO MATCH FOUND.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #MESSAGE {%s} - NO MATCH FOUND.", arg1);
 		}
 	}
 	return ses;
@@ -718,13 +743,13 @@ DO_COMMAND(do_message)
 
 DO_COMMAND(do_ignore)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int index, found = FALSE;
 
-	arg = get_arg_in_braces(ses, arg, left,  0);
-	arg = get_arg_in_braces(ses, arg, right, 0);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ONE);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " IGNORES ");
 
@@ -747,26 +772,28 @@ DO_COMMAND(do_ignore)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(arg1, list_table[index].name) && !is_abbrev(arg1, list_table[index].name_multi) && strcasecmp(arg1, "ALL"))
 			{
 				continue;
 			}
 
-			if (*right == 0)
+			if (*arg2 == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE);
 			}
-			else if (is_abbrev(right, "ON"))
+			else if (is_abbrev(arg2, "ON"))
 			{
 				SET_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE);
 			}
-			else if (is_abbrev(right, "OFF"))
+			else if (is_abbrev(arg2, "OFF"))
 			{
 				DEL_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE);
 			}
 			else
 			{
-				return show_error(ses, LIST_COMMAND, "#SYNTAX: #IGNORE {%s} [ON|OFF]", left);
+				show_error(ses, LIST_COMMAND, "#SYNTAX: #IGNORE {%s} [ON|OFF]", arg1);
+				
+				return ses;
 			}
 			show_message(ses, LIST_COMMAND, "#OK: #%s IGNORE STATUS HAS BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE) ? "ON" : "OFF");
 
@@ -775,7 +802,7 @@ DO_COMMAND(do_ignore)
 
 		if (found == FALSE)
 		{
-			show_error(ses, LIST_COMMAND, "#ERROR: #IGNORE {%s} - NO MATCH FOUND.", left);
+			show_error(ses, LIST_COMMAND, "#ERROR: #IGNORE {%s} - NO MATCH FOUND.", arg1);
 		}
 	}
 	return ses;
@@ -784,13 +811,13 @@ DO_COMMAND(do_ignore)
 
 DO_COMMAND(do_debug)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE];
 	int index, found = FALSE;
 
-	arg = get_arg_in_braces(ses, arg, left,  0);
-	arg = get_arg_in_braces(ses, arg, right, 0);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ONE);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " DEBUGS ");
 
@@ -813,40 +840,42 @@ DO_COMMAND(do_debug)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(arg1, list_table[index].name) && !is_abbrev(arg1, list_table[index].name_multi) && strcasecmp(arg1, "ALL"))
 			{
 				continue;
 			}
 
-			if (*right == 0)
+			if (*arg2 == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG);
 			}
-			else if (is_abbrev(right, "ON"))
+			else if (is_abbrev(arg2, "ON"))
 			{
 				SET_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG);
 			}
-			else if (is_abbrev(right, "OFF"))
+			else if (is_abbrev(arg2, "OFF"))
 			{
 				DEL_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG);
 				DEL_BIT(ses->list[index]->flags, LIST_FLAG_LOG);
 			}
-			else if (is_abbrev(right, "LOG"))
+			else if (is_abbrev(arg2, "LOG"))
 			{
 				SET_BIT(ses->list[index]->flags, LIST_FLAG_LOG);
 			}
 			else
 			{
-				return show_error(ses, LIST_COMMAND, "#SYNTAX: #DEBUG {%s} [ON|OFF|LOG]", left);
+				show_error(ses, LIST_COMMAND, "#SYNTAX: #DEBUG {%s} [ON|OFF|LOG]", arg1);
+				
+				return ses;
 			}
-			show_message(ses, LIST_COMMAND, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[index].name, is_abbrev(right, "LOG") ? "LOG" : HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
+			show_message(ses, LIST_COMMAND, "#OK: #%s DEBUG STATUS HAS BEEN SET TO: %s.", list_table[index].name, is_abbrev(arg2, "LOG") ? "LOG" : HAS_BIT(ses->list[index]->flags, LIST_FLAG_DEBUG) ? "ON" : "OFF");
 
 			found = TRUE;
 		}
 
 		if (found == FALSE)
 		{
-			show_error(ses, LIST_COMMAND, "#DEBUG {%s} - NO MATCH FOUND.", left);
+			show_error(ses, LIST_COMMAND, "#DEBUG {%s} - NO MATCH FOUND.", arg1);
 		}
 	}
 	return ses;
@@ -854,14 +883,14 @@ DO_COMMAND(do_debug)
 
 DO_COMMAND(do_info)
 {
-	char left[BUFFER_SIZE], right[BUFFER_SIZE], name[BUFFER_SIZE];
+	char arg1[BUFFER_SIZE], arg2[BUFFER_SIZE], name[BUFFER_SIZE];
 	int cnt, index, found = FALSE;
 	struct listroot *root;
 
-	arg = get_arg_in_braces(ses, arg, left,  0);
-	arg = get_arg_in_braces(ses, arg, right, 0);
+	arg = get_arg_in_braces(ses, arg, arg1, GET_ONE);
+	arg = get_arg_in_braces(ses, arg, arg2, GET_ONE);
 
-	if (*left == 0)
+	if (*arg1 == 0)
 	{
 		tintin_header(ses, " INFORMATION ");
 
@@ -869,7 +898,7 @@ DO_COMMAND(do_info)
 		{
 			if (!HAS_BIT(ses->list[index]->flags, LIST_FLAG_HIDE))
 			{
-				tintin_printf2(ses, "%-15s   %5d   IGNORE %3s   MESSAGE %3s   INFO %3s   DEBUG %3s %3s",
+				tintin_printf2(ses, "%-15s %5d   IGNORE %3s   MESSAGE %3s   INFO %3s   DEBUG %3s %3s",
 					list_table[index].name_multi,
 					ses->list[index]->used,
 					HAS_BIT(ses->list[index]->flags, LIST_FLAG_IGNORE)  ?  "ON" : "OFF",
@@ -891,20 +920,20 @@ DO_COMMAND(do_info)
 				continue;
 			}
 
-			if (!is_abbrev(left, list_table[index].name) && !is_abbrev(left, list_table[index].name_multi) && strcasecmp(left, "ALL"))
+			if (!is_abbrev(arg1, list_table[index].name) && !is_abbrev(arg1, list_table[index].name_multi) && strcasecmp(arg1, "ALL"))
 			{
 				continue;
 			}
 
-			if (*right == 0)
+			if (*arg2 == 0)
 			{
 				TOG_BIT(ses->list[index]->flags, LIST_FLAG_INFO);
 			}
-			else if (is_abbrev(right, "ON"))
+			else if (is_abbrev(arg2, "ON"))
 			{
 				SET_BIT(ses->list[index]->flags, LIST_FLAG_INFO);
 			}
-			else if (is_abbrev(right, "OFF"))
+			else if (is_abbrev(arg2, "OFF"))
 			{
 				DEL_BIT(ses->list[index]->flags, LIST_FLAG_INFO);
 			}
@@ -912,14 +941,14 @@ DO_COMMAND(do_info)
 			{
 				root = ses->list[index];
 
-				if (is_abbrev(right, "LIST"))
+				if (is_abbrev(arg2, "LIST"))
 				{
 					for (cnt = 0 ; cnt < root->used ; cnt++)
 					{
-						tintin_printf2(ses, "#INFO %s %4d {arg1}{%s} {arg2}{%s} {arg3}{%s} {class}{%s} {data}{%lld}", list_table[index].name, cnt, root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
+						tintin_printf2(ses, "#INFO %s %4d {arg1}{%s} {arg2}{%s} {arg3}{%s} {class}{%s}", list_table[index].name, cnt, root->list[cnt]->arg1, root->list[cnt]->arg2, root->list[cnt]->arg3, root->list[cnt]->group);
 					}
 				}
-				else if (is_abbrev(right, "SAVE"))
+				else if (is_abbrev(arg2, "SAVE"))
 				{
 					sprintf(name, "info[%s]", list_table[index].name);
 					delete_nest_node(ses->list[LIST_VARIABLE], name);
@@ -928,17 +957,21 @@ DO_COMMAND(do_info)
 					{
 						sprintf(name, "info[%s][%d]", list_table[index].name, cnt);
 
-						set_nest_node(ses->list[LIST_VARIABLE], name, "{arg1}{%s}{arg2}{%s}{arg3}{%s}{class}{%s}{data}{%lld}", root->list[cnt]->left, root->list[cnt]->right, root->list[cnt]->pr, root->list[cnt]->group, root->list[cnt]->data);
+						set_nest_node(ses->list[LIST_VARIABLE], name, "{arg1}{%s}{arg2}{%s}{arg3}{%s}{class}{%s}", root->list[cnt]->arg1, root->list[cnt]->arg2, root->list[cnt]->arg3, root->list[cnt]->group);
 					}
 					show_message(ses, LIST_COMMAND, "#INFO: DATA WRITTEN TO {info[%s]}", list_table[index].name);
 				}
 				else
 				{
-					return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF|LIST|SAVE|SYSTEM]", left);
+					show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF|LIST|SAVE|SYSTEM]", arg1);
+					
+					return ses;
 				}
 				found = TRUE;
 
-				return show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF]", left);
+				show_error(ses, LIST_COMMAND, "#SYNTAX: #INFO {%s} [ON|OFF]", arg1);
+				
+				return ses;
 			}
 			show_message(ses, LIST_COMMAND, "#OK: #%s INFO STATUS HAS BEEN SET TO: %s.", list_table[index].name, HAS_BIT(ses->list[index]->flags, LIST_FLAG_INFO) ? "ON" : "OFF");
 
@@ -947,21 +980,25 @@ DO_COMMAND(do_info)
 
 		if (found == FALSE)
 		{
-			if (is_abbrev(left, "CPU"))
+			if (is_abbrev(arg1, "CPU"))
 			{
 				show_cpu(ses);
 			}
-			else if (is_abbrev(left, "STACK"))
+			else if (is_abbrev(arg1, "STACK"))
 			{
 				dump_stack();
 			}
-			else if (is_abbrev(left, "SYSTEM"))
+			else if (is_abbrev(arg1, "SYSTEM"))
 			{
-				if (is_abbrev(right, "SAVE"))
+				if (is_abbrev(arg2, "SAVE"))
 				{
 					sprintf(name, "info[SYSTEM]");
 
-					set_nest_node(ses->list[LIST_VARIABLE], name, "{CLIENT_NAME}{%s}{CLIENT_VERSION}{%s}", CLIENT_NAME, CLIENT_VERSION);
+					set_nest_node(ses->list[LIST_VARIABLE], name, "{CLIENT_NAME}{%s}{CLIENT_VERSION}{%-3s}", CLIENT_NAME, CLIENT_VERSION);
+
+					add_nest_node(ses->list[LIST_VARIABLE], name, "{CLIENT}{{NAME}{%s}{VERSION}{%-3s}}", CLIENT_NAME, CLIENT_VERSION);
+
+					add_nest_node(ses->list[LIST_VARIABLE], name, "{SCROLL}{{BASE}{%d}{LINE}{%d}{MAX}{%d}{ROW}{%d}}", ses->scroll->base, ses->scroll->line, ses->scroll->max, ses->scroll->row);
 
 					show_message(ses, LIST_COMMAND, "#INFO: DATA WRITTEN TO {info[SYSTEM]}");
 				}
@@ -969,11 +1006,15 @@ DO_COMMAND(do_info)
 				{
 					tintin_printf2(ses, "#INFO SYSTEM: CLIENT_NAME = %s", CLIENT_NAME);
 					tintin_printf2(ses, "#INFO SYSTEM: CLIENT_VERSION = %s", CLIENT_VERSION);
+					tintin_printf2(ses, "#INFO SYSTEM: SCROLL_BASE = %d", ses->scroll->base);
+					tintin_printf2(ses, "#INFO SYSTEM: SCROLL_LINE = %d", ses->scroll->line);
+					tintin_printf2(ses, "#INFO SYSTEM: SCROLL_MAX = %d", ses->scroll->max);
+					tintin_printf2(ses, "#INFO SYSTEM: SCROLL_ROW = %d", ses->scroll->row);
 				}
 			}
 			else
 			{
-				show_error(ses, LIST_COMMAND, "#INFO {%s} - NO MATCH FOUND.", left);
+				show_error(ses, LIST_COMMAND, "#INFO {%s} - NO MATCH FOUND.", arg1);
 			}
 		}
 	}
